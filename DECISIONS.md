@@ -646,3 +646,20 @@ carrying an unpaired surrogate fails where it enters: a tool output or state
 mutation raises at dispatch and is recorded as a dispatched, failed event, which
 is scored evidence rather than a crash; a trajectory payload is rejected before
 its destination file is opened. Ordinary non-ASCII text is unaffected.
+
+### D-050 — The declared package table asserts about the lock, it does not replace it
+`_lock_environment_consistency` parsed `requirements-smoke.lock` into
+`locked_versions` and then immediately overwrote every entry it cared about with
+the hardcoded `EXPECTED_PACKAGES` table. For those fifteen lane-defining
+packages the lock was therefore never compared against anything: a drift between
+the lock and the table would have been invisible, and the probe would have
+reported a matching environment while silently checking the table against
+itself.
+
+The expected set is now derived from the lock alone. Direct-URL pins, which
+carry no `==` and cover the four CUDA wheels, are read from their wheel
+filenames by `_LOCK_URL_PIN_RE`, so all 93 locked distributions participate. The
+declared table is retained but demoted to an assertion: any disagreement with
+the lock is reported as `declared_lock_drift` and fails the probe. Three tests
+pin this, including one asserting that the locked distribution count exceeds the
+declared table, so the lock can never quietly shrink to the table again.

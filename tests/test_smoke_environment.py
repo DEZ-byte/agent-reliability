@@ -216,5 +216,46 @@ class SmokeEnvironmentUnitTests(unittest.TestCase):
         return result
 
 
+class LockDerivedPinTests(unittest.TestCase):
+    """The declared table asserts about the lock; it never replaces it."""
+
+    def test_direct_url_pins_are_read_from_the_lock(self) -> None:
+        text = probe.LOCK_PATH.read_text(encoding="utf-8")
+        versions = probe._lock_wheel_url_versions(text)
+        self.assertEqual(versions.get("torch"), "2.11.0+cu128")
+        self.assertEqual(versions.get("torchvision"), "0.26.0+cu128")
+        self.assertEqual(versions.get("xformers"), "0.0.35")
+        self.assertEqual(versions.get("triton-windows"), "3.6.0.post26")
+
+    def test_every_declared_package_is_pinned_by_the_lock(self) -> None:
+        text = probe.LOCK_PATH.read_text(encoding="utf-8")
+        locked = {}
+        for line in text.splitlines():
+            match = probe._LOCK_PIN_RE.match(line)
+            if match:
+                locked[probe._normalized_distribution_name(match.group(1))] = match.group(2)
+        locked.update(probe._lock_wheel_url_versions(text))
+        for name, version in probe.EXPECTED_PACKAGES.items():
+            canonical = probe._normalized_distribution_name(name)
+            with self.subTest(package=name):
+                self.assertIn(canonical, locked, "declared package absent from the lock")
+                self.assertEqual(
+                    locked[canonical],
+                    version,
+                    "declared version drifted from requirements-smoke.lock",
+                )
+
+    def test_consistency_report_exposes_declared_lock_drift(self) -> None:
+        report = probe._lock_environment_consistency()
+        self.assertIn("declared_versions_match_lock", report)
+        self.assertIn("declared_lock_drift", report)
+        self.assertTrue(report["declared_versions_match_lock"])
+        self.assertEqual(report["declared_lock_drift"], {})
+        # The lock, not the table, is the source of the expected set.
+        self.assertGreater(
+            report["locked_distribution_count"], len(probe.EXPECTED_PACKAGES)
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

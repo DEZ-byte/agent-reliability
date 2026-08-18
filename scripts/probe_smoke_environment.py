@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from urllib.parse import unquote
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Final
@@ -64,6 +65,10 @@ SOURCE_PATHS: Final = (
 )
 _LOCK_PIN_RE: Final = re.compile(
     r"^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s\\]+)"
+)
+# Direct-URL pins (the CUDA wheels) carry their version in the wheel filename.
+_LOCK_URL_PIN_RE: Final = re.compile(
+    r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*) @ \S+/(?P<filename>[^/\s#]+\.whl)"
 )
 _SENSITIVE_ENV_RE: Final = re.compile(
     r"(?i)(?:token|secret|password|passwd|credential|authorization|cookie|api[_-]?key)"
@@ -234,14 +239,40 @@ def _normalized_distribution_name(value: str) -> str:
     return re.sub(r"[-_.]+", "-", value).lower()
 
 
+def _lock_wheel_url_versions(text: str) -> dict[str, str]:
+    """Read versions for direct-URL pins, which carry no ``==`` in the lock."""
+
+    versions: dict[str, str] = {}
+    for line in text.splitlines():
+        match = _LOCK_URL_PIN_RE.match(line)
+        if not match:
+            continue
+        filename = unquote(match.group("filename"))
+        parts = filename.split("-")
+        if len(parts) >= 2:
+            versions[_normalized_distribution_name(match.group("name"))] = parts[1]
+    return versions
+
+
 def _lock_environment_consistency() -> dict[str, Any]:
+    lock_text = LOCK_PATH.read_text(encoding="utf-8")
     locked_versions: dict[str, str] = {}
-    for line in LOCK_PATH.read_text(encoding="utf-8").splitlines():
+    for line in lock_text.splitlines():
         match = _LOCK_PIN_RE.match(line)
         if match:
             locked_versions[_normalized_distribution_name(match.group(1))] = match.group(2)
-    for name, version in EXPECTED_PACKAGES.items():
-        locked_versions[_normalized_distribution_name(name)] = version
+    locked_versions.update(_lock_wheel_url_versions(lock_text))
+
+    # The declared table is an assertion ABOUT the lock, never a substitute for
+    # it. Overwriting the parsed pins here would mean the lock was never
+    # actually compared against the installed environment.
+    declared_drift = {
+        name: {"declared": version, "locked": locked_versions.get(canonical)}
+        for name, version in EXPECTED_PACKAGES.items()
+        for canonical in [_normalized_distribution_name(name)]
+        if locked_versions.get(canonical) != version
+    }
+
     expected_versions = {
         **locked_versions,
         **{
@@ -266,9 +297,11 @@ def _lock_environment_consistency() -> dict[str, Any]:
     return {
         "status": (
             "passed"
-            if not missing and not mismatches and not unexpected
+            if not missing and not mismatches and not unexpected and not declared_drift
             else "failed"
         ),
+        "declared_versions_match_lock": not declared_drift,
+        "declared_lock_drift": declared_drift,
         "locked_distribution_count": len(locked_versions),
         "editable_distribution_count": len(EXPECTED_EDITABLE_PROJECT),
         "installed_distribution_count": len(installed_versions),
