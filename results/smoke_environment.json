@@ -1,7 +1,7 @@
 {
-  "created_at_utc": "2026-08-18T11:06:19.556365+00:00",
+  "created_at_utc": "2026-08-18T11:14:27.190529+00:00",
   "dependency_check": {
-    "elapsed_seconds": 0.047,
+    "elapsed_seconds": 0.031,
     "returncode": 0,
     "status": "passed",
     "stderr_tail": "Checked 94 packages in 3ms\nAll installed packages are compatible\n",
@@ -46,7 +46,7 @@
         "version": "2.11.0+cu128"
       }
     },
-    "elapsed_seconds": 8.296,
+    "elapsed_seconds": 8.25,
     "environment_policy": {
       "captured_output_redacted": true,
       "huggingface_offline_flags_set": true,
@@ -55,7 +55,7 @@
     },
     "returncode": 0,
     "status": "passed",
-    "stderr_tail": "W0818 07:06:23.071000 12960 Lib\\site-packages\\torch\\distributed\\elastic\\multiprocessing\\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.\n",
+    "stderr_tail": "W0818 07:14:30.736000 13320 Lib\\site-packages\\torch\\distributed\\elastic\\multiprocessing\\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.\n",
     "stdout_tail": "\ud83e\udda5 Unsloth: Will patch your computer to enable 2x faster free finetuning.\n\ud83e\udda5 Unsloth Zoo will now patch everything to make training faster!\n__SMOKE_ENV_CHILD_JSON__={\"imports\": {\"agent.parser\": true, \"bitsandbytes\": \"0.50.1\", \"torch\": true, \"transformers\": \"5.5.0\", \"triton\": \"3.6.0\", \"trl\": \"0.24.0\", \"unsloth\": true, \"xformers\": \"0.0.35\"}, \"torch\": {\"cuda_available\": true, \"cuda_runtime_version\": \"12.8\", \"device_count\": 1, \"devices\": [{\"compute_capability\": [8, 9], \"index\": 0, \"name\": \"NVIDIA GeForce RTX 4060 Laptop GPU\", \"total_memory_bytes\": 8585216000}], \"version\": \"2.11.0+cu128\"}}\n"
   },
   "lane_id": "phase-a-windows-unsloth-trl024",
@@ -113,14 +113,14 @@
   },
   "source": {
     "file_sha256": {
-      "configs/model_smoke.json": "57901682f8bc4576292483229289f22f5894cafb852ed357a9068b38fe24e170",
+      "configs/model_smoke.json": "56c9c2e08533cfc6b3cab8c97f807cbaa79deafe91d5db5f08d66fdde4602506",
       "pyproject.toml": "148d1bacf0331c6ebc83fe22546b0d2d2be1d7cf025f1448ba129030b208fa2f",
       "requirements-smoke.in": "e3167007513a3ef3cef7bba42a6b01b91bb9e7870ab5a81960c2215356f7ce92",
       "requirements-smoke.lock": "c81df3a3b3025a98a4b68f71fbd49c0e1347bb7dc8f3ad4f9bc3ebf369357568",
       "scripts/probe_smoke_environment.py": "af4ac3ac81b6ce95f411d897b22884efa3c234443ed1c0a5e5f94fedab713d33",
       "scripts/smoke_models.py": "579aba44a506f403f43d25c511fa98341cd8d6def100277cfec3cc89137e48b7"
     },
-    "git_commit": "858465b01e768b65c4cf91e5aedb8e1aabef1dd1",
+    "git_commit": "2d101fe77860e286d5f1c7c91e161caa36ae0c3c",
     "git_status_check": {
       "returncode": 0,
       "status": "passed"
