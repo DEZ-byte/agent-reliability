@@ -41,7 +41,9 @@ CONFIG_SCHEMA_VERSION: Final = 1
 RESULT_SCHEMA_VERSION: Final = 1
 DEFAULT_CONFIG: Final = Path(__file__).resolve().parents[1] / "configs" / "model_smoke.json"
 DEFAULT_OUTPUT: Final = Path(__file__).resolve().parents[1] / "results" / "model_smoke.json"
+PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 MAX_CONFIG_BYTES: Final = 256 * 1024
+MAX_REGISTRY_BYTES: Final = 256 * 1024
 MAX_RESULT_BYTES: Final = 8 * 1024 * 1024
 MAX_CANDIDATES: Final = 4
 MAX_MESSAGE_CHARS: Final = 4096
@@ -54,6 +56,11 @@ MAX_PERSISTED_PROMPT_CHARS: Final = 32 * 1024
 MAX_TEMPLATE_TOKENS: Final = 8192
 MAX_TEMPLATE_SOURCE_CHARS: Final = 256 * 1024
 MAX_ERROR_CHARS: Final = 4096
+MAX_P6_TOKENS: Final = 512
+P6_LORA_RANK: Final = 4
+P6_LEARNING_RATE: Final = 1e-3
+P6_REFERENCE_ATOL: Final = 1e-4
+P6_REFERENCE_RTOL: Final = 1e-4
 GENERATION_START_MARKER: Final = "__CODEX_SMOKE_GENERATION_START_7D9C4A__"
 GENERATION_END_MARKER: Final = "__CODEX_SMOKE_GENERATION_END_7D9C4A__"
 OPTIONAL_LIBRARIES: Final = (
@@ -69,6 +76,8 @@ _MODEL_ID_RE: Final = re.compile(
 )
 _CANDIDATE_NAME_RE: Final = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{0,63})$")
 _SHA_RE: Final = re.compile(r"^[0-9a-f]{40}$")
+_SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
+_PROTOCOL_PROBES: Final = tuple(f"P{index}" for index in range(7))
 
 
 class StrictModel(BaseModel):
@@ -77,6 +86,7 @@ class StrictModel(BaseModel):
 
 class CandidateConfig(StrictModel):
     name: str
+    bundle: Literal["qwen2.5", "qwen3"]
     role: Literal["primary_small", "scale_check"]
     model_id: str
     revision: str
@@ -305,8 +315,70 @@ class ProbeConfig(StrictModel):
         return self
 
 
+class SmokeLaneConfig(StrictModel):
+    identity: Literal["phase-a-windows-unsloth-trl024"]
+    lock_path: Literal["requirements-smoke.lock"]
+    expected_lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    m6_environment_factory_in_scope: Literal[False]
+    probe_implementation: dict[
+        Literal["P0", "P1", "P2", "P3", "P4", "P5", "P6"],
+        Literal["implemented", "not_implemented"],
+    ]
+
+    @model_validator(mode="after")
+    def validate_probe_implementation(self) -> "SmokeLaneConfig":
+        expected = {probe_id: "implemented" for probe_id in _PROTOCOL_PROBES}
+        if self.probe_implementation != expected:
+            raise ValueError(
+                "probe_implementation must mark P0-P6 implemented"
+            )
+        return self
+
+
+class ReleaseSelectionGate(StrictModel):
+    registry_path: Literal["configs/model_candidates.json"]
+    expected_registry_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    status: Literal["pending", "resolved"]
+    intended_release_scope: str | None = Field(default=None, max_length=2048)
+    decision_record: str | None = Field(
+        default=None, pattern=r"^D-[0-9]{3}$"
+    )
+    eligible_bundles: list[Literal["qwen2.5", "qwen3"]] = Field(
+        default_factory=list, max_length=2
+    )
+
+    @model_validator(mode="after")
+    def state_is_consistent(self) -> "ReleaseSelectionGate":
+        if self.status == "pending":
+            if (
+                self.intended_release_scope is not None
+                or self.decision_record is not None
+                or self.eligible_bundles
+            ):
+                raise ValueError(
+                    "a pending release gate cannot define scope, decision, or eligible bundles"
+                )
+        elif (
+            not self.intended_release_scope
+            or not self.decision_record
+            or not self.eligible_bundles
+        ):
+            raise ValueError(
+                "a resolved release gate requires scope, a decision record, and eligible bundles"
+            )
+        if len(self.eligible_bundles) != len(set(self.eligible_bundles)):
+            raise ValueError("eligible release bundles must be unique")
+        return self
+
+    @property
+    def selection_allowed(self) -> bool:
+        return self.status == "resolved" and bool(self.eligible_bundles)
+
+
 class SmokeConfig(StrictModel):
     schema_version: Literal[1]
+    lane: SmokeLaneConfig
+    release_gate: ReleaseSelectionGate
     candidates: list[CandidateConfig] = Field(
         min_length=1, max_length=MAX_CANDIDATES
     )
@@ -331,6 +403,15 @@ class SmokeConfig(StrictModel):
             raise ValueError(
                 "config must contain exactly two primary_small and two scale_check candidates"
             )
+        bundle_roles = {
+            bundle: {candidate.role for candidate in self.candidates if candidate.bundle == bundle}
+            for bundle in ("qwen2.5", "qwen3")
+        }
+        if bundle_roles != {
+            "qwen2.5": {"primary_small", "scale_check"},
+            "qwen3": {"primary_small", "scale_check"},
+        }:
+            raise ValueError("each Qwen bundle must contain one primary and one scale candidate")
         return self
 
 
@@ -377,13 +458,111 @@ class ProbeResult(StrictModel):
     error: str | None = Field(default=None, max_length=MAX_ERROR_CHARS)
 
 
+class MinimalTrainingResult(StrictModel):
+    probe_id: Literal["P6"] = "P6"
+    name: Literal["minimal_training_execution"] = "minimal_training_execution"
+    status: Literal["planned", "passed", "failed", "skipped"] = "planned"
+    executed: bool = False
+    passed: bool = False
+    plan: dict[str, JsonValue] = Field(default_factory=dict)
+    metrics: dict[str, JsonValue] = Field(default_factory=dict)
+    error: str | None = Field(default=None, max_length=MAX_ERROR_CHARS)
+
+    @model_validator(mode="after")
+    def status_is_consistent(self) -> "MinimalTrainingResult":
+        expected_executed = self.status in {"passed", "failed"}
+        if self.executed != expected_executed:
+            raise ValueError("P6 executed must be true exactly when its status passed or failed")
+        if self.passed != (self.status == "passed"):
+            raise ValueError("P6 passed must be true exactly when its status is passed")
+        if self.status == "failed" and self.error is None:
+            raise ValueError("a failed P6 result requires an error")
+        if self.status == "passed" and self.error is not None:
+            raise ValueError("a passed P6 result cannot include an error")
+        if self.status == "skipped" and self.error is None:
+            raise ValueError("a skipped P6 result requires a reason")
+        return self
+
+
+def _derived_environment_compatibility(
+    probes: list[ProbeResult] | tuple[ProbeResult, ...],
+) -> bool | None:
+    statuses = {probe.name: probe.status for probe in probes}
+    required = (
+        "tool_chat_template",
+        "four_bit_load",
+        "deterministic_generation",
+        "training_stack_imports",
+        "training_template_masking",
+    )
+    if any(statuses.get(name) == "planned" for name in required):
+        return None
+    if any(name not in statuses for name in required):
+        return None
+    return all(statuses[name] == "passed" for name in required)
+
+
 class CandidateResult(StrictModel):
     name: str
+    bundle: Literal["qwen2.5", "qwen3"]
     role: Literal["primary_small", "scale_check"]
     model_id: str
     requested_revision: str
     resolved_revision: str | None
     probes: list[ProbeResult]
+    p6: MinimalTrainingResult
+    environment_compatible: bool | None
+    selection_eligible: bool
+
+    @model_validator(mode="after")
+    def enforce_true_gates_and_p6(self) -> "CandidateResult":
+        expected_compatibility = _derived_environment_compatibility(self.probes)
+        if self.environment_compatible != expected_compatibility:
+            raise ValueError(
+                "environment_compatible must reflect every required P1-P5 probe"
+            )
+        if self.selection_eligible and not (
+            self.environment_compatible is True
+            and self.p6.executed
+            and self.p6.status == "passed"
+            and self.p6.passed
+        ):
+            raise ValueError(
+                "selection eligibility requires the environment gates and executed/passed P6"
+            )
+        return self
+
+
+def _candidate_result(
+    *,
+    name: str,
+    bundle: Literal["qwen2.5", "qwen3"],
+    role: Literal["primary_small", "scale_check"],
+    model_id: str,
+    requested_revision: str,
+    resolved_revision: str | None,
+    probes: list[ProbeResult],
+    p6: MinimalTrainingResult | None = None,
+) -> CandidateResult:
+    p6_result = p6 or MinimalTrainingResult(plan=_minimal_training_plan())
+    environment_compatible = _derived_environment_compatibility(probes)
+    return CandidateResult(
+        name=name,
+        bundle=bundle,
+        role=role,
+        model_id=model_id,
+        requested_revision=requested_revision,
+        resolved_revision=resolved_revision,
+        probes=probes,
+        p6=p6_result,
+        environment_compatible=environment_compatible,
+        selection_eligible=(
+            environment_compatible is True
+            and p6_result.executed
+            and p6_result.status == "passed"
+            and p6_result.passed
+        ),
+    )
 
 
 class RunOptions(StrictModel):
@@ -393,16 +572,53 @@ class RunOptions(StrictModel):
     selected_candidates: list[str]
 
 
+class SmokeLaneResult(StrictModel):
+    identity: Literal["phase-a-windows-unsloth-trl024"]
+    lock_path: Literal["requirements-smoke.lock"]
+    expected_lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    actual_lock_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    lock_matches_expected: bool
+    m6_environment_factory_in_scope: Literal[False]
+    probe_implementation: dict[
+        Literal["P0", "P1", "P2", "P3", "P4", "P5", "P6"],
+        Literal["implemented", "not_implemented"],
+    ]
+
+    @model_validator(mode="after")
+    def lock_identity_is_consistent(self) -> "SmokeLaneResult":
+        matches = (
+            self.actual_lock_sha256 is not None
+            and self.actual_lock_sha256 == self.expected_lock_sha256
+        )
+        if self.lock_matches_expected != matches:
+            raise ValueError("lock_matches_expected is inconsistent with the lock hashes")
+        expected_probes = {probe_id: "implemented" for probe_id in _PROTOCOL_PROBES}
+        if self.probe_implementation != expected_probes:
+            raise ValueError("lane result has an invalid probe implementation contract")
+        return self
+
+
+class SourceIdentity(StrictModel):
+    git_commit_sha: str = Field(pattern=r"^[0-9a-f]{40}$")
+    smoke_script_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    smoke_config_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class SmokeResult(StrictModel):
     schema_version: Literal[1]
     created_at_utc: str
     config_path: str
     config_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    lane: SmokeLaneResult
+    release_gate: ReleaseSelectionGate
+    release_registry_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_identity: SourceIdentity
     command: list[str]
     options: RunOptions
     hardware: HardwareFacts
     library_versions: dict[str, str | None]
     candidates: list[CandidateResult]
+    selection_eligible: bool
 
     @field_validator("created_at_utc")
     @classmethod
@@ -411,6 +627,57 @@ class SmokeResult(StrictModel):
             raise ValueError("created_at_utc must use the UTC Z suffix")
         datetime.fromisoformat(value.removesuffix("Z") + "+00:00")
         return value
+
+    @model_validator(mode="after")
+    def validate_identity_and_eligibility(self) -> "SmokeResult":
+        if self.config_sha256 != self.source_identity.smoke_config_sha256:
+            raise ValueError("config and source-identity hashes must match")
+        if self.release_registry_sha256 != self.release_gate.expected_registry_sha256:
+            raise ValueError("release registry hash must match the configured evidence hash")
+        expected_selection = (
+            self.release_gate.status == "resolved"
+            and _has_selectable_bundle(self.candidates, self.release_gate.eligible_bundles)
+        )
+        if self.selection_eligible != expected_selection:
+            raise ValueError(
+                "top-level selection eligibility requires all four configured roles and candidates"
+            )
+        return self
+
+
+def _all_four_candidates_eligible(
+    candidates: list[CandidateResult] | tuple[CandidateResult, ...],
+) -> bool:
+    if len(candidates) != MAX_CANDIDATES:
+        return False
+    if len({candidate.name for candidate in candidates}) != MAX_CANDIDATES:
+        return False
+    role_counts = {
+        role: sum(candidate.role == role for candidate in candidates)
+        for role in ("primary_small", "scale_check")
+    }
+    return role_counts == {"primary_small": 2, "scale_check": 2} and all(
+        candidate.selection_eligible for candidate in candidates
+    )
+
+
+def _has_selectable_bundle(
+    candidates: list[CandidateResult] | tuple[CandidateResult, ...],
+    eligible_bundles: list[Literal["qwen2.5", "qwen3"]]
+    | tuple[Literal["qwen2.5", "qwen3"], ...],
+) -> bool:
+    if not _all_four_candidates_eligible(candidates):
+        return False
+    by_bundle = {
+        bundle: [candidate for candidate in candidates if candidate.bundle == bundle]
+        for bundle in ("qwen2.5", "qwen3")
+    }
+    return any(
+        len(by_bundle[bundle]) == 2
+        and {candidate.role for candidate in by_bundle[bundle]}
+        == {"primary_small", "scale_check"}
+        for bundle in eligible_bundles
+    )
 
 
 class SmokeConfigError(ValueError):
@@ -515,6 +782,237 @@ def write_result_atomic(result: SmokeResult, path: str | os.PathLike[str]) -> No
         raise
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _resolve_lane_lock_path(lane: SmokeLaneConfig) -> Path:
+    lock_path = (PROJECT_ROOT / lane.lock_path).resolve()
+    try:
+        lock_path.relative_to(PROJECT_ROOT.resolve())
+    except ValueError as exc:
+        raise SmokeConfigError("lane lock path must remain inside the project") from exc
+    return lock_path
+
+
+def _collect_lane_result(lane: SmokeLaneConfig) -> SmokeLaneResult:
+    lock_path = _resolve_lane_lock_path(lane)
+    try:
+        actual_sha256 = _sha256_file(lock_path)
+    except FileNotFoundError:
+        actual_sha256 = None
+    except OSError as exc:
+        raise SmokeConfigError(f"cannot read lane lock {lock_path}: {exc}") from exc
+    return SmokeLaneResult(
+        identity=lane.identity,
+        lock_path=lane.lock_path,
+        expected_lock_sha256=lane.expected_lock_sha256,
+        actual_lock_sha256=actual_sha256,
+        lock_matches_expected=actual_sha256 == lane.expected_lock_sha256,
+        m6_environment_factory_in_scope=lane.m6_environment_factory_in_scope,
+        probe_implementation=dict(lane.probe_implementation),
+    )
+
+
+def _resolve_release_registry_path(gate: ReleaseSelectionGate) -> Path:
+    registry_path = (PROJECT_ROOT / gate.registry_path).resolve()
+    try:
+        registry_path.relative_to(PROJECT_ROOT.resolve())
+    except ValueError as exc:
+        raise SmokeConfigError("release registry path must remain inside the project") from exc
+    return registry_path
+
+
+def _decision_section(decision_record: str) -> str:
+    try:
+        text = (PROJECT_ROOT / "DECISIONS.md").read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SmokeConfigError("cannot read DECISIONS.md for the release gate") from exc
+    match = re.search(
+        rf"(?ms)^### {re.escape(decision_record)} —[^\r\n]*\r?\n"
+        rf"(?P<body>.*?)(?=^### D-[0-9]{{3}} —|\Z)",
+        text,
+    )
+    if match is None:
+        raise SmokeConfigError(
+            f"release decision {decision_record} is not a recorded DECISIONS.md section"
+        )
+    return match.group("body")
+
+
+def _release_decision_markers(gate: ReleaseSelectionGate) -> tuple[str, str]:
+    bundles = ", ".join(f"`{bundle}`" for bundle in gate.eligible_bundles)
+    return (
+        f"Release scope: `{gate.intended_release_scope}`",
+        f"Release-eligible bundles: {bundles}",
+    )
+
+
+def _validate_release_registry(
+    gate: ReleaseSelectionGate,
+    candidates: list[CandidateConfig] | tuple[CandidateConfig, ...],
+) -> str:
+    """Validate the immutable registry and any resolved release decision."""
+
+    registry_path = _resolve_release_registry_path(gate)
+    try:
+        raw = registry_path.read_bytes()
+    except OSError as exc:
+        raise SmokeConfigError(f"cannot read release registry {registry_path}: {exc}") from exc
+    if len(raw) > MAX_REGISTRY_BYTES:
+        raise SmokeConfigError("release registry exceeds its size limit")
+    actual_sha256 = hashlib.sha256(raw).hexdigest()
+    if actual_sha256 != gate.expected_registry_sha256:
+        raise SmokeConfigError(
+            "release registry SHA-256 does not match the configured evidence hash"
+        )
+    try:
+        payload = _strict_json_loads(raw)
+    except (json.JSONDecodeError, _StrictJSONError) as exc:
+        raise SmokeConfigError(f"release registry is not strict JSON: {exc}") from exc
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        raise SmokeConfigError("release registry must be a schema-version 1 object")
+    roles = payload.get("roles")
+    if not isinstance(roles, dict):
+        raise SmokeConfigError("release registry roles must be an object")
+
+    entries: dict[str, tuple[str, dict[str, object]]] = {}
+    for role, role_entries in roles.items():
+        if not isinstance(role, str) or not isinstance(role_entries, list):
+            raise SmokeConfigError("release registry roles contain invalid entries")
+        for entry in role_entries:
+            if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
+                raise SmokeConfigError("release registry contains an invalid candidate")
+            model_id = entry["id"]
+            if model_id in entries:
+                raise SmokeConfigError(f"release registry repeats model ID {model_id}")
+            entries[model_id] = (role, entry)
+
+    states_by_bundle: dict[str, set[str]] = {"qwen2.5": set(), "qwen3": set()}
+    for candidate in candidates:
+        registered = entries.get(candidate.model_id)
+        if registered is None:
+            raise SmokeConfigError(
+                f"smoke candidate {candidate.model_id} is absent from the release registry"
+            )
+        registry_role, entry = registered
+        if (
+            registry_role != candidate.role
+            or entry.get("revision") != candidate.revision
+            or entry.get("smoke_bundle") != candidate.bundle
+        ):
+            raise SmokeConfigError(
+                f"release registry identity mismatch for {candidate.model_id}"
+            )
+        state = entry.get("release_eligibility")
+        decision = entry.get("release_decision")
+        if state not in {"pending", "eligible", "ineligible"}:
+            raise SmokeConfigError(
+                f"release registry has invalid eligibility for {candidate.model_id}"
+            )
+        if (state == "pending") != (decision is None):
+            raise SmokeConfigError(
+                f"release registry decision state is inconsistent for {candidate.model_id}"
+            )
+        if decision is not None and (
+            not isinstance(decision, str) or re.fullmatch(r"D-[0-9]{3}", decision) is None
+        ):
+            raise SmokeConfigError(
+                f"release registry decision is invalid for {candidate.model_id}"
+            )
+        states_by_bundle[candidate.bundle].add(state)
+        if gate.status == "pending" and state != "pending":
+            raise SmokeConfigError(
+                "a pending release gate requires pending smoke-candidate registry entries"
+            )
+        if gate.status == "resolved" and decision != gate.decision_record:
+            raise SmokeConfigError(
+                f"release decision mismatch for {candidate.model_id}"
+            )
+
+    if gate.status == "resolved":
+        if any(len(states) != 1 or "pending" in states for states in states_by_bundle.values()):
+            raise SmokeConfigError(
+                "a resolved release gate requires one resolved eligibility per complete bundle"
+            )
+        derived_bundles = [
+            bundle
+            for bundle in ("qwen2.5", "qwen3")
+            if states_by_bundle[bundle] == {"eligible"}
+        ]
+        if derived_bundles != gate.eligible_bundles:
+            raise SmokeConfigError(
+                "release gate eligible bundles do not match the candidate registry"
+            )
+        section = _decision_section(gate.decision_record or "")
+        missing_markers = [
+            marker for marker in _release_decision_markers(gate) if marker not in section
+        ]
+        if missing_markers:
+            raise SmokeConfigError(
+                "release decision section does not contain the exact scope and bundle markers"
+            )
+    return actual_sha256
+
+
+def _git_commit_sha() -> str:
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise SmokeConfigError("cannot resolve the source Git commit SHA") from exc
+    commit_sha = completed.stdout.strip().lower()
+    if not _SHA_RE.fullmatch(commit_sha):
+        raise SmokeConfigError("Git returned an invalid source commit SHA")
+    return commit_sha
+
+
+def _git_worktree_changes() -> list[str]:
+    """Return all nonignored staged, unstaged, and untracked Git changes."""
+
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise SmokeConfigError("cannot verify that the Git worktree is clean") from exc
+    return [line for line in completed.stdout.splitlines() if line]
+
+
+def _require_clean_git_worktree() -> None:
+    changes = _git_worktree_changes()
+    if changes:
+        raise SmokeConfigError(
+            "measured smoke run requires a clean Git worktree; detected "
+            f"{len(changes)} nonignored staged, unstaged, or untracked change(s)"
+        )
+
+
+def _collect_source_identity(config_sha256: str) -> SourceIdentity:
+    if not _SHA256_RE.fullmatch(config_sha256):
+        raise SmokeConfigError("config SHA-256 is invalid")
+    return SourceIdentity(
+        git_commit_sha=_git_commit_sha(),
+        smoke_script_sha256=_sha256_file(Path(__file__).resolve()),
+        smoke_config_sha256=config_sha256,
+    )
+
+
 def collect_library_versions() -> dict[str, str | None]:
     """Inspect installed distribution metadata without importing ML libraries."""
 
@@ -603,6 +1101,42 @@ def collect_hardware_facts() -> HardwareFacts:
     )
 
 
+def _minimal_training_plan() -> dict[str, JsonValue]:
+    return {
+        "execution": "one assistant-only LoRA forward/backward and one ephemeral SGD step",
+        "batch_size": 1,
+        "maximum_sequence_tokens": MAX_P6_TOKENS,
+        "reuse": "exact P5 input_ids and assistant_masks on the already-loaded NF4 model",
+        "adapter": {
+            "implementation": "unsloth.FastLanguageModel.get_peft_model",
+            "rank": P6_LORA_RANK,
+            "alpha": P6_LORA_RANK,
+            "target_modules": ["q_proj", "v_proj"],
+            "dropout": 0.0,
+            "bias": "none",
+            "gradient_checkpointing": "unsloth",
+        },
+        "masking": "trl.trainer.sft_trainer.DataCollatorForLanguageModeling assistant_masks",
+        "reference_policy": "same PEFT model with adapters disabled; no second model",
+        "optimizer": {
+            "class": "torch.optim.SGD",
+            "learning_rate": P6_LEARNING_RATE,
+            "momentum": 0.0,
+            "checkpoint": False,
+        },
+        "hard_checks": [
+            "TRL labels exactly match the P5 assistant mask",
+            "only LoRA parameters are trainable",
+            "finite loss, reference log probabilities, gradients, and updates",
+            "at least one nonzero LoRA gradient and parameter update",
+            "adapter-disable context restores the policy adapter",
+            "disabled-adapter reference is invariant across the optimizer step",
+            "no optimizer or model checkpoint is written",
+        ],
+        "quality_claim": False,
+    }
+
+
 def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
     tool_names = [tool.function.name for tool in probe.tools]
     template_plan: dict[str, JsonValue] = {
@@ -624,7 +1158,9 @@ def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
         "tool_names": tool_names,
     }
     load_plan: dict[str, JsonValue] = {
-        "artifact_access": "AutoModelForCausalLM.from_pretrained with the configured revision",
+        "artifact_access": (
+            "unsloth.FastLanguageModel.from_pretrained with the configured revision"
+        ),
         "device_map": {
             "root": f"cuda:{probe.target_cuda_device_index}",
             "multi_gpu_allowed": False,
@@ -657,10 +1193,14 @@ def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
         "warmup_runs": probe.warmup_runs,
         "timed_runs": probe.timed_runs,
         "timing": "CUDA-synchronized perf_counter around model.generate",
-        "checks": [
+        "compatibility_checks": [
             "all timed output token ID sequences are identical within each case",
             "at least one new token is produced across timed runs",
+            "every timed generation completes with positive measured duration",
+        ],
+        "ranking_observations": [
             "exactly one parsed call is registered, schema-valid, and names the expected tool",
+            "tool-call quality is recorded for ranking and does not gate environment compatibility",
         ],
         "generation_cases": [
             {
@@ -684,19 +1224,18 @@ def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
     import_plan: dict[str, JsonValue] = {
         "imports": [
             "trl.GRPOConfig",
-            "trl.chat_template_utils.get_training_chat_template",
+            "trl.trainer.sft_trainer.DataCollatorForLanguageModeling",
             "unsloth.FastLanguageModel",
-            "unsloth.chat_templates.get_chat_template",
         ],
         "construct": "GRPOConfig only; no trainer and no training run",
-        "hard_gate": "every planned import and configuration construction succeeds",
+        "preflight": "every planned import and configuration construction succeeds",
         "reference_policy_fixture": (
             "planned as a separate pre-compute unit fixture; this import smoke does not "
             "claim reference-policy correctness"
         ),
     }
     training_template_plan: dict[str, JsonValue] = {
-        "template_source": "trl.chat_template_utils.get_training_chat_template",
+        "template_source": "tokenizer.get_chat_template(tools=...) resolved native template",
         "record": [
             "training template SHA-256 separately from native template",
             "training rendered prompt SHA-256",
@@ -704,7 +1243,7 @@ def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
             "tokenized prefix before and after appending the tool observation",
         ],
         "hard_checks": [
-            "assistant mask exactly equals all token spans emitted by TRL generation blocks",
+            "assistant mask exactly equals all token spans emitted by template generation blocks",
             "pre-observation tokens are an exact prefix after the tool observation is appended",
         ],
         "note": "imports alone cannot pass this probe",
@@ -746,6 +1285,23 @@ def build_result(
         raise SmokeConfigError(
             "run_load and allow_download must be enabled together for model access"
         )
+    lane_result = _collect_lane_result(config.lane)
+    release_registry_sha256 = _validate_release_registry(
+        config.release_gate, config.candidates
+    )
+    if run_load and lane_result.actual_lock_sha256 is None:
+        raise SmokeConfigError(
+            f"measured smoke run requires the lane lock: {lane_result.lock_path}"
+        )
+    if run_load and not lane_result.lock_matches_expected:
+        raise SmokeConfigError(
+            "measured smoke run rejected because the lane lock SHA-256 does not "
+            "match the configured expected value"
+        )
+    if run_load:
+        _require_clean_git_worktree()
+    config_sha256 = hashlib.sha256(config_bytes).hexdigest()
+    source_identity = _collect_source_identity(config_sha256)
     selected = _select_candidates(config, selected_names)
     options = RunOptions(
         dry_run=not run_load,
@@ -760,8 +1316,9 @@ def build_result(
         if run_load:
             candidate_result = _execute_candidate(candidate, config.probe)
         else:
-            candidate_result = CandidateResult(
+            candidate_result = _candidate_result(
                 name=candidate.name,
+                bundle=candidate.bundle,
                 role=candidate.role,
                 model_id=candidate.model_id,
                 requested_revision=candidate.revision,
@@ -774,12 +1331,22 @@ def build_result(
         schema_version=RESULT_SCHEMA_VERSION,
         created_at_utc=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         config_path=str(config_path.resolve()),
-        config_sha256=hashlib.sha256(config_bytes).hexdigest(),
+        config_sha256=config_sha256,
+        lane=lane_result,
+        release_gate=config.release_gate,
+        release_registry_sha256=release_registry_sha256,
+        source_identity=source_identity,
         command=command,
         options=options,
         hardware=hardware,
         library_versions=library_versions,
         candidates=candidates,
+        selection_eligible=(
+            config.release_gate.status == "resolved"
+            and _has_selectable_bundle(
+                candidates, config.release_gate.eligible_bundles
+            )
+        ),
     )
 
 
@@ -797,6 +1364,49 @@ def _select_candidates(
     return [by_name[name] for name in selected_names]
 
 
+def _load_unsloth_four_bit_model(
+    *,
+    model_id: str,
+    revision: str,
+    quantization_config: Any,
+    compute_dtype: Any,
+    target_cuda_device_index: int,
+    seed: int,
+) -> tuple[Any, Any]:
+    unsloth = importlib.import_module("unsloth")
+    fast_language_model = getattr(unsloth, "FastLanguageModel")
+    loader = getattr(fast_language_model, "from_pretrained")
+    loaded = loader(
+        model_name=model_id,
+        revision=revision,
+        max_seq_length=MAX_P6_TOKENS,
+        dtype=compute_dtype,
+        load_in_4bit=True,
+        trust_remote_code=False,
+        device_map={"": target_cuda_device_index},
+        quantization_config=quantization_config,
+        local_files_only=False,
+        use_exact_model_name=True,
+        fast_inference=False,
+        random_state=seed,
+        disable_log_stats=True,
+    )
+    if not isinstance(loaded, tuple) or len(loaded) != 2:
+        raise TypeError("Unsloth model loader did not return (model, tokenizer)")
+    model, tokenizer = loaded
+    if model is None or tokenizer is None:
+        raise ValueError("Unsloth model loader returned an empty model or tokenizer")
+    if _resolved_revision(tokenizer) != revision:
+        raise ValueError(
+            "Unsloth model loader tokenizer did not resolve the requested revision"
+        )
+    if getattr(model, "_saved_temp_tokenizer", None) is not tokenizer:
+        raise ValueError(
+            "Unsloth model loader did not attach its tokenizer for LoRA preparation"
+        )
+    return model, tokenizer
+
+
 def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> CandidateResult:
     plans = {planned.name: planned.plan for planned in probe_plans(probe)}
     import_result = _run_training_stack_import_probe(
@@ -806,8 +1416,9 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
         transformers = importlib.import_module("transformers")
     except (ImportError, RuntimeError) as exc:
         error = f"transformers runtime unavailable: {_error_text(exc)}"
-        return CandidateResult(
+        return _candidate_result(
             name=candidate.name,
+            bundle=candidate.bundle,
             role=candidate.role,
             model_id=candidate.model_id,
             requested_revision=candidate.revision,
@@ -836,6 +1447,7 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
                     error=error,
                 ),
             ],
+            p6=_skipped_minimal_training(error),
         )
 
     tokenizer: Any = None
@@ -930,8 +1542,9 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
 
     if tokenizer is None:
         dependency_error = "tokenizer/template probe did not produce a generation prompt"
-        return CandidateResult(
+        return _candidate_result(
             name=candidate.name,
+            bundle=candidate.bundle,
             role=candidate.role,
             model_id=candidate.model_id,
             requested_revision=candidate.revision,
@@ -961,6 +1574,7 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
                     error=dependency_error,
                 ),
             ],
+            p6=_skipped_minimal_training(dependency_error),
         )
 
     training_template_result = _run_training_template_probe(
@@ -976,8 +1590,9 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
         importlib.import_module("bitsandbytes")
     except (ImportError, RuntimeError) as exc:
         runtime_error = f"4-bit runtime unavailable: {_error_text(exc)}"
-        return CandidateResult(
+        return _candidate_result(
             name=candidate.name,
+            bundle=candidate.bundle,
             role=candidate.role,
             model_id=candidate.model_id,
             requested_revision=candidate.revision,
@@ -1001,11 +1616,13 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
                 import_result,
                 training_template_result,
             ],
+            p6=_skipped_minimal_training(runtime_error),
         )
 
     if not torch.cuda.is_available():
-        return CandidateResult(
+        return _candidate_result(
             name=candidate.name,
+            bundle=candidate.bundle,
             role=candidate.role,
             model_id=candidate.model_id,
             requested_revision=candidate.revision,
@@ -1029,6 +1646,7 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
                 import_result,
                 training_template_result,
             ],
+            p6=_skipped_minimal_training("torch reports that CUDA is unavailable"),
         )
 
     target_cuda_device_index = probe.target_cuda_device_index
@@ -1037,8 +1655,9 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             f"configured CUDA device {target_cuda_device_index} is unavailable; "
             f"torch reports {torch.cuda.device_count()} visible device(s)"
         )
-        return CandidateResult(
+        return _candidate_result(
             name=candidate.name,
+            bundle=candidate.bundle,
             role=candidate.role,
             model_id=candidate.model_id,
             requested_revision=candidate.revision,
@@ -1062,6 +1681,7 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
                 import_result,
                 training_template_result,
             ],
+            p6=_skipped_minimal_training(error),
         )
 
     model: Any = None
@@ -1079,13 +1699,25 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             bnb_4bit_use_double_quant=probe.double_quant,
         )
         started = time.perf_counter()
-        model = transformers.AutoModelForCausalLM.from_pretrained(
-            candidate.model_id,
+        model, tokenizer = _load_unsloth_four_bit_model(
+            model_id=candidate.model_id,
             revision=candidate.revision,
-            trust_remote_code=False,
-            local_files_only=False,
             quantization_config=quantization_config,
-            device_map={"": target_cuda_device_index},
+            compute_dtype=compute_dtype,
+            target_cuda_device_index=target_cuda_device_index,
+            seed=probe.seed,
+        )
+        loaded_get_chat_template = getattr(tokenizer, "get_chat_template", None)
+        loaded_native_template = (
+            loaded_get_chat_template(tools=tools)
+            if callable(loaded_get_chat_template)
+            else getattr(tokenizer, "chat_template", None)
+        )
+        training_template_result = _run_training_template_probe(
+            tokenizer=tokenizer,
+            native_template=loaded_native_template,
+            probe=probe,
+            plan=plans["training_template_masking"],
         )
         _synchronize_cuda(torch, target_cuda_device_index)
         load_seconds = time.perf_counter() - started
@@ -1116,6 +1748,10 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             plan=plans["four_bit_load"],
             metrics={
                 "load_seconds": load_seconds,
+                "model_loader": "unsloth.FastLanguageModel.from_pretrained",
+                "unsloth_training_tokenizer_attached": True,
+                "loaded_tokenizer_revision_matches_requested": True,
+                "p5_ran_with_loaded_training_tokenizer": True,
                 "resolved_revision_matches_requested": revision_matches,
                 "model_memory_footprint_bytes": footprint,
                 "target_cuda_device_index": target_cuda_device_index,
@@ -1167,19 +1803,36 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             plan=plans["deterministic_generation"],
         )
 
-    return CandidateResult(
+    candidate_probes = [
+        template_result,
+        load_result,
+        generation_result,
+        import_result,
+        training_template_result,
+    ]
+    p6_prerequisite_error = _p6_prerequisite_error(candidate_probes)
+    if p6_prerequisite_error is not None or model is None:
+        p6_result = _skipped_minimal_training(
+            p6_prerequisite_error or "P6 has no loaded model"
+        )
+    else:
+        p6_result = _run_minimal_training_probe(
+            torch=torch,
+            model=model,
+            tokenizer=tokenizer,
+            probe=probe,
+            training_template_result=training_template_result,
+        )
+
+    return _candidate_result(
         name=candidate.name,
+        bundle=candidate.bundle,
         role=candidate.role,
         model_id=candidate.model_id,
         requested_revision=candidate.revision,
         resolved_revision=resolved_revision,
-        probes=[
-            template_result,
-            load_result,
-            generation_result,
-            import_result,
-            training_template_result,
-        ],
+        probes=candidate_probes,
+        p6=p6_result,
     )
 
 
@@ -1302,12 +1955,14 @@ def _run_generation_probe(
                 return None
             return sum(bool(row[key]) for row in score_rows) / output_count  # type: ignore[index]
 
-        checks = {
+        compatibility_checks = {
             "timed_outputs_identical_within_each_case": all(
                 deterministic_by_case.values()
             ),
             "nonzero_generated_tokens": token_total > 0,
             "positive_elapsed_time": seconds_total > 0,
+        }
+        quality_observations = {
             "every_output_is_strict_and_schema_valid": all(
                 strict_tool_output_by_case.values()
             ),
@@ -1315,14 +1970,24 @@ def _run_generation_probe(
                 expected_dispatchable_by_case.values()
             ),
         }
-        passed = all(checks.values())
+        compatible = all(compatibility_checks.values())
         throughput = token_total / seconds_total if seconds_total > 0 else None
+        ranking_metrics = {
+            "strict_json_parse_rate": rate("strict_json_parse_success"),
+            "registered_schema_valid_output_rate": rate(
+                "registered_schema_valid_output"
+            ),
+            "dispatchable_call_output_rate": rate("has_dispatchable_call"),
+            "zero_tool_call_rate": rate("zero_tool_call"),
+        }
         return ProbeResult(
             name="deterministic_generation",
-            status="passed" if passed else "failed",
+            status="passed" if compatible else "failed",
             plan=plan,
             metrics={
-                "checks": checks,
+                "compatibility_checks": compatibility_checks,
+                "quality_observations": quality_observations,
+                "tool_call_quality_gates_environment_compatibility": False,
                 "prompt_token_counts_by_case": prompt_token_counts,
                 "deterministic_by_case": deterministic_by_case,
                 "strict_tool_output_by_case": strict_tool_output_by_case,
@@ -1339,15 +2004,11 @@ def _run_generation_probe(
                     "seed": probe.seed,
                     "max_new_tokens": probe.max_new_tokens,
                 },
-                "strict_json_parse_rate": rate("strict_json_parse_success"),
-                "registered_schema_valid_output_rate": rate(
-                    "registered_schema_valid_output"
-                ),
-                "dispatchable_call_output_rate": rate("has_dispatchable_call"),
-                "zero_tool_call_rate": rate("zero_tool_call"),
+                **ranking_metrics,
+                "ranking_metrics": ranking_metrics,
                 "retained_outputs": retained_outputs,
             },
-            error=None if passed else "generation or strict tool-call hard gate failed",
+            error=None if compatible else "generation compatibility check failed",
         )
     except Exception as exc:  # External model/runtime errors are result data.
         return ProbeResult(
@@ -1370,20 +2031,23 @@ def _run_training_stack_import_probe(plan: dict[str, JsonValue]) -> ProbeResult:
         # Unsloth requires import before Transformers/TRL so its supported
         # patches are installed before those modules initialize.
         unsloth = importlib.import_module("unsloth")
-        unsloth_chat = importlib.import_module("unsloth.chat_templates")
         imported["unsloth"] = True
         trl = importlib.import_module("trl")
-        chat_utils = importlib.import_module("trl.chat_template_utils")
+        sft_module = importlib.import_module("trl.trainer.sft_trainer")
         imported["trl"] = True
         grpo_config_class = getattr(trl, "GRPOConfig")
-        getattr(chat_utils, "get_training_chat_template")
-        getattr(unsloth, "FastLanguageModel")
-        getattr(unsloth_chat, "get_chat_template")
+        getattr(sft_module, "DataCollatorForLanguageModeling")
+        fast_language_model = getattr(unsloth, "FastLanguageModel")
+        getattr(fast_language_model, "from_pretrained")
+        getattr(fast_language_model, "get_peft_model")
+        getattr(fast_language_model, "for_training")
         imported.update({
             "trl.GRPOConfig": True,
-            "trl.chat_template_utils.get_training_chat_template": True,
+            "trl.trainer.sft_trainer.DataCollatorForLanguageModeling": True,
             "unsloth.FastLanguageModel": True,
-            "unsloth.chat_templates.get_chat_template": True,
+            "unsloth.FastLanguageModel.from_pretrained": True,
+            "unsloth.FastLanguageModel.get_peft_model": True,
+            "unsloth.FastLanguageModel.for_training": True,
         })
         output_dir = str(Path(tempfile.gettempdir()) / "qwen-smoke-grpo-config")
         config = grpo_config_class(
@@ -1429,12 +2093,9 @@ def _run_training_template_probe(
     plan: dict[str, JsonValue],
 ) -> ProbeResult:
     try:
-        chat_utils = importlib.import_module("trl.chat_template_utils")
-        helper = getattr(chat_utils, "get_training_chat_template")
-        patched_template = helper(tokenizer)
-        training_template = patched_template or native_template
+        training_template = native_template
         if not isinstance(training_template, str) or not training_template:
-            raise ValueError("TRL did not provide one usable string training template")
+            raise ValueError("tokenizer did not resolve one usable string training template")
         if len(training_template) > MAX_TEMPLATE_SOURCE_CHARS:
             raise ValueError("training template source exceeds the character limit")
 
@@ -1532,12 +2193,13 @@ def _run_training_template_probe(
             plan=plan,
             metrics={
                 "checks": checks,
-                "trl_patch_returned": patched_template is not None,
+                "training_template_source": "resolved_native_chat_template",
                 "native_chat_template_sha256": _artifact_sha256(native_template),
                 "training_chat_template_sha256": _artifact_sha256(training_template),
                 "training_rendered_prompt_sha256": _text_sha256(rendered),
                 "training_rendered_prompt": rendered,
                 "training_rendered_token_count": len(full_ids),
+                "training_input_ids": full_ids,
                 "assistant_token_mask": assistant_mask,
                 "expected_assistant_token_mask": expected_mask,
                 "assistant_mask_one_count": sum(value == 1 for value in assistant_mask),
@@ -1563,6 +2225,637 @@ def _run_training_template_probe(
             metrics={},
             error=_error_text(exc),
         )
+
+
+def _p6_prerequisite_error(probes: list[ProbeResult]) -> str | None:
+    statuses = {probe.name: probe.status for probe in probes}
+    required = {
+        "four_bit_load": "P3 four-bit load",
+        "training_stack_imports": "training-stack imports",
+        "training_template_masking": "P5 training mask",
+    }
+    failures = [
+        f"{label}={statuses.get(name, 'missing')}"
+        for name, label in required.items()
+        if statuses.get(name) != "passed"
+    ]
+    if failures:
+        return "P6 prerequisites did not pass: " + ", ".join(failures)
+    return None
+
+
+def _skipped_minimal_training(reason: str) -> MinimalTrainingResult:
+    return MinimalTrainingResult(
+        status="skipped",
+        executed=False,
+        passed=False,
+        plan=_minimal_training_plan(),
+        metrics={},
+        error=_error_text(ValueError(reason)),
+    )
+
+
+def _assistant_only_labels(
+    input_ids: list[int], assistant_mask: list[int]
+) -> list[int]:
+    if not input_ids or len(input_ids) > MAX_P6_TOKENS:
+        raise ValueError(
+            f"P6 requires 1-{MAX_P6_TOKENS} input tokens; received {len(input_ids)}"
+        )
+    if len(input_ids) != len(assistant_mask):
+        raise ValueError("P6 input IDs and assistant mask lengths differ")
+    if any(token_id < 0 for token_id in input_ids):
+        raise ValueError("P6 input IDs must be non-negative")
+    if any(value not in {0, 1} for value in assistant_mask):
+        raise ValueError("P6 assistant mask must be binary")
+    if not any(assistant_mask) or all(assistant_mask):
+        raise ValueError("P6 assistant mask must contain supervised and ignored tokens")
+    labels = [
+        token_id if mask_value == 1 else -100
+        for token_id, mask_value in zip(input_ids, assistant_mask)
+    ]
+    if not any(label != -100 for label in labels[1:]):
+        raise ValueError("P6 has no causally shifted supervised token")
+    return labels
+
+
+def _p5_training_batch(
+    training_template_result: ProbeResult,
+) -> tuple[list[int], list[int], list[int]]:
+    if training_template_result.status != "passed":
+        raise ValueError("P6 requires a passed P5 training-template result")
+    raw_input_ids = training_template_result.metrics.get("training_input_ids")
+    raw_assistant_mask = training_template_result.metrics.get(
+        "assistant_token_mask"
+    )
+    if raw_input_ids is None or raw_assistant_mask is None:
+        raise ValueError("P5 result is missing the exact training IDs or assistant mask")
+    input_ids = _flat_int_list(raw_input_ids)
+    assistant_mask = _flat_int_list(raw_assistant_mask)
+    labels = _assistant_only_labels(input_ids, assistant_mask)
+    return input_ids, assistant_mask, labels
+
+
+def _adapter_enabled_state(model: Any) -> bool:
+    get_status = getattr(model, "get_model_status", None)
+    if not callable(get_status):
+        raise TypeError("PEFT model does not expose get_model_status")
+    enabled = getattr(get_status(), "enabled", None)
+    if type(enabled) is not bool:
+        raise ValueError("PEFT adapter enabled state is not uniformly boolean")
+    return enabled
+
+
+def _run_with_adapters_disabled(
+    model: Any, operation: Any
+) -> tuple[Any, dict[str, bool]]:
+    disable_adapter = getattr(model, "disable_adapter", None)
+    if not callable(disable_adapter):
+        raise TypeError("PEFT model does not expose disable_adapter")
+    enabled_before = _adapter_enabled_state(model)
+    with disable_adapter():
+        disabled_inside = not _adapter_enabled_state(model)
+        value = operation()
+    enabled_after = _adapter_enabled_state(model)
+    return value, {
+        "adapter_enabled_before_reference": enabled_before,
+        "adapter_disabled_inside_reference": disabled_inside,
+        "adapter_restored_after_reference": enabled_after,
+    }
+
+
+def _selected_token_logps(
+    *,
+    torch: Any,
+    model: Any,
+    input_ids: Any,
+    attention_mask: Any,
+    labels: Any,
+) -> Any:
+    outputs = model(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        use_cache=False,
+    )
+    logits = getattr(outputs, "logits", None)
+    if logits is None:
+        raise ValueError("model did not return logits for the reference-policy probe")
+    shifted_labels = labels[:, 1:]
+    supervised = shifted_labels.ne(-100)
+    supervised_count = int(supervised.sum().item())
+    if supervised_count <= 0:
+        raise ValueError("reference-policy probe has no supervised shifted token")
+    selected_logits = logits[:, :-1, :][supervised]
+    selected_targets = shifted_labels[supervised]
+    chosen_logits = selected_logits.gather(
+        -1, selected_targets.unsqueeze(-1)
+    ).squeeze(-1)
+    logps = (
+        chosen_logits.float()
+        - torch.logsumexp(selected_logits.float(), dim=-1)
+    ).detach().cpu()
+    del outputs, logits, selected_logits, chosen_logits
+    return logps
+
+
+def _gradient_statistics(
+    torch: Any, named_parameters: list[tuple[str, Any]]
+) -> dict[str, JsonValue]:
+    gradient_parameter_count = 0
+    gradient_none_count = 0
+    nonzero_elements = 0
+    element_count = 0
+    maximum = 0.0
+    norm_squared = 0.0
+    all_finite = True
+    for _, parameter in named_parameters:
+        gradient = getattr(parameter, "grad", None)
+        if gradient is None:
+            gradient_none_count += 1
+            continue
+        gradient_parameter_count += 1
+        element_count += int(gradient.numel())
+        finite = bool(torch.isfinite(gradient).all().item())
+        all_finite = all_finite and finite
+        if not finite:
+            continue
+        nonzero_elements += int(torch.count_nonzero(gradient).item())
+        maximum = max(maximum, float(gradient.detach().abs().max().item()))
+        parameter_norm = float(gradient.detach().float().norm().item())
+        norm_squared += parameter_norm * parameter_norm
+    return {
+        "gradient_parameter_count": gradient_parameter_count,
+        "gradient_none_count": gradient_none_count,
+        "gradient_element_count": element_count,
+        "gradient_nonzero_element_count": nonzero_elements,
+        "gradient_all_finite": all_finite,
+        "gradient_max_abs": maximum if all_finite else None,
+        "gradient_l2_norm": math.sqrt(norm_squared) if all_finite else None,
+    }
+
+
+def _parameter_update_statistics(
+    torch: Any,
+    named_parameters: list[tuple[str, Any]],
+    before: dict[str, Any],
+) -> dict[str, JsonValue]:
+    changed_parameters = 0
+    nonzero_elements = 0
+    maximum = 0.0
+    all_finite = True
+    for name, parameter in named_parameters:
+        delta = parameter.detach().float().cpu() - before[name]
+        finite = bool(torch.isfinite(delta).all().item())
+        all_finite = all_finite and finite
+        if not finite:
+            continue
+        changed = int(torch.count_nonzero(delta).item())
+        nonzero_elements += changed
+        changed_parameters += int(changed > 0)
+        maximum = max(maximum, float(delta.abs().max().item()))
+    return {
+        "updated_parameter_count": changed_parameters,
+        "updated_element_count": nonzero_elements,
+        "parameter_updates_all_finite": all_finite,
+        "parameter_update_max_abs": maximum if all_finite else None,
+    }
+
+
+def _run_minimal_training_probe(
+    *,
+    torch: Any,
+    model: Any,
+    tokenizer: Any,
+    probe: ProbeConfig,
+    training_template_result: ProbeResult,
+) -> MinimalTrainingResult:
+    plan = _minimal_training_plan()
+    metrics: dict[str, JsonValue] = {
+        "training_started": False,
+        "quality_claim": False,
+        "optimizer_checkpoint_written": False,
+        "separate_reference_model_loaded": False,
+        "reference_policy_mechanism": "peft_disable_adapter_same_model",
+    }
+    checks: dict[str, bool] = {}
+    optimizer: Any = None
+    outputs: Any = None
+    adapted_model: Any = model
+    target_device_index = probe.target_cuda_device_index
+    started = time.perf_counter()
+    try:
+        input_ids, assistant_mask, expected_labels = _p5_training_batch(
+            training_template_result
+        )
+        effective_supervised_tokens = sum(
+            label != -100 for label in expected_labels[1:]
+        )
+        metrics.update(
+            {
+                "batch_size": 1,
+                "sequence_token_count": len(input_ids),
+                "assistant_mask_one_count": sum(assistant_mask),
+                "assistant_mask_zero_count": len(assistant_mask)
+                - sum(assistant_mask),
+                "effective_causal_supervised_token_count": effective_supervised_tokens,
+                "input_ids_sha256": _artifact_sha256(input_ids),
+                "assistant_mask_sha256": _artifact_sha256(assistant_mask),
+                "expected_labels_sha256": _artifact_sha256(expected_labels),
+            }
+        )
+        checks.update(
+            {
+                "batch_size_is_one": True,
+                "sequence_within_token_cap": len(input_ids) <= MAX_P6_TOKENS,
+                "p5_mask_reused_exactly": True,
+                "effective_supervision_nonempty": effective_supervised_tokens > 0,
+            }
+        )
+
+        unsloth = importlib.import_module("unsloth")
+        sft_module = importlib.import_module("trl.trainer.sft_trainer")
+        fast_language_model = getattr(unsloth, "FastLanguageModel")
+        collator_class = getattr(sft_module, "DataCollatorForLanguageModeling")
+
+        pad_token_id = getattr(tokenizer, "pad_token_id", None)
+        if pad_token_id is None:
+            pad_token_id = getattr(tokenizer, "eos_token_id", None)
+        if type(pad_token_id) is not int or pad_token_id < 0:
+            raise ValueError("tokenizer has no usable pad or EOS token ID")
+        collator = collator_class(
+            pad_token_id=pad_token_id,
+            completion_only_loss=False,
+            padding_free=False,
+        )
+        batch = collator(
+            [{"input_ids": input_ids, "assistant_masks": assistant_mask}]
+        )
+        collated_input_ids = _flat_int_list(batch["input_ids"])
+        collated_attention_mask = _flat_int_list(batch["attention_mask"])
+        collated_labels = _flat_int_list(batch["labels"])
+        checks["trl_input_ids_match_p5"] = collated_input_ids == input_ids
+        checks["trl_attention_mask_is_exact"] = collated_attention_mask == [
+            1
+        ] * len(input_ids)
+        checks["trl_labels_match_assistant_mask"] = (
+            collated_labels == expected_labels
+        )
+        if not all(
+            checks[name]
+            for name in (
+                "trl_input_ids_match_p5",
+                "trl_attention_mask_is_exact",
+                "trl_labels_match_assistant_mask",
+            )
+        ):
+            raise ValueError("TRL collator changed P5 IDs, attention, or assistant labels")
+        metrics["trl_labels_sha256"] = _artifact_sha256(collated_labels)
+        metrics["trl_collator_class"] = (
+            f"{type(collator).__module__}.{type(collator).__qualname__}"
+        )
+
+        with torch.cuda.device(target_device_index):
+            allocated_before = int(torch.cuda.memory_allocated(target_device_index))
+            reserved_before = int(torch.cuda.memory_reserved(target_device_index))
+            torch.cuda.reset_peak_memory_stats(target_device_index)
+        metrics["cuda_allocated_before_p6_bytes"] = allocated_before
+        metrics["cuda_reserved_before_p6_bytes"] = reserved_before
+
+        torch.manual_seed(probe.seed)
+        torch.cuda.manual_seed_all(probe.seed)
+        adapted_model = fast_language_model.get_peft_model(
+            model,
+            r=P6_LORA_RANK,
+            target_modules=["q_proj", "v_proj"],
+            lora_alpha=P6_LORA_RANK,
+            lora_dropout=0.0,
+            bias="none",
+            use_gradient_checkpointing="unsloth",
+            random_state=probe.seed,
+            max_seq_length=MAX_P6_TOKENS,
+            use_rslora=False,
+            modules_to_save=None,
+            init_lora_weights=True,
+            loftq_config=None,
+        )
+        prepared_model = fast_language_model.for_training(
+            adapted_model, use_gradient_checkpointing=True
+        )
+        if prepared_model is not None:
+            adapted_model = prepared_model
+        if hasattr(adapted_model, "config"):
+            adapted_model.config.use_cache = False
+
+        named_trainable_parameters = [
+            (name, parameter)
+            for name, parameter in adapted_model.named_parameters()
+            if parameter.requires_grad
+        ]
+        unexpected_trainable_names = [
+            name
+            for name, _ in named_trainable_parameters
+            if "lora_" not in name.lower()
+        ]
+        trainable_parameter_count = sum(
+            int(parameter.numel()) for _, parameter in named_trainable_parameters
+        )
+        trainable_parameter_bytes = sum(
+            int(parameter.numel()) * int(parameter.element_size())
+            for _, parameter in named_trainable_parameters
+        )
+        metrics.update(
+            {
+                "adapter_rank": P6_LORA_RANK,
+                "adapter_alpha": P6_LORA_RANK,
+                "adapter_target_modules": ["q_proj", "v_proj"],
+                "trainable_tensor_count": len(named_trainable_parameters),
+                "trainable_parameter_count": trainable_parameter_count,
+                "trainable_parameter_bytes": trainable_parameter_bytes,
+                "trainable_parameter_names_sha256": _artifact_sha256(
+                    [name for name, _ in named_trainable_parameters]
+                ),
+                "unexpected_trainable_names": unexpected_trainable_names[:32],
+            }
+        )
+        checks["trainable_adapter_parameters_present"] = bool(
+            named_trainable_parameters
+        )
+        checks["only_lora_parameters_trainable"] = not unexpected_trainable_names
+        if not all(
+            checks[name]
+            for name in (
+                "trainable_adapter_parameters_present",
+                "only_lora_parameters_trainable",
+            )
+        ):
+            raise ValueError("P6 found no LoRA parameters or unexpected trainable base parameters")
+
+        device = torch.device(f"cuda:{target_device_index}")
+        cuda_input_ids = batch["input_ids"].to(device)
+        cuda_attention_mask = batch["attention_mask"].to(device)
+        cuda_labels = batch["labels"].to(device)
+        metrics["training_started"] = True
+
+        adapted_model.eval()
+        with torch.inference_mode():
+            reference_before, reference_checks_before = (
+                _run_with_adapters_disabled(
+                    adapted_model,
+                    lambda: _selected_token_logps(
+                        torch=torch,
+                        model=adapted_model,
+                        input_ids=cuda_input_ids,
+                        attention_mask=cuda_attention_mask,
+                        labels=cuda_labels,
+                    ),
+                )
+            )
+        checks.update(
+            {
+                f"reference_before_{name}": value
+                for name, value in reference_checks_before.items()
+            }
+        )
+        checks["reference_before_finite"] = bool(
+            torch.isfinite(reference_before).all().item()
+        )
+        if not all(reference_checks_before.values()) or not checks[
+            "reference_before_finite"
+        ]:
+            raise ValueError("reference adapter-disable pre-step check failed")
+
+        adapted_model.train()
+        adapted_model.zero_grad(set_to_none=True)
+        optimizer = torch.optim.SGD(
+            [parameter for _, parameter in named_trainable_parameters],
+            lr=P6_LEARNING_RATE,
+            momentum=0.0,
+        )
+        optimizer_parameter_ids = {
+            id(parameter)
+            for group in optimizer.param_groups
+            for parameter in group["params"]
+        }
+        trainable_parameter_ids = {
+            id(parameter) for _, parameter in named_trainable_parameters
+        }
+        checks["optimizer_contains_exact_trainable_set"] = (
+            optimizer_parameter_ids == trainable_parameter_ids
+        )
+        metrics["optimizer_class"] = (
+            f"{type(optimizer).__module__}.{type(optimizer).__qualname__}"
+        )
+        metrics["optimizer_learning_rate"] = P6_LEARNING_RATE
+        metrics["optimizer_momentum"] = 0.0
+        metrics["optimizer_state_entries_before_step"] = len(optimizer.state)
+        if not checks["optimizer_contains_exact_trainable_set"]:
+            raise ValueError("P6 optimizer parameter set does not match LoRA trainables")
+
+        forward_started = time.perf_counter()
+        outputs = adapted_model(
+            input_ids=cuda_input_ids,
+            attention_mask=cuda_attention_mask,
+            labels=cuda_labels,
+            use_cache=False,
+        )
+        _synchronize_cuda(torch, target_device_index)
+        metrics["forward_seconds"] = time.perf_counter() - forward_started
+        loss = getattr(outputs, "loss", None)
+        if loss is None:
+            raise ValueError("model did not return a loss for the assistant-only batch")
+        loss_value = float(loss.detach().float().cpu().item())
+        checks["loss_is_finite"] = math.isfinite(loss_value)
+        checks["loss_requires_grad"] = bool(getattr(loss, "requires_grad", False))
+        if not checks["loss_is_finite"] or not checks["loss_requires_grad"]:
+            raise ValueError("P6 loss is nonfinite or detached")
+        metrics["assistant_only_loss"] = loss_value
+
+        backward_started = time.perf_counter()
+        loss.backward()
+        _synchronize_cuda(torch, target_device_index)
+        metrics["backward_seconds"] = time.perf_counter() - backward_started
+        gradient_stats = _gradient_statistics(
+            torch, named_trainable_parameters
+        )
+        metrics.update(gradient_stats)
+        checks["all_trainables_have_gradients"] = (
+            gradient_stats["gradient_none_count"] == 0
+        )
+        checks["gradients_are_finite"] = bool(
+            gradient_stats["gradient_all_finite"]
+        )
+        checks["nonzero_adapter_gradient"] = (
+            int(gradient_stats["gradient_nonzero_element_count"]) > 0
+        )
+        if not all(
+            checks[name]
+            for name in (
+                "all_trainables_have_gradients",
+                "gradients_are_finite",
+                "nonzero_adapter_gradient",
+            )
+        ):
+            raise ValueError("P6 adapter gradients are absent, zero, or nonfinite")
+
+        parameter_before_step = {
+            name: parameter.detach().float().cpu().clone()
+            for name, parameter in named_trainable_parameters
+        }
+        optimizer_started = time.perf_counter()
+        optimizer.step()
+        _synchronize_cuda(torch, target_device_index)
+        metrics["optimizer_step_seconds"] = time.perf_counter() - optimizer_started
+        metrics["optimizer_state_entries_after_step"] = len(optimizer.state)
+        update_stats = _parameter_update_statistics(
+            torch, named_trainable_parameters, parameter_before_step
+        )
+        metrics.update(update_stats)
+        checks["optimizer_state_remains_empty"] = len(optimizer.state) == 0
+        checks["parameter_updates_are_finite"] = bool(
+            update_stats["parameter_updates_all_finite"]
+        )
+        checks["nonzero_adapter_parameter_update"] = (
+            int(update_stats["updated_parameter_count"]) > 0
+        )
+        if not all(
+            checks[name]
+            for name in (
+                "optimizer_state_remains_empty",
+                "parameter_updates_are_finite",
+                "nonzero_adapter_parameter_update",
+            )
+        ):
+            raise ValueError("P6 adapter update or zero-state optimizer check failed")
+
+        optimizer.zero_grad(set_to_none=True)
+        adapted_model.zero_grad(set_to_none=True)
+        del loss, outputs, parameter_before_step
+        outputs = None
+        torch.cuda.empty_cache()
+        checks["training_graph_released_before_post_step_reference"] = True
+
+        adapted_model.eval()
+        with torch.inference_mode():
+            reference_after, reference_checks_after = _run_with_adapters_disabled(
+                adapted_model,
+                lambda: _selected_token_logps(
+                    torch=torch,
+                    model=adapted_model,
+                    input_ids=cuda_input_ids,
+                    attention_mask=cuda_attention_mask,
+                    labels=cuda_labels,
+                ),
+            )
+            policy_after = _selected_token_logps(
+                torch=torch,
+                model=adapted_model,
+                input_ids=cuda_input_ids,
+                attention_mask=cuda_attention_mask,
+                labels=cuda_labels,
+            )
+        checks.update(
+            {
+                f"reference_after_{name}": value
+                for name, value in reference_checks_after.items()
+            }
+        )
+        checks["reference_after_finite"] = bool(
+            torch.isfinite(reference_after).all().item()
+        )
+        checks["policy_after_finite"] = bool(
+            torch.isfinite(policy_after).all().item()
+        )
+        checks["reference_token_count_matches_batch"] = (
+            int(reference_after.numel()) == effective_supervised_tokens
+            and int(policy_after.numel()) == effective_supervised_tokens
+        )
+        reference_delta = (reference_after - reference_before).abs()
+        policy_reference_delta = (policy_after - reference_after).abs()
+        reference_max_delta = float(reference_delta.max().item())
+        policy_reference_max_delta = float(policy_reference_delta.max().item())
+        checks["reference_invariant_across_step"] = bool(
+            torch.allclose(
+                reference_before,
+                reference_after,
+                atol=P6_REFERENCE_ATOL,
+                rtol=P6_REFERENCE_RTOL,
+            )
+        )
+        checks["no_checkpoint_written"] = True
+        if not all(reference_checks_after.values()) or not all(
+            checks[name]
+            for name in (
+                "reference_after_finite",
+                "policy_after_finite",
+                "reference_token_count_matches_batch",
+                "reference_invariant_across_step",
+                "no_checkpoint_written",
+            )
+        ):
+            raise ValueError("P6 reference-policy post-step check failed")
+        metrics.update(
+            {
+                "reference_logprob_count": int(reference_after.numel()),
+                "reference_before_sha256": _artifact_sha256(
+                    reference_before.tolist()
+                ),
+                "reference_after_sha256": _artifact_sha256(
+                    reference_after.tolist()
+                ),
+                "reference_pre_post_max_abs_delta": reference_max_delta,
+                "reference_invariance_atol": P6_REFERENCE_ATOL,
+                "reference_invariance_rtol": P6_REFERENCE_RTOL,
+                "policy_reference_max_abs_logprob_delta_after": (
+                    policy_reference_max_delta
+                ),
+            }
+        )
+        _synchronize_cuda(torch, target_device_index)
+        metrics["peak_cuda_allocated_bytes"] = int(
+            torch.cuda.max_memory_allocated(target_device_index)
+        )
+        metrics["peak_cuda_reserved_bytes"] = int(
+            torch.cuda.max_memory_reserved(target_device_index)
+        )
+        metrics["total_seconds"] = time.perf_counter() - started
+        metrics["checks"] = checks
+        return MinimalTrainingResult(
+            status="passed",
+            executed=True,
+            passed=True,
+            plan=plan,
+            metrics=metrics,
+            error=None,
+        )
+    except Exception as exc:  # External CUDA/training errors are result data.
+        metrics["checks"] = checks
+        metrics["total_seconds"] = time.perf_counter() - started
+        try:
+            metrics["peak_cuda_allocated_bytes"] = int(
+                torch.cuda.max_memory_allocated(target_device_index)
+            )
+            metrics["peak_cuda_reserved_bytes"] = int(
+                torch.cuda.max_memory_reserved(target_device_index)
+            )
+        except Exception:
+            pass
+        return MinimalTrainingResult(
+            status="failed",
+            executed=True,
+            passed=False,
+            plan=plan,
+            metrics=metrics,
+            error=_error_text(exc),
+        )
+    finally:
+        try:
+            if optimizer is not None:
+                optimizer.zero_grad(set_to_none=True)
+            adapted_model.zero_grad(set_to_none=True)
+            del outputs, optimizer
+            torch.cuda.empty_cache()
+        except Exception:
+            pass
 
 
 def _instrument_generation_blocks(template: str) -> str:

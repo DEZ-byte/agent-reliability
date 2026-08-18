@@ -65,6 +65,21 @@ class ToolCallParserTests(unittest.TestCase):
         self.assertEqual([issue.code for issue in parsed.issues], ["invalid_json"])
         self.assertIn("duplicate", parsed.issues[0].message)
 
+    def test_duplicate_surrogate_key_returns_encodable_parse_evidence(self) -> None:
+        surrogate = "\ud800"
+        parsed = parse_tool_calls(
+            '<tool_call>{"name":"x","arguments":{"'
+            + surrogate
+            + '":1,"'
+            + surrogate
+            + '":2}}</tool_call>'
+        )
+
+        self.assertEqual(parsed.calls, [])
+        self.assertEqual([issue.code for issue in parsed.issues], ["invalid_json"])
+        self.assertIn(r"\ud800", parsed.issues[0].message)
+        parsed.issues[0].message.encode("utf-8")
+
     def test_envelope_must_have_exact_name_and_arguments_keys(self) -> None:
         parsed = parse_tool_calls(
             '<tool_call>{"name":"calculator","arguments":{},"result":42}</tool_call>'
@@ -91,6 +106,37 @@ class ToolCallParserTests(unittest.TestCase):
             [issue.code for issue in unexpected.issues],
             ["unexpected_close_tag"],
         )
+
+    def test_parse_issue_records_block_attribution(self) -> None:
+        unclosed = parse_tool_calls('<tool_call>{"name":"x","arguments":{}}')
+        unexpected = parse_tool_calls("text</tool_call>")
+
+        self.assertTrue(unclosed.issues[0].attached_to_block)
+        self.assertFalse(unexpected.issues[0].attached_to_block)
+
+    def test_unpaired_surrogate_is_a_parse_issue_not_a_crash(self) -> None:
+        """UTF-8 cannot encode a lone surrogate; reject it at the boundary."""
+
+        raw = '<tool_call>{"name":"calculator","arguments":{"v":"\ud800"}}</tool_call>'
+        result = parse_tool_calls(raw)
+
+        self.assertEqual(result.emitted_blocks, 1)
+        self.assertEqual(result.calls, [])
+        self.assertEqual([i.code for i in result.issues], ["unpaired_surrogate"])
+        self.assertTrue(result.issues[0].attached_to_block)
+
+    def test_unpaired_surrogate_is_detected_in_names_keys_and_nesting(self) -> None:
+        cases = (
+            '<tool_call>{"name":"\ud800","arguments":{}}</tool_call>',
+            '<tool_call>{"name":"x","arguments":{"\ud800":1}}</tool_call>',
+            '<tool_call>{"name":"x","arguments":{"a":[{"b":"\ud800"}]}}</tool_call>',
+        )
+        for raw in cases:
+            with self.subTest(raw=raw):
+                result = parse_tool_calls(raw)
+                self.assertEqual(
+                    [i.code for i in result.issues], ["unpaired_surrogate"]
+                )
 
 
 if __name__ == "__main__":

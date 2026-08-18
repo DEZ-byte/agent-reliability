@@ -56,8 +56,10 @@ An event is an eligible correction opportunity (`A_i = 1`) only when:
 - the model-facing error observation is deterministic, structured, and saved;
 - the failing decision commits no state change between its decision-boundary
   `state_before` and `state_after` digests;
-- at least one model decision and its permitted tool execution remain under
-  the arm's fixed 20-step cap and generation-token cap; and
+- at least one diagnostic-branch model decision and its permitted tool attempt
+  remain under the branch's frozen model-decision and generation-token
+  budgets; the common 20 environment-turn cap is checked separately and is
+  never treated as a model-decision budget; and
 - the exact history, environment state, budgets, and policy fingerprint can
   be restored for all matched branches.
 
@@ -184,14 +186,15 @@ themselves.
 
 ### 3.3 Common continuation rules
 
-The three branches inherit the same environment step cap, task deadline, tool
-schemas, policy-manual condition, and remaining generated-token budget from
-the failed prefix. The branch-specific first decision is the only recovery
-intervention. After an accepted corrective decision, the current branch actor
-continues under the common R1 act/observe policy. If another eligible runtime
-failure occurs, the diagnostic branch terminates as failure rather than
-starting a second correction ladder. This isolates one pre-registered
-opportunity.
+The three branches inherit the same environment-turn cap and remaining
+environment-turn count, task deadline, tool schemas, policy-manual condition,
+and remaining generated-token budget from the failed prefix. Each branch also
+uses its separately frozen model-decision budget. The branch-specific first
+decision is the only recovery intervention. After an accepted corrective
+decision, the current branch actor continues under the common R1 act/observe
+policy. If another eligible runtime failure occurs, the diagnostic branch
+terminates as failure rather than starting a second correction ladder. This
+isolates one pre-registered opportunity.
 
 For Phase B, simulator state and seed are restored at the branch point. Future
 user turns may legitimately differ after the agent branches; the bundle is
@@ -537,7 +540,9 @@ bundle rule prevents a favorable condition from retaining an easier sample.
 
 ## 10. Fit with R0, R1, R2, and project milestones
 
-- **R0:** remains one generation with no retries. It may log an observable
+- **R0:** remains one generation per natural agent turn with no same-state
+  replacement generation. A conversational episode may generate again only
+  after a genuine environment or user observation. R0 may log an observable
   failure, but no production self-correction is credited. Diagnostic forks
   from an R0 prefix are labeled separately and never alter R0 `pass^k`.
 - **R1:** naturally exposes action/observation continuations from the same

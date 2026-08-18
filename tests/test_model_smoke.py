@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+from contextlib import nullcontext
 import importlib
 import json
 import tempfile
@@ -45,6 +46,82 @@ class ModelSmokeConfigTests(unittest.TestCase):
         self.assertEqual(
             {tool.mutative for tool in config.probe.tools}, {False, True}
         )
+        self.assertEqual(config.lane.identity, "phase-a-windows-unsloth-trl024")
+        self.assertEqual(config.lane.lock_path, "requirements-smoke.lock")
+        self.assertEqual(
+            config.lane.expected_lock_sha256,
+            smoke._sha256_file(PROJECT_ROOT / config.lane.lock_path),
+        )
+        self.assertFalse(config.lane.m6_environment_factory_in_scope)
+        self.assertEqual(
+            config.lane.probe_implementation,
+            {
+                "P0": "implemented",
+                "P1": "implemented",
+                "P2": "implemented",
+                "P3": "implemented",
+                "P4": "implemented",
+                "P5": "implemented",
+                "P6": "implemented",
+            },
+        )
+        self.assertEqual(config.release_gate.status, "pending")
+        self.assertEqual(
+            config.release_gate.expected_registry_sha256,
+            smoke._sha256_file(PROJECT_ROOT / config.release_gate.registry_path),
+        )
+        self.assertIsNone(config.release_gate.intended_release_scope)
+        self.assertIsNone(config.release_gate.decision_record)
+        self.assertEqual(config.release_gate.eligible_bundles, [])
+        self.assertFalse(config.release_gate.selection_allowed)
+
+    def test_lane_probe_contract_is_strict(self) -> None:
+        original = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        mutations = (
+            ("missing-p0", lambda payload: payload["lane"]["probe_implementation"].pop("P0")),
+            (
+                "not-implemented-p6",
+                lambda payload: payload["lane"]["probe_implementation"].update(
+                    {"P6": "not_implemented"}
+                ),
+            ),
+            (
+                "m6-in-scope",
+                lambda payload: payload["lane"].update(
+                    {"m6_environment_factory_in_scope": True}
+                ),
+            ),
+        )
+        for name, mutate in mutations:
+            with self.subTest(name=name):
+                payload = json.loads(json.dumps(original))
+                mutate(payload)
+                with self.assertRaises(ValidationError):
+                    smoke.SmokeConfig.model_validate(payload)
+
+    def test_release_gate_requires_an_explicit_resolved_decision(self) -> None:
+        original = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        invalid_pending = json.loads(json.dumps(original))
+        invalid_pending["release_gate"]["eligible_bundles"] = ["qwen3"]
+        with self.assertRaises(ValidationError):
+            smoke.SmokeConfig.model_validate(invalid_pending)
+
+        invalid_resolved = json.loads(json.dumps(original))
+        invalid_resolved["release_gate"]["status"] = "resolved"
+        with self.assertRaises(ValidationError):
+            smoke.SmokeConfig.model_validate(invalid_resolved)
+
+        resolved = json.loads(json.dumps(original))
+        resolved["release_gate"].update(
+            {
+                "status": "resolved",
+                "intended_release_scope": "public research artifacts",
+                "decision_record": "D-039",
+                "eligible_bundles": ["qwen3"],
+            }
+        )
+        parsed = smoke.SmokeConfig.model_validate(resolved)
+        self.assertTrue(parsed.release_gate.selection_allowed)
 
     def test_invalid_model_id_is_rejected(self) -> None:
         payload = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
@@ -190,6 +267,17 @@ class ModelSmokeDryRunTests(unittest.TestCase):
             )
         )
         self.assertTrue(
+            all(candidate.p6.status == "planned" for candidate in result.candidates)
+        )
+        self.assertTrue(
+            all(candidate.environment_compatible is None for candidate in result.candidates)
+        )
+        self.assertFalse(result.selection_eligible)
+        self.assertEqual(result.lane.identity, "phase-a-windows-unsloth-trl024")
+        self.assertTrue(result.lane.lock_matches_expected)
+        self.assertEqual(result.release_gate.status, "pending")
+        self.assertFalse(result.release_gate.selection_allowed)
+        self.assertTrue(
             all(
                 probe.metrics == {}
                 for candidate in result.candidates
@@ -235,6 +323,310 @@ class ModelSmokeDryRunTests(unittest.TestCase):
 
 
 class ModelSmokeProbeTests(unittest.TestCase):
+    def test_generation_quality_is_ranked_without_failing_compatibility(self) -> None:
+        class FakeVector:
+            shape = (1, 2)
+
+            def to(self, device: object) -> "FakeVector":
+                return self
+
+        class FakeTokenSlice:
+            def detach(self) -> "FakeTokenSlice":
+                return self
+
+            def cpu(self) -> "FakeTokenSlice":
+                return self
+
+            @staticmethod
+            def tolist() -> list[int]:
+                return [7]
+
+        class FakeGenerated:
+            def __getitem__(self, key: object) -> FakeTokenSlice:
+                return FakeTokenSlice()
+
+        class FakeModel:
+            @staticmethod
+            def eval() -> None:
+                return None
+
+            @staticmethod
+            def generate(**kwargs: object) -> FakeGenerated:
+                return FakeGenerated()
+
+        class FakeTokenizer:
+            eos_token_id = 0
+
+            @staticmethod
+            def apply_chat_template(*args: object, **kwargs: object) -> str:
+                return "rendered prompt"
+
+            @staticmethod
+            def decode(*args: object, **kwargs: object) -> str:
+                return "I would use a tool, but this is not a tool call."
+
+            def __call__(self, *args: object, **kwargs: object) -> dict[str, FakeVector]:
+                return {"input_ids": FakeVector()}
+
+        fake_torch = SimpleNamespace(
+            device=lambda value: value,
+            manual_seed=lambda seed: None,
+            inference_mode=nullcontext,
+            cuda=SimpleNamespace(
+                manual_seed_all=lambda seed: None,
+                synchronize=lambda device_index: None,
+            ),
+        )
+        probe = smoke.load_config(CONFIG_PATH).probe
+        plan = {
+            item.name: item.plan for item in smoke.probe_plans(probe)
+        }["deterministic_generation"]
+
+        result = smoke._run_generation_probe(
+            torch=fake_torch,
+            model=FakeModel(),
+            tokenizer=FakeTokenizer(),
+            probe=probe,
+            plan=plan,
+        )
+
+        self.assertEqual(result.status, "passed")
+        self.assertTrue(all(result.metrics["compatibility_checks"].values()))
+        self.assertFalse(
+            result.metrics["quality_observations"][
+                "every_output_has_exactly_one_expected_dispatchable_call"
+            ]
+        )
+        self.assertEqual(result.metrics["ranking_metrics"]["zero_tool_call_rate"], 1.0)
+        self.assertFalse(
+            result.metrics["tool_call_quality_gates_environment_compatibility"]
+        )
+
+    def test_environment_compatibility_requires_every_p1_through_p5_probe(self) -> None:
+        def probe_result(name: str, status: str) -> smoke.ProbeResult:
+            return smoke.ProbeResult.model_validate(
+                {"name": name, "status": status, "plan": {}, "metrics": {}}
+            )
+
+        candidate = smoke._candidate_result(
+            name="candidate",
+            bundle="qwen3",
+            role="primary_small",
+            model_id="owner/model",
+            requested_revision="0" * 40,
+            resolved_revision="0" * 40,
+            probes=[
+                probe_result("tool_chat_template", "passed"),
+                probe_result("four_bit_load", "passed"),
+                probe_result("deterministic_generation", "failed"),
+                probe_result("training_stack_imports", "passed"),
+                probe_result("training_template_masking", "passed"),
+            ],
+        )
+        self.assertFalse(candidate.environment_compatible)
+        self.assertFalse(candidate.selection_eligible)
+
+        passing_probes = [
+            probe_result(probe.name, "passed") for probe in candidate.probes
+        ]
+        technically_eligible = smoke._candidate_result(
+            name="candidate",
+            bundle="qwen3",
+            role="primary_small",
+            model_id="owner/model",
+            requested_revision="0" * 40,
+            resolved_revision="0" * 40,
+            probes=passing_probes,
+            p6=smoke.MinimalTrainingResult(
+                status="passed",
+                executed=True,
+                passed=True,
+                plan=smoke._minimal_training_plan(),
+                metrics={"assistant_only_loss": 1.0},
+            ),
+        )
+        self.assertTrue(technically_eligible.selection_eligible)
+
+        failed_p3 = technically_eligible.model_dump(mode="python")
+        failed_p3["probes"][1]["status"] = "failed"
+        failed_p3["environment_compatible"] = False
+        failed_p3["selection_eligible"] = False
+        self.assertFalse(
+            smoke.CandidateResult.model_validate(failed_p3).environment_compatible
+        )
+
+    def test_p6_reuses_exact_p5_batch_and_builds_assistant_only_labels(self) -> None:
+        p5 = smoke.ProbeResult(
+            name="training_template_masking",
+            status="passed",
+            plan={},
+            metrics={
+                "training_input_ids": [10, 11, 12, 13, 14],
+                "assistant_token_mask": [0, 0, 1, 1, 0],
+            },
+        )
+
+        input_ids, assistant_mask, labels = smoke._p5_training_batch(p5)
+
+        self.assertEqual(input_ids, [10, 11, 12, 13, 14])
+        self.assertEqual(assistant_mask, [0, 0, 1, 1, 0])
+        self.assertEqual(labels, [-100, -100, 12, 13, -100])
+        self.assertEqual(input_ids, p5.metrics["training_input_ids"])
+        self.assertEqual(assistant_mask, p5.metrics["assistant_token_mask"])
+
+        invalid_batches = (
+            ([1], [1]),
+            ([1, 2], [0, 0]),
+            ([1, 2], [1]),
+            ([1, 2], [0, 2]),
+            (list(range(smoke.MAX_P6_TOKENS + 1)), [0] * smoke.MAX_P6_TOKENS + [1]),
+        )
+        for ids, mask in invalid_batches:
+            with self.subTest(length=len(ids), mask=mask[:3]):
+                with self.assertRaises(ValueError):
+                    smoke._assistant_only_labels(ids, mask)
+
+    def test_unsloth_loader_binds_exact_revision_and_training_tokenizer(self) -> None:
+        revision = "a" * 40
+        quantization_config = object()
+        compute_dtype = object()
+        calls: list[dict[str, object]] = []
+
+        class FastLanguageModel:
+            @staticmethod
+            def from_pretrained(**kwargs: object) -> tuple[object, object]:
+                calls.append(kwargs)
+                tokenizer = SimpleNamespace(
+                    init_kwargs={"_commit_hash": revision}
+                )
+                model = SimpleNamespace(_saved_temp_tokenizer=tokenizer)
+                return model, tokenizer
+
+        unsloth = SimpleNamespace(FastLanguageModel=FastLanguageModel)
+        with patch.object(smoke.importlib, "import_module", return_value=unsloth):
+            model, tokenizer = smoke._load_unsloth_four_bit_model(
+                model_id="owner/model",
+                revision=revision,
+                quantization_config=quantization_config,
+                compute_dtype=compute_dtype,
+                target_cuda_device_index=2,
+                seed=17,
+            )
+
+        self.assertIs(model._saved_temp_tokenizer, tokenizer)
+        self.assertEqual(len(calls), 1)
+        kwargs = calls[0]
+        self.assertEqual(kwargs["model_name"], "owner/model")
+        self.assertEqual(kwargs["revision"], revision)
+        self.assertEqual(kwargs["device_map"], {"": 2})
+        self.assertEqual(kwargs["max_seq_length"], smoke.MAX_P6_TOKENS)
+        self.assertIs(kwargs["quantization_config"], quantization_config)
+        self.assertIs(kwargs["dtype"], compute_dtype)
+        self.assertTrue(kwargs["load_in_4bit"])
+        self.assertTrue(kwargs["use_exact_model_name"])
+        self.assertFalse(kwargs["fast_inference"])
+
+        class MissingAttachmentFastLanguageModel:
+            @staticmethod
+            def from_pretrained(**kwargs: object) -> tuple[object, object]:
+                tokenizer = SimpleNamespace(init_kwargs={"_commit_hash": revision})
+                return SimpleNamespace(), tokenizer
+
+        broken_unsloth = SimpleNamespace(
+            FastLanguageModel=MissingAttachmentFastLanguageModel
+        )
+        with patch.object(
+            smoke.importlib, "import_module", return_value=broken_unsloth
+        ):
+            with self.assertRaisesRegex(ValueError, "attach its tokenizer"):
+                smoke._load_unsloth_four_bit_model(
+                    model_id="owner/model",
+                    revision=revision,
+                    quantization_config=quantization_config,
+                    compute_dtype=compute_dtype,
+                    target_cuda_device_index=2,
+                    seed=17,
+                )
+
+    def test_p6_prerequisites_fail_closed(self) -> None:
+        def result(name: str, status: str) -> smoke.ProbeResult:
+            return smoke.ProbeResult.model_validate(
+                {"name": name, "status": status, "plan": {}, "metrics": {}}
+            )
+
+        passing = [
+            result("four_bit_load", "passed"),
+            result("training_stack_imports", "passed"),
+            result("training_template_masking", "passed"),
+        ]
+        self.assertIsNone(smoke._p6_prerequisite_error(passing))
+
+        passing[1] = result("training_stack_imports", "unavailable")
+        error = smoke._p6_prerequisite_error(passing)
+        self.assertIsNotNone(error)
+        self.assertIn("training-stack imports=unavailable", error or "")
+        skipped = smoke._skipped_minimal_training(error or "missing")
+        self.assertEqual(skipped.status, "skipped")
+        self.assertFalse(skipped.executed)
+        self.assertFalse(skipped.passed)
+
+    def test_reference_adapter_context_is_executed_and_restored(self) -> None:
+        class FakeModel:
+            def __init__(self) -> None:
+                self.enabled = True
+                self.events: list[str] = []
+
+            def get_model_status(self) -> SimpleNamespace:
+                return SimpleNamespace(enabled=self.enabled)
+
+            def disable_adapter(self) -> object:
+                model = self
+
+                class Context:
+                    def __enter__(self) -> None:
+                        model.events.append("enter")
+                        model.enabled = False
+
+                    def __exit__(self, *args: object) -> None:
+                        model.enabled = True
+                        model.events.append("exit")
+
+                return Context()
+
+        model = FakeModel()
+
+        def operation() -> str:
+            model.events.append("operation")
+            self.assertFalse(model.enabled)
+            return "reference-logps"
+
+        value, checks = smoke._run_with_adapters_disabled(model, operation)
+
+        self.assertEqual(value, "reference-logps")
+        self.assertTrue(all(checks.values()))
+        self.assertTrue(model.enabled)
+        self.assertEqual(model.events, ["enter", "operation", "exit"])
+
+    def test_p6_result_status_and_metrics_are_fail_closed(self) -> None:
+        passed = smoke.MinimalTrainingResult(
+            status="passed",
+            executed=True,
+            passed=True,
+            plan=smoke._minimal_training_plan(),
+            metrics={"assistant_only_loss": 1.0},
+        )
+        self.assertTrue(passed.passed)
+
+        invalid_payloads = (
+            {"status": "passed", "executed": False, "passed": True},
+            {"status": "failed", "executed": True, "passed": False},
+            {"status": "skipped", "executed": False, "passed": False},
+        )
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                with self.assertRaises(ValidationError):
+                    smoke.MinimalTrainingResult.model_validate(payload)
+
     def test_model_placement_requires_one_exact_cuda_device(self) -> None:
         class FakeModel:
             def __init__(self, device_map: dict[str, object], devices: list[str]) -> None:
@@ -417,21 +809,15 @@ class ModelSmokeProbeTests(unittest.TestCase):
                     return [1]
                 return "x" * (smoke.MAX_PERSISTED_PROMPT_CHARS + 1)
 
-        helper_module = SimpleNamespace(
-            get_training_chat_template=lambda tokenizer: (
-                "head{% generation %}body{% endgeneration %}tail"
-            )
-        )
         plan = {
             item.name: item.plan for item in smoke.probe_plans(probe)
         }["training_template_masking"]
-        with patch.object(smoke.importlib, "import_module", return_value=helper_module):
-            result = smoke._run_training_template_probe(
-                tokenizer=OversizedRenderTokenizer(),
-                native_template="native",
-                probe=probe,
-                plan=plan,
-            )
+        result = smoke._run_training_template_probe(
+            tokenizer=OversizedRenderTokenizer(),
+            native_template="head{% generation %}body{% endgeneration %}tail",
+            probe=probe,
+            plan=plan,
+        )
 
         self.assertEqual(result.status, "failed")
         self.assertEqual(result.metrics, {})
@@ -449,20 +835,16 @@ class ModelSmokeProbeTests(unittest.TestCase):
                     "MASK_ASSISTANT_8C53 MASK_TOOL_RESULT_2D74"
                 )
 
-        helper_module = SimpleNamespace(
-            get_training_chat_template=lambda tokenizer: "patched-template"
-        )
         probe = smoke.load_config(CONFIG_PATH).probe
         plan = {
             item.name: item.plan for item in smoke.probe_plans(probe)
         }["training_template_masking"]
-        with patch.object(smoke.importlib, "import_module", return_value=helper_module):
-            result = smoke._run_training_template_probe(
-                tokenizer=MasklessTokenizer(),
-                native_template="native-template",
-                probe=probe,
-                plan=plan,
-            )
+        result = smoke._run_training_template_probe(
+            tokenizer=MasklessTokenizer(),
+            native_template="head{% generation %}body{% endgeneration %}tail",
+            probe=probe,
+            plan=plan,
+        )
 
         self.assertEqual(result.status, "failed")
         self.assertIn("assistant mask", result.error or "")
@@ -533,25 +915,20 @@ class ModelSmokeProbeTests(unittest.TestCase):
                     ],
                 }
 
-        helper_module = SimpleNamespace(
-            get_training_chat_template=lambda tokenizer: (
-                "head{% generation %}body{% endgeneration %}tail"
-            )
-        )
+        training_template = "head{% generation %}body{% endgeneration %}tail"
         plan = {
             item.name: item.plan for item in smoke.probe_plans(probe)
         }["training_template_masking"]
         results = []
-        with patch.object(smoke.importlib, "import_module", return_value=helper_module):
-            for complete_mask in (True, False):
-                results.append(
-                    smoke._run_training_template_probe(
-                        tokenizer=MaskingTokenizer(complete_mask=complete_mask),
-                        native_template="native-template",
-                        probe=probe,
-                        plan=plan,
-                    )
+        for complete_mask in (True, False):
+            results.append(
+                smoke._run_training_template_probe(
+                    tokenizer=MaskingTokenizer(complete_mask=complete_mask),
+                    native_template=training_template,
+                    probe=probe,
+                    plan=plan,
                 )
+            )
 
         correct, incomplete = results
         self.assertEqual(correct.status, "passed")
@@ -567,9 +944,13 @@ class ModelSmokeProbeTests(unittest.TestCase):
             correct.metrics["assistant_token_mask"],
             correct.metrics["expected_assistant_token_mask"],
         )
-        self.assertNotEqual(
+        self.assertEqual(
             correct.metrics["native_chat_template_sha256"],
             correct.metrics["training_chat_template_sha256"],
+        )
+        self.assertEqual(
+            correct.metrics["training_template_source"],
+            "resolved_native_chat_template",
         )
         self.assertEqual(incomplete.status, "failed")
         self.assertFalse(
@@ -578,7 +959,7 @@ class ModelSmokeProbeTests(unittest.TestCase):
             ]
         )
 
-    def test_plans_include_reserved_memory_hashes_and_training_hard_gates(self) -> None:
+    def test_plans_separate_true_gates_preflight_and_ranking(self) -> None:
         plans = {
             item.name: item.plan
             for item in smoke.probe_plans(smoke.load_config(CONFIG_PATH).probe)
@@ -589,6 +970,9 @@ class ModelSmokeProbeTests(unittest.TestCase):
             plans["four_bit_load"]["measurements"],
         )
         self.assertIn("hard_gate", plans["four_bit_load"])
+        self.assertIn("preflight", plans["training_stack_imports"])
+        self.assertNotIn("hard_gate", plans["training_stack_imports"])
+        self.assertIn("ranking_observations", plans["deterministic_generation"])
         self.assertTrue(
             any(
                 "native chat-template SHA-256" in item
@@ -664,7 +1048,130 @@ class ModelSmokePersistenceTests(unittest.TestCase):
 
         self.assertEqual(restored, result)
         self.assertEqual(restored.schema_version, smoke.RESULT_SCHEMA_VERSION)
+        self.assertEqual(
+            restored.source_identity.smoke_config_sha256,
+            restored.config_sha256,
+        )
+        self.assertEqual(
+            restored.source_identity.smoke_script_sha256,
+            smoke._sha256_file(Path(smoke.__file__).resolve()),
+        )
+        self.assertEqual(len(restored.source_identity.git_commit_sha), 40)
+        self.assertEqual(
+            restored.lane.actual_lock_sha256,
+            smoke._sha256_file(PROJECT_ROOT / "requirements-smoke.lock"),
+        )
+        self.assertTrue(restored.lane.lock_matches_expected)
+        self.assertFalse(restored.selection_eligible)
+        self.assertTrue(
+            all(candidate.p6.status == "planned" for candidate in restored.candidates)
+        )
         self.assertEqual(leftovers, [])
+
+    def test_selection_eligibility_requires_executed_passed_p6(self) -> None:
+        config = smoke.load_config(CONFIG_PATH)
+        result = smoke.build_result(
+            config,
+            config_path=CONFIG_PATH,
+            config_bytes=CONFIG_PATH.read_bytes(),
+            command=[],
+            run_load=False,
+            allow_download=False,
+            selected_names=["qwen3-1.7b"],
+        )
+        candidate = result.candidates[0].model_dump(mode="python")
+        candidate["selection_eligible"] = True
+
+        with self.assertRaises(ValidationError):
+            smoke.CandidateResult.model_validate(candidate)
+
+        missing_p6 = result.candidates[0].model_dump(mode="python")
+        missing_p6.pop("p6")
+        with self.assertRaises(ValidationError):
+            smoke.CandidateResult.model_validate(missing_p6)
+
+        inconsistent_p6 = result.candidates[0].p6.model_dump(mode="python")
+        inconsistent_p6.update({"status": "passed", "executed": False, "passed": True})
+        with self.assertRaises(ValidationError):
+            smoke.MinimalTrainingResult.model_validate(inconsistent_p6)
+
+    def test_top_level_selection_requires_four_candidates_and_release_gate(self) -> None:
+        config = smoke.load_config(CONFIG_PATH)
+        full_result = smoke.build_result(
+            config,
+            config_path=CONFIG_PATH,
+            config_bytes=CONFIG_PATH.read_bytes(),
+            command=[],
+            run_load=False,
+            allow_download=False,
+            selected_names=[],
+        )
+
+        technical_candidates = []
+        for candidate in full_result.candidates:
+            payload = candidate.model_dump(mode="python")
+            for probe in payload["probes"]:
+                probe["status"] = "passed"
+            payload["p6"] = smoke.MinimalTrainingResult(
+                status="passed",
+                executed=True,
+                passed=True,
+                plan=smoke._minimal_training_plan(),
+                metrics={"assistant_only_loss": 1.0},
+            ).model_dump(mode="python")
+            payload["environment_compatible"] = True
+            payload["selection_eligible"] = True
+            technical_candidates.append(
+                smoke.CandidateResult.model_validate(payload)
+            )
+
+        pending_payload = full_result.model_dump(mode="python")
+        pending_payload["candidates"] = [
+            candidate.model_dump(mode="python")
+            for candidate in technical_candidates
+        ]
+        pending_payload["selection_eligible"] = False
+        pending = smoke.SmokeResult.model_validate(pending_payload)
+        self.assertFalse(pending.selection_eligible)
+        pending_payload["selection_eligible"] = True
+        with self.assertRaises(ValidationError):
+            smoke.SmokeResult.model_validate(pending_payload)
+
+        resolved_payload = full_result.model_dump(mode="python")
+        resolved_payload["release_gate"].update(
+            {
+                "status": "resolved",
+                "intended_release_scope": "public research artifacts",
+                "decision_record": "D-039",
+                "eligible_bundles": ["qwen3"],
+            }
+        )
+        resolved_payload["candidates"] = [
+            candidate.model_dump(mode="python")
+            for candidate in technical_candidates
+        ]
+        resolved_payload["selection_eligible"] = True
+        resolved = smoke.SmokeResult.model_validate(resolved_payload)
+        self.assertTrue(resolved.selection_eligible)
+
+        one_candidate_payload = full_result.model_dump(mode="python")
+        one_candidate_payload["release_gate"].update(
+            {
+                "status": "resolved",
+                "intended_release_scope": "public research artifacts",
+                "decision_record": "D-039",
+                "eligible_bundles": ["qwen3"],
+            }
+        )
+        one_candidate_payload["candidates"] = [
+            technical_candidates[0].model_dump(mode="python")
+        ]
+        one_candidate_payload["selection_eligible"] = False
+        one_candidate = smoke.SmokeResult.model_validate(one_candidate_payload)
+        self.assertFalse(one_candidate.selection_eligible)
+        one_candidate_payload["selection_eligible"] = True
+        with self.assertRaises(ValidationError):
+            smoke.SmokeResult.model_validate(one_candidate_payload)
 
     def test_mutated_result_is_rejected_before_replacing_destination(self) -> None:
         config = smoke.load_config(CONFIG_PATH)
@@ -718,6 +1225,158 @@ class ModelSmokePersistenceTests(unittest.TestCase):
 
 
 class ModelSmokeSafetyTests(unittest.TestCase):
+    def test_resolved_release_gate_is_bound_to_registry_and_decision(self) -> None:
+        config = smoke.load_config(CONFIG_PATH)
+        registry = json.loads(
+            (PROJECT_ROOT / config.release_gate.registry_path).read_text(
+                encoding="utf-8"
+            )
+        )
+        smoke_ids = {candidate.model_id: candidate for candidate in config.candidates}
+        for entries in registry["roles"].values():
+            for entry in entries:
+                candidate = smoke_ids.get(entry["id"])
+                if candidate is None:
+                    continue
+                entry["release_eligibility"] = (
+                    "eligible" if candidate.bundle == "qwen3" else "ineligible"
+                )
+                entry["release_decision"] = "D-039"
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            registry_path = root / "configs" / "model_candidates.json"
+            registry_path.parent.mkdir()
+            registry_bytes = json.dumps(
+                registry, ensure_ascii=False, separators=(",", ":")
+            ).encode("utf-8")
+            registry_path.write_bytes(registry_bytes)
+            (root / "DECISIONS.md").write_text(
+                "### D-039 — Resolve model release scope\n"
+                "Release scope: `public research artifacts`\n"
+                "Release-eligible bundles: `qwen3`\n",
+                encoding="utf-8",
+            )
+            gate = smoke.ReleaseSelectionGate.model_validate(
+                {
+                    "registry_path": "configs/model_candidates.json",
+                    "expected_registry_sha256": smoke.hashlib.sha256(
+                        registry_bytes
+                    ).hexdigest(),
+                    "status": "resolved",
+                    "intended_release_scope": "public research artifacts",
+                    "decision_record": "D-039",
+                    "eligible_bundles": ["qwen3"],
+                }
+            )
+            with patch.object(smoke, "PROJECT_ROOT", root):
+                actual = smoke._validate_release_registry(gate, config.candidates)
+                self.assertEqual(actual, gate.expected_registry_sha256)
+
+                mismatched = gate.model_copy(
+                    update={"eligible_bundles": ["qwen2.5"]}
+                )
+                with self.assertRaisesRegex(
+                    smoke.SmokeConfigError, "do not match"
+                ):
+                    smoke._validate_release_registry(mismatched, config.candidates)
+
+    def test_measured_run_rejects_dirty_worktree_before_model_access(self) -> None:
+        config = smoke.load_config(CONFIG_PATH)
+        with (
+            patch.object(
+                smoke,
+                "_git_worktree_changes",
+                return_value=[" M src/agent/parser.py", "?? untracked.py"],
+            ),
+            patch.object(
+                smoke,
+                "_collect_source_identity",
+                side_effect=AssertionError("source collection must not start"),
+            ),
+            patch.object(
+                smoke,
+                "_execute_candidate",
+                side_effect=AssertionError("model execution must not start"),
+            ),
+            self.assertRaisesRegex(smoke.SmokeConfigError, "clean Git worktree"),
+        ):
+            smoke.build_result(
+                config,
+                config_path=CONFIG_PATH,
+                config_bytes=CONFIG_PATH.read_bytes(),
+                command=[],
+                run_load=True,
+                allow_download=True,
+                selected_names=[],
+            )
+
+    def test_offline_plan_does_not_require_clean_worktree(self) -> None:
+        config = smoke.load_config(CONFIG_PATH)
+        with patch.object(
+            smoke,
+            "_git_worktree_changes",
+            side_effect=AssertionError("offline plan must not inspect worktree state"),
+        ):
+            result = smoke.build_result(
+                config,
+                config_path=CONFIG_PATH,
+                config_bytes=CONFIG_PATH.read_bytes(),
+                command=[],
+                run_load=False,
+                allow_download=False,
+                selected_names=["qwen3-1.7b"],
+            )
+
+        self.assertTrue(result.options.dry_run)
+        self.assertEqual(result.candidates[0].p6.status, "planned")
+
+    def test_measured_run_rejects_missing_or_mismatched_lane_lock(self) -> None:
+        original = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        mismatched_payload = json.loads(json.dumps(original))
+        mismatched_payload["lane"]["expected_lock_sha256"] = "0" * 64
+        mismatched = smoke.SmokeConfig.model_validate(mismatched_payload)
+
+        with (
+            patch.object(
+                smoke,
+                "_execute_candidate",
+                side_effect=AssertionError("model execution must not start"),
+            ),
+            self.assertRaisesRegex(smoke.SmokeConfigError, "does not match"),
+        ):
+            smoke.build_result(
+                mismatched,
+                config_path=CONFIG_PATH,
+                config_bytes=json.dumps(mismatched_payload).encode("utf-8"),
+                command=[],
+                run_load=True,
+                allow_download=True,
+                selected_names=[],
+            )
+
+        config = smoke.load_config(CONFIG_PATH)
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "missing.lock"
+            with (
+                patch.object(smoke, "_resolve_lane_lock_path", return_value=missing),
+                patch.object(
+                    smoke,
+                    "_execute_candidate",
+                    side_effect=AssertionError("model execution must not start"),
+                ),
+                self.assertRaisesRegex(smoke.SmokeConfigError, "requires the lane lock"),
+            ):
+                smoke.build_result(
+                    config,
+                    config_path=CONFIG_PATH,
+                    config_bytes=CONFIG_PATH.read_bytes(),
+                    command=[],
+                    run_load=True,
+                    allow_download=True,
+                    selected_names=[],
+                )
+
     def test_unsafe_flag_combinations_fail_without_output(self) -> None:
         combinations = (["--run-load"], ["--allow-download"])
         for flags in combinations:

@@ -1,6 +1,8 @@
 # Qwen model-selection smoke protocol
 
-**Status:** pre-measurement protocol. No candidate has been selected and no
+**Status:** pre-measurement protocol. The current runner implements P0-P6, but
+P6 has not been executed on any checkpoint. All four checkpoint executions
+remain required before selection. No candidate has been selected and no
 performance number has been recorded.
 
 ## Purpose
@@ -11,12 +13,17 @@ software lock, and named GPU must be used for every candidate.
 
 ## Current support evidence
 
+- The Phase-A/M0 smoke lane is the Windows stack pinned by
+  `requirements-smoke.in` and `requirements-smoke.lock`: Unsloth 2026.8.18,
+  TRL 0.24.0, and Transformers 5.5.0. Its evidence applies only to that lane.
 - The [TRL quickstart](https://huggingface.co/docs/trl/quickstart) demonstrates
   GRPO with a Qwen2.5 Instruct checkpoint.
 - The [TRL GRPO documentation](https://huggingface.co/docs/trl/v1.8.0/en/grpo_trainer)
   documents tool functions and multi-turn `environment_factory` rollouts. It
   lists Qwen2.5 and Qwen3 among tested families and requires
-  `transformers>=5.2.0` for `environment_factory`.
+  `transformers>=5.2.0` for `environment_factory`. That support belongs to a
+  separate M6 environment with TRL 1.8 and no Unsloth; it is not evidence for
+  the Phase-A/M0 stack.
 - The [Unsloth repository](https://github.com/unslothai/unsloth) links an
   advanced Qwen3 GRPO notebook.
 
@@ -41,12 +48,18 @@ separate diagnostic, but it cannot decide this selection.
 ## Environment lifecycle
 
 Compatibility reconnaissance may iterate dependencies without producing a
-selection result. Once every checkpoint can reach the planned import/template
-probes, freeze a provisional `requirements-smoke.lock` and environment
-manifest. Recreate that environment from scratch, then run every measured
-candidate under the same lock. The later training lock may extend or replace
-the provisional smoke lock only after the model decision; it cannot rewrite
-the recorded smoke environment.
+selection result. Phase-A/M0 compatibility uses the Windows Unsloth 2026.8.18,
+TRL 0.24.0, and Transformers 5.5.0 lane pinned by `requirements-smoke.in` and
+`requirements-smoke.lock`. Once every checkpoint can reach the planned
+import/template probes, freeze the provisional lock and environment manifest.
+Recreate that environment from scratch, then run every measured candidate
+under the same lock.
+
+M6 `environment_factory` work uses a separate TRL 1.8 environment without
+Unsloth. It requires its own input requirements, lock, manifest, and executed
+evidence. Phase-A/M0 support cannot be transferred to M6, and M6 support cannot
+be transferred back to the smoke selection. Neither lane may rewrite the
+other lane's recorded environment.
 
 ## Reproducibility rules
 
@@ -73,9 +86,9 @@ the recorded smoke environment.
 
 - Resolve the repository and immutable commit.
 - Load the tokenizer at that commit.
-- Record tokenizer class, vocabulary size, special tokens, and chat-template
-  hash. Record the native inference template and any TRL-patched training
-  template as separate artifacts; never overwrite one with the other.
+- Record tokenizer class, vocabulary size, special tokens, and the resolved
+  native chat-template hash. If a later lane introduces a separate training
+  template, record it as a separate artifact; never overwrite either source.
 - Apply the native chat template to the same system/user messages and tool
   schema.
 - Require a non-empty generation prompt and deterministic tokenization.
@@ -90,8 +103,9 @@ the recorded smoke environment.
 - Render at least one read-only and one mutative tool schema.
 - Generate fixed tool-required prompts with identical decoding settings.
 - Parse output through the repository's normalized parser adapter.
-- Require exactly one parsed, registered, schema-valid call and require its
-  name to match the prompt's expected tool.
+- Score a prompt as a strict tool-call success only when it produces exactly
+  one parsed, registered, schema-valid call whose name matches the expected
+  tool. This is a measured success definition, not a compatibility hard gate.
 - Record JSON parse rate, registered-schema validity, side-effect-free
   dispatchable-call rate, and zero-tool-call rate. “Dispatchable” means the
   smoke registry would accept the call; no handler runs and no gate event is
@@ -115,34 +129,68 @@ the recorded smoke environment.
 - Report generated tokens per second after warm-up and the raw durations.
 - Keep failures and partial outputs in the artifact.
 
-### P5 — training-stack import smoke
+### P5 — multi-message serialization and masking smoke
 
-- Import the pinned TRL and Unsloth paths used by the planned GRPO recipe.
+- Import the pinned TRL 0.24 and Unsloth 2026.8.18 paths used by the Phase-A/M0
+  recipe.
 - Construct configuration objects without starting a training run.
-- Obtain the TRL training template through its public helper and record its
-  hash separately from the model's native inference template.
+- Use the exact native template resolved by the tokenizer returned from
+  `FastLanguageModel.from_pretrained`. Pinned TRL 0.24 has no public helper
+  that patches a Qwen template. Record the template hash and fail closed when
+  it cannot produce assistant masks.
 - Render a multi-turn assistant/tool trajectory with
   `return_assistant_tokens_mask=True`. Compare the complete returned mask with
   independently derived `{% generation %}` spans; sentinel spot checks alone
   are insufficient.
 - Verify prefix preservation before and after appending a tool observation.
+- Import TRL's pinned `DataCollatorForLanguageModeling`; P6 must prove that it
+  converts this exact P5 mask into the expected assistant-only labels.
+- Treat this as serialization and masking evidence only. It does not execute a
+  live multi-turn environment and does not validate the separate TRL 1.8 M6
+  `environment_factory` lane.
 
 ### P6 — minimal training execution
 
-- Run one bounded forward/backward or tiny GRPO step per checkpoint with the
-  frozen stack; an import or config construction alone does not establish
-  Unsloth/TRL training compatibility.
-- Verify assistant-only loss masking and reference-policy handling from the
-  executed batch before any full training run.
+- Run one bounded rank-4 LoRA microstep targeting `q_proj` and `v_proj` for
+  each of the four checkpoints with the frozen Phase-A/M0 stack; an import or
+  config construction alone does not establish Unsloth/TRL training
+  compatibility.
+- Reuse the exact P5 input IDs and assistant-token mask. Require the TRL
+  collator to produce the expected assistant-only labels before the forward
+  pass.
+- Use the same PEFT model with its adapter disabled for the reference-policy
+  calculation, and verify that this reference remains invariant across the
+  adapter update.
+- Execute one ephemeral SGD forward, backward, and optimizer step. Write no
+  checkpoint and make no training-quality claim from this microstep.
 - Save loss finiteness, peak VRAM, effective batch/token counts, and any
   failure as raw result data. Do not use this microstep as a quality metric.
+- The P6 code path is implemented and covered by mock-only focused tests, but
+  no checkpoint has executed it. All four real P6 artifacts are mandatory
+  before a bundle can be selected.
 
 ## Selection rule
 
 First apply the release-license constraint recorded for the intended public
 artifact. An ineligible bundle may retain its technical measurements but
 cannot be selected. Each remaining generation bundle must pass P1–P6 for both
-its primary and scale checkpoint. Rank eligible passing bundles in this order:
+its primary and scale checkpoint.
+
+The machine-readable `release_gate` remains pending with
+`eligible_bundles=[]`. It pins the model registry by SHA-256. A future resolved
+gate must match each bundle's registry-backed `release_eligibility`, cite one
+recorded `D-###` decision, and reproduce that decision's exact release-scope
+and eligible-bundle markers. Top-level selection stays ineligible even if all
+four candidates pass technically until at least one complete bundle is
+release-eligible.
+
+Every P1-P5 probe result must complete successfully and every P6 must execute
+and pass before the four-checkpoint comparison is selection-ready. The P2
+strict tool-call and zero-call rates remain ranking observations inside the
+successful deterministic-generation probe; they are not converted into an
+unregistered threshold.
+
+Rank eligible passing bundles in this order:
 
 1. higher primary strict tool-call validity;
 2. lower primary zero-tool-call rate on tool-required prompts;

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import tempfile
 from collections.abc import Iterable, Mapping
 from os import PathLike
 from pathlib import Path
@@ -64,27 +66,55 @@ def write_trajectory_jsonl(
 ) -> int:
     """Write records as UTF-8 JSONL, returning the number written.
 
-    All records are validated before the destination is opened, avoiding a
-    partially written file when an item is invalid.
+    Every record is validated *and encoded* before the destination is touched,
+    so an invalid or unencodable item cannot damage an existing results file.
+    The bytes are then written to a sibling temporary file and moved into place,
+    making the replacement atomic for readers.
     """
 
     validated = tuple(_revalidate_record(record) for record in records)
-    lines = tuple(
-        json.dumps(
-            record.model_dump(mode="json"),
-            ensure_ascii=False,
-            allow_nan=False,
-            separators=(",", ":"),
+    try:
+        payloads = tuple(
+            json.dumps(
+                record.model_dump(mode="json"),
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+            ).encode("utf-8")
+            for record in validated
         )
-        for record in validated
-    )
+    except UnicodeEncodeError as exc:
+        raise ValueError(
+            "trajectory record contains text that UTF-8 cannot encode "
+            "(most likely an unpaired surrogate): %s" % exc
+        ) from exc
 
     path = Path(destination)
-    with path.open("w", encoding="utf-8", newline="\n") as stream:
-        for line in lines:
-            stream.write(line)
-            stream.write("\n")
-    return len(lines)
+    temporary: Path | None = None
+    try:
+        # The temporary file must be unique even when worker threads share a
+        # process and destination. Keeping it beside the destination preserves
+        # the same-filesystem guarantee required by ``os.replace``.
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=path.parent,
+            prefix=".%s." % path.name,
+            suffix=".tmp",
+            delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            for payload in payloads:
+                stream.write(payload)
+                stream.write(b"\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        assert temporary is not None
+        os.replace(temporary, path)
+    except BaseException:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+        raise
+    return len(payloads)
 
 
 def read_trajectory_jsonl(source: Pathish) -> list[TrajectoryRecord]:

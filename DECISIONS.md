@@ -301,3 +301,117 @@ McNemar is limited to genuinely paired binary pass^1 outcomes. Fractional
 `pass^k` contrasts use a hierarchical paired bootstrap and a task-level paired
 permutation statistic. Undefined denominators remain `NA` or `INVALID` under
 the protocol and can never become a favorable zero.
+
+### D-034 — Confirmatory protocols supersede stale matrix and cap shorthand
+The production grid remains the 23 arms in D-003, but the confirmatory H2
+contrast adds two scale-model reward variants evaluated at R1 audit, for 25
+total registered arms/configurations. These two runs use n=8 on the frozen
+authorization manifest and cannot be replaced by a full-composite checkpoint.
+
+The common runtime limit is 20 environment turns. Rungs intentionally have
+different model-decision budgets, so D-010's phrase “identical step caps” is
+superseded. Tier-1 arrays support only k in {1,4}; pass^8 requires n=8. M3 may
+report only `H1-PhaseA provisional`; project-level H1 remains `NA` until the
+Phase B stratum completes at M5. A budget stop cannot redefine these frozen
+requirements. H3's 90% trained-model retention is the primary verdict; the
+10-point base-model drop is a separately labeled auxiliary criterion.
+
+### D-035 — Smoke and live multi-turn training use separate evidence lanes
+The Phase-A/M0 smoke lane uses the Windows stack pinned by
+`requirements-smoke.in` and `requirements-smoke.lock`: Unsloth 2026.8.18,
+TRL 0.24.0, and Transformers 5.5.0. The current runner implements P0-P6. P5
+tests multi-message serialization and assistant-token masking; it does not
+execute a live multi-turn environment. P2's exact-one-valid-call condition
+defines a measured success, not a compatibility hard gate.
+
+P6 is a bounded rank-4 `q_proj`/`v_proj` LoRA microstep. It reuses the exact P5
+mask through the TRL collator, obtains a same-model reference with the PEFT
+adapter disabled, and performs one ephemeral SGD step without writing a
+checkpoint or making a quality claim. Its implementation has mock-only test
+coverage; no checkpoint has executed it. All four executions remain required,
+and the machine-readable release gate remains pending, before model selection.
+
+M6 `environment_factory` work uses a separate TRL 1.8 environment without
+Unsloth. It must have its own requirements input, lock, manifest, and executed
+compatibility evidence. Evidence cannot transfer between these lanes, and a
+later M6 lock cannot rewrite the Phase-A/M0 smoke record.
+
+### D-036 — Parse evidence is attributed to a block, and the format term reads only block-attributable failures
+An external audit reproduced a reward defect: a fully valid, schema-valid,
+dispatched tool call scored the -0.5 format penalty instead of +0.2 whenever
+the surrounding prose happened to contain the literal string `</tool_call>`.
+The parser correctly refuses to count a stray closing tag as an emitted block,
+but `score_episode` tested `not trace.parse.issues`, so any issue at all broke
+the conjunction.
+
+BLUEPRINT_v2.md s7.0 and D-017 define the format term as a conjunction over
+*emitted blocks*. `ParseIssue` therefore gains `attached_to_block` (default
+`True`), the `unexpected_close_tag` issue sets it to `False`, and the reward
+reads only block-attributable issues. An unclosed block remains attached and
+still fails format, because the parser does count it as emitted. Text outside
+the envelope is still preserved as evidence; it simply no longer decides the
+format term. The reward magnitudes in s7.0 are unchanged.
+
+Consequence: `ParseIssue` gained a field, so evidence digests computed before
+this change will not match. No measured artifact exists yet, so nothing is
+invalidated.
+
+### D-037 — Unpaired surrogates are rejected at the parser boundary
+A model can emit the JSON escape for a lone surrogate inside tool-call
+arguments. `json` accepts it and yields a `str` that UTF-8 cannot encode, so it
+crashed evidence hashing with an uncaught `UnicodeEncodeError` and could kill
+rollout scoring mid-run.
+
+Such a value is now rejected where it enters, as a reward-visible
+`unpaired_surrogate` parse issue covering nested values, tool names, and object
+keys. Evidence hashing additionally converts any remaining encode failure into
+a described `ValueError` rather than propagating `UnicodeEncodeError`. Failing
+closed as scored parse evidence is preferred to crashing a training run.
+
+### D-038 — Result writing is atomic and pre-encoded
+`write_trajectory_jsonl` promised that records are validated before the
+destination is opened, but encoding happened during the write. One unencodable
+record therefore truncated an existing results file.
+
+Records are now validated *and* encoded to bytes before the destination is
+touched, then written to a sibling temporary file, flushed, fsynced, and moved
+into place with `os.replace`. A failed write removes the temporary file and
+leaves the previous results untouched. Evaluation artifacts are the project's
+primary evidence, so a partial or destroyed result file is treated as a
+correctness defect, not an inconvenience.
+
+### D-039 — Model selection is registry-backed and fail-closed
+The smoke configuration no longer accepts a free-form `selection_allowed`
+switch. It pins `configs/model_candidates.json` by SHA-256. Each registry
+entry carries an independent `release_eligibility` and `release_decision`, and
+the four smoke checkpoints also carry their size-paired `smoke_bundle`.
+
+A resolved release gate requires all four smoke entries to use the same
+recorded `D-###` decision, each bundle to be consistently eligible or
+ineligible, and the configured eligible-bundle list to match the registry.
+The decision section must include exact `Release scope:` and
+`Release-eligible bundles:` markers. The current gate and all registry entries
+remain pending; this decision changes evidence validation, not model or
+license selection.
+
+Technical readiness now requires successful P1-P5 probe statuses plus an
+executed, passing P6 microstep for all four checkpoints before the two bundles
+are compared. P2 strict tool-call rates remain ranking observations rather
+than binary compatibility gates, but a failed deterministic-generation probe
+cannot be treated as selection-ready.
+
+### D-040 — Pinned TRL 0.24 does not supply the assumed Qwen template helper
+D-026 correctly requires `{% generation %}` spans for assistant-token masks,
+but its claim that current TRL supplies a public Qwen training-template helper
+does not hold for the pinned Phase-A lane. `trl==0.24.0` has no
+`trl.chat_template_utils` module. The runner now uses the exact native template
+resolved from the tokenizer returned by Unsloth and fails P5 when that template
+cannot produce a complete assistant mask.
+
+P3 loads through `FastLanguageModel.from_pretrained`, not raw Transformers,
+because the installed Unsloth LoRA path requires the loader-attached training
+tokenizer. The runner verifies its immutable revision and attachment, reruns
+P5 with that exact tokenizer, and uses it for generation and P6. TRL's public
+`DataCollatorForLanguageModeling` remains the P6 label-construction check. No
+checkpoint has executed this corrected path yet, so support remains pending
+measured evidence.

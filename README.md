@@ -38,10 +38,37 @@ Or run the local check wrapper:
 ./scripts/check.ps1 -Python .venv\Scripts\python.exe
 ```
 
-The current lock covers only the reliability kernel. Before any measured model
-comparison, compatibility reconnaissance must produce a provisional ML smoke
-lock and immutable environment manifest. The later training lock is finalized
-after the Qwen decision without rewriting the smoke environment.
+The kernel lock above covers only the reliability kernel. The Phase-A/M0 model
+smoke uses a separate Windows stack: Unsloth 2026.8.18, TRL 0.24.0, and
+Transformers 5.5.0. Recreate that environment in the ignored `.venv` directory
+from the generated smoke lock:
+
+```powershell
+if (Test-Path -LiteralPath .venv) { Remove-Item -LiteralPath .venv -Recurse -Force }
+py -3.12 -m venv .venv
+.venv\Scripts\python.exe -m pip install uv==0.12.5
+.venv\Scripts\uv.exe pip sync requirements-smoke.lock --python .venv\Scripts\python.exe
+```
+
+`requirements-smoke.lock` already includes the repository as an editable
+project, so the sync command is the complete install. Do not add a second
+editable-install step. Before any measured comparison, the provisional lock
+and an immutable environment manifest must be frozen after compatibility
+checks and recreated cleanly.
+
+After committing the exact source used by the smoke, record the model-free
+dependency, offline-import, and CUDA manifest:
+
+```powershell
+.venv\Scripts\python.exe scripts\probe_smoke_environment.py --output results\smoke_environment.json
+```
+
+The manifest fails when the Git tree is dirty, the configured lock hash has
+changed, or an installed locked distribution has a different version.
+
+The later M6 live multi-turn lane uses TRL 1.8 `environment_factory` without
+Unsloth. It needs a separate lock and manifest. Compatibility evidence does
+not transfer between the two lanes.
 
 ## M0 evidence controls
 
@@ -65,10 +92,22 @@ records local environment facts without importing the optional ML stack or
 accessing a model repository:
 
 ```powershell
-python scripts/smoke_models.py --output results/model_smoke-plan.json
+.venv\Scripts\python.exe scripts\smoke_models.py --output results/model_smoke-plan.json
 ```
 
 Tokenizer/model access requires both `--run-load` and `--allow-download`.
+The current runner implements P0-P6. P5 checks multi-message serialization and
+assistant-token masking, not a live multi-turn environment. P6 reuses that
+exact mask through the TRL collator, attaches a rank-4 `q_proj`/`v_proj` LoRA
+adapter, obtains a same-model reference with the PEFT adapter disabled, and
+runs one ephemeral SGD microstep without writing a checkpoint. This code path
+has mock-only test coverage; it has not run on any model checkpoint and makes
+no quality claim. P6 must execute for all four checkpoints before selection.
+
+The machine-readable release gate is still pending. It pins the candidate
+registry by SHA-256 and derives eligible bundles from each checkpoint's
+registry state. Selection stays disabled until all four checkpoints pass
+P1-P6 and a recorded release decision resolves at least one complete bundle.
 Do not treat the offline plan artifact as a benchmark result.
 
 ## Source of truth

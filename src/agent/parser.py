@@ -30,11 +30,46 @@ def _parse_finite_float(value: str) -> float:
     return parsed
 
 
+def _has_surrogate(text: str) -> bool:
+    return any(0xD800 <= ord(char) <= 0xDFFF for char in text)
+
+
+def _find_surrogate(value: Any, path: str = "tool_call") -> str | None:
+    """Return the path of the first unpaired surrogate, if any.
+
+    ``json`` accepts escapes such as ``ud800`` and yields a ``str`` holding a
+    lone surrogate codepoint. UTF-8 cannot encode it, so it would later crash
+    evidence hashing and result writing. It is rejected here instead, where it
+    becomes reward-visible parse evidence.
+    """
+
+    if isinstance(value, str):
+        return path if _has_surrogate(value) else None
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            found = _find_surrogate(item, "%s[%d]" % (path, index))
+            if found is not None:
+                return found
+        return None
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if isinstance(key, str) and _has_surrogate(key):
+                return "%s key %r" % (path, key)
+            found = _find_surrogate(item, "%s.%s" % (path, key))
+            if found is not None:
+                return found
+        return None
+    return None
+
+
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
         if key in result:
-            raise _StrictJsonError(f"duplicate JSON object key '{key}'")
+            # ``json`` accepts a lone surrogate in an escaped object key.
+            # Keep strict-decoder errors ASCII-safe so constructing the
+            # reward-visible ParseIssue cannot itself fail Unicode validation.
+            raise _StrictJsonError(f"duplicate JSON object key {key!r}")
         result[key] = value
     return result
 
@@ -64,6 +99,14 @@ def _decode_block(payload: str, block_index: int) -> tuple[ToolCall | None, Pars
             block_index=block_index,
             code="invalid_json",
             message=f"invalid JSON{position}: {exc}",
+        )
+
+    surrogate_path = _find_surrogate(decoded)
+    if surrogate_path is not None:
+        return None, ParseIssue(
+            block_index=block_index,
+            code="unpaired_surrogate",
+            message="tool_call contains an unpaired surrogate at %s" % surrogate_path,
         )
 
     if not isinstance(decoded, dict):
@@ -120,6 +163,7 @@ def parse_tool_calls(completion: str) -> ParseResult:
                     block_index=emitted_blocks,
                     code="unexpected_close_tag",
                     message="closing tool_call tag has no matching opening tag",
+                    attached_to_block=False,
                 )
             )
             cursor = next_close + len(CLOSE_TAG)

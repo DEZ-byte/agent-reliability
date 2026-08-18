@@ -31,11 +31,18 @@ class ToolCall(_ContractModel):
 
 
 class ParseIssue(_ContractModel):
-    """A deterministic parser failure associated with a tool block."""
+    """A deterministic parser failure observed while reading a completion.
+
+    ``attached_to_block`` records whether the failure belongs to an emitted
+    ``<tool_call>`` block. Stray text outside the envelope is preserved as
+    evidence but must not make an otherwise valid block score as malformed;
+    the format term is a conjunction over emitted blocks only.
+    """
 
     block_index: int = Field(ge=0)
     code: str = Field(min_length=1)
     message: str = Field(min_length=1)
+    attached_to_block: bool = True
 
 
 class ParseResult(_ContractModel):
@@ -92,13 +99,20 @@ def compute_evidence_digest(
         "final_state": final_state,
         "gate_policy_fingerprint": gate_policy_fingerprint,
     }
-    encoded = json.dumps(
+    serialized = json.dumps(
         payload,
         allow_nan=False,
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
-    ).encode("utf-8")
+    )
+    try:
+        encoded = serialized.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise ValueError(
+            "reward evidence contains text that UTF-8 cannot encode "
+            "(most likely an unpaired surrogate): %s" % exc
+        ) from exc
     return hashlib.sha256(encoded).hexdigest()
 
 

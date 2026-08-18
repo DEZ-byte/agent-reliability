@@ -18,11 +18,26 @@ tests or an artifact in the repository; a design note alone does not count.
 - [ ] First GitHub Actions run green on Windows and Linux
 - [x] Ten-to-fifteen-source verified literature scan
 - [x] Immutable model/dataset registry and license provenance table
-- [ ] Frozen provisional ML smoke lock and one-step training compatibility run
-- [ ] Qwen2.5-versus-Qwen3 measured smoke test and decision
+- [ ] Freeze the provisional Phase-A/M0 Windows smoke lock after all four
+  checkpoints pass the import/template compatibility probes
+- [ ] Record an immutable Phase-A/M0 environment manifest from a clean `.venv`
+  recreation
+- [x] Implement the bounded P6 rank-4 `q_proj`/`v_proj` LoRA microstep with
+  exact P5-mask collation and adapter-disabled same-model reference checks
+- [ ] Execute P6 training compatibility on all four checkpoints
+- [ ] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke and record the
+  license-filtered bundle decision
 - [ ] Function-calling dataset decision after license caveats are resolved
 - [ ] Repository license decision after the license table exists
 - [ ] File Meta gated-model access requests
+
+## M6 environment lane
+
+- [ ] Create a separate TRL 1.8, no-Unsloth requirements input and lock for
+  `environment_factory`
+- [ ] Record a separate immutable M6 environment manifest
+- [ ] Execute live multi-turn `environment_factory` compatibility checks; do
+  not reuse Phase-A/M0 P5 serialization evidence
 
 ## M1 onward
 
@@ -43,6 +58,7 @@ These are tracked rather than silently guessed:
 - Correct the reference-policy implementation after the SFT/LoRA smoke test.
 - Decide whether the public release may depend on non-commercial model terms;
   apply that license filter before naming a Qwen bundle winner.
-- Reconcile current TRL OpenEnv multi-turn support with the M6 backend choice.
+- Reconcile current TRL OpenEnv multi-turn support with the M6 backend choice
+  inside the separate TRL 1.8 environment lane.
 - Pin one tau2 repository, immutable revision, task set, simulator, and reward
   basis; never mix Sierra and Amazon-verified scores in one comparison.

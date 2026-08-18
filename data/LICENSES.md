@@ -27,6 +27,13 @@ The Qwen primary and scale winners remain pending the measured smoke test. The
 license table must not be used as a proxy for the required tool-template,
 VRAM, throughput, and training-stack measurements.
 
+Each registry entry also has an independent release gate. A
+`release_eligibility` value of `pending` requires a null `release_decision`.
+Changing it to `eligible` or `ineligible` requires the recorded `D-###`
+decision that resolved the intended release scope. The four Qwen smoke entries
+also record `smoke_bundle`, so a license decision cannot silently pair primary
+and scale checkpoints from different generations.
+
 ## Function-calling datasets
 
 | Candidate and verified revision | Access | Stated license | Provenance, release implications, and unresolved caveats |

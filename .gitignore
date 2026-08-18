@@ -5,6 +5,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.uv-cache-smoke/
+.hf-cache-smoke/
+.triton-cache-smoke/
+unsloth_compiled_cache/
 .coverage
 htmlcov/
 .env

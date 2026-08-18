@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
 
 from pydantic import ValidationError
 
@@ -135,6 +139,81 @@ class TrajectoryRecordTests(unittest.TestCase):
 
             with self.assertRaisesRegex(TrajectoryJSONLError, r"line 1"):
                 read_trajectory_jsonl(path)
+
+    def test_unencodable_record_leaves_an_existing_file_intact(self) -> None:
+        """Regression: the writer must not truncate results it cannot replace."""
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trajectories.jsonl"
+            write_trajectory_jsonl([make_record(run_idx=0)], path)
+            before = path.read_bytes()
+
+            doomed = make_record(run_idx=1).model_dump(mode="python")
+            doomed["raw_completion"] = "lone surrogate " + chr(0xD800)
+
+            with self.assertRaisesRegex(ValueError, "UTF-8 cannot encode"):
+                write_trajectory_jsonl([doomed], path)
+
+            self.assertEqual(path.read_bytes(), before)
+            self.assertEqual(read_trajectory_jsonl(path), [make_record(run_idx=0)])
+            leftovers = [p.name for p in Path(directory).iterdir() if ".tmp" in p.name]
+            self.assertEqual(leftovers, [])
+
+    def test_invalid_record_leaves_an_existing_file_intact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trajectories.jsonl"
+            write_trajectory_jsonl([make_record(run_idx=0)], path)
+            before = path.read_bytes()
+
+            with self.assertRaises(ValidationError):
+                write_trajectory_jsonl(
+                    [{"schema_version": 1, "task_id": "incomplete"}], path
+                )
+
+            self.assertEqual(path.read_bytes(), before)
+
+    def test_write_leaves_no_temporary_file_behind(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trajectories.jsonl"
+            write_trajectory_jsonl([make_record(run_idx=0)], path)
+
+            self.assertEqual([p.name for p in Path(directory).iterdir()], [path.name])
+
+    def test_concurrent_writers_use_distinct_temporary_files(self) -> None:
+        """Concurrent replacements may race, but neither writer may collide."""
+
+        first = [make_record(run_idx=1)]
+        second = [make_record(run_idx=2)]
+        barrier = threading.Barrier(2)
+        sources: list[Path] = []
+        sources_lock = threading.Lock()
+        real_replace = os.replace
+
+        def synchronized_replace(source: Path, destination: Path) -> None:
+            with sources_lock:
+                sources.append(Path(source))
+            barrier.wait(timeout=5)
+            real_replace(source, destination)
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trajectories.jsonl"
+            with patch(
+                "evaluation.trajectory.os.replace",
+                side_effect=synchronized_replace,
+            ):
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = [
+                        executor.submit(write_trajectory_jsonl, records, path)
+                        for records in (first, second)
+                    ]
+                    self.assertEqual(
+                        [future.result(timeout=10) for future in futures],
+                        [1, 1],
+                    )
+
+            self.assertEqual(len(set(sources)), 2)
+            self.assertIn(read_trajectory_jsonl(path), (first, second))
+            self.assertEqual([p.name for p in Path(directory).iterdir()], [path.name])
 
 
 if __name__ == "__main__":

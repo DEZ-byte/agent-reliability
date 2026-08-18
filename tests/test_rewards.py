@@ -268,6 +268,87 @@ class RewardTests(unittest.TestCase):
         self.assertEqual(reward.efficiency, -0.3)
         self.assertEqual(reward.total, -0.1)
 
+    def test_stray_close_tag_in_prose_does_not_spoil_a_valid_block(self) -> None:
+        """Regression: the format term is a conjunction over emitted blocks.
+
+        Prose that merely contains a closing tag emits no block, so it must not
+        turn a valid, dispatched call from +0.2 into -0.5.
+        """
+
+        raw = "I must not emit </tool_call> unpaired. " + block(
+            "calculator", {"value": 7}
+        )
+        trace, engine = audit(raw)
+
+        reward = score_episode(
+            trace,
+            EnvironmentOutcome(correct=True, source=OutcomeSource.SANDBOX_RESULT),
+            tool_required=True,
+            gate_engine=engine,
+        )
+
+        self.assertEqual(trace.parse.emitted_blocks, 1)
+        self.assertIn("unexpected_close_tag", [i.code for i in trace.parse.issues])
+        self.assertTrue(reward.format_valid)
+        self.assertEqual(reward.format, 0.2)
+        self.assertEqual(reward.accuracy, 1.0)
+        self.assertEqual(reward.efficiency, -0.05)
+        self.assertEqual(reward.total, 1.15)
+
+    def test_stray_close_tag_alone_scores_no_emitted_blocks(self) -> None:
+        trace, engine = audit("no tool here </tool_call>")
+
+        reward = score_episode(
+            trace,
+            EnvironmentOutcome(correct=True, source=OutcomeSource.SANDBOX_RESULT),
+            tool_required=True,
+            gate_engine=engine,
+        )
+
+        self.assertEqual(trace.parse.emitted_blocks, 0)
+        self.assertEqual(reward.format, 0.0)
+        self.assertEqual(reward.accuracy, 0.0)
+        self.assertEqual(reward.efficiency, -0.3)
+
+    def test_unclosed_block_still_fails_format(self) -> None:
+        """The companion case: an unclosed block IS emitted, so it must fail."""
+
+        trace, engine = audit('<tool_call>{"name":"calculator","arguments":{}}')
+
+        reward = score_episode(
+            trace,
+            EnvironmentOutcome(correct=True, source=OutcomeSource.SANDBOX_RESULT),
+            tool_required=True,
+            gate_engine=engine,
+        )
+
+        self.assertEqual(trace.parse.emitted_blocks, 1)
+        self.assertFalse(reward.format_valid)
+        self.assertEqual(reward.format, -0.5)
+
+    def test_duplicate_surrogate_key_fails_closed_as_parse_evidence(self) -> None:
+        surrogate = "\ud800"
+        raw = (
+            '<tool_call>{"name":"calculator","arguments":{"'
+            + surrogate
+            + '":1,"'
+            + surrogate
+            + '":2}}</tool_call>'
+        )
+
+        trace, engine = audit(raw)
+        reward = score_episode(
+            trace,
+            EnvironmentOutcome(correct=True, source=OutcomeSource.SANDBOX_RESULT),
+            tool_required=True,
+            gate_engine=engine,
+        )
+
+        self.assertEqual([issue.code for issue in trace.parse.issues], ["invalid_json"])
+        self.assertEqual(reward.accuracy, 0.0)
+        self.assertEqual(reward.format, -0.5)
+        self.assertEqual(reward.total, -0.8)
+
 
 if __name__ == "__main__":
     unittest.main()

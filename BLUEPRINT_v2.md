@@ -26,7 +26,7 @@ costs far less at inference" is a publishable, hireable result.
 | :-- | :-- | :-- |
 | H1 | GRPO with gate rewards on the primary ≤4B model closes ≥50% of the pass^4 gap to the fully scaffolded 8B baseline, at ≤30% of the 8B arm's generated tokens per episode. | Gap closure <50% → reported as "scaffolding retains the reliability lead; post-training buys partial closure at X% of the cost." |
 | H2 | Adding the gate-reward term reduces the `skipped_auth` failure rate by ≥50% relative to an otherwise-identical GRPO run without it (ablation ladder, §7.4). | No reduction → gate rewards do not internalize the constraint; format+accuracy explain the gains. |
-| H3 | The GRPO-trained model retains ≥90% of its pass^1 when the domain policy manual is removed from the system prompt; the base model degrades materially on the same probe set. | Trained model still depends on the manual → policy knowledge was not internalized into weights. |
+| H3 | The GRPO-trained model retains ≥90% of its pass^1 when the domain policy manual is removed from the system prompt. Base-model degradation on the same probe set is a separately reported auxiliary criterion, not part of the H3 verdict. | Trained model still depends on the manual → policy knowledge was not internalized into weights; a weak base-model drop limits the interpretation but does not rewrite the H3 threshold. |
 
 Decision rule: every hypothesis is reported with its measured outcome and CI.
 None is dropped for being negative.
@@ -100,7 +100,7 @@ the winner, then record the measurements and artifact paths in DECISIONS.md.
 
 ---
 
-## 4. Experimental matrix (~23 arms, tiered — not 108)
+## 4. Experimental matrix (~25 arms, tiered — not 108)
 
 Rungs: **R0** direct with no same-turn model retry; **R1** same-model
 act/observe with bounded structured feedback; **R2** feedback + reflection +
@@ -111,20 +111,25 @@ gates and, for small parents only, one 8B handoff (§8 and
 | :-- | :-- | :-- |
 | Primary (≤4B) | {Base, SFT, DPO, GRPO} × {R0, R1, R2} | 12 |
 | Scale check (1.5–1.7B) | {Base, GRPO} × {R0, R2} | 4 |
+| Scale H2 confirmatory | GRPO-{accuracy+format, accuracy+format+gate} × R1-audit | 2 |
 | Llama-3.2-3B | {Base, GRPO} × {R0, R2} | 4 |
 | Llama-3.1-8B | Base × {R0, R1, R2} | 3 |
-| **Total** | | **23** |
+| **Total** | | **25** |
 
 Headline comparison: **primary Base×R0 → primary GRPO×R0 gap closure relative
 to 8B Base×R2-no-escalation**; primary GRPO×R2 is the separate “hybrid” row.
 Exact aggregation and token-ratio rules are in `HYPOTHESIS_PROTOCOL.md`.
 
 Eval tiers (protocol in §7):
-- Tier 1 — all 23 arms: n=4 runs, Phase A test set (N≈150) + tau2-retail test
-  split. Reports pass^1, pass^4 (pass@k alongside).
+- Tier 1 — all 23 production-grid arms: n=4 runs, Phase A test set
+  (N≈150) + tau2-retail test split. Reports pass^1, pass^4 (pass@k
+  alongside).
 - Tier 2 — 7 headline arms only (8B×R2-no-escalation, 8B×R1, primary
   Base×R0, primary Base×R1, primary SFT×R1, primary GRPO×R0, primary
   GRPO×R2): n=8 runs → adds pass^8. Base×R0 is required to define H1's gap.
+- H2 confirmatory — the two additional scale-model reward variants run with
+  n=8 under R1 audit on the frozen authorization manifest. They are not
+  silently substituted with the full-composite production-grid checkpoint.
 
 ---
 
@@ -353,7 +358,7 @@ R1/R2 rows are secondary because gates or retries could mask prompt dependence.
 
 Estimates to validate at M1 (record actuals in DECISIONS.md):
 - GRPO single-turn: 1.5B ≈ 4–8 h; 3–4B ≈ 8–15 h per run on a 4090.
-- Phase B eval: ~8–10 arms × ~114 tasks × n=4 (+n=8 on 6 arms) ≈ 6–8k episodes,
+- Phase B eval: ~8–10 arms × ~114 tasks × n=4 (+n=8 on 7 arms) ≈ 6–8k episodes,
   batched ≈ 30–60 GPU-hours.
 - Every trainer is idempotent-resumable (checkpoint + RNG + dataloader cursor
   every ~25 steps to HF Hub); assume any session can die.
@@ -370,7 +375,8 @@ Estimates to validate at M1 (record actuals in DECISIONS.md):
 
 ### 10.1 Metrics — exact definitions (from ONE run array)
 Run n=8 samples per task once (Tier 2 arms; n=4 for Tier 1), c_i = successes
-on task i. Compute for k ∈ {1,4,8}:
+on task i. Compute only requested k with `k ≤ n`: Tier 1 uses k ∈ {1,4};
+Tier 2 uses k ∈ {1,4,8}.
 
 - **pass^k** (reliability — all k succeed):
   pass^k = (1/|D|) Σ_i C(c_i, k) / C(n, k)
@@ -379,8 +385,9 @@ on task i. Compute for k ∈ {1,4,8}:
 - pass^1 = pass@1 = mean success rate. ("Best-case single run" is a
   misdefinition — never use it.)
 
-Decoding: fixed temperature/top_p/step cap, identical across all arms, pinned
-in `configs/eval.yaml`, per-run seeds recorded.
+Temperature, `top_p`, prompts, environment-turn cap, and run seeds are pinned
+in `configs/eval.yaml`. Rung-specific model-decision budgets are deliberate
+treatments, not a shared step-cap setting, and are logged separately.
 
 ### 10.2 Statistics
 - All arms evaluated on the identical task/run seed matrix. Use McNemar only
@@ -389,8 +396,9 @@ in `configs/eval.yaml`, per-run seeds recorded.
   plus a pre-registered paired permutation statistic.
 - 95% CIs via hierarchical bootstrap (resample tasks, recompute the
   combinatorial estimator from each task's runs).
-- N≈150 cannot resolve <5 pp gaps; the README says so and headline claims are
-  restricted to gaps that survive the paired test.
+- Freeze a sensitivity/precision analysis from the actual task, seed, and
+  paired-outcome design before interpreting small gaps. Report observed CI
+  widths; do not use an unsupported blanket power threshold.
 
 ### 10.3 Trajectory logging (portfolio artifact)
 Every eval episode is one JSONL record: `task_id`, `run_idx`, `prompt`,
@@ -425,7 +433,7 @@ and cite it.
 | **M0** (~1 wk) | Repo skeleton, kernel lock, provisional ML smoke lock, tool registry, sandbox + escape tests, literature scan, PLAN.md + DECISIONS.md in git, HF gated-license requests filed, Qwen 2.5-vs-3 smoke test | CI green; model choice recorded |
 | **M1** (~2 wk) | Phase A env + rewards v2 + pass^k harness + framework-neutral R0/R1 core | **Real** baseline numbers, all 4 base models, R0/R1, with CIs — ships as a measurement study |
 | **M2** (~1–2 wk) | SFT on primary + re-eval | "Does imitation help?" row filled |
-| **M3** (~2–3 wk) | Single-turn GRPO + ablation ladder + ≥2 seeds + W&B curves; DPO arm alongside | **Headline experiment** rows filled |
+| **M3** (~2–3 wk) | Single-turn GRPO + ablation ladder + ≥2 seeds + W&B curves; DPO arm alongside | Phase A GRPO rows and `H1-PhaseA provisional` filled; project-level H1 remains `NA` until M5 |
 | **M4** (~2 wk) | LangGraph parity adapter + R2 cascade/gates on base models | First real Pareto plot |
 | **M5** (~2–3 wk) | tau2-retail eval via the pinned-tuple adapter (`src/env/tau2_adapter.py`, budget 3–5 days) + local user sim | Phase B table filled; one same-tuple reference result reproduced when available |
 | **M6** (stretch) | Multi-turn GRPO via the backend selected by the TRL-versus-`verifiers` pilot | Kill criterion below |
@@ -444,7 +452,7 @@ commits and tests — the commit history is part of the portfolio).
 | Risk | Early indicator | Response |
 | :-- | :-- | :-- |
 | Multi-turn GRPO stalls | No reward slope within 2 calendar weeks of M6 start | Ship the single-turn headline; multi-turn → future work |
-| GPU overspend | >$30 in any month | Freeze eval at k=4, N=100; queue rest for next month |
+| GPU overspend | >$30 in any month | Stop new runs and queue the remainder. Keep project H1 `NA`/provisional until its frozen n=8 and both benchmark strata complete; any k=4/N=100 result is a separately versioned exploratory row. |
 | Llama gating delayed | Not approved by end of M1 | Switch to Qwen-only registry |
 | TRL/Unsloth breakage | Pinned env fails on upgrade | Stay on lockfile; upgrade only between milestones |
 | tau2 adapter overruns | >5 days on the adapter | Ship Phase A only; tau2 → future work |

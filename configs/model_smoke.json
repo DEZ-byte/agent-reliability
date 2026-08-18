@@ -1,26 +1,53 @@
 {
   "schema_version": 1,
+  "lane": {
+    "identity": "phase-a-windows-unsloth-trl024",
+    "lock_path": "requirements-smoke.lock",
+    "expected_lock_sha256": "c81df3a3b3025a98a4b68f71fbd49c0e1347bb7dc8f3ad4f9bc3ebf369357568",
+    "m6_environment_factory_in_scope": false,
+    "probe_implementation": {
+      "P0": "implemented",
+      "P1": "implemented",
+      "P2": "implemented",
+      "P3": "implemented",
+      "P4": "implemented",
+      "P5": "implemented",
+      "P6": "implemented"
+    }
+  },
+  "release_gate": {
+    "registry_path": "configs/model_candidates.json",
+    "expected_registry_sha256": "e6d751c4738805abd05259c3cc64e84f78416d49a5e2408aa2dae597be5ef2dc",
+    "status": "pending",
+    "intended_release_scope": null,
+    "decision_record": null,
+    "eligible_bundles": []
+  },
   "candidates": [
     {
       "name": "qwen2.5-3b-instruct",
+      "bundle": "qwen2.5",
       "role": "primary_small",
       "model_id": "Qwen/Qwen2.5-3B-Instruct",
       "revision": "aa8e72537993ba99e69dfaafa59ed015b17504d1"
     },
     {
       "name": "qwen3-4b",
+      "bundle": "qwen3",
       "role": "primary_small",
       "model_id": "Qwen/Qwen3-4B",
       "revision": "1cfa9a7208912126459214e8b04321603b3df60c"
     },
     {
       "name": "qwen2.5-1.5b-instruct",
+      "bundle": "qwen2.5",
       "role": "scale_check",
       "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
       "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
     },
     {
       "name": "qwen3-1.7b",
+      "bundle": "qwen3",
       "role": "scale_check",
       "model_id": "Qwen/Qwen3-1.7B",
       "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"

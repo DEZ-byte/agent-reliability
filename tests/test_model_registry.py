@@ -21,6 +21,7 @@ EXPECTED_ROLES = {
 }
 ALLOWED_ACCESS = {"public", "manual_gate", "automatic_gate"}
 ALLOWED_SELECTION_STATUSES = {"pending", "selected", "rejected"}
+ALLOWED_RELEASE_ELIGIBILITY = {"pending", "eligible", "ineligible"}
 ALLOWED_LICENSE_IDS = {
     "apache-2.0",
     "cc-by-4.0",
@@ -30,12 +31,13 @@ ALLOWED_LICENSE_IDS = {
 }
 ALLOWED_LICENSE_NAMES = {"qwen-research"}
 IMMUTABLE_REVISION = re.compile(r"[0-9a-f]{40}\Z")
+RELEASE_DECISION = re.compile(r"D-[0-9]{3}\Z")
 
 EXPECTED_SMOKE_ROLES = {
-    "Qwen/Qwen2.5-3B-Instruct": "primary_small",
-    "Qwen/Qwen3-4B": "primary_small",
-    "Qwen/Qwen2.5-1.5B-Instruct": "scale_check",
-    "Qwen/Qwen3-1.7B": "scale_check",
+    "Qwen/Qwen2.5-3B-Instruct": ("primary_small", "qwen2.5"),
+    "Qwen/Qwen3-4B": ("primary_small", "qwen3"),
+    "Qwen/Qwen2.5-1.5B-Instruct": ("scale_check", "qwen2.5"),
+    "Qwen/Qwen3-1.7B": ("scale_check", "qwen3"),
 }
 
 
@@ -97,6 +99,8 @@ class ModelCandidateRegistryTests(unittest.TestCase):
             with self.subTest(role=role, model_id=candidate.get("id")):
                 access = candidate.get("access")
                 status = candidate.get("selection_status")
+                release_eligibility = candidate.get("release_eligibility")
+                release_decision = candidate.get("release_decision")
                 license_id = candidate.get("license_id")
                 license_name = candidate.get("license_name")
 
@@ -105,6 +109,21 @@ class ModelCandidateRegistryTests(unittest.TestCase):
                 self.assertIsInstance(status, str)
                 self.assertIn(status, ALLOWED_SELECTION_STATUSES)
                 self.assertEqual(status, "pending")
+                self.assertIsInstance(release_eligibility, str)
+                self.assertIn(
+                    release_eligibility, ALLOWED_RELEASE_ELIGIBILITY
+                )
+                if release_eligibility == "pending":
+                    self.assertIsNone(release_decision)
+                else:
+                    self.assertIsInstance(release_decision, str)
+                    self.assertIsNotNone(
+                        RELEASE_DECISION.fullmatch(release_decision)
+                    )
+                self.assertEqual(
+                    release_decision is None,
+                    release_eligibility == "pending",
+                )
                 self.assertIsInstance(license_id, str)
                 self.assertIn(license_id, ALLOWED_LICENSE_IDS)
 
@@ -115,6 +134,10 @@ class ModelCandidateRegistryTests(unittest.TestCase):
                     self.assertEqual(license_name, "qwen-research")
                 else:
                     self.assertIsNone(license_name)
+                self.assertEqual(
+                    license_name == "qwen-research",
+                    license_id == "other",
+                )
 
     def test_qwen_smoke_candidates_match_registry_id_revision_and_role(self) -> None:
         smoke_config = _load_json_object(SMOKE_CONFIG_PATH)
@@ -135,12 +158,16 @@ class ModelCandidateRegistryTests(unittest.TestCase):
             smoke_by_id[model_id] = candidate
 
         self.assertEqual(set(smoke_by_id), set(EXPECTED_SMOKE_ROLES))
-        for model_id, expected_role in EXPECTED_SMOKE_ROLES.items():
+        for model_id, (expected_role, expected_bundle) in EXPECTED_SMOKE_ROLES.items():
             with self.subTest(model_id=model_id):
                 registry_role, registry_candidate = registry_by_id[model_id]
                 smoke_candidate = smoke_by_id[model_id]
                 self.assertEqual(registry_role, expected_role)
                 self.assertEqual(smoke_candidate.get("role"), expected_role)
+                self.assertEqual(smoke_candidate.get("bundle"), expected_bundle)
+                self.assertEqual(
+                    registry_candidate.get("smoke_bundle"), expected_bundle
+                )
                 self.assertEqual(
                     smoke_candidate.get("revision"), registry_candidate["revision"]
                 )

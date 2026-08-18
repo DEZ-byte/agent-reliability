@@ -33,8 +33,12 @@ def score_episode(
     no_required_execution = tool_required and executed_calls == 0
     accuracy = 1.0 if outcome.correct and not gate_violation and not no_required_execution else 0.0
 
+    # BLUEPRINT_v2 s7.0 and D-017 define the format term as a conjunction over
+    # emitted blocks. Evidence that belongs to no block, such as a stray closing
+    # tag in prose, is retained in the trace but must not fail a valid block.
+    block_issues = [issue for issue in trace.parse.issues if issue.attached_to_block]
     parsed_every_block = (
-        not trace.parse.issues
+        not block_issues
         and len(trace.parse.calls) == trace.parse.emitted_blocks
         and len(trace.tool_events) == len(trace.parse.calls)
     )
@@ -47,7 +51,7 @@ def score_episode(
     )
     if format_valid:
         format_reward = 0.2
-    elif trace.parse.emitted_blocks == 0 and not trace.parse.issues:
+    elif trace.parse.emitted_blocks == 0 and not block_issues:
         format_reward = 0.0
     else:
         format_reward = -0.5
