@@ -5,6 +5,35 @@
     "lock_path": "requirements-smoke.lock",
     "expected_lock_sha256": "c81df3a3b3025a98a4b68f71fbd49c0e1347bb7dc8f3ad4f9bc3ebf369357568",
     "m6_environment_factory_in_scope": false,
+    "gate_demotions": [
+      {
+        "probe": "training_template_masking",
+        "check": "prefix_preserved_after_tool_observation",
+        "demoted_to": "recorded_phase_a_diagnostic",
+        "scope_lane_identity": "phase-a-windows-unsloth-trl024",
+        "scope_stage": "blueprint_7_1_stage_1_single_turn",
+        "valid_for_training_stages": [
+          "stage_1_single_turn"
+        ],
+        "invalid_for_training_stages": [
+          "stage_2_scripted_multi_turn",
+          "stage_3_tau2_multi_turn",
+          "m6_environment_factory"
+        ],
+        "still_hard_gate_when": "multi_turn_or_m6_in_scope",
+        "timing": "post_hoc_after_measurement",
+        "decision_record": "D-046",
+        "demoted_on": "2026-08-18",
+        "motive": "The owner wants the public portfolio repository releasable under a permissive licence. The technically eligible Qwen2.5 bundle contains Qwen/Qwen2.5-3B-Instruct under the non-commercial Qwen Research License; the Qwen3 bundle is Apache-2.0. This demotion was proposed after the four measurements were known and after it was known which bundle it favours.",
+        "rationale": "The check asserts a multi-turn serialization property: that appending a tool observation leaves the earlier tokenization byte-identical. BLUEPRINT_v2 section 3.1 and section 7.1 Stage 1 specify single-turn verifiable tool tasks for this lane, where one trajectory is tokenized once and assistant-only loss is taken over a single assistant block. That objective never exercises the demoted property. This is a scope argument, not a refutation of the measurement: Qwen3 fails this check reproducibly at both sizes, on its own native inference template as well as the project wrapper, and the cause is not diagnosed anywhere in this repository.",
+        "validity_precondition": "Sound only while no Phase-A Stage-1 rollout appends a tool observation into an already-tokenized model context. If any Stage-1 arm or rung feeds an observation back, the property is in scope for that arm and this demotion does not cover it.",
+        "rearm_conditions": [
+          "Rerun P5 with this check enforced as a hard gate on the M6 TRL 1.8 / no-Unsloth lane, with its own requirements input, lock, manifest and artifact.",
+          "Diagnose the root cause from the recorded first_prefix_divergence_index and the surrounding decoded windows.",
+          "Re-verify assistant-mask exactness on a trajectory with at least two appended tool observations."
+        ]
+      }
+    ],
     "probe_implementation": {
       "P0": "implemented",
       "P1": "implemented",
@@ -79,7 +108,9 @@
                 "description": "The arithmetic expression to evaluate."
               }
             },
-            "required": ["expression"],
+            "required": [
+              "expression"
+            ],
             "additionalProperties": false
           }
         }
@@ -102,7 +133,10 @@
                 "description": "The new order status."
               }
             },
-            "required": ["order_id", "status"],
+            "required": [
+              "order_id",
+              "status"
+            ],
             "additionalProperties": false
           }
         }

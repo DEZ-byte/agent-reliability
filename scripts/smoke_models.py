@@ -77,6 +77,39 @@ _MODEL_ID_RE: Final = re.compile(
 _CANDIDATE_NAME_RE: Final = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{0,63})$")
 _SHA_RE: Final = re.compile(r"^[0-9a-f]{40}$")
 _SHA256_RE: Final = re.compile(r"^[0-9a-f]{64}$")
+_GATE_ID_RE: Final = re.compile(r"^P5:[a-z0-9_]{3,80}$")
+
+# A probe may clear its hard gates while a pre-registered check that was demoted
+# to a diagnostic is false. That is a distinct outcome from a clean pass and is
+# never reported as one.
+PASSING_PROBE_STATUSES: Final = frozenset({"passed", "passed_with_demoted_gates"})
+
+# The eleven pre-registered P5 checks, in the order MODEL_SMOKE_PROTOCOL.md
+# prints them. This tuple is the readable record of the stronger condition and
+# must not be edited when a check is demoted.
+P5_CHECK_IDS: Final = (
+    "assistant_mask_length_matches_tokens",
+    "assistant_mask_is_binary",
+    "assistant_mask_nonempty",
+    "assistant_mask_has_unmasked_tokens",
+    "expected_mask_length_matches_tokens",
+    "assistant_mask_exactly_matches_generation_spans",
+    "project_template_render_matches_native",
+    "project_template_token_ids_match_native",
+    "render_tokenization_matches_template",
+    "prefix_nonempty",
+    "prefix_preserved_after_tool_observation",
+)
+
+# The closed universe of checks a lane may ever demote, and the set that is
+# re-armed as a hard gate whenever multi-turn or M6 is in scope. Widening either
+# requires reviewed code, a dated decision, and a test edit.
+P5_DEMOTABLE_CHECK_IDS: Final = frozenset({"prefix_preserved_after_tool_observation"})
+MULTI_TURN_HARD_GATE_CHECK_IDS: Final = frozenset({"prefix_preserved_after_tool_observation"})
+
+assert P5_DEMOTABLE_CHECK_IDS <= set(P5_CHECK_IDS)
+# Nothing may be demotable in Phase A unless it is also re-armed for multi-turn.
+assert P5_DEMOTABLE_CHECK_IDS == MULTI_TURN_HARD_GATE_CHECK_IDS
 _PROTOCOL_PROBES: Final = tuple(f"P{index}" for index in range(7))
 
 
@@ -315,15 +348,113 @@ class ProbeConfig(StrictModel):
         return self
 
 
+class GateDemotion(StrictModel):
+    """A dated, decision-bound re-scoping of one pre-registered hard gate.
+
+    A demotion never removes a check. It moves the check out of the set that
+    decides ``passed`` for one declared scope, while the check keeps running,
+    keeps its name, and records strictly more evidence than before.
+    """
+
+    probe: Literal["training_template_masking"]
+    check: Literal["prefix_preserved_after_tool_observation"]
+    demoted_to: Literal["recorded_phase_a_diagnostic"]
+    scope_lane_identity: Literal["phase-a-windows-unsloth-trl024"]
+    scope_stage: Literal["blueprint_7_1_stage_1_single_turn"]
+    valid_for_training_stages: list[Literal["stage_1_single_turn"]] = Field(
+        min_length=1, max_length=1
+    )
+    invalid_for_training_stages: list[
+        Literal[
+            "stage_2_scripted_multi_turn",
+            "stage_3_tau2_multi_turn",
+            "m6_environment_factory",
+        ]
+    ] = Field(min_length=3, max_length=3)
+    still_hard_gate_when: Literal["multi_turn_or_m6_in_scope"]
+    timing: Literal["pre_registered", "post_hoc_after_measurement"]
+    decision_record: str = Field(pattern=r"^D-[0-9]{3}$")
+    demoted_on: str = Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+    motive: str = Field(min_length=40, max_length=1024)
+    rationale: str = Field(min_length=40, max_length=2048)
+    validity_precondition: str = Field(min_length=40, max_length=1024)
+    rearm_conditions: list[str] = Field(min_length=1, max_length=8)
+
+    @property
+    def gate_id(self) -> str:
+        return f"P5:{self.check}"
+
+    @model_validator(mode="after")
+    def post_hoc_requires_full_disclosure(self) -> "GateDemotion":
+        if len(set(self.invalid_for_training_stages)) != len(
+            self.invalid_for_training_stages
+        ):
+            raise ValueError("invalid_for_training_stages must be unique")
+        if any(not condition.strip() for condition in self.rearm_conditions):
+            raise ValueError("every re-arm condition must be non-blank")
+        if self.timing == "post_hoc_after_measurement":
+            # A relaxation proposed after the results were known cannot be
+            # recorded tersely.
+            if len(self.rationale) < 200 or not self.motive.strip():
+                raise ValueError(
+                    "a post-hoc demotion requires a stated motive and a full rationale"
+                )
+        return self
+
+
+class DemotedGateFailure(StrictModel):
+    """Proof that one candidate cleared a probe only because of a demotion."""
+
+    probe: Literal["training_template_masking"]
+    check: Literal["prefix_preserved_after_tool_observation"]
+    observed_value: Literal[False]
+    decision_record: str = Field(pattern=r"^D-[0-9]{3}$")
+    demoted_on: str = Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+    still_hard_gate_when: Literal["multi_turn_or_m6_in_scope"]
+
+    @property
+    def gate_id(self) -> str:
+        return f"P5:{self.check}"
+
+
+def _applied_gate_demotions(
+    declared: "list[GateDemotion] | tuple[GateDemotion, ...]",
+    *,
+    m6_environment_factory_in_scope: bool,
+) -> tuple["GateDemotion", ...]:
+    """Resolve which demotions apply. Multi-turn scope re-arms every gate."""
+
+    if m6_environment_factory_in_scope:
+        return ()
+    return tuple(declared)
+
+
 class SmokeLaneConfig(StrictModel):
     identity: Literal["phase-a-windows-unsloth-trl024"]
     lock_path: Literal["requirements-smoke.lock"]
     expected_lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     m6_environment_factory_in_scope: Literal[False]
+    gate_demotions: list[GateDemotion] = Field(default_factory=list, max_length=2)
     probe_implementation: dict[
         Literal["P0", "P1", "P2", "P3", "P4", "P5", "P6"],
         Literal["implemented", "not_implemented"],
     ]
+
+    @model_validator(mode="after")
+    def demotions_are_single_turn_scoped(self) -> "SmokeLaneConfig":
+        if self.gate_demotions and self.m6_environment_factory_in_scope:
+            raise ValueError(
+                "a lane with multi-turn or M6 in scope cannot declare gate demotions"
+            )
+        pairs = [(item.probe, item.check) for item in self.gate_demotions]
+        if len(pairs) != len(set(pairs)):
+            raise ValueError("gate demotions must be unique per probe and check")
+        for item in self.gate_demotions:
+            if item.scope_lane_identity != self.identity:
+                raise ValueError("a gate demotion must name the lane it is scoped to")
+            if item.check not in P5_DEMOTABLE_CHECK_IDS:
+                raise ValueError(f"check {item.check!r} is not demotable")
+        return self
 
     @model_validator(mode="after")
     def validate_probe_implementation(self) -> "SmokeLaneConfig":
@@ -452,10 +583,32 @@ class ProbeResult(StrictModel):
         "training_stack_imports",
         "training_template_masking",
     ]
-    status: Literal["planned", "passed", "failed", "unavailable", "skipped"]
+    status: Literal[
+        "planned",
+        "passed",
+        "passed_with_demoted_gates",
+        "failed",
+        "unavailable",
+        "skipped",
+    ]
     plan: dict[str, JsonValue]
     metrics: dict[str, JsonValue]
     error: str | None = Field(default=None, max_length=MAX_ERROR_CHARS)
+
+    @model_validator(mode="after")
+    def demoted_pass_must_announce_itself(self) -> "ProbeResult":
+        if self.status == "passed" and self.error is not None:
+            raise ValueError("a clean pass cannot carry an error")
+        if self.status == "passed_with_demoted_gates":
+            if not self.error:
+                raise ValueError(
+                    "passed_with_demoted_gates requires an error naming the demoted gate"
+                )
+            if "NOT evidence of multi-turn" not in self.error:
+                raise ValueError(
+                    "a demoted pass must state that it is NOT evidence of multi-turn"
+                )
+        return self
 
 
 class MinimalTrainingResult(StrictModel):
@@ -499,7 +652,7 @@ def _derived_environment_compatibility(
         return None
     if any(name not in statuses for name in required):
         return None
-    return all(statuses[name] == "passed" for name in required)
+    return all(statuses[name] in PASSING_PROBE_STATUSES for name in required)
 
 
 class CandidateResult(StrictModel):
@@ -512,7 +665,26 @@ class CandidateResult(StrictModel):
     probes: list[ProbeResult]
     p6: MinimalTrainingResult
     environment_compatible: bool | None
+    environment_compatible_scope: Literal["phase_a_single_turn"] = "phase_a_single_turn"
+    demoted_gate_failures: list[DemotedGateFailure] = Field(default_factory=list)
+    m6_multi_turn_eligible: Literal[False] = False
     selection_eligible: bool
+
+    @model_validator(mode="after")
+    def demoted_failures_match_probe_status(self) -> "CandidateResult":
+        demoted = [
+            probe for probe in self.probes
+            if probe.status == "passed_with_demoted_gates"
+        ]
+        if demoted and not self.demoted_gate_failures:
+            raise ValueError(
+                "a candidate with a demoted probe pass must record demoted_gate_failures"
+            )
+        if self.demoted_gate_failures and not demoted:
+            raise ValueError(
+                "demoted_gate_failures recorded without a demoted probe pass"
+            )
+        return self
 
     @model_validator(mode="after")
     def enforce_true_gates_and_p6(self) -> "CandidateResult":
@@ -546,6 +718,22 @@ def _candidate_result(
 ) -> CandidateResult:
     p6_result = p6 or MinimalTrainingResult(plan=_minimal_training_plan())
     environment_compatible = _derived_environment_compatibility(probes)
+    demoted_failures: list[DemotedGateFailure] = []
+    for probe_result in probes:
+        if probe_result.status != "passed_with_demoted_gates":
+            continue
+        failed = probe_result.metrics.get("failed_demoted_check_ids") or []
+        for check in failed:
+            demoted_failures.append(
+                DemotedGateFailure(
+                    probe="training_template_masking",
+                    check=check,
+                    observed_value=False,
+                    decision_record="D-046",
+                    demoted_on="2026-08-18",
+                    still_hard_gate_when="multi_turn_or_m6_in_scope",
+                )
+            )
     return CandidateResult(
         name=name,
         bundle=bundle,
@@ -556,6 +744,7 @@ def _candidate_result(
         probes=probes,
         p6=p6_result,
         environment_compatible=environment_compatible,
+        demoted_gate_failures=demoted_failures,
         selection_eligible=(
             environment_compatible is True
             and p6_result.executed
@@ -579,10 +768,26 @@ class SmokeLaneResult(StrictModel):
     actual_lock_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     lock_matches_expected: bool
     m6_environment_factory_in_scope: Literal[False]
+    gate_demotions: list[GateDemotion] = Field(default_factory=list)
+    gate_demotion_decision_sha256: dict[str, str] = Field(default_factory=dict)
     probe_implementation: dict[
         Literal["P0", "P1", "P2", "P3", "P4", "P5", "P6"],
         Literal["implemented", "not_implemented"],
     ]
+
+    @model_validator(mode="after")
+    def demotion_hashes_cover_every_declaration(self) -> "SmokeLaneResult":
+        expected = {item.gate_id for item in self.gate_demotions}
+        if set(self.gate_demotion_decision_sha256) != expected:
+            raise ValueError(
+                "gate_demotion_decision_sha256 must key exactly the declared gate IDs"
+            )
+        for gate_id, digest in self.gate_demotion_decision_sha256.items():
+            if not _GATE_ID_RE.fullmatch(gate_id):
+                raise ValueError(f"malformed gate id {gate_id!r}")
+            if not _SHA256_RE.fullmatch(digest):
+                raise ValueError(f"malformed decision digest for {gate_id!r}")
+        return self
 
     @model_validator(mode="after")
     def lock_identity_is_consistent(self) -> "SmokeLaneResult":
@@ -618,7 +823,31 @@ class SmokeResult(StrictModel):
     hardware: HardwareFacts
     library_versions: dict[str, str | None]
     candidates: list[CandidateResult]
+    candidates_with_demoted_gate_failures: list[str] = Field(default_factory=list)
+    post_hoc_gate_demotion_present: bool = False
     selection_eligible: bool
+
+    @model_validator(mode="after")
+    def demotion_ledger_is_consistent(self) -> "SmokeResult":
+        observed = sorted(
+            candidate.name
+            for candidate in self.candidates
+            if candidate.demoted_gate_failures
+        )
+        if sorted(self.candidates_with_demoted_gate_failures) != observed:
+            raise ValueError(
+                "candidates_with_demoted_gate_failures must name exactly the "
+                "candidates whose eligibility relied on a demoted gate"
+            )
+        post_hoc = any(
+            item.timing == "post_hoc_after_measurement"
+            for item in self.lane.gate_demotions
+        )
+        if self.post_hoc_gate_demotion_present != post_hoc:
+            raise ValueError(
+                "post_hoc_gate_demotion_present is inconsistent with the lane declaration"
+            )
+        return self
 
     @field_validator("created_at_utc")
     @classmethod
@@ -814,8 +1043,50 @@ def _collect_lane_result(lane: SmokeLaneConfig) -> SmokeLaneResult:
         actual_lock_sha256=actual_sha256,
         lock_matches_expected=actual_sha256 == lane.expected_lock_sha256,
         m6_environment_factory_in_scope=lane.m6_environment_factory_in_scope,
+        gate_demotions=list(lane.gate_demotions),
+        gate_demotion_decision_sha256=_validate_gate_demotions(lane.gate_demotions),
         probe_implementation=dict(lane.probe_implementation),
     )
+
+
+def _demotion_decision_markers(item: GateDemotion) -> tuple[str, ...]:
+    """The lines a demotion's decision section must contain, verbatim."""
+
+    return (
+        f"Demoted gate: `{item.gate_id}`",
+        f"Demoted on: {item.demoted_on}",
+        f"Timing: {item.timing}",
+        f"Scope: `{item.scope_lane_identity}` / {item.scope_stage}",
+        "Still a hard gate for:",
+        "Re-arm conditions:",
+    )
+
+
+def _validate_gate_demotions(
+    demotions: "list[GateDemotion] | tuple[GateDemotion, ...]",
+) -> dict[str, str]:
+    """Bind every declared demotion to its recorded decision text.
+
+    Fails the run when the honesty prose is missing, so a demotion cannot
+    outlive the disclosure that justifies it. Returns the SHA-256 of each
+    decision section so the artifact pins the exact text it relied on.
+    """
+
+    digests: dict[str, str] = {}
+    for item in demotions:
+        body = _decision_section(item.decision_record)
+        missing = [
+            marker
+            for marker in _demotion_decision_markers(item)
+            if marker not in body
+        ]
+        if missing:
+            raise SmokeConfigError(
+                f"decision {item.decision_record} is missing required gate-demotion "
+                f"lines: {'; '.join(missing)}"
+            )
+        digests[item.gate_id] = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    return digests
 
 
 def _resolve_release_registry_path(gate: ReleaseSelectionGate) -> Path:
@@ -1317,7 +1588,9 @@ def build_result(
     candidates: list[CandidateResult] = []
     for candidate in selected:
         if run_load:
-            candidate_result = _execute_candidate(candidate, config.probe)
+            candidate_result = _execute_candidate(
+                candidate, config.probe, lane=config.lane
+            )
         else:
             candidate_result = _candidate_result(
                 name=candidate.name,
@@ -1344,6 +1617,13 @@ def build_result(
         hardware=hardware,
         library_versions=library_versions,
         candidates=candidates,
+        candidates_with_demoted_gate_failures=sorted(
+            item.name for item in candidates if item.demoted_gate_failures
+        ),
+        post_hoc_gate_demotion_present=any(
+            item.timing == "post_hoc_after_measurement"
+            for item in lane_result.gate_demotions
+        ),
         selection_eligible=(
             config.release_gate.status == "resolved"
             and _has_selectable_bundle(
@@ -1463,7 +1743,9 @@ def _load_unsloth_four_bit_model(
     return model, tokenizer, tokenizer_revision_evidence
 
 
-def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> CandidateResult:
+def _execute_candidate(
+    candidate: CandidateConfig, probe: ProbeConfig, *, lane: SmokeLaneConfig
+) -> CandidateResult:
     plans = {planned.name: planned.plan for planned in probe_plans(probe)}
     import_result = _run_training_stack_import_probe(
         plans["training_stack_imports"]
@@ -1645,6 +1927,8 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
         native_template=native_template,
         probe=probe,
         plan=plans["training_template_masking"],
+        applied_demotions=lane.gate_demotions,
+        m6_in_scope=lane.m6_environment_factory_in_scope,
     )
 
     try:
@@ -1783,6 +2067,8 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             native_template=loaded_native_template,
             probe=probe,
             plan=plans["training_template_masking"],
+            applied_demotions=lane.gate_demotions,
+            m6_in_scope=lane.m6_environment_factory_in_scope,
         )
         _synchronize_cuda(torch, target_cuda_device_index)
         load_seconds = time.perf_counter() - started
@@ -2173,6 +2459,8 @@ def _run_training_template_probe(
     native_template: str | dict[str, str] | None,
     probe: ProbeConfig,
     plan: dict[str, JsonValue],
+    applied_demotions: "list[GateDemotion] | tuple[GateDemotion, ...]",
+    m6_in_scope: bool,
 ) -> ProbeResult:
     try:
         if not isinstance(native_template, str) or not native_template:
@@ -2292,13 +2580,62 @@ def _run_training_template_probe(
                 full_ids[: len(prefix_ids)] == prefix_ids
             ),
         }
-        passed = all(checks.values())
+        if set(checks) != set(P5_CHECK_IDS):
+            raise ValueError("P5 check set drifted from the pre-registered list")
+
+        # Every check keeps running and keeps its recorded value. A demotion
+        # only moves a check out of the set that decides `passed`, and only for
+        # the scope the lane declared.
+        demoted_ids = {
+            item.check
+            for item in _applied_gate_demotions(
+                applied_demotions,
+                m6_environment_factory_in_scope=m6_in_scope,
+            )
+        }
+        hard_check_ids = [name for name in P5_CHECK_IDS if name not in demoted_ids]
+        hard_passed = all(checks[name] for name in hard_check_ids)
+        passed_under_preregistered_rule = all(checks.values())
+        relied_on_demotion = hard_passed and not passed_under_preregistered_rule
+        failed_demoted = sorted(name for name in demoted_ids if not checks[name])
+
+        first_divergence: int | None = None
+        if not checks["prefix_preserved_after_tool_observation"]:
+            limit = min(len(prefix_ids), len(full_ids))
+            first_divergence = next(
+                (i for i in range(limit) if prefix_ids[i] != full_ids[i]), limit
+            )
+
+        if not hard_passed:
+            status = "failed"
+            error = "training template mask or prefix hard gate failed"
+        elif relied_on_demotion:
+            status = "passed_with_demoted_gates"
+            error = (
+                "P5 hard gates passed only because "
+                + ", ".join(failed_demoted)
+                + " is a recorded Phase-A diagnostic under D-046 "
+                "(post_hoc_after_measurement). This is NOT evidence of multi-turn "
+                "tokenized-prefix stability and is NOT a P5 pass under the "
+                "pre-registered eleven-check rule."
+            )
+        else:
+            status = "passed"
+            error = None
+
         return ProbeResult(
             name="training_template_masking",
-            status="passed" if passed else "failed",
+            status=status,
             plan=plan,
             metrics={
                 "checks": checks,
+                "preregistered_hard_check_ids": list(P5_CHECK_IDS),
+                "applied_hard_check_ids": hard_check_ids,
+                "demoted_check_ids": sorted(demoted_ids),
+                "failed_demoted_check_ids": failed_demoted,
+                "passed_under_preregistered_p5_rule": passed_under_preregistered_rule,
+                "first_prefix_divergence_index": first_divergence,
+                "pre_observation_prefix_token_ids": prefix_ids,
                 "training_template_source": (
                     "project_owned_qwen_assistant_branch_generation_wrapper"
                 ),
@@ -2318,7 +2655,7 @@ def _run_training_template_probe(
                 "generation_character_spans": [list(span) for span in generation_spans],
                 "pre_observation_prefix_token_count": len(prefix_ids),
             },
-            error=None if passed else "training template mask or prefix hard gate failed",
+            error=error,
         )
     except ImportError as exc:
         return ProbeResult(
@@ -2357,7 +2694,7 @@ def _p6_prerequisite_error(probes: list[ProbeResult]) -> str | None:
     failures = [
         f"{label}={statuses.get(name, 'missing')}"
         for name, label in required.items()
-        if statuses.get(name) != "passed"
+        if statuses.get(name) not in PASSING_PROBE_STATUSES
     ]
     if failures:
         return "P6 prerequisites did not pass: " + ", ".join(failures)
@@ -2402,7 +2739,7 @@ def _assistant_only_labels(
 def _p5_training_batch(
     training_template_result: ProbeResult,
 ) -> tuple[list[int], list[int], list[int]]:
-    if training_template_result.status != "passed":
+    if training_template_result.status not in PASSING_PROBE_STATUSES:
         raise ValueError("P6 requires a passed P5 training-template result")
     raw_input_ids = training_template_result.metrics.get("training_input_ids")
     raw_assistant_mask = training_template_result.metrics.get(

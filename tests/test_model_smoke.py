@@ -955,6 +955,8 @@ class ModelSmokeProbeTests(unittest.TestCase):
             native_template=QWEN_NATIVE_TRAINING_TEMPLATE,
             probe=probe,
             plan=plan,
+            applied_demotions=(),
+            m6_in_scope=False,
         )
 
         self.assertEqual(result.status, "failed")
@@ -982,6 +984,8 @@ class ModelSmokeProbeTests(unittest.TestCase):
             native_template=QWEN_NATIVE_TRAINING_TEMPLATE,
             probe=probe,
             plan=plan,
+            applied_demotions=(),
+            m6_in_scope=False,
         )
 
         self.assertEqual(result.status, "failed")
@@ -1064,6 +1068,8 @@ class ModelSmokeProbeTests(unittest.TestCase):
                     native_template=QWEN_NATIVE_TRAINING_TEMPLATE,
                     probe=probe,
                     plan=plan,
+                    applied_demotions=(),
+                    m6_in_scope=False,
                 )
             )
 
@@ -1586,6 +1592,133 @@ class ModelSmokeSafetyTests(unittest.TestCase):
             smoke.main(["--config", str(CONFIG_PATH), "--output", str(CONFIG_PATH)])
 
         self.assertEqual(raised.exception.code, 2)
+
+
+class GateDemotionTests(unittest.TestCase):
+    """D-046 scoped the P5 prefix check. These pin that it stayed scoped."""
+
+    def _demotion(self, **overrides):
+        payload = dict(
+            probe="training_template_masking",
+            check="prefix_preserved_after_tool_observation",
+            demoted_to="recorded_phase_a_diagnostic",
+            scope_lane_identity="phase-a-windows-unsloth-trl024",
+            scope_stage="blueprint_7_1_stage_1_single_turn",
+            valid_for_training_stages=["stage_1_single_turn"],
+            invalid_for_training_stages=[
+                "stage_2_scripted_multi_turn",
+                "stage_3_tau2_multi_turn",
+                "m6_environment_factory",
+            ],
+            still_hard_gate_when="multi_turn_or_m6_in_scope",
+            timing="post_hoc_after_measurement",
+            decision_record="D-046",
+            demoted_on="2026-08-18",
+            motive="x" * 60,
+            rationale="y" * 220,
+            validity_precondition="z" * 60,
+            rearm_conditions=["rerun under M6 with the gate enforced"],
+        )
+        payload.update(overrides)
+        return smoke.GateDemotion(**payload)
+
+    def test_demotion_never_applies_when_multi_turn_is_in_scope(self) -> None:
+        demotion = self._demotion()
+        self.assertEqual(
+            smoke._applied_gate_demotions(
+                [demotion], m6_environment_factory_in_scope=False
+            ),
+            (demotion,),
+        )
+        self.assertEqual(
+            smoke._applied_gate_demotions(
+                [demotion], m6_environment_factory_in_scope=True
+            ),
+            (),
+        )
+
+    def test_demotable_set_equals_the_multi_turn_rearm_set(self) -> None:
+        self.assertEqual(
+            smoke.P5_DEMOTABLE_CHECK_IDS, smoke.MULTI_TURN_HARD_GATE_CHECK_IDS
+        )
+        self.assertTrue(smoke.P5_DEMOTABLE_CHECK_IDS <= set(smoke.P5_CHECK_IDS))
+
+    def test_post_hoc_demotion_requires_a_motive_and_full_rationale(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._demotion(rationale="too short")
+        with self.assertRaises(ValidationError):
+            self._demotion(motive="   ")
+
+    def test_declared_demotion_must_match_its_decision_record(self) -> None:
+        digests = smoke._validate_gate_demotions([self._demotion()])
+        self.assertEqual(
+            set(digests), {"P5:prefix_preserved_after_tool_observation"}
+        )
+        for digest in digests.values():
+            self.assertRegex(digest, r"^[0-9a-f]{64}$")
+        with self.assertRaises(smoke.SmokeConfigError):
+            smoke._validate_gate_demotions([self._demotion(demoted_on="2020-01-01")])
+
+    def test_demoted_pass_must_announce_that_it_is_not_multi_turn_evidence(self) -> None:
+        with self.assertRaises(ValidationError):
+            smoke.ProbeResult(
+                name="training_template_masking",
+                status="passed_with_demoted_gates",
+                plan={},
+                metrics={},
+                error=None,
+            )
+        with self.assertRaises(ValidationError):
+            smoke.ProbeResult(
+                name="training_template_masking",
+                status="passed_with_demoted_gates",
+                plan={},
+                metrics={},
+                error="quietly fine",
+            )
+        with self.assertRaises(ValidationError):
+            smoke.ProbeResult(
+                name="training_template_masking",
+                status="passed",
+                plan={},
+                metrics={},
+                error="a clean pass may not carry an error",
+            )
+
+    def test_committed_artifacts_declare_no_demotion(self) -> None:
+        """History is not rewritten: pre-D-046 runs stay hard failures."""
+
+        paths = sorted((smoke.PROJECT_ROOT / "results").glob("model_smoke-*.json"))
+        self.assertGreaterEqual(len(paths), 5)
+        for path in paths:
+            with self.subTest(artifact=path.name):
+                result = smoke.read_result(path)
+                self.assertEqual(result.lane.gate_demotions, [])
+                self.assertEqual(result.lane.gate_demotion_decision_sha256, {})
+                self.assertEqual(result.candidates_with_demoted_gate_failures, [])
+                self.assertFalse(result.post_hoc_gate_demotion_present)
+                for candidate in result.candidates:
+                    self.assertEqual(candidate.demoted_gate_failures, [])
+                    for probe in candidate.probes:
+                        self.assertNotEqual(
+                            probe.status, "passed_with_demoted_gates"
+                        )
+
+    def test_gate_demotions_do_not_reach_the_library(self) -> None:
+        """The smoke demotion must never leak into the reward or eval path."""
+
+        banned = (
+            "gate_demotions",
+            "demoted_gate_failures",
+            "passed_with_demoted_gates",
+            "prefix_preserved_after_tool_observation",
+            "smoke_models",
+        )
+        for path in sorted((smoke.PROJECT_ROOT / "src").rglob("*.py")):
+            text = path.read_text(encoding="utf-8")
+            for token in banned:
+                with self.subTest(path=path.name, token=token):
+                    self.assertNotIn(token, text)
 
 
 if __name__ == "__main__":

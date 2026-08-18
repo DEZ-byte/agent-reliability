@@ -32,8 +32,10 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Rerun Qwen3-1.7B after correcting empty device-map handling so P4 can
   execute while the independent P5 prefix result remains fail-closed
 - [x] Execute P6 training compatibility on all four checkpoints. Both Qwen2.5
-  checkpoints execute and pass P6; both Qwen3 checkpoints stop at the P5
-  prefix gate, so P6 is correctly not reached for them
+  checkpoints execute and pass P6; both Qwen3 checkpoints stopped at the P5
+  prefix gate under the pre-D-046 rule, so P6 was correctly not reached for them
+- [ ] Rerun both Qwen3 checkpoints under D-046 so P6 executes for the first time
+  on Qwen3; write NEW artifacts and never overwrite the pre-D-046 ones
 - [x] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke on one frozen lane
   and lock. Qwen2.5 {3B, 1.5B} is technically eligible on every probe; Qwen3
   {4B, 1.7B} fails only `prefix_preserved_after_tool_observation`, identically
@@ -49,6 +51,10 @@ tests or an artifact in the repository; a design note alone does not count.
 
 ## M6 environment lane
 
+- [ ] Re-arm and re-verify `prefix_preserved_after_tool_observation` as a HARD
+  gate before any multi-turn work. The D-046 demotion is Stage-1-scoped and does
+  not carry over, including to BLUEPRINT_v2 7.1 Stage 2, which sits inside
+  Phase A but is multi-turn
 - [ ] Create a separate TRL 1.8, no-Unsloth requirements input and lock for
   `environment_factory`
 - [ ] Record a separate immutable M6 environment manifest

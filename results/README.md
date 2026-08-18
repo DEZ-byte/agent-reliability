@@ -19,3 +19,17 @@ placement rerun remains separate and pending.
 
 Generated experiment tables must be derived from versioned trajectory logs,
 and every displayed measurement must link to its artifact.
+
+## Demoted gates
+
+From D-046 (2026-08-18), a P5 probe may report `passed_with_demoted_gates`. That
+status means the probe cleared its hard gates only because a pre-registered
+check — `prefix_preserved_after_tool_observation` — was re-scoped to a Phase-A
+diagnostic. It is not a P5 pass under the pre-registered eleven-check rule, and
+`passed_under_preregistered_p5_rule` in the same artifact says so directly.
+
+Artifacts written before D-046 recorded a genuine hard failure under the stronger
+rule. They are retained unmodified and are never reinterpreted as passes; their
+`config_sha256` differs from every post-D-046 artifact, so the two evidence
+regimes are distinguishable by hash alone. Never write "Qwen3 passed P1-P6"
+without the qualifier.

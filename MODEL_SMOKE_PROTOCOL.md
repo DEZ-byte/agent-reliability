@@ -157,7 +157,47 @@ other lane's recorded environment.
   `return_assistant_tokens_mask=True`. Compare the complete returned mask with
   independently derived `{% generation %}` spans; sentinel spot checks alone
   are insufficient.
-- Verify prefix preservation before and after appending a tool observation.
+- Measure prefix preservation before and after appending a tool observation on
+  every run and under every scope, recording the first divergent token index and
+  the pre-observation prefix token IDs when it fails.
+
+  **Demoted gate (D-046, 2026-08-18): `prefix_preserved_after_tool_observation`.**
+  This check was pre-registered as a P5 hard gate. After the four checkpoint
+  measurements were known, D-046 demoted it to a recorded Phase-A *diagnostic*,
+  because it asserts a multi-turn property while the Phase-A/M0 lane and
+  BLUEPRINT_v2 section 7.1 Stage 1 train single-turn tasks only. It remains a
+  HARD GATE for Stage 2 scripted 2-4-turn episodes, Stage 3 tau2 multi-turn, the
+  M6 `environment_factory` lane, and any Rung 1/2 scaffold that appends a tool
+  observation to an already-tokenized context. The demotion expires at the
+  Stage-1/Stage-2 boundary, not at the M0/M6 boundary.
+
+  A candidate that clears P5 only because of this demotion is recorded with probe
+  status `passed_with_demoted_gates` — never plain `passed` — a mandatory error
+  naming the check and D-046, `passed_under_preregistered_p5_rule: false`, a
+  candidate-level `demoted_gate_failures` entry, and its name in the top-level
+  `candidates_with_demoted_gate_failures`. Such a result is never written,
+  quoted, or tabulated as a P5 pass.
+
+## Gate demotions
+
+| Gate | Probe | Demoted on | Decision | Timing | Scope | Still a hard gate for | Re-arm conditions |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| `prefix_preserved_after_tool_observation` | P5 | 2026-08-18 | D-046 | post-hoc, after measurement | Phase-A lane, Stage 1 single-turn only | Stage 2, Stage 3, the M6 lane, and any Rung 1/2 scaffold that appends a tool observation | M6-lane rerun with the gate enforced; root cause diagnosed from `first_prefix_divergence_index`; assistant-mask exactness re-verified on at least two appended observations |
+
+This table is append-only. A demotion may be added only with a dated `D-###`
+section carrying the marker lines the runner checks; the runner fails closed if
+any marker is missing. A demotion is never deleted, only annotated when it is
+re-armed. The pre-registered eleven-check list stays printed above, unedited, so
+the stronger condition remains readable beside the weaker one. The set of checks
+the runner may ever demote is bounded in code and must equal the set re-armed
+for multi-turn.
+
+A pre-registered gate is never deleted or quietly softened. It is either
+enforced, or re-scoped by a dated decision that names the scope where it still
+binds, the diagnostic it becomes elsewhere, the artifact fields that expose the
+demotion, and the re-verification owed. A re-scoped gate keeps its original name
+and expression, is still measured on every run, and must record strictly more
+evidence than it did as a hard gate.
 - Import TRL's pinned `DataCollatorForLanguageModeling`; P6 must prove that it
   converts this exact P5 mask into the expected assistant-only labels.
 - Treat this as serialization and masking evidence only. It does not execute a

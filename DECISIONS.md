@@ -490,3 +490,78 @@ Qwen3-1.7B artifacts the actual cause was a revision-resolution failure, so a
 permanent record attributed the skip to a hardware verdict that was never
 reached. The probe now reports the upstream probe status and its error text,
 matching the pattern P6 already used for its prerequisites.
+
+## 2026-08-18 — M0 gate scoping
+
+### D-046 — `prefix_preserved_after_tool_observation` is a Phase-A diagnostic and stays a multi-turn hard gate
+
+Demoted gate: `P5:prefix_preserved_after_tool_observation`
+Demoted on: 2026-08-18
+Timing: post_hoc_after_measurement
+Scope: `phase-a-windows-unsloth-trl024` / blueprint_7_1_stage_1_single_turn
+Still a hard gate for: BLUEPRINT_v2 7.1 Stage 2 scripted 2-4-turn episodes, Stage 3 tau2 multi-turn, the M6 `environment_factory` lane, and any Rung 1/2 scaffold that appends a tool observation to an already-tokenized context.
+Re-arm conditions: (1) rerun P5 with this check enforced as a hard gate on the M6 TRL 1.8 / no-Unsloth lane, with its own requirements input, lock, manifest and artifact; (2) diagnose the root cause from the recorded `first_prefix_divergence_index` and the surrounding decoded windows; (3) re-verify assistant-mask exactness on a trajectory with at least two appended tool observations.
+
+**What is demoted.** One of the eleven P5 checks, `full_ids[:len(prefix_ids)] == prefix_ids`. It is
+not deleted, renamed, or softened. It is still computed under every scope, still recorded in
+`metrics.checks` under the same name with the same expression, and now additionally records the
+first divergent token index, so the demoted check reports strictly more evidence than it did as a
+hard gate.
+
+**Why.** The check asserts a multi-turn serialization property: that appending a tool observation
+leaves the earlier tokenization byte-identical. BLUEPRINT_v2 section 3.1 and section 7.1 Stage 1
+specify single-turn verifiable tool tasks for the Phase-A/M0 lane, where one trajectory is tokenized
+once and assistant-only loss is taken over a single assistant block. That objective never exercises
+the demoted property. This is a scope argument, not a refutation of the measurement.
+
+**The measured fact this sets aside.** Qwen3-4B and Qwen3-1.7B fail this and only this check, at
+both sizes, while `project_template_render_matches_native`,
+`project_template_token_ids_match_native` and `assistant_mask_exactly_matches_generation_spans` all
+pass. The P1 native diagnostic shows the same divergence on Qwen3's own inference template: prefix
+309 tokens against a 322-token full render. Qwen2.5-3B and Qwen2.5-1.5B pass all eleven checks and
+pass P6. The cause of the Qwen3 divergence is not diagnosed anywhere in this repository.
+
+**The motive, stated plainly.** The owner wants the public portfolio repository to be releasable
+under a permissive licence. The technically eligible Qwen2.5 bundle contains
+`Qwen/Qwen2.5-3B-Instruct` under the non-commercial Qwen Research License; the Qwen3 bundle is
+Apache-2.0. This demotion was proposed after the four measurements were known and after it was known
+which bundle it favours. It is therefore recorded as `post_hoc_after_measurement`. The scoping
+argument would have been equally correct had it been noticed before any model ran. It was not, and
+recording that ordering is not optional. An undisclosed motive is how the v1 blueprint failed.
+
+**The validity precondition.** This demotion is sound only while no Phase-A Stage-1 rollout appends
+a tool observation into an already-tokenized model context. If any Stage-1 arm or rung feeds an
+observation back, the property is in scope for that arm and this demotion does not cover it.
+
+**What this does not do.** It does not make Qwen3 selection-eligible: P6 has never executed on any
+Qwen3 checkpoint, and the demotion only makes P6 reachable. It does not select a bundle, resolve the
+release gate, or establish multi-turn compatibility. It does not weaken assistant-only loss masking,
+which rests on checks that remain hard gates in every scope and are permanently outside the
+demotable set. It does not alter any Qwen2.5 measurement, the reward path, the gate engine, the
+evaluation harness, or the ranking keys. It does not transfer Phase-A evidence to M6.
+
+**Mechanism.** The demotion is declared in `configs/model_smoke.json` under `lane.gate_demotions`,
+so it rides `config_sha256`. The demotable set is a closed Literal in code and must equal the
+multi-turn re-arm set. Scope is resolved once, by `_applied_gate_demotions`, whose first statement
+returns an empty tuple when multi-turn or M6 is in scope. A run that relied on the demotion reports
+probe status `passed_with_demoted_gates`, never plain `passed`, with a mandatory error naming the
+check and this decision, plus `passed_under_preregistered_p5_rule: false`, a candidate-level
+`demoted_gate_failures` record, and the candidate's name in the top-level
+`candidates_with_demoted_gate_failures` beside `post_hoc_gate_demotion_present: true`. The runner
+fails closed if this section loses any of the six marker lines above, and this section's SHA-256 is
+pinned into each artifact.
+
+**Historical records.** The artifacts committed before this decision recorded a genuine hard failure
+under the stronger rule. They are retained unmodified, are not regenerated, and are not retroactively
+reinterpreted as passes. Their `config_sha256` differs from every post-D-046 artifact, so the two
+evidence regimes are distinguishable by hash alone.
+
+**Obligation.** Any multi-turn or M6 use of a Qwen3 checkpoint must first satisfy the re-arm
+conditions above, on the M6 lane, with its own lock, manifest and artifact.
+
+### D-047 — D-026 is narrowed, not waived
+D-026 required assistant-only loss to be used only after a fixture proves correct assistant masking
+and multi-turn prefix preservation. D-046 narrows the prefix half of that requirement to multi-turn
+scope, where it is reaffirmed in full. The masking half is unchanged and remains a hard gate under
+every scope. D-043's statement that its correction does not waive the independent P5 prefix gate
+also stands: the gate is re-scoped by a dated decision, not waived.
