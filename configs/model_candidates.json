@@ -7,9 +7,9 @@
         "id": "Qwen/Qwen2.5-3B-Instruct",
         "smoke_bundle": "qwen2.5",
         "revision": "aa8e72537993ba99e69dfaafa59ed015b17504d1",
-        "selection_status": "pending",
-        "release_eligibility": "pending",
-        "release_decision": null,
+        "selection_status": "rejected",
+        "release_eligibility": "ineligible",
+        "release_decision": "D-048",
         "license_id": "other",
         "license_name": "qwen-research",
         "access": "public"
@@ -18,9 +18,9 @@
         "id": "Qwen/Qwen3-4B",
         "smoke_bundle": "qwen3",
         "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
-        "selection_status": "pending",
-        "release_eligibility": "pending",
-        "release_decision": null,
+        "selection_status": "selected",
+        "release_eligibility": "eligible",
+        "release_decision": "D-048",
         "license_id": "apache-2.0",
         "access": "public"
       }
@@ -30,9 +30,9 @@
         "id": "Qwen/Qwen2.5-1.5B-Instruct",
         "smoke_bundle": "qwen2.5",
         "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
-        "selection_status": "pending",
-        "release_eligibility": "pending",
-        "release_decision": null,
+        "selection_status": "rejected",
+        "release_eligibility": "ineligible",
+        "release_decision": "D-048",
         "license_id": "apache-2.0",
         "access": "public"
       },
@@ -40,9 +40,9 @@
         "id": "Qwen/Qwen3-1.7B",
         "smoke_bundle": "qwen3",
         "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
-        "selection_status": "pending",
-        "release_eligibility": "pending",
-        "release_decision": null,
+        "selection_status": "selected",
+        "release_eligibility": "eligible",
+        "release_decision": "D-048",
         "license_id": "apache-2.0",
         "access": "public"
       }

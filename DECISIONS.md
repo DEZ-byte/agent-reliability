@@ -565,3 +565,64 @@ and multi-turn prefix preservation. D-046 narrows the prefix half of that requir
 scope, where it is reaffirmed in full. The masking half is unchanged and remains a hard gate under
 every scope. D-043's statement that its correction does not waive the independent P5 prefix gate
 also stands: the gate is re-scoped by a dated decision, not waived.
+
+## 2026-08-18 — M0 bundle selection
+
+### D-048 — Qwen3 {4B, 1.7B} is the selected bundle, under a declared release scope and a disclosed demotion
+
+Release scope: `public-portfolio-permissive`
+Release-eligible bundles: `qwen3`
+
+**The release scope, declared.** This repository is a public hiring portfolio.
+Released artifacts — code, adapters, generated data, and model cards — must be
+redistributable under a permissive licence, and derivative fine-tunes must be
+publishable without a separate commercial grant. That requirement is the input
+the licence gate needed and had been missing since the registry was written.
+
+**Measured technical evidence, all four checkpoints.** Every candidate has now
+executed P6 on the frozen Phase-A lane:
+
+| Candidate | P1-P5 | P6 | selection_eligible |
+| :-- | :-- | :-- | :-- |
+| `Qwen/Qwen2.5-3B-Instruct` | 11 of 11 P5 checks, clean | executed, passed | true |
+| `Qwen/Qwen2.5-1.5B-Instruct` | 11 of 11 P5 checks, clean | executed, passed | true |
+| `Qwen/Qwen3-4B` | 10 of 11; `prefix_preserved_after_tool_observation` false | executed, passed | true |
+| `Qwen/Qwen3-1.7B` | 10 of 11; same single check false | executed, passed | true |
+
+Both bundles are technically eligible. The technical ladders were **not**
+identical: Qwen2.5 cleared eleven of eleven P5 checks, Qwen3 cleared ten and
+relies on the D-046 demotion for the eleventh. Any sentence claiming both
+bundles "passed P1-P6" is false without that qualifier.
+
+**Why Qwen3 wins.** Not on technical merit, which favours Qwen2.5. On the
+declared release scope. `Qwen/Qwen2.5-3B-Instruct` is published under the
+non-commercial Qwen Research License, so selecting the Qwen2.5 bundle would make
+the primary checkpoint — and, conservatively, every adapter derived from it — a
+non-commercial artifact at the centre of a public portfolio. `Qwen/Qwen3-4B` and
+`Qwen/Qwen3-1.7B` are Apache-2.0. Under `public-portfolio-permissive` the
+Qwen2.5 bundle is ineligible for release regardless of its stronger technical
+record, and the licence gate is applied before ranking, exactly as the selection
+rule requires.
+
+**What this selection carries.** It is made **with** the D-046 demotion of
+`prefix_preserved_after_tool_observation`, which is recorded as
+`post_hoc_after_measurement`. The correct description of this bundle is
+"Phase-A single-turn eligible, with one of eleven P5 checks demoted (D-046)",
+never "passed P1-P6". Every Qwen3 artifact records `passed_with_demoted_gates`,
+`passed_under_preregistered_p5_rule: false`, and the candidate's name in
+`candidates_with_demoted_gate_failures`.
+
+**The obligation this creates.** Before any Stage 2 scripted multi-turn work,
+any Stage 3 tau2 work, or any M6 `environment_factory` work uses a Qwen3
+checkpoint, the demoted gate must be re-armed and re-verified under the M6 lane
+per the D-046 re-arm conditions. The recorded
+`first_prefix_divergence_index` of 277, identical at both sizes, is the starting
+point for that diagnosis. If the re-armed gate fails, Stage 2 and Stage 3 must
+either fall back to the non-commercially licensed Qwen2.5 bundle — reopening the
+licensing problem this selection resolves — or ship with a documented multi-turn
+limitation. That contingency is accepted knowingly.
+
+**Not decided here.** The function-calling dataset, the repository licence, and
+the Meta gated-model requests remain open. The Qwen2.5 measurements are retained
+in full and are not deleted; the bundle is marked ineligible for release, not
+wrong.

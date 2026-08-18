@@ -108,7 +108,19 @@ class ModelCandidateRegistryTests(unittest.TestCase):
                 self.assertIn(access, ALLOWED_ACCESS)
                 self.assertIsInstance(status, str)
                 self.assertIn(status, ALLOWED_SELECTION_STATUSES)
-                self.assertEqual(status, "pending")
+                # Selection and release eligibility resolve together, by a
+                # dated decision (D-048). Neither may move without the other.
+                self.assertEqual(
+                    status == "pending",
+                    candidate.get("release_eligibility") == "pending",
+                    "selection_status and release_eligibility must resolve together",
+                )
+                if status == "selected":
+                    self.assertEqual(candidate.get("release_eligibility"), "eligible")
+                if status == "rejected":
+                    self.assertEqual(
+                        candidate.get("release_eligibility"), "ineligible"
+                    )
                 self.assertIsInstance(release_eligibility, str)
                 self.assertIn(
                     release_eligibility, ALLOWED_RELEASE_ELIGIBILITY

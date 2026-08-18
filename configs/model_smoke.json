@@ -46,11 +46,13 @@
   },
   "release_gate": {
     "registry_path": "configs/model_candidates.json",
-    "expected_registry_sha256": "e6d751c4738805abd05259c3cc64e84f78416d49a5e2408aa2dae597be5ef2dc",
-    "status": "pending",
-    "intended_release_scope": null,
-    "decision_record": null,
-    "eligible_bundles": []
+    "expected_registry_sha256": "967d822c9e1b41c4ffce9cded363a4036ed465d91826c3f0d276c3c5a48de30c",
+    "status": "resolved",
+    "intended_release_scope": "public-portfolio-permissive",
+    "decision_record": "D-048",
+    "eligible_bundles": [
+      "qwen3"
+    ]
   },
   "candidates": [
     {

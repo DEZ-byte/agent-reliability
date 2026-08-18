@@ -73,15 +73,21 @@ class ModelSmokeConfigTests(unittest.TestCase):
                 "P6": "implemented",
             },
         )
-        self.assertEqual(config.release_gate.status, "pending")
+        # Resolved by D-048. A resolved gate must carry all three of scope,
+        # decision, and bundles; the model rejects any partial resolution.
+        self.assertEqual(config.release_gate.status, "resolved")
+        self.assertEqual(config.release_gate.decision_record, "D-048")
+        self.assertEqual(config.release_gate.eligible_bundles, ["qwen3"])
+        self.assertTrue(config.release_gate.intended_release_scope)
         self.assertEqual(
             config.release_gate.expected_registry_sha256,
             smoke._sha256_file(PROJECT_ROOT / config.release_gate.registry_path),
         )
-        self.assertIsNone(config.release_gate.intended_release_scope)
-        self.assertIsNone(config.release_gate.decision_record)
-        self.assertEqual(config.release_gate.eligible_bundles, [])
-        self.assertFalse(config.release_gate.selection_allowed)
+        self.assertEqual(
+            config.release_gate.intended_release_scope,
+            "public-portfolio-permissive",
+        )
+        self.assertTrue(config.release_gate.selection_allowed)
 
     def test_lane_probe_contract_is_strict(self) -> None:
         original = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
@@ -109,15 +115,28 @@ class ModelSmokeConfigTests(unittest.TestCase):
 
     def test_release_gate_requires_an_explicit_resolved_decision(self) -> None:
         original = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+        # A pending gate may not name scope, decision, or bundles.
         invalid_pending = json.loads(json.dumps(original))
-        invalid_pending["release_gate"]["eligible_bundles"] = ["qwen3"]
+        invalid_pending["release_gate"].update(
+            status="pending",
+            intended_release_scope=None,
+            decision_record=None,
+            eligible_bundles=["qwen3"],
+        )
         with self.assertRaises(ValidationError):
             smoke.SmokeConfig.model_validate(invalid_pending)
 
-        invalid_resolved = json.loads(json.dumps(original))
-        invalid_resolved["release_gate"]["status"] = "resolved"
+        # A resolved gate may not omit any of the three.
+        for field in ("intended_release_scope", "decision_record"):
+            partial = json.loads(json.dumps(original))
+            partial["release_gate"][field] = None
+            with self.assertRaises(ValidationError):
+                smoke.SmokeConfig.model_validate(partial)
+        no_bundles = json.loads(json.dumps(original))
+        no_bundles["release_gate"]["eligible_bundles"] = []
         with self.assertRaises(ValidationError):
-            smoke.SmokeConfig.model_validate(invalid_resolved)
+            smoke.SmokeConfig.model_validate(no_bundles)
 
         resolved = json.loads(json.dumps(original))
         resolved["release_gate"].update(
@@ -283,8 +302,10 @@ class ModelSmokeDryRunTests(unittest.TestCase):
         self.assertFalse(result.selection_eligible)
         self.assertEqual(result.lane.identity, "phase-a-windows-unsloth-trl024")
         self.assertTrue(result.lane.lock_matches_expected)
-        self.assertEqual(result.release_gate.status, "pending")
-        self.assertFalse(result.release_gate.selection_allowed)
+        self.assertEqual(result.release_gate.status, "resolved")
+        self.assertTrue(result.release_gate.selection_allowed)
+        # A resolved gate still cannot make an unmeasured plan selectable.
+        self.assertFalse(result.selection_eligible)
         self.assertTrue(
             all(
                 probe.metrics == {}
@@ -1317,11 +1338,27 @@ class ModelSmokePersistenceTests(unittest.TestCase):
                 smoke.CandidateResult.model_validate(payload)
             )
 
+        # The repository config is resolved (D-048), so the pending half of
+        # this test supplies its own pending gate rather than depending on the
+        # committed state.
         pending_payload = full_result.model_dump(mode="python")
+        pending_payload["release_gate"].update(
+            {
+                "status": "pending",
+                "intended_release_scope": None,
+                "decision_record": None,
+                "eligible_bundles": [],
+            }
+        )
         pending_payload["candidates"] = [
             candidate.model_dump(mode="python")
             for candidate in technical_candidates
         ]
+        pending_payload["candidates_with_demoted_gate_failures"] = sorted(
+            candidate.name
+            for candidate in technical_candidates
+            if candidate.demoted_gate_failures
+        )
         pending_payload["selection_eligible"] = False
         pending = smoke.SmokeResult.model_validate(pending_payload)
         self.assertFalse(pending.selection_eligible)
@@ -1685,24 +1722,72 @@ class GateDemotionTests(unittest.TestCase):
                 error="a clean pass may not carry an error",
             )
 
-    def test_committed_artifacts_declare_no_demotion(self) -> None:
-        """History is not rewritten: pre-D-046 runs stay hard failures."""
+    def test_committed_artifacts_are_internally_consistent(self) -> None:
+        """History is not rewritten and every artifact states its own regime."""
 
         paths = sorted((smoke.PROJECT_ROOT / "results").glob("model_smoke-*.json"))
         self.assertGreaterEqual(len(paths), 5)
+        pre, post = 0, 0
         for path in paths:
             with self.subTest(artifact=path.name):
                 result = smoke.read_result(path)
-                self.assertEqual(result.lane.gate_demotions, [])
-                self.assertEqual(result.lane.gate_demotion_decision_sha256, {})
-                self.assertEqual(result.candidates_with_demoted_gate_failures, [])
-                self.assertFalse(result.post_hoc_gate_demotion_present)
-                for candidate in result.candidates:
-                    self.assertEqual(candidate.demoted_gate_failures, [])
-                    for probe in candidate.probes:
-                        self.assertNotEqual(
-                            probe.status, "passed_with_demoted_gates"
-                        )
+                declared = bool(result.lane.gate_demotions)
+                self.assertEqual(
+                    set(result.lane.gate_demotion_decision_sha256),
+                    {item.gate_id for item in result.lane.gate_demotions},
+                )
+                demoted_probe_names = {
+                    candidate.name
+                    for candidate in result.candidates
+                    for probe in candidate.probes
+                    if probe.status == "passed_with_demoted_gates"
+                }
+                if not declared:
+                    # Pre-D-046 evidence: the stronger rule applied, and the
+                    # recorded failure is never reinterpreted as a pass.
+                    pre += 1
+                    self.assertEqual(demoted_probe_names, set())
+                    self.assertEqual(result.candidates_with_demoted_gate_failures, [])
+                    self.assertFalse(result.post_hoc_gate_demotion_present)
+                    for candidate in result.candidates:
+                        self.assertEqual(candidate.demoted_gate_failures, [])
+                else:
+                    post += 1
+                    self.assertEqual(
+                        sorted(demoted_probe_names),
+                        result.candidates_with_demoted_gate_failures,
+                    )
+                    for candidate in result.candidates:
+                        if candidate.name not in demoted_probe_names:
+                            continue
+                        self.assertTrue(candidate.demoted_gate_failures)
+                        for probe in candidate.probes:
+                            if probe.status != "passed_with_demoted_gates":
+                                continue
+                            self.assertFalse(
+                                probe.metrics["passed_under_preregistered_p5_rule"]
+                            )
+        self.assertGreater(pre, 0, "expected retained pre-D-046 artifacts")
+        self.assertGreater(post, 0, "expected post-D-046 artifacts")
+
+    def test_pre_d046_qwen3_artifacts_still_record_a_hard_failure(self) -> None:
+        """The demotion must never rewrite the evidence it was based on."""
+
+        found = 0
+        for path in sorted((smoke.PROJECT_ROOT / "results").glob("model_smoke-qwen3-*.json")):
+            result = smoke.read_result(path)
+            if result.lane.gate_demotions:
+                continue
+            for candidate in result.candidates:
+                for probe in candidate.probes:
+                    if probe.name != "training_template_masking":
+                        continue
+                    if probe.status == "unavailable":
+                        continue
+                    with self.subTest(artifact=path.name):
+                        self.assertEqual(probe.status, "failed")
+                    found += 1
+        self.assertGreater(found, 0)
 
     def test_gate_demotions_do_not_reach_the_library(self) -> None:
         """The smoke demotion must never leak into the reward or eval path."""
