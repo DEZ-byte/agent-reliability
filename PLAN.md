@@ -34,17 +34,19 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Execute P6 training compatibility on all four checkpoints. Both Qwen2.5
   checkpoints execute and pass P6; both Qwen3 checkpoints stopped at the P5
   prefix gate under the pre-D-046 rule, so P6 was correctly not reached for them
-- [ ] Rerun both Qwen3 checkpoints under D-046 so P6 executes for the first time
+- [x] Rerun both Qwen3 checkpoints under D-046 so P6 executes for the first time
   on Qwen3; write NEW artifacts and never overwrite the pre-D-046 ones
 - [x] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke on one frozen lane
   and lock. Qwen2.5 {3B, 1.5B} is technically eligible on every probe; Qwen3
   {4B, 1.7B} fails only `prefix_preserved_after_tool_observation`, identically
   at both sizes
-- [ ] Declare the intended release scope, then apply the license gate and
-  record the bundle decision. Blocked on that declaration, not on measurement:
-  the technically eligible bundle contains the non-commercial
-  `Qwen/Qwen2.5-3B-Instruct`, while the Apache-2.0 Qwen3 bundle is currently
-  ineligible
+- [x] Declare the intended release scope, then apply the license gate and
+  record the bundle decision. Scope is `public-portfolio-permissive`; the
+  Apache-2.0 Qwen3 {4B, 1.7B} bundle is selected on licence, not on technical
+  merit, with the D-046 demotion disclosed (D-048)
+- [x] Record a single four-candidate artifact on one lane with the gate
+  resolved. Top-level `selection_eligible` is true for the first time; the two
+  Qwen3 candidates carry `passed_with_demoted_gates`
 - [ ] Function-calling dataset decision after license caveats are resolved
 - [ ] Repository license decision after the license table exists
 - [ ] File Meta gated-model access requests
