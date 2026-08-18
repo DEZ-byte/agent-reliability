@@ -1806,5 +1806,47 @@ class GateDemotionTests(unittest.TestCase):
                     self.assertNotIn(token, text)
 
 
+class ChatTemplateControlTests(unittest.TestCase):
+    """The Qwen3-vs-Qwen2.5 parity control must be measured, not assumed."""
+
+    class _Tok:
+        def __init__(self, reads: bool) -> None:
+            self.reads = reads
+
+        def apply_chat_template(self, messages, **kwargs):
+            if self.reads and kwargs.get("enable_thinking"):
+                return "RENDER<think>"
+            return "RENDER"
+
+    def _probe(self):
+        payload = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))["probe"]
+        return smoke.ProbeConfig.model_validate(payload)
+
+    def test_a_template_that_reads_the_control_is_recorded_as_honored(self) -> None:
+        result = smoke._chat_template_kwargs_honored(
+            tokenizer=self._Tok(reads=True), messages=[], tools=[], probe=self._probe()
+        )
+        self.assertIs(result["enable_thinking"], True)
+
+    def test_a_template_that_ignores_the_control_is_recorded_as_not_honored(self) -> None:
+        """Not a failure: Qwen2.5 has no thinking mode. It must still be visible."""
+
+        result = smoke._chat_template_kwargs_honored(
+            tokenizer=self._Tok(reads=False), messages=[], tools=[], probe=self._probe()
+        )
+        self.assertIs(result["enable_thinking"], False)
+
+    def test_template_errors_become_evidence_rather_than_crashes(self) -> None:
+        class Boom:
+            def apply_chat_template(self, messages, **kwargs):
+                raise RuntimeError("template exploded")
+
+        result = smoke._chat_template_kwargs_honored(
+            tokenizer=Boom(), messages=[], tools=[], probe=self._probe()
+        )
+        self.assertIsInstance(result["enable_thinking"], str)
+        self.assertIn("error", result["enable_thinking"])
+
+
 if __name__ == "__main__":
     unittest.main()

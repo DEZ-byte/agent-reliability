@@ -1867,6 +1867,10 @@ def _execute_candidate(
                 "native_rendered_prompt": rendered,
                 "native_rendered_character_count": len(rendered),
                 "native_rendered_token_count": len(token_ids),
+                "chat_template_kwargs": dict(probe.chat_template_kwargs),
+                "chat_template_kwargs_honored": _chat_template_kwargs_honored(
+                    tokenizer=tokenizer, messages=messages, tools=tools, probe=probe
+                ),
                 "native_prefix_preservation_diagnostic": _prefix_diagnostic(
                     tokenizer=tokenizer,
                     template=native_template,
@@ -2198,6 +2202,41 @@ def _execute_candidate(
         probes=candidate_probes,
         p6=p6_result,
     )
+
+
+def _chat_template_kwargs_honored(
+    *, tokenizer: Any, messages: list[dict[str, JsonValue]], tools: Any, probe: ProbeConfig
+) -> dict[str, JsonValue]:
+    """Record, per boolean control, whether the template actually consumed it.
+
+    `enable_thinking=false` is the parity condition that lets a Qwen3 bundle be
+    compared with a Qwen2.5 bundle on generated tokens. Passing it proves
+    nothing: a Jinja template silently ignores a variable it does not read. Each
+    boolean is therefore re-rendered with its value negated, and a difference is
+    the evidence that the control reached the template. A control that is not
+    honored is not a failure — Qwen2.5 has no thinking mode — but it must be
+    recorded rather than assumed.
+    """
+
+    honored: dict[str, JsonValue] = {}
+    for key, value in probe.chat_template_kwargs.items():
+        if not isinstance(value, bool):
+            continue
+        try:
+            kwargs = dict(probe.chat_template_kwargs)
+            scored = tokenizer.apply_chat_template(
+                messages, tools=tools, add_generation_prompt=True,
+                tokenize=False, **kwargs
+            )
+            kwargs[key] = not value
+            negated = tokenizer.apply_chat_template(
+                messages, tools=tools, add_generation_prompt=True,
+                tokenize=False, **kwargs
+            )
+            honored[key] = scored != negated
+        except Exception as exc:  # Template errors are evidence, not crashes.
+            honored[key] = f"error: {_error_text(exc)[:120]}"
+    return honored
 
 
 def _run_generation_probe(

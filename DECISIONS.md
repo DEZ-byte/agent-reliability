@@ -663,3 +663,30 @@ declared table is retained but demoted to an assertion: any disagreement with
 the lock is reported as `declared_lock_drift` and fails the probe. Three tests
 pin this, including one asserting that the locked distribution count exceeds the
 declared table, so the lock can never quietly shrink to the table again.
+
+### D-051 — The thinking-parity control is measured, and it did hold
+D-031 scored Qwen3 with `enable_thinking=false` so the bundles could be compared
+on generated tokens without charging hidden reasoning to one side. The harness
+passed that kwarg but never checked it: a Jinja template silently ignores a
+variable it does not read, so the decisive parity control was an assumption.
+
+Measured on the pinned revisions, offline, by rendering the probe messages twice
+with the flag negated:
+
+| Candidate | Control honored | Scored render ends with |
+| :-- | :-- | :-- |
+| `Qwen/Qwen2.5-3B-Instruct` | no | `<|im_start|>assistant` |
+| `Qwen/Qwen2.5-1.5B-Instruct` | no | `<|im_start|>assistant` |
+| `Qwen/Qwen3-4B` | yes | `<think>` opened and closed empty |
+| `Qwen/Qwen3-1.7B` | yes | `<think>` opened and closed empty |
+
+The control reached the templates that have a thinking mode and changed their
+output; it is inert on Qwen2.5, which has none. That is the intended behaviour,
+so the D-048 comparison stands. "Not honored" is recorded, not gated: it is
+correct for a template without the feature and would be a finding only for a
+model that claims one.
+
+The P1 probe now records `chat_template_kwargs` and
+`chat_template_kwargs_honored` per candidate, so no future run has to assume it
+again. A template that raises while being probed records the error as evidence
+instead of failing the run.
