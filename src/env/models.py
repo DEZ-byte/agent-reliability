@@ -16,6 +16,19 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 
+def contains_surrogate(text: str) -> bool:
+    """True when a string holds a surrogate codepoint.
+
+    ``json`` accepts an escape such as ``\ud800`` and yields a ``str`` holding a
+    lone surrogate. Python stores real codepoints, so any surrogate present here
+    is unpaired and UTF-8 cannot encode it. Every strict-JSON boundary in this
+    package rejects such a value, so it fails where it enters and becomes scored
+    evidence instead of aborting a run later during hashing or result writing.
+    """
+
+    return any(0xD800 <= ord(char) <= 0xDFFF for char in text)
+
+
 class _ContractModel(BaseModel):
     """Strict base class shared by all serialized reliability contracts."""
 

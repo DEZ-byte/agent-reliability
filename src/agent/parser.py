@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from env.models import ParseIssue, ParseResult, ToolCall
+from env.models import ParseIssue, ParseResult, ToolCall, contains_surrogate
 
 
 OPEN_TAG = "<tool_call>"
@@ -30,10 +30,6 @@ def _parse_finite_float(value: str) -> float:
     return parsed
 
 
-def _has_surrogate(text: str) -> bool:
-    return any(0xD800 <= ord(char) <= 0xDFFF for char in text)
-
-
 def _find_surrogate(value: Any, path: str = "tool_call") -> str | None:
     """Return the path of the first unpaired surrogate, if any.
 
@@ -44,7 +40,7 @@ def _find_surrogate(value: Any, path: str = "tool_call") -> str | None:
     """
 
     if isinstance(value, str):
-        return path if _has_surrogate(value) else None
+        return path if contains_surrogate(value) else None
     if isinstance(value, list):
         for index, item in enumerate(value):
             found = _find_surrogate(item, "%s[%d]" % (path, index))
@@ -53,7 +49,7 @@ def _find_surrogate(value: Any, path: str = "tool_call") -> str | None:
         return None
     if isinstance(value, dict):
         for key, item in value.items():
-            if isinstance(key, str) and _has_surrogate(key):
+            if isinstance(key, str) and contains_surrogate(key):
                 return "%s key %r" % (path, key)
             found = _find_surrogate(item, "%s.%s" % (path, key))
             if found is not None:

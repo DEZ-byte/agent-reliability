@@ -150,7 +150,9 @@ class TrajectoryRecordTests(unittest.TestCase):
             doomed = make_record(run_idx=1).model_dump(mode="python")
             doomed["raw_completion"] = "lone surrogate " + chr(0xD800)
 
-            with self.assertRaisesRegex(ValueError, "UTF-8 cannot encode"):
+            # Rejected at validation, before the destination is opened. The
+            # writer's own encode guard remains as defence in depth.
+            with self.assertRaises(ValueError):
                 write_trajectory_jsonl([doomed], path)
 
             self.assertEqual(path.read_bytes(), before)

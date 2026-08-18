@@ -16,6 +16,7 @@ from env.models import (
     ToolCall,
     ToolEvent,
     compute_evidence_digest,
+    contains_surrogate,
 )
 
 
@@ -28,7 +29,11 @@ def _json_clone(value: _T) -> _T:
     """Deep-copy a value while proving it is strict JSON data."""
 
     def validate(item: object, path: str) -> None:
-        if item is None or isinstance(item, (str, bool)) or type(item) is int:
+        if isinstance(item, str):
+            if contains_surrogate(item):
+                raise TypeError(f"unpaired surrogate at {path}")
+            return
+        if item is None or isinstance(item, bool) or type(item) is int:
             return
         if type(item) is float:
             if not math.isfinite(item):
@@ -42,6 +47,8 @@ def _json_clone(value: _T) -> _T:
             for key, child in item.items():
                 if not isinstance(key, str):
                     raise TypeError(f"non-string object key at {path}")
+                if contains_surrogate(key):
+                    raise TypeError(f"unpaired surrogate in object key at {path}")
                 validate(child, f"{path}.{key}")
             return
         raise TypeError(f"non-JSON value of type {type(item).__name__} at {path}")

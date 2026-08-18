@@ -14,6 +14,8 @@ from typing import Final, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError, field_validator
 
+from env.models import contains_surrogate
+
 
 TRAJECTORY_SCHEMA_VERSION: Final = 1
 _REPLACE_LOCKS: Final = tuple(threading.Lock() for _ in range(64))
@@ -164,7 +166,11 @@ def _revalidate_record(
 
 
 def _validate_json_value(value: object, path: str = "payload") -> None:
-    if value is None or isinstance(value, (str, bool, int)):
+    if isinstance(value, str):
+        if contains_surrogate(value):
+            raise ValueError(f"{path} contains an unpaired surrogate")
+        return
+    if value is None or isinstance(value, (bool, int)):
         return
     if isinstance(value, float):
         if not math.isfinite(value):
@@ -178,6 +184,8 @@ def _validate_json_value(value: object, path: str = "payload") -> None:
         for key, item in value.items():
             if not isinstance(key, str):
                 raise ValueError(f"{path} contains a non-string object key")
+            if contains_surrogate(key):
+                raise ValueError(f"{path} has an unpaired surrogate in an object key")
             _validate_json_value(item, f"{path}.{key}")
         return
     raise ValueError(f"{path} contains non-JSON value {value!r}")

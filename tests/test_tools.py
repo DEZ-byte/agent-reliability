@@ -217,5 +217,27 @@ class ToolRegistryTests(unittest.TestCase):
             ToolSpec("unsafe_write", SetArgs, handler, mutative=True)
 
 
+class SurrogateBoundaryTests(unittest.TestCase):
+    """A tool may not smuggle an unencodable string into the evidence log."""
+
+    def test_tool_output_with_an_unpaired_surrogate_is_rejected(self) -> None:
+        from env.tools import _json_clone
+
+        with self.assertRaisesRegex(TypeError, "JSON-serializable"):
+            _json_clone({"answer": chr(0xD800)})
+
+    def test_object_key_with_an_unpaired_surrogate_is_rejected(self) -> None:
+        from env.tools import _json_clone
+
+        with self.assertRaisesRegex(TypeError, "JSON-serializable"):
+            _json_clone({chr(0xD800): "value"})
+
+    def test_ordinary_non_ascii_text_still_round_trips(self) -> None:
+        from env.tools import _json_clone
+
+        payload = {"note": "café — 日本語", "n": [1, 2.5, None, True]}
+        self.assertEqual(_json_clone(payload), payload)
+
+
 if __name__ == "__main__":
     unittest.main()

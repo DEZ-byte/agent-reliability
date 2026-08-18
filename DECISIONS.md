@@ -626,3 +626,23 @@ limitation. That contingency is accepted knowingly.
 the Meta gated-model requests remain open. The Qwen2.5 measurements are retained
 in full and are not deleted; the bundle is marked ineligible for release, not
 wrong.
+
+## 2026-08-18 — M0 hardening
+
+### D-049 — One surrogate rule, enforced at every strict-JSON boundary
+The parser rejected unpaired surrogates (D-037), but two other boundaries did
+not. `_json_clone` in `src/env/tools.py` proved values with
+`json.dumps(value, allow_nan=False)`, whose default `ensure_ascii=True` escapes
+a lone surrogate so it round-trips and is accepted, contradicting the function's
+own docstring claim to prove strict JSON. `_validate_json_value` in
+`src/evaluation/trajectory.py` checked object keys only for being strings, and
+returned early on any string value. A surrogate arriving through a tool return
+value, through environment state, or as an object key therefore passed
+validation and aborted the run later, during evidence hashing or result writing.
+
+The rule now has one definition, `contains_surrogate` in `src/env/models.py`,
+used by the parser, the tool boundary, and the trajectory validator. A value
+carrying an unpaired surrogate fails where it enters: a tool output or state
+mutation raises at dispatch and is recorded as a dispatched, failed event, which
+is scored evidence rather than a crash; a trajectory payload is rejected before
+its destination file is opened. Ordinary non-ASCII text is unaffected.
