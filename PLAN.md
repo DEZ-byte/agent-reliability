@@ -15,13 +15,24 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Exact `pass^k` and `pass@k` estimators with known-answer tests
 - [x] Versioned trajectory JSONL round trip
 - [x] End-to-end CPU fixture and local check wrapper
-- [ ] First GitHub Actions run green on Windows and Linux
+- [ ] First GitHub Actions run green on Windows and Linux — **blocked on the
+  owner**: the repository has no git remote, and creating or publishing one is
+  the owner's decision. The workflow exists and the suite is green locally on
+  Windows; the Linux job and the POSIX rlimit test have never run
 - [x] Ten-to-fifteen-source verified literature scan
 - [x] Immutable model/dataset registry and license provenance table
-- [ ] Freeze the provisional Phase-A/M0 Windows smoke lock after all four
-  checkpoints pass the import/template compatibility probes
-- [ ] Record an immutable Phase-A/M0 environment manifest from a clean `.venv`
-  recreation
+- [x] Freeze the provisional Phase-A/M0 Windows smoke lock after all four
+  checkpoints pass the import/template compatibility probes. All ten committed
+  artifacts record one lock state (`c81df3a3`, expected == actual), and all four
+  candidates were measured under it
+- [x] Verify the lock resolves into a clean Python 3.12 environment. `uv pip
+  install --dry-run` against `requirements-smoke.lock` resolves every pin,
+  including the four direct-URL CUDA wheels, in a throwaway environment
+- [ ] Record an immutable Phase-A/M0 environment manifest from a full clean
+  `.venv` recreation and re-measure all four candidates under it. Deliberately
+  not done unattended: it means deleting the working environment,
+  re-downloading several GB, and rerunning every candidate. It should be a
+  watched operation
 - [x] Implement the bounded P6 rank-4 `q_proj`/`v_proj` LoRA microstep with
   exact P5-mask collation and adapter-disabled same-model reference checks
 - [x] Retain the first negative Qwen3-1.7B compatibility artifact without
@@ -47,9 +58,21 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Record a single four-candidate artifact on one lane with the gate
   resolved. Top-level `selection_eligible` is true for the first time; the two
   Qwen3 candidates carry `passed_with_demoted_gates`
-- [ ] Function-calling dataset decision after license caveats are resolved
-- [ ] Repository license decision after the license table exists
-- [ ] File Meta gated-model access requests
+- [ ] Function-calling dataset decision — **blocked on the owner**: xLAM is the
+  recommended source (D-028), but its access gate must be accepted from the
+  owner's own Hugging Face account, and its card's "research purposes only"
+  wording must be reconciled with the declared `public-portfolio-permissive`
+  release scope before ingestion
+- [ ] Repository license decision — **needs the owner's choice**: the licence
+  table now exists and the release scope is declared. The selected Qwen3 bundle
+  is Apache-2.0 and xLAM is CC BY 4.0, so either MIT or Apache-2.0 is compatible
+  for the repository's own code; Apache-2.0 is the closer match to the model
+  licence. Choosing a licence is the owner's call, not a derivable fact
+- [ ] File Meta gated-model access requests — **blocked on the owner**:
+  accepting Meta's terms requires the owner's own Hugging Face account. Needed
+  for `meta-llama/Llama-3.2-3B-Instruct` (cross-family check) and
+  `meta-llama/Llama-3.1-8B-Instruct` (scaffolded comparator), both required
+  before M1 baselines
 
 ## M6 environment lane
 
