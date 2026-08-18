@@ -1,0 +1,330 @@
+{
+  "candidates": [
+    {
+      "bundle": "qwen3",
+      "environment_compatible": false,
+      "model_id": "Qwen/Qwen3-1.7B",
+      "name": "qwen3-1.7b",
+      "p6": {
+        "error": "ValueError: P6 prerequisites did not pass: P3 four-bit load=failed, P5 training mask=failed",
+        "executed": false,
+        "metrics": {},
+        "name": "minimal_training_execution",
+        "passed": false,
+        "plan": {
+          "adapter": {
+            "alpha": 4,
+            "bias": "none",
+            "dropout": 0.0,
+            "gradient_checkpointing": "unsloth",
+            "implementation": "unsloth.FastLanguageModel.get_peft_model",
+            "rank": 4,
+            "target_modules": [
+              "q_proj",
+              "v_proj"
+            ]
+          },
+          "batch_size": 1,
+          "execution": "one assistant-only LoRA forward/backward and one ephemeral SGD step",
+          "hard_checks": [
+            "TRL labels exactly match the P5 assistant mask",
+            "only LoRA parameters are trainable",
+            "finite loss, reference log probabilities, gradients, and updates",
+            "at least one nonzero LoRA gradient and parameter update",
+            "adapter-disable context restores the policy adapter",
+            "disabled-adapter reference is invariant across the optimizer step",
+            "no optimizer or model checkpoint is written"
+          ],
+          "masking": "trl.trainer.sft_trainer.DataCollatorForLanguageModeling assistant_masks",
+          "maximum_sequence_tokens": 512,
+          "optimizer": {
+            "checkpoint": false,
+            "class": "torch.optim.SGD",
+            "learning_rate": 0.001,
+            "momentum": 0.0
+          },
+          "quality_claim": false,
+          "reference_policy": "same PEFT model with adapters disabled; no second model",
+          "reuse": "exact P5 input_ids and assistant_masks on the already-loaded NF4 model"
+        },
+        "probe_id": "P6",
+        "status": "skipped"
+      },
+      "probes": [
+        {
+          "error": "template quality check failed",
+          "metrics": {
+            "checks": {
+              "all_expected_markers_present": true,
+              "immutable_revision_resolved": false,
+              "native_template_present": true,
+              "nonempty": true,
+              "nonzero_token_count": true,
+              "repeat_render_identical": true,
+              "repeat_tokenization_identical": true
+            },
+            "native_chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+            "native_prefix_preservation_diagnostic": {
+              "full_token_count": 322,
+              "prefix_preserved": false,
+              "prefix_token_count": 309,
+              "status": "measured"
+            },
+            "native_rendered_character_count": 1286,
+            "native_rendered_prompt": "<|im_start|>system\nYou are a tool-using assistant. Use the registered tools when they are required.\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function signatures within <tools></tools> XML tags:\n<tools>\n{\"type\": \"function\", \"function\": {\"name\": \"calculator\", \"description\": \"Evaluate one arithmetic expression.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"expression\": {\"type\": \"string\", \"description\": \"The arithmetic expression to evaluate.\"}}, \"required\": [\"expression\"], \"additionalProperties\": false}}}\n{\"type\": \"function\", \"function\": {\"name\": \"update_order\", \"description\": \"Change the status of an existing order.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"order_id\": {\"type\": \"string\", \"description\": \"The existing order identifier.\"}, \"status\": {\"type\": \"string\", \"description\": \"The new order status.\"}}, \"required\": [\"order_id\", \"status\"], \"additionalProperties\": false}}}\n</tools>\n\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\": <args-json-object>}\n</tool_call><|im_end|>\n<|im_start|>user\nUse the calculator to compute 17 * 23.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+            "native_rendered_prompt_sha256": "060b36c1e3b3cdfb09b513389d0c9db0e7715f664166e8a1917f6a4d1b41bfb7",
+            "native_rendered_token_count": 288,
+            "special_tokens_map": {
+              "eos_token": "<|im_end|>",
+              "pad_token": "<|endoftext|>"
+            },
+            "tokenizer_class": "Qwen2Tokenizer",
+            "vocabulary_size": 151669
+          },
+          "name": "tool_chat_template",
+          "plan": {
+            "artifact_access": "AutoTokenizer.from_pretrained at the configured immutable SHA",
+            "checks": [
+              "rendered prompt is non-empty",
+              "two independent renders are byte-identical",
+              "two independent tokenizations are identical",
+              "every configured marker occurs in the rendered prompt",
+              "the rendered prompt tokenizes to at least one token"
+            ],
+            "expected_markers": [
+              "calculator",
+              "update_order",
+              "expression",
+              "order_id",
+              "17 * 23"
+            ],
+            "record": [
+              "tokenizer metadata and native chat-template SHA-256",
+              "native rendered prompt text and SHA-256",
+              "native prefix preservation as a diagnostic, not a hard gate"
+            ],
+            "render": "apply_chat_template(messages, tools, add_generation_prompt=True)",
+            "tool_names": [
+              "calculator",
+              "update_order"
+            ]
+          },
+          "status": "failed"
+        },
+        {
+          "error": "ValueError: Unsloth model loader tokenizer did not resolve the requested revision",
+          "metrics": {},
+          "name": "four_bit_load",
+          "plan": {
+            "artifact_access": "unsloth.FastLanguageModel.from_pretrained with the configured revision",
+            "compute_dtype": "bfloat16 when supported, otherwise float16",
+            "device_map": {
+              "multi_gpu_allowed": false,
+              "root": "cuda:0"
+            },
+            "double_quant": true,
+            "hard_gate": "every parameter and device-map entry must be on the configured single CUDA device, with verified effective NF4 4-bit state",
+            "load_in_4bit": true,
+            "measurements": [
+              "wall-clock load seconds",
+              "model memory footprint bytes",
+              "per-device peak CUDA allocated bytes",
+              "per-device peak CUDA reserved bytes",
+              "target GPU name and total memory",
+              "torch CUDA runtime version",
+              "actual parameter devices and dtypes"
+            ],
+            "quantization_type": "nf4"
+          },
+          "status": "failed"
+        },
+        {
+          "error": "4-bit model did not pass the no-offload hard gate",
+          "metrics": {},
+          "name": "deterministic_generation",
+          "plan": {
+            "compatibility_checks": [
+              "all timed output token ID sequences are identical within each case",
+              "at least one new token is produced across timed runs",
+              "every timed generation completes with positive measured duration"
+            ],
+            "decode": "greedy (do_sample=False)",
+            "execution_boundary": "schema acceptance only; no tool handler or execution gate runs",
+            "generation_cases": [
+              {
+                "expected_tool": "calculator",
+                "name": "calculator-read-only"
+              },
+              {
+                "expected_tool": "update_order",
+                "name": "order-update-mutative"
+              }
+            ],
+            "max_new_tokens": 96,
+            "ranking_observations": [
+              "exactly one parsed call is registered, schema-valid, and names the expected tool",
+              "tool-call quality is recorded for ranking and does not gate environment compatibility"
+            ],
+            "retained_output_limit_characters": 4096,
+            "sampling_parameters_active": false,
+            "seed": 17,
+            "temperature": 0.0,
+            "throughput": "sum(actual new tokens) / sum(measured generation seconds)",
+            "timed_runs": 3,
+            "timing": "CUDA-synchronized perf_counter around model.generate",
+            "tool_scoring": [
+              "strict JSON parse rate",
+              "registered-schema-valid output rate",
+              "dispatchable-call output rate (schema acceptance only)",
+              "zero-tool-call rate"
+            ],
+            "top_p": 1.0,
+            "warmup_runs": 2
+          },
+          "status": "skipped"
+        },
+        {
+          "error": null,
+          "metrics": {
+            "constructed_config_class": "trl.trainer.grpo_config.GRPOConfig",
+            "imports": {
+              "trl": true,
+              "trl.GRPOConfig": true,
+              "trl.trainer.sft_trainer.DataCollatorForLanguageModeling": true,
+              "unsloth": true,
+              "unsloth.FastLanguageModel": true,
+              "unsloth.FastLanguageModel.for_training": true,
+              "unsloth.FastLanguageModel.from_pretrained": true,
+              "unsloth.FastLanguageModel.get_peft_model": true
+            },
+            "training_started": false
+          },
+          "name": "training_stack_imports",
+          "plan": {
+            "construct": "GRPOConfig only; no trainer and no training run",
+            "imports": [
+              "trl.GRPOConfig",
+              "trl.trainer.sft_trainer.DataCollatorForLanguageModeling",
+              "unsloth.FastLanguageModel"
+            ],
+            "preflight": "every planned import and configuration construction succeeds",
+            "reference_policy_fixture": "planned as a separate pre-compute unit fixture; this import smoke does not claim reference-policy correctness"
+          },
+          "status": "passed"
+        },
+        {
+          "error": "ValueError: training template has unbalanced or absent generation blocks",
+          "metrics": {},
+          "name": "training_template_masking",
+          "plan": {
+            "hard_checks": [
+              "assistant mask exactly equals all token spans emitted by template generation blocks",
+              "pre-observation tokens are an exact prefix after the tool observation is appended"
+            ],
+            "note": "imports alone cannot pass this probe",
+            "record": [
+              "training template SHA-256 separately from native template",
+              "training rendered prompt SHA-256",
+              "complete expected and returned assistant-token masks",
+              "tokenized prefix before and after appending the tool observation"
+            ],
+            "template_source": "tokenizer.get_chat_template(tools=...) resolved native template"
+          },
+          "status": "failed"
+        }
+      ],
+      "requested_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "resolved_revision": null,
+      "role": "scale_check",
+      "selection_eligible": false
+    }
+  ],
+  "command": [
+    "C:\\Users\\Anirudh\\Documents\\My projects\\Aligning Small Language Models for Verifiable Tool Execution & Self-Correction\\.venv\\Scripts\\python.exe",
+    "C:\\Users\\Anirudh\\Documents\\My projects\\Aligning Small Language Models for Verifiable Tool Execution & Self-Correction\\scripts\\smoke_models.py",
+    "--candidate",
+    "qwen3-1.7b",
+    "--run-load",
+    "--allow-download",
+    "--output",
+    "results\\model_smoke-qwen3-1.7b.json"
+  ],
+  "config_path": "C:\\Users\\Anirudh\\Documents\\My projects\\Aligning Small Language Models for Verifiable Tool Execution & Self-Correction\\configs\\model_smoke.json",
+  "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
+  "created_at_utc": "2026-08-18T08:17:48.168763Z",
+  "hardware": {
+    "cuda": {
+      "cuda_visible_devices": null,
+      "devices": [
+        {
+          "compute_capability": "8.9",
+          "driver_version": "610.88",
+          "index": 0,
+          "memory_total_mib": 8188,
+          "name": "NVIDIA GeForce RTX 4060 Laptop GPU"
+        }
+      ],
+      "error": null,
+      "nvidia_smi_path": "C:\\WINDOWS\\system32\\nvidia-smi.EXE",
+      "status": "available"
+    },
+    "executable": "C:\\Users\\Anirudh\\Documents\\My projects\\Aligning Small Language Models for Verifiable Tool Execution & Self-Correction\\.venv\\Scripts\\python.exe",
+    "logical_cpu_count": 24,
+    "machine": "AMD64",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python_implementation": "CPython",
+    "python_version": "3.12.13",
+    "release": "11",
+    "system": "Windows"
+  },
+  "lane": {
+    "actual_lock_sha256": "c81df3a3b3025a98a4b68f71fbd49c0e1347bb7dc8f3ad4f9bc3ebf369357568",
+    "expected_lock_sha256": "c81df3a3b3025a98a4b68f71fbd49c0e1347bb7dc8f3ad4f9bc3ebf369357568",
+    "identity": "phase-a-windows-unsloth-trl024",
+    "lock_matches_expected": true,
+    "lock_path": "requirements-smoke.lock",
+    "m6_environment_factory_in_scope": false,
+    "probe_implementation": {
+      "P0": "implemented",
+      "P1": "implemented",
+      "P2": "implemented",
+      "P3": "implemented",
+      "P4": "implemented",
+      "P5": "implemented",
+      "P6": "implemented"
+    }
+  },
+  "library_versions": {
+    "accelerate": "1.14.0",
+    "bitsandbytes": "0.50.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.5.0",
+    "trl": "0.24.0",
+    "unsloth": "2026.8.18"
+  },
+  "options": {
+    "allow_download": true,
+    "dry_run": false,
+    "run_load": true,
+    "selected_candidates": [
+      "qwen3-1.7b"
+    ]
+  },
+  "release_gate": {
+    "decision_record": null,
+    "eligible_bundles": [],
+    "expected_registry_sha256": "e6d751c4738805abd05259c3cc64e84f78416d49a5e2408aa2dae597be5ef2dc",
+    "intended_release_scope": null,
+    "registry_path": "configs/model_candidates.json",
+    "status": "pending"
+  },
+  "release_registry_sha256": "e6d751c4738805abd05259c3cc64e84f78416d49a5e2408aa2dae597be5ef2dc",
+  "schema_version": 1,
+  "selection_eligible": false,
+  "source_identity": {
+    "git_commit_sha": "6824196aebaa1476bf7627fc4cef73a03e1af7a3",
+    "smoke_config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
+    "smoke_script_sha256": "e9b7ad8411cc422041147387cec50a0317bc6c4bb67a6a1d988226b3aedce5c4"
+  }
+}
