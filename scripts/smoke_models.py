@@ -2641,6 +2641,18 @@ def _run_minimal_training_probe(
         metrics["cuda_allocated_before_p6_bytes"] = allocated_before
         metrics["cuda_reserved_before_p6_bytes"] = reserved_before
 
+        # P4 generation routes through Unsloth's fast path, which calls
+        # for_inference and sets `_flag_for_generation` on the base model and
+        # every nested submodule. for_training later walks the same chain and
+        # deletes that attribute. Once the model is wrapped by PEFT the walk
+        # starts at PeftModelForCausalLM, whose __getattr__ delegates to the
+        # base model: hasattr succeeds, the attribute is absent from the
+        # wrapper's own __dict__, and `del` raises AttributeError. Clearing the
+        # inference flag first restores the pre-generation state that
+        # for_training expects. It changes no measured quantity; the count is
+        # recorded so the sequencing remains visible in the artifact.
+        metrics["cleared_generation_flags"] = _clear_generation_flags(model)
+
         torch.manual_seed(probe.seed)
         torch.cuda.manual_seed_all(probe.seed)
         adapted_model = fast_language_model.get_peft_model(
@@ -3344,6 +3356,25 @@ def _canonical_cuda_device(value: object) -> str:
     if isinstance(value, int) or text.isdigit():
         return f"cuda:{int(value)}"
     return text
+
+
+def _clear_generation_flags(model: Any) -> int:
+    """Remove Unsloth's inference flag from a model chain, returning the count.
+
+    Deletes only from each object's own ``__dict__`` so an attribute visible
+    through a wrapper's delegation is never mistaken for one the wrapper owns.
+    """
+
+    cleared = 0
+    seen: set[int] = set()
+    node = model
+    while node is not None and id(node) not in seen:
+        seen.add(id(node))
+        if getattr(node, "__dict__", None) is not None:
+            if node.__dict__.pop("_flag_for_generation", None) is not None:
+                cleared += 1
+        node = getattr(node, "model", None)
+    return cleared
 
 
 def _inspect_model_placement(
