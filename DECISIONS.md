@@ -744,3 +744,37 @@ would have produced an unanswerable question later.
    infrastructure causes, sends ambiguous cases to the model-failure side, caps
    reruns at two at the same seed, requires reruns to be exhausted before any
    outcome is read, and requires rerun and `INVALID` counts to be reported.
+
+### D-054 — The repository is Apache-2.0, and that covers this repository only
+The owner chose Apache-2.0 for the project's own source, configuration,
+protocols, and documentation. `LICENSE` is the canonical text from
+apache.org, byte-identical except for the appendix copyright line, which now
+reads `Copyright 2026 Anirudh Raj Sharma`.
+
+Apache-2.0 is the closer match to the selected bundle: D-048 chose Qwen3
+{4B, 1.7B} under `public-portfolio-permissive`, and those weights are
+Apache-2.0. Choosing the same licence for the repository keeps the code and the
+model terms aligned and satisfies the attribution and notice duties in one
+place.
+
+A repository licence cannot relicense anything upstream, so `NOTICE` states the
+boundary explicitly: model weights, adapters trained from them, generated
+trajectories, and third-party datasets each keep their own terms, recorded per
+artifact with verified revisions in `data/LICENSES.md`. It names the two traps
+specifically — `Qwen/Qwen2.5-3B-Instruct` is non-commercial and is not covered
+by the Apache-2.0 bundle decision, and Llama weights carry Meta's attribution
+and derivative-naming obligations.
+
+### D-055 — xLAM access is granted; the release-scope question is still open
+The owner has accepted the `Salesforce/xlam-function-calling-60k` access gate,
+so the dataset can now be fetched. That resolves access only.
+
+The unresolved item from D-028 stands: the card declares CC BY 4.0 in metadata
+while its ethical section says the release is "for research purposes only".
+Under the `public-portfolio-permissive` scope declared in D-048, training a
+published adapter on that data is exactly the case the two statements disagree
+about. The dataset is therefore not ingested yet. Resolving it means one of:
+obtaining clarification from the publisher; using xLAM but publishing neither
+the data nor adapters derived from it; or generating format-grounding data from
+an Apache-2.0 teacher instead. This is a licensing-risk judgement for the owner,
+not a technical finding, and it is recorded as open rather than assumed away.

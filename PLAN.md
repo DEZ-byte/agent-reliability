@@ -58,21 +58,21 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Record a single four-candidate artifact on one lane with the gate
   resolved. Top-level `selection_eligible` is true for the first time; the two
   Qwen3 candidates carry `passed_with_demoted_gates`
-- [ ] Function-calling dataset decision — **blocked on the owner**: xLAM is the
-  recommended source (D-028), but its access gate must be accepted from the
-  owner's own Hugging Face account, and its card's "research purposes only"
-  wording must be reconciled with the declared `public-portfolio-permissive`
-  release scope before ingestion
-- [ ] Repository license decision — **needs the owner's choice**: the licence
-  table now exists and the release scope is declared. The selected Qwen3 bundle
-  is Apache-2.0 and xLAM is CC BY 4.0, so either MIT or Apache-2.0 is compatible
-  for the repository's own code; Apache-2.0 is the closer match to the model
-  licence. Choosing a licence is the owner's call, not a derivable fact
-- [ ] File Meta gated-model access requests — **blocked on the owner**:
-  accepting Meta's terms requires the owner's own Hugging Face account. Needed
-  for `meta-llama/Llama-3.2-3B-Instruct` (cross-family check) and
-  `meta-llama/Llama-3.1-8B-Instruct` (scaffolded comparator), both required
-  before M1 baselines
+- [x] Accept the xLAM access gate (done by the owner)
+- [ ] Function-calling dataset decision — **still open (D-055)**: access is
+  granted, but xLAM's card declares CC BY 4.0 while its ethical section says
+  "research purposes only", which conflicts with the declared
+  `public-portfolio-permissive` scope for any published adapter trained on it.
+  Resolve by publisher clarification, by not publishing derivatives, or by
+  generating grounding data from an Apache-2.0 teacher
+- [x] Repository license decision: Apache-2.0 (D-054). `LICENSE` is the
+  canonical text; `NOTICE` records that it covers this repository only and that
+  every upstream artifact keeps its own terms
+- [x] File Meta gated-model access requests (submitted by the owner)
+- [ ] Meta approval received for `meta-llama/Llama-3.2-3B-Instruct` and
+  `meta-llama/Llama-3.1-8B-Instruct` — **waiting on Meta**, not on work here.
+  Both are required before M1 baselines; the Qwen-only arms can proceed
+  meanwhile
 
 ## M6 environment lane
 
