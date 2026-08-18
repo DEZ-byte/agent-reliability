@@ -1,10 +1,10 @@
 # Qwen model-selection smoke protocol
 
-**Status:** pre-measurement protocol. The current runner implements P0-P6. The
-first Qwen3-1.7B attempt produced a retained negative compatibility artifact;
-its corrected rerun remains pending, and P6 has not executed on any checkpoint.
-All four checkpoint executions remain required before selection. No candidate
-has been selected and no performance number has been recorded.
+**Status:** pre-measurement protocol. The current runner implements P0-P6. Two
+Qwen3-1.7B attempts are retained as runner diagnostics; a corrected placement
+rerun remains pending, and P6 has not executed on any checkpoint. All four
+checkpoint executions remain required before selection. No candidate has been
+selected and no performance number has been recorded.
 
 ## Purpose
 
@@ -122,6 +122,10 @@ other lane's recorded environment.
   configured CUDA device; multi-GPU sharding is a failure.
 - Record GPU name, total VRAM, quantization settings, actual parameter dtype,
   peak allocated VRAM, peak reserved VRAM, and load duration.
+- Treat actual parameter devices as the primary placement evidence. An absent
+  or empty loader device map is recorded as unavailable evidence; it is not a
+  pass by itself and does not contradict an all-target-CUDA parameter scan. If
+  a non-empty map is present, every entry must agree with the target device.
 - Require runtime evidence that NF4 4-bit quantization was actually applied,
   not merely requested in the loader arguments.
 - A candidate fails this probe if it cannot complete on the named target GPU
@@ -183,6 +187,10 @@ other lane's recorded environment.
 The retained first Qwen3-1.7B artifact records the pre-correction P1/P3 private
 metadata and P5 native-template failures. It is not overwritten by the
 corrected rerun and is not model-quality evidence.
+
+The retained second artifact proves the snapshot and mask corrections and
+records the pre-D-043 empty-device-map false failure. It also remains
+runner-debugging evidence rather than model-quality evidence.
 
 ## Selection rule
 

@@ -5,9 +5,9 @@ the tool-execution reliability gap between a small language model and a larger,
 runtime-scaffolded comparator.
 
 > Status: implementation has started; no benchmark or model-quality results
-> have been produced. One retained Qwen3-1.7B artifact records a negative
-> compatibility attempt. H1–H3 in [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) remain
-> open.
+> have been produced. Retained Qwen3-1.7B artifacts record negative
+> compatibility attempts and runner corrections. H1–H3 in
+> [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) remain open.
 
 ## Current scope
 
@@ -114,8 +114,14 @@ for all four checkpoints before selection.
 The first Qwen3-1.7B attempt is retained at
 [`results/model_smoke-qwen3-1.7b-6824196.json`](results/model_smoke-qwen3-1.7b-6824196.json).
 It records the private-revision-metadata and native-template masking failures
-that motivated the corrected probes. The corrected rerun remains pending, and
-the artifact does not select a model or establish quality.
+that motivated the corrected probes. The artifact does not select a model or
+establish quality.
+
+The next attempt is retained at
+[`results/model_smoke-qwen3-1.7b-3e2522f.json`](results/model_smoke-qwen3-1.7b-3e2522f.json).
+It proves the revision and assistant-mask corrections, and it exposed a false
+placement failure caused by an empty Unsloth device map despite all parameters
+being on `cuda:0`. The raw artifact is diagnostic evidence, not a model result.
 
 The machine-readable release gate is still pending. It pins the candidate
 registry by SHA-256 and derives eligible bundles from each checkpoint's

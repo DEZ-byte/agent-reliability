@@ -737,6 +737,10 @@ class ModelSmokeProbeTests(unittest.TestCase):
 
         cases = (
             (FakeModel({"": 0}, ["cuda:0"]), True, False),
+            (FakeModel({}, ["cuda:0"]), True, False),
+            (FakeModel({}, ["cpu"]), False, True),
+            (FakeModel({}, ["meta"]), False, True),
+            (FakeModel({}, ["cuda:0", "cpu"]), False, True),
             (FakeModel({"layer": "cpu"}, ["cuda:0", "cpu"]), False, True),
             (FakeModel({"layer": "disk"}, ["cuda:0"]), False, True),
             (
@@ -754,6 +758,44 @@ class ModelSmokeProbeTests(unittest.TestCase):
                 self.assertEqual(passed, expected_pass)
                 self.assertEqual(metrics["offload_detected"], expected_offload)
                 self.assertIn("actual_parameter_dtype", metrics)
+
+        empty_metrics, empty_passed = smoke._inspect_model_placement(
+            FakeModel({}, ["cuda:0"]), target_cuda_device_index=0
+        )
+        self.assertTrue(empty_passed)
+        self.assertTrue(empty_metrics["device_map_attribute_present"])
+        self.assertTrue(empty_metrics["device_map_format_valid"])
+        self.assertFalse(empty_metrics["device_map_has_entries"])
+        self.assertEqual(empty_metrics["device_map_entry_count"], 0)
+        self.assertIsNone(empty_metrics["every_device_map_entry_on_target"])
+        self.assertTrue(
+            empty_metrics["device_map_does_not_contradict_parameters"]
+        )
+
+        mapless_model = SimpleNamespace(
+            parameters=lambda: [
+                SimpleNamespace(device="cuda:0", dtype="torch.float16")
+            ]
+        )
+        mapless_metrics, mapless_passed = smoke._inspect_model_placement(
+            mapless_model, target_cuda_device_index=0
+        )
+        self.assertTrue(mapless_passed)
+        self.assertFalse(mapless_metrics["device_map_attribute_present"])
+        self.assertFalse(mapless_metrics["device_map_has_entries"])
+        self.assertIsNone(mapless_metrics["every_device_map_entry_on_target"])
+
+        malformed_model = SimpleNamespace(
+            hf_device_map="cuda:0",
+            parameters=lambda: [
+                SimpleNamespace(device="cuda:0", dtype="torch.float16")
+            ],
+        )
+        malformed_metrics, malformed_passed = smoke._inspect_model_placement(
+            malformed_model, target_cuda_device_index=0
+        )
+        self.assertFalse(malformed_passed)
+        self.assertFalse(malformed_metrics["device_map_format_valid"])
 
     def test_effective_nf4_quantization_requires_runtime_and_class_evidence(self) -> None:
         class Params4bit:

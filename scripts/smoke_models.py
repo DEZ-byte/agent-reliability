@@ -1867,7 +1867,10 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             status="skipped",
             plan=plans["deterministic_generation"],
             metrics={},
-            error="4-bit model did not pass the no-offload hard gate",
+            error=(
+                "deterministic generation not run: four_bit_load="
+                f"{load_result.status}: {load_result.error}"
+            ),
         )
     else:
         generation_result = _run_generation_probe(
@@ -2009,8 +2012,12 @@ def _run_generation_probe(
                 case_dispatchable.append(
                     bool(scored["exactly_one_expected_dispatchable_call"])
                 )
+                # Ranking key 1 in MODEL_SMOKE_PROTOCOL.md is strict tool-call
+                # validity, which is a different and weaker question than "did
+                # the model pick the expected tool". Reading the dispatchable
+                # metric here would make the two observations one number.
                 case_strict_outputs.append(
-                    bool(scored["exactly_one_expected_dispatchable_call"])
+                    bool(scored["registered_schema_valid_output"])
                 )
                 elapsed_seconds.append(elapsed)
                 token_counts.append(len(output_ids))
@@ -3343,14 +3350,18 @@ def _inspect_model_placement(
     model: Any, *, target_cuda_device_index: int
 ) -> tuple[dict[str, JsonValue], bool]:
     expected_device = f"cuda:{target_cuda_device_index}"
-    raw_device_map = getattr(model, "hf_device_map", {})
+    device_map_attribute_present = hasattr(model, "hf_device_map")
+    raw_device_map = getattr(model, "hf_device_map", None)
+    device_map_format_valid = raw_device_map is None or isinstance(
+        raw_device_map, dict
+    )
     device_map = (
         {
             str(key): _canonical_cuda_device(value)
             for key, value in raw_device_map.items()
         }
         if isinstance(raw_device_map, dict)
-        else {"unrecognized": str(raw_device_map)}
+        else {}
     )
     parameters = list(model.parameters())
     parameter_devices = sorted(
@@ -3368,13 +3379,20 @@ def _inspect_model_placement(
     every_parameter_on_target = bool(parameter_devices) and all(
         device == expected_device for device in parameter_devices
     )
-    every_map_entry_on_target = bool(device_map) and all(
-        device == expected_device for device in device_map.values()
+    device_map_has_entries = bool(device_map)
+    every_map_entry_on_target = (
+        all(device == expected_device for device in device_map.values())
+        if device_map_has_entries
+        else None
+    )
+    device_map_does_not_contradict_parameters = (
+        device_map_format_valid
+        and (not device_map_has_entries or every_map_entry_on_target is True)
     )
     placement_matches_target = (
         not offload_targets
         and every_parameter_on_target
-        and every_map_entry_on_target
+        and device_map_does_not_contradict_parameters
     )
     actual_dtype = (
         parameter_dtypes[0]
@@ -3383,6 +3401,13 @@ def _inspect_model_placement(
     )
     metrics: dict[str, JsonValue] = {
         "device_map": device_map,
+        "device_map_attribute_present": device_map_attribute_present,
+        "device_map_format_valid": device_map_format_valid,
+        "device_map_has_entries": device_map_has_entries,
+        "device_map_entry_count": len(device_map),
+        "device_map_does_not_contradict_parameters": (
+            device_map_does_not_contradict_parameters
+        ),
         "parameter_devices": parameter_devices,
         "actual_parameter_dtype": actual_dtype,
         "actual_parameter_dtypes": parameter_dtypes,

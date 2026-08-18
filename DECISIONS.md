@@ -447,3 +447,46 @@ The first negative Qwen3-1.7B compatibility artifact is retained rather than
 rewritten. A corrected rerun remains pending. Neither this implementation
 decision nor the negative artifact names a winning bundle or supports a
 model-quality claim.
+
+### D-043 — Actual CUDA parameters are primary placement evidence when no map is retained
+The D-042 rerun proved the immutable revision and assistant-mask corrections,
+but Unsloth returned an empty `hf_device_map` after placing every parameter on
+`cuda:0`. The runner incorrectly treated the empty map as a conflicting map
+and skipped generation.
+
+An absent or empty device map is now recorded as unavailable evidence, not as
+affirmative placement evidence and not as a contradiction. P3 passes placement
+only when the model has at least one parameter, every actual parameter is on
+the configured CUDA device, and no CPU, disk, or meta offload target is
+observed. If a non-empty device map is present, every entry must also name that
+same CUDA device. A malformed or conflicting map still fails closed.
+
+The second raw Qwen3-1.7B artifact remains preserved. This correction does not
+waive the independent P5 prefix-preservation gate, select a model, or establish
+model quality.
+
+### D-044 — Strict tool-call validity is measured separately from expected-tool selection
+`MODEL_SMOKE_PROTOCOL.md` ranks eligible bundles first on strict tool-call
+validity. The generation probe filled `strict_tool_output_by_case` from
+`exactly_one_expected_dispatchable_call`, the same expression that already fed
+`expected_tool_dispatchable_by_case`, so the reported strict metric and
+`every_output_is_strict_and_schema_valid` were duplicates of a different
+observation and ranking key 1 did not measure what its name states.
+
+The accumulator now reads `registered_schema_valid_output`: every emitted block
+parses strictly, every parsed call is registered and schema-valid, and at least
+one call exists. Choosing the expected tool remains the separate, stricter
+observation. The two now differ, for example when a model emits a valid call to
+the wrong registered tool, or two valid calls where one was required.
+
+No selection has been made, so no recorded decision changes. The two committed
+Qwen3-1.7B artifacts predate this fix and their P4 probe was skipped, so neither
+contains a strict-validity value; both remain valid historical records.
+
+### D-045 — A skipped probe names its real upstream cause
+The deterministic-generation probe recorded the fixed string "4-bit model did
+not pass the no-offload hard gate" whenever it was skipped. In the committed
+Qwen3-1.7B artifacts the actual cause was a revision-resolution failure, so a
+permanent record attributed the skip to a hardware verdict that was never
+reached. The probe now reports the upstream probe status and its error text,
+matching the pattern P6 already used for its prerequisites.

@@ -26,8 +26,11 @@ tests or an artifact in the repository; a design note alone does not count.
   exact P5-mask collation and adapter-disabled same-model reference checks
 - [x] Retain the first negative Qwen3-1.7B compatibility artifact without
   treating it as model-quality or selection evidence
-- [ ] Rerun Qwen3-1.7B with exact local snapshot revision evidence and the
-  project-owned training-only assistant-mask wrapper
+- [x] Rerun Qwen3-1.7B with exact local snapshot revision evidence and the
+  project-owned training-only assistant-mask wrapper; retain the placement
+  diagnostic artifact
+- [ ] Rerun Qwen3-1.7B after correcting empty device-map handling so P4 can
+  execute while the independent P5 prefix result remains fail-closed
 - [ ] Execute P6 training compatibility on all four checkpoints
 - [ ] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke and record the
   license-filtered bundle decision
