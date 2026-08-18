@@ -1,9 +1,10 @@
 # Qwen model-selection smoke protocol
 
-**Status:** pre-measurement protocol. The current runner implements P0-P6, but
-P6 has not been executed on any checkpoint. All four checkpoint executions
-remain required before selection. No candidate has been selected and no
-performance number has been recorded.
+**Status:** pre-measurement protocol. The current runner implements P0-P6. The
+first Qwen3-1.7B attempt produced a retained negative compatibility artifact;
+its corrected rerun remains pending, and P6 has not executed on any checkpoint.
+All four checkpoint executions remain required before selection. No candidate
+has been selected and no performance number has been recorded.
 
 ## Purpose
 
@@ -84,7 +85,11 @@ other lane's recorded environment.
 
 ### P1 — repository and tokenizer
 
-- Resolve the repository and immutable commit.
+- Resolve the repository and immutable commit. Prove the revision from the
+  exact local Hugging Face `snapshots/<commit>/...` identity, using an offline
+  cache lookup for a known repository file. If the loaded object also exposes
+  revision metadata, require it to agree; do not require a private
+  `_commit_hash` attribute to exist.
 - Load the tokenizer at that commit.
 - Record tokenizer class, vocabulary size, special tokens, and the resolved
   native chat-template hash. If a later lane introduces a separate training
@@ -134,10 +139,16 @@ other lane's recorded environment.
 - Import the pinned TRL 0.24 and Unsloth 2026.8.18 paths used by the Phase-A/M0
   recipe.
 - Construct configuration objects without starting a training run.
-- Use the exact native template resolved by the tokenizer returned from
-  `FastLanguageModel.from_pretrained`. Pinned TRL 0.24 has no public helper
-  that patches a Qwen template. Record the template hash and fail closed when
-  it cannot produce assistant masks.
+- Keep the exact native template resolved by the tokenizer returned from
+  `FastLanguageModel.from_pretrained` as the unchanged inference template.
+  Derive a separate project-owned, training-only template by wrapping the one
+  unambiguous Qwen assistant branch in `{% generation %}` and
+  `{% endgeneration %}`. Record both template hashes. Fail closed when the
+  branch structure is missing, duplicated, already instrumented, or otherwise
+  ambiguous.
+- Require the native and training-only templates to render exactly the same
+  text and exactly the same token IDs for the probe trajectory. The wrapper
+  may change only assistant-mask attribution, never serialized model input.
 - Render a multi-turn assistant/tool trajectory with
   `return_assistant_tokens_mask=True`. Compare the complete returned mask with
   independently derived `{% generation %}` spans; sentinel spot checks alone
@@ -168,6 +179,10 @@ other lane's recorded environment.
 - The P6 code path is implemented and covered by mock-only focused tests, but
   no checkpoint has executed it. All four real P6 artifacts are mandatory
   before a bundle can be selected.
+
+The retained first Qwen3-1.7B artifact records the pre-correction P1/P3 private
+metadata and P5 native-template failures. It is not overwritten by the
+corrected rerun and is not model-quality evidence.
 
 ## Selection rule
 

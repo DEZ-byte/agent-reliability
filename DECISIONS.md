@@ -426,3 +426,24 @@ flush, and fsync remain independent and concurrent.
 There is no ordering guarantee: the last completed replacement wins, but the
 destination is always one complete validated artifact. Cross-process writers
 must use separate output paths or an external run-level lock.
+
+### D-042 — Smoke revision and Qwen masking evidence use public, reproducible contracts
+D-040's reliance on a loader object's private `_commit_hash` is superseded.
+Immutable revision evidence comes from resolving a known repository file in
+the exact local Hugging Face `snapshots/<commit>/...` directory. Exposed model
+or tokenizer revision metadata is optional, but it must agree with the
+requested commit when present. A missing private attribute is not itself a
+compatibility failure.
+
+For P5, the native Qwen template remains unchanged and remains the inference
+template. The runner derives a separate project-owned, training-only template
+by adding `{% generation %}` markers around the single unambiguous assistant
+branch. Native and training-only rendering must produce byte-for-byte equal
+text and exactly equal token IDs; the only permitted difference is assistant
+mask attribution. Missing, duplicated, already instrumented, or ambiguous
+branch structure fails closed.
+
+The first negative Qwen3-1.7B compatibility artifact is retained rather than
+rewritten. A corrected rerun remains pending. Neither this implementation
+decision nor the negative artifact names a winning bundle or supports a
+model-quality claim.

@@ -17,6 +17,14 @@ from scripts import smoke_models as smoke
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "configs" / "model_smoke.json"
+QWEN_NATIVE_TRAINING_TEMPLATE = (
+    "{%- for message in messages %}"
+    "{%- if message.role == \"user\" %}USER"
+    "{%- elif message.role == \"assistant\" %}ASSISTANT"
+    "{%- elif message.role == \"tool\" %}TOOL"
+    "{%- endif %}"
+    "{%- endfor %}"
+)
 
 
 class ModelSmokeConfigTests(unittest.TestCase):
@@ -492,28 +500,40 @@ class ModelSmokeProbeTests(unittest.TestCase):
         compute_dtype = object()
         calls: list[dict[str, object]] = []
 
-        class FastLanguageModel:
-            @staticmethod
-            def from_pretrained(**kwargs: object) -> tuple[object, object]:
-                calls.append(kwargs)
-                tokenizer = SimpleNamespace(
-                    init_kwargs={"_commit_hash": revision}
-                )
-                model = SimpleNamespace(_saved_temp_tokenizer=tokenizer)
-                return model, tokenizer
+        with tempfile.TemporaryDirectory() as temporary:
+            snapshot = Path(temporary) / "snapshots" / revision
+            snapshot.mkdir(parents=True)
+            tokenizer_config = snapshot / "tokenizer_config.json"
+            tokenizer_config.write_text("{}", encoding="utf-8")
 
-        unsloth = SimpleNamespace(FastLanguageModel=FastLanguageModel)
-        with patch.object(smoke.importlib, "import_module", return_value=unsloth):
-            model, tokenizer = smoke._load_unsloth_four_bit_model(
-                model_id="owner/model",
-                revision=revision,
-                quantization_config=quantization_config,
-                compute_dtype=compute_dtype,
-                target_cuda_device_index=2,
-                seed=17,
+            class FastLanguageModel:
+                @staticmethod
+                def from_pretrained(**kwargs: object) -> tuple[object, object]:
+                    calls.append(kwargs)
+                    tokenizer = SimpleNamespace()
+                    model = SimpleNamespace(_saved_temp_tokenizer=tokenizer)
+                    return model, tokenizer
+
+            unsloth = SimpleNamespace(FastLanguageModel=FastLanguageModel)
+            hub = SimpleNamespace(
+                hf_hub_download=lambda **kwargs: str(tokenizer_config)
             )
 
+            def imported(name: str) -> object:
+                return unsloth if name == "unsloth" else hub
+
+            with patch.object(smoke.importlib, "import_module", side_effect=imported):
+                model, tokenizer, evidence = smoke._load_unsloth_four_bit_model(
+                    model_id="owner/model",
+                    revision=revision,
+                    quantization_config=quantization_config,
+                    compute_dtype=compute_dtype,
+                    target_cuda_device_index=2,
+                    seed=17,
+                )
+
         self.assertIs(model._saved_temp_tokenizer, tokenizer)
+        self.assertEqual(evidence["source"], "huggingface_hub_local_snapshot")
         self.assertEqual(len(calls), 1)
         kwargs = calls[0]
         self.assertEqual(kwargs["model_name"], "owner/model")
@@ -526,27 +546,103 @@ class ModelSmokeProbeTests(unittest.TestCase):
         self.assertTrue(kwargs["use_exact_model_name"])
         self.assertFalse(kwargs["fast_inference"])
 
-        class MissingAttachmentFastLanguageModel:
-            @staticmethod
-            def from_pretrained(**kwargs: object) -> tuple[object, object]:
-                tokenizer = SimpleNamespace(init_kwargs={"_commit_hash": revision})
-                return SimpleNamespace(), tokenizer
+        with tempfile.TemporaryDirectory() as temporary:
+            snapshot = Path(temporary) / "snapshots" / revision
+            snapshot.mkdir(parents=True)
+            tokenizer_config = snapshot / "tokenizer_config.json"
+            tokenizer_config.write_text("{}", encoding="utf-8")
 
-        broken_unsloth = SimpleNamespace(
-            FastLanguageModel=MissingAttachmentFastLanguageModel
-        )
-        with patch.object(
-            smoke.importlib, "import_module", return_value=broken_unsloth
-        ):
-            with self.assertRaisesRegex(ValueError, "attach its tokenizer"):
-                smoke._load_unsloth_four_bit_model(
+            class MissingAttachmentFastLanguageModel:
+                @staticmethod
+                def from_pretrained(**kwargs: object) -> tuple[object, object]:
+                    return SimpleNamespace(), SimpleNamespace()
+
+            broken_unsloth = SimpleNamespace(
+                FastLanguageModel=MissingAttachmentFastLanguageModel
+            )
+            hub = SimpleNamespace(
+                hf_hub_download=lambda **kwargs: str(tokenizer_config)
+            )
+
+            def imported(name: str) -> object:
+                return broken_unsloth if name == "unsloth" else hub
+
+            with patch.object(
+                smoke.importlib, "import_module", side_effect=imported
+            ):
+                with self.assertRaisesRegex(ValueError, "attach its tokenizer"):
+                    smoke._load_unsloth_four_bit_model(
+                        model_id="owner/model",
+                        revision=revision,
+                        quantization_config=quantization_config,
+                        compute_dtype=compute_dtype,
+                        target_cuda_device_index=2,
+                        seed=17,
+                    )
+
+    def test_immutable_cache_evidence_requires_exact_snapshot(self) -> None:
+        revision = "a" * 40
+        with tempfile.TemporaryDirectory() as temporary:
+            exact = Path(temporary) / "snapshots" / revision / "config.json"
+            exact.parent.mkdir(parents=True)
+            exact.write_text("{}", encoding="utf-8")
+            calls: list[dict[str, object]] = []
+            hub = SimpleNamespace(
+                hf_hub_download=lambda **kwargs: (
+                    calls.append(kwargs) or str(exact)
+                )
+            )
+            with patch.object(smoke.importlib, "import_module", return_value=hub):
+                evidence = smoke._immutable_cache_revision_evidence(
                     model_id="owner/model",
                     revision=revision,
-                    quantization_config=quantization_config,
-                    compute_dtype=compute_dtype,
-                    target_cuda_device_index=2,
-                    seed=17,
+                    filename="config.json",
+                    artifact=SimpleNamespace(),
                 )
+
+            self.assertTrue(evidence["snapshot_revision_matches_requested"])
+            self.assertFalse(evidence["artifact_revision_exposed"])
+            self.assertNotIn(temporary, json.dumps(evidence))
+            self.assertEqual(
+                calls,
+                [{
+                    "repo_id": "owner/model",
+                    "filename": "config.json",
+                    "revision": revision,
+                    "local_files_only": True,
+                }],
+            )
+
+            wrong = Path(temporary) / "snapshots" / ("b" * 40) / "config.json"
+            wrong.parent.mkdir(parents=True)
+            wrong.write_text("{}", encoding="utf-8")
+            wrong_hub = SimpleNamespace(
+                hf_hub_download=lambda **kwargs: str(wrong)
+            )
+            with patch.object(
+                smoke.importlib, "import_module", return_value=wrong_hub
+            ):
+                with self.assertRaisesRegex(ValueError, "snapshot revision mismatch"):
+                    smoke._immutable_cache_revision_evidence(
+                        model_id="owner/model",
+                        revision=revision,
+                        filename="config.json",
+                        artifact=SimpleNamespace(),
+                    )
+
+            exact_hub = SimpleNamespace(
+                hf_hub_download=lambda **kwargs: str(exact)
+            )
+            with patch.object(
+                smoke.importlib, "import_module", return_value=exact_hub
+            ):
+                with self.assertRaisesRegex(ValueError, "artifact revision mismatch"):
+                    smoke._immutable_cache_revision_evidence(
+                        model_id="owner/model",
+                        revision=revision,
+                        filename="config.json",
+                        artifact=SimpleNamespace(_commit_hash="b" * 40),
+                    )
 
     def test_p6_prerequisites_fail_closed(self) -> None:
         def result(name: str, status: str) -> smoke.ProbeResult:
@@ -814,7 +910,7 @@ class ModelSmokeProbeTests(unittest.TestCase):
         }["training_template_masking"]
         result = smoke._run_training_template_probe(
             tokenizer=OversizedRenderTokenizer(),
-            native_template="head{% generation %}body{% endgeneration %}tail",
+            native_template=QWEN_NATIVE_TRAINING_TEMPLATE,
             probe=probe,
             plan=plan,
         )
@@ -841,7 +937,7 @@ class ModelSmokeProbeTests(unittest.TestCase):
         }["training_template_masking"]
         result = smoke._run_training_template_probe(
             tokenizer=MasklessTokenizer(),
-            native_template="head{% generation %}body{% endgeneration %}tail",
+            native_template=QWEN_NATIVE_TRAINING_TEMPLATE,
             probe=probe,
             plan=plan,
         )
@@ -915,7 +1011,6 @@ class ModelSmokeProbeTests(unittest.TestCase):
                     ],
                 }
 
-        training_template = "head{% generation %}body{% endgeneration %}tail"
         plan = {
             item.name: item.plan for item in smoke.probe_plans(probe)
         }["training_template_masking"]
@@ -924,7 +1019,7 @@ class ModelSmokeProbeTests(unittest.TestCase):
             results.append(
                 smoke._run_training_template_probe(
                     tokenizer=MaskingTokenizer(complete_mask=complete_mask),
-                    native_template=training_template,
+                    native_template=QWEN_NATIVE_TRAINING_TEMPLATE,
                     probe=probe,
                     plan=plan,
                 )
@@ -944,13 +1039,19 @@ class ModelSmokeProbeTests(unittest.TestCase):
             correct.metrics["assistant_token_mask"],
             correct.metrics["expected_assistant_token_mask"],
         )
-        self.assertEqual(
+        self.assertNotEqual(
             correct.metrics["native_chat_template_sha256"],
             correct.metrics["training_chat_template_sha256"],
         )
         self.assertEqual(
             correct.metrics["training_template_source"],
-            "resolved_native_chat_template",
+            "project_owned_qwen_assistant_branch_generation_wrapper",
+        )
+        self.assertTrue(
+            correct.metrics["checks"]["project_template_render_matches_native"]
+        )
+        self.assertTrue(
+            correct.metrics["checks"]["project_template_token_ids_match_native"]
         )
         self.assertEqual(incomplete.status, "failed")
         self.assertFalse(
@@ -958,6 +1059,49 @@ class ModelSmokeProbeTests(unittest.TestCase):
                 "assistant_mask_exactly_matches_generation_spans"
             ]
         )
+
+    def test_qwen_training_template_patch_is_exact_and_rejects_ambiguity(self) -> None:
+        patched = smoke._build_qwen_training_template(
+            QWEN_NATIVE_TRAINING_TEMPLATE
+        )
+        self.assertEqual(patched.count("{% generation %}"), 1)
+        self.assertEqual(patched.count("{% endgeneration %}"), 1)
+        assistant = patched.index('{%- elif message.role == "assistant" %}')
+        start = patched.index("{% generation %}")
+        stop = patched.index("{% endgeneration %}")
+        tool = patched.index('{%- elif message.role == "tool" %}')
+        self.assertLess(assistant, start)
+        self.assertLess(start, stop)
+        self.assertLess(stop, tool)
+
+        ambiguous = QWEN_NATIVE_TRAINING_TEMPLATE.replace(
+            '{%- elif message.role == "tool" %}',
+            '{%- elif message.role == "assistant" %}SECOND'
+            '{%- elif message.role == "tool" %}',
+        )
+        with self.assertRaisesRegex(ValueError, "exactly one assistant branch"):
+            smoke._build_qwen_training_template(ambiguous)
+
+        already_patched = QWEN_NATIVE_TRAINING_TEMPLATE.replace(
+            "ASSISTANT", "{% generation %}ASSISTANT{% endgeneration %}"
+        )
+        with self.assertRaisesRegex(ValueError, "already contains generation tags"):
+            smoke._build_qwen_training_template(already_patched)
+
+    def test_generation_end_marker_follows_indented_qwen_block_tag(self) -> None:
+        patched = smoke._build_qwen_training_template(
+            QWEN_NATIVE_TRAINING_TEMPLATE.replace(
+                "ASSISTANT", "ASSISTANT\n    "
+            )
+        )
+        instrumented = smoke._instrument_generation_blocks(patched)
+        end_tag = instrumented.index("{% endgeneration %}")
+        end_marker = instrumented.index(smoke.GENERATION_END_MARKER)
+        tool_branch = instrumented.index(
+            '{%- elif message.role == "tool" %}'
+        )
+        self.assertLess(end_tag, end_marker)
+        self.assertLess(end_marker, tool_branch)
 
     def test_plans_separate_true_gates_preflight_and_ranking(self) -> None:
         plans = {

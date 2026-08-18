@@ -4,8 +4,10 @@ Research code for measuring how much verifiable-reward post-training can close
 the tool-execution reliability gap between a small language model and a larger,
 runtime-scaffolded comparator.
 
-> Status: implementation has started; no experiments or benchmark results have
-> been produced. H1–H3 in [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) remain open.
+> Status: implementation has started; no benchmark or model-quality results
+> have been produced. One retained Qwen3-1.7B artifact records a negative
+> compatibility attempt. H1–H3 in [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) remain
+> open.
 
 ## Current scope
 
@@ -97,12 +99,23 @@ accessing a model repository:
 
 Tokenizer/model access requires both `--run-load` and `--allow-download`.
 The current runner implements P0-P6. P5 checks multi-message serialization and
-assistant-token masking, not a live multi-turn environment. P6 reuses that
-exact mask through the TRL collator, attaches a rank-4 `q_proj`/`v_proj` LoRA
-adapter, obtains a same-model reference with the PEFT adapter disabled, and
-runs one ephemeral SGD microstep without writing a checkpoint. This code path
-has mock-only test coverage; it has not run on any model checkpoint and makes
-no quality claim. P6 must execute for all four checkpoints before selection.
+assistant-token masking, not a live multi-turn environment. It preserves the
+native inference template and derives a project-owned, training-only Qwen
+wrapper whose rendered text and token IDs must match the native template
+exactly. Ambiguous template structures fail closed. Immutable model identity
+comes from the exact local Hugging Face snapshot commit, with any exposed
+loader metadata required to agree. P6 reuses the exact P5 mask through the TRL
+collator, attaches a rank-4 `q_proj`/`v_proj` LoRA adapter, obtains a same-model
+reference with the PEFT adapter disabled, and runs one ephemeral SGD microstep
+without writing a checkpoint. This code path has mock-only test coverage; it
+has not run on any model checkpoint and makes no quality claim. P6 must execute
+for all four checkpoints before selection.
+
+The first Qwen3-1.7B attempt is retained at
+[`results/model_smoke-qwen3-1.7b-6824196.json`](results/model_smoke-qwen3-1.7b-6824196.json).
+It records the private-revision-metadata and native-template masking failures
+that motivated the corrected probes. The corrected rerun remains pending, and
+the artifact does not select a model or establish quality.
 
 The machine-readable release gate is still pending. It pins the candidate
 registry by SHA-256 and derives eligible bundles from each checkpoint's

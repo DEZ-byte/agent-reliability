@@ -24,6 +24,10 @@ tests or an artifact in the repository; a design note alone does not count.
   recreation
 - [x] Implement the bounded P6 rank-4 `q_proj`/`v_proj` LoRA microstep with
   exact P5-mask collation and adapter-disabled same-model reference checks
+- [x] Retain the first negative Qwen3-1.7B compatibility artifact without
+  treating it as model-quality or selection evidence
+- [ ] Rerun Qwen3-1.7B with exact local snapshot revision evidence and the
+  project-owned training-only assistant-mask wrapper
 - [ ] Execute P6 training compatibility on all four checkpoints
 - [ ] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke and record the
   license-filtered bundle decision

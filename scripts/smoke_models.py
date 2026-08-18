@@ -1235,7 +1235,9 @@ def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
         ),
     }
     training_template_plan: dict[str, JsonValue] = {
-        "template_source": "tokenizer.get_chat_template(tools=...) resolved native template",
+        "template_source": (
+            "project-owned generation wrapper derived from the resolved native Qwen template"
+        ),
         "record": [
             "training template SHA-256 separately from native template",
             "training rendered prompt SHA-256",
@@ -1244,6 +1246,7 @@ def probe_plans(probe: ProbeConfig) -> list[ProbeResult]:
         ],
         "hard_checks": [
             "assistant mask exactly equals all token spans emitted by template generation blocks",
+            "project training render and token IDs exactly equal the native template",
             "pre-observation tokens are an exact prefix after the tool observation is appended",
         ],
         "note": "imports alone cannot pass this probe",
@@ -1364,6 +1367,57 @@ def _select_candidates(
     return [by_name[name] for name in selected_names]
 
 
+def _immutable_cache_revision_evidence(
+    *,
+    model_id: str,
+    revision: str,
+    filename: str,
+    artifact: Any,
+) -> dict[str, JsonValue]:
+    huggingface_hub = importlib.import_module("huggingface_hub")
+    download = getattr(huggingface_hub, "hf_hub_download")
+    cached = Path(
+        download(
+            repo_id=model_id,
+            filename=filename,
+            revision=revision,
+            local_files_only=True,
+        )
+    )
+    if not cached.is_file():
+        raise ValueError(f"immutable cache evidence is not a file for {filename}")
+    snapshot_revision = cached.parent.name
+    if cached.name != filename or cached.parent.parent.name != "snapshots":
+        raise ValueError(f"immutable cache evidence has no snapshot layout for {filename}")
+    if snapshot_revision != revision:
+        raise ValueError(
+            f"immutable cache snapshot revision mismatch for {filename}: "
+            f"expected {revision}, observed {snapshot_revision}"
+        )
+
+    exposed_revision = _resolved_revision(artifact)
+    if exposed_revision is not None and exposed_revision != revision:
+        raise ValueError(
+            f"artifact revision mismatch for {filename}: expected {revision}, "
+            f"observed {exposed_revision}"
+        )
+    source = (
+        "artifact_metadata_and_huggingface_hub_local_snapshot"
+        if exposed_revision is not None
+        else "huggingface_hub_local_snapshot"
+    )
+    return {
+        "source": source,
+        "cache_filename": filename,
+        "snapshot_revision": snapshot_revision,
+        "snapshot_revision_matches_requested": True,
+        "artifact_revision_exposed": exposed_revision is not None,
+        "artifact_revision_matches_requested": (
+            exposed_revision is None or exposed_revision == revision
+        ),
+    }
+
+
 def _load_unsloth_four_bit_model(
     *,
     model_id: str,
@@ -1372,7 +1426,7 @@ def _load_unsloth_four_bit_model(
     compute_dtype: Any,
     target_cuda_device_index: int,
     seed: int,
-) -> tuple[Any, Any]:
+) -> tuple[Any, Any, dict[str, JsonValue]]:
     unsloth = importlib.import_module("unsloth")
     fast_language_model = getattr(unsloth, "FastLanguageModel")
     loader = getattr(fast_language_model, "from_pretrained")
@@ -1396,15 +1450,17 @@ def _load_unsloth_four_bit_model(
     model, tokenizer = loaded
     if model is None or tokenizer is None:
         raise ValueError("Unsloth model loader returned an empty model or tokenizer")
-    if _resolved_revision(tokenizer) != revision:
-        raise ValueError(
-            "Unsloth model loader tokenizer did not resolve the requested revision"
-        )
+    tokenizer_revision_evidence = _immutable_cache_revision_evidence(
+        model_id=model_id,
+        revision=revision,
+        filename="tokenizer_config.json",
+        artifact=tokenizer,
+    )
     if getattr(model, "_saved_temp_tokenizer", None) is not tokenizer:
         raise ValueError(
             "Unsloth model loader did not attach its tokenizer for LoRA preparation"
         )
-    return model, tokenizer
+    return model, tokenizer, tokenizer_revision_evidence
 
 
 def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> CandidateResult:
@@ -1461,7 +1517,13 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             trust_remote_code=False,
             local_files_only=False,
         )
-        resolved_revision = _resolved_revision(tokenizer)
+        tokenizer_revision_evidence = _immutable_cache_revision_evidence(
+            model_id=candidate.model_id,
+            revision=candidate.revision,
+            filename="tokenizer_config.json",
+            artifact=tokenizer,
+        )
+        resolved_revision = candidate.revision
         get_chat_template = getattr(tokenizer, "get_chat_template", None)
         native_template = (
             get_chat_template(tools=tools)
@@ -1513,6 +1575,7 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             metrics={
                 "checks": checks,
                 "tokenizer_class": type(tokenizer).__name__,
+                "immutable_revision_evidence": tokenizer_revision_evidence,
                 "vocabulary_size": len(tokenizer),
                 "special_tokens_map": _json_safe_metadata(
                     getattr(tokenizer, "special_tokens_map", {})
@@ -1699,13 +1762,15 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             bnb_4bit_use_double_quant=probe.double_quant,
         )
         started = time.perf_counter()
-        model, tokenizer = _load_unsloth_four_bit_model(
-            model_id=candidate.model_id,
-            revision=candidate.revision,
-            quantization_config=quantization_config,
-            compute_dtype=compute_dtype,
-            target_cuda_device_index=target_cuda_device_index,
-            seed=probe.seed,
+        model, tokenizer, loaded_tokenizer_revision_evidence = (
+            _load_unsloth_four_bit_model(
+                model_id=candidate.model_id,
+                revision=candidate.revision,
+                quantization_config=quantization_config,
+                compute_dtype=compute_dtype,
+                target_cuda_device_index=target_cuda_device_index,
+                seed=probe.seed,
+            )
         )
         loaded_get_chat_template = getattr(tokenizer, "get_chat_template", None)
         loaded_native_template = (
@@ -1721,7 +1786,13 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
         )
         _synchronize_cuda(torch, target_cuda_device_index)
         load_seconds = time.perf_counter() - started
-        resolved_revision = _resolved_revision(model) or resolved_revision
+        model_revision_evidence = _immutable_cache_revision_evidence(
+            model_id=candidate.model_id,
+            revision=candidate.revision,
+            filename="config.json",
+            artifact=model,
+        )
+        resolved_revision = candidate.revision
         peak_allocated = torch.cuda.max_memory_allocated(target_cuda_device_index)
         peak_reserved = torch.cuda.max_memory_reserved(target_cuda_device_index)
         gpu_name = torch.cuda.get_device_name(target_cuda_device_index)
@@ -1738,7 +1809,7 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
             expected_double_quant=probe.double_quant,
             expected_compute_dtype=compute_dtype,
         )
-        revision_matches = resolved_revision == candidate.revision
+        revision_matches = True
         load_passed = (
             placement_passed and quantization_passed and revision_matches
         )
@@ -1751,6 +1822,10 @@ def _execute_candidate(candidate: CandidateConfig, probe: ProbeConfig) -> Candid
                 "model_loader": "unsloth.FastLanguageModel.from_pretrained",
                 "unsloth_training_tokenizer_attached": True,
                 "loaded_tokenizer_revision_matches_requested": True,
+                "loaded_tokenizer_revision_evidence": (
+                    loaded_tokenizer_revision_evidence
+                ),
+                "model_revision_evidence": model_revision_evidence,
                 "p5_ran_with_loaded_training_tokenizer": True,
                 "resolved_revision_matches_requested": revision_matches,
                 "model_memory_footprint_bytes": footprint,
@@ -2093,11 +2168,11 @@ def _run_training_template_probe(
     plan: dict[str, JsonValue],
 ) -> ProbeResult:
     try:
-        training_template = native_template
-        if not isinstance(training_template, str) or not training_template:
+        if not isinstance(native_template, str) or not native_template:
             raise ValueError("tokenizer did not resolve one usable string training template")
-        if len(training_template) > MAX_TEMPLATE_SOURCE_CHARS:
+        if len(native_template) > MAX_TEMPLATE_SOURCE_CHARS:
             raise ValueError("training template source exceeds the character limit")
+        training_template = _build_qwen_training_template(native_template)
 
         trajectory = [
             message.model_dump(mode="json", exclude_none=True)
@@ -2105,7 +2180,7 @@ def _run_training_template_probe(
         ]
         prefix_messages = trajectory[:-1]
         tools = _tool_payloads(probe)
-        prefix_ids = _flat_int_list(
+        prefix_ids = _chat_template_token_ids(
             tokenizer.apply_chat_template(
                 prefix_messages,
                 tools=tools,
@@ -2117,6 +2192,24 @@ def _run_training_template_probe(
         )
         if len(prefix_ids) > MAX_TEMPLATE_TOKENS:
             raise ValueError("training prefix exceeds the token limit")
+        native_rendered = tokenizer.apply_chat_template(
+            trajectory,
+            tools=tools,
+            chat_template=native_template,
+            add_generation_prompt=False,
+            tokenize=False,
+            **probe.chat_template_kwargs,
+        )
+        native_ids = _chat_template_token_ids(
+            tokenizer.apply_chat_template(
+                trajectory,
+                tools=tools,
+                chat_template=native_template,
+                add_generation_prompt=False,
+                tokenize=True,
+                **probe.chat_template_kwargs,
+            )
+        )
         rendered = tokenizer.apply_chat_template(
             trajectory,
             tools=tools,
@@ -2127,6 +2220,10 @@ def _run_training_template_probe(
         )
         if len(rendered) > MAX_PERSISTED_PROMPT_CHARS:
             raise ValueError("training rendered prompt exceeds the character limit")
+        if len(native_rendered) > MAX_PERSISTED_PROMPT_CHARS:
+            raise ValueError("native training render exceeds the character limit")
+        if len(native_ids) > MAX_TEMPLATE_TOKENS:
+            raise ValueError("native training render exceeds the token limit")
         masked = tokenizer.apply_chat_template(
             trajectory,
             tools=tools,
@@ -2180,6 +2277,8 @@ def _run_training_template_probe(
             "assistant_mask_exactly_matches_generation_spans": (
                 assistant_mask == expected_mask
             ),
+            "project_template_render_matches_native": rendered == native_rendered,
+            "project_template_token_ids_match_native": full_ids == native_ids,
             "render_tokenization_matches_template": render_ids == full_ids,
             "prefix_nonempty": bool(prefix_ids),
             "prefix_preserved_after_tool_observation": (
@@ -2193,9 +2292,14 @@ def _run_training_template_probe(
             plan=plan,
             metrics={
                 "checks": checks,
-                "training_template_source": "resolved_native_chat_template",
+                "training_template_source": (
+                    "project_owned_qwen_assistant_branch_generation_wrapper"
+                ),
                 "native_chat_template_sha256": _artifact_sha256(native_template),
                 "training_chat_template_sha256": _artifact_sha256(training_template),
+                "native_training_rendered_prompt_sha256": _text_sha256(
+                    native_rendered
+                ),
                 "training_rendered_prompt_sha256": _text_sha256(rendered),
                 "training_rendered_prompt": rendered,
                 "training_rendered_token_count": len(full_ids),
@@ -2225,6 +2329,15 @@ def _run_training_template_probe(
             metrics={},
             error=_error_text(exc),
         )
+
+
+def _chat_template_token_ids(value: Any) -> list[int]:
+    get = getattr(value, "get", None)
+    if callable(get):
+        input_ids = get("input_ids")
+        if input_ids is not None:
+            value = input_ids
+    return _flat_int_list(value)
 
 
 def _p6_prerequisite_error(probes: list[ProbeResult]) -> str | None:
@@ -2858,6 +2971,82 @@ def _run_minimal_training_probe(
             pass
 
 
+def _build_qwen_training_template(native_template: str) -> str:
+    if len(native_template) > MAX_TEMPLATE_SOURCE_CHARS:
+        raise ValueError("native Qwen template exceeds the character limit")
+    generation_tags = re.findall(
+        r"{%-?\s*(?:endgeneration|generation)\s*-?%}", native_template
+    )
+    if generation_tags:
+        raise ValueError("native Qwen template already contains generation tags")
+
+    role_access = r"(?:message\.role|message\[['\"]role['\"]\])"
+
+    def branch(role: str) -> list[re.Match[str]]:
+        pattern = re.compile(
+            r"{%-?\s*elif\s+"
+            + role_access
+            + r"\s*==\s*(['\"])"
+            + re.escape(role)
+            + r"\1\s*-?%}"
+        )
+        return list(pattern.finditer(native_template))
+
+    assistant_matches = branch("assistant")
+    tool_matches = branch("tool")
+    if len(assistant_matches) != 1 or len(tool_matches) != 1:
+        raise ValueError(
+            "native Qwen template must contain exactly one assistant branch and one tool branch"
+        )
+    assistant = assistant_matches[0]
+    tool = tool_matches[0]
+    if tool.start() <= assistant.end():
+        raise ValueError("native Qwen assistant branch must precede its tool sibling")
+
+    control_pattern = re.compile(r"{%-?\s*(.*?)\s*-?%}", re.DOTALL)
+    depth = 0
+    sibling_found = False
+    block_starts = ("if ", "for ", "macro ", "block ", "filter ", "with ", "call ")
+    block_ends = ("endif", "endfor", "endmacro", "endblock", "endfilter", "endwith", "endcall")
+    for control in control_pattern.finditer(
+        native_template, assistant.end(), tool.end()
+    ):
+        if control.start() == tool.start():
+            if depth != 0:
+                raise ValueError("native Qwen tool branch is not the assistant sibling")
+            sibling_found = True
+            break
+        statement = control.group(1).strip()
+        if statement.startswith(block_starts):
+            depth += 1
+        elif statement.startswith(block_ends):
+            if depth == 0:
+                raise ValueError("native Qwen assistant branch closes before the tool branch")
+            depth -= 1
+        elif depth == 0 and (
+            statement.startswith("elif ") or statement == "else"
+        ):
+            raise ValueError("native Qwen assistant branch has an ambiguous sibling")
+    if not sibling_found:
+        raise ValueError("native Qwen tool branch is not the assistant sibling")
+
+    generation_end_position = tool.start()
+    if tool.group(0).lstrip().startswith("{%-"):
+        while (
+            generation_end_position > assistant.end()
+            and native_template[generation_end_position - 1].isspace()
+        ):
+            generation_end_position -= 1
+
+    return (
+        native_template[: assistant.end()]
+        + "{% generation %}"
+        + native_template[assistant.end() : generation_end_position]
+        + "{% endgeneration %}"
+        + native_template[generation_end_position:]
+    )
+
+
 def _instrument_generation_blocks(template: str) -> str:
     if len(template) > MAX_TEMPLATE_SOURCE_CHARS:
         raise ValueError("training template source exceeds the character limit")
@@ -2883,10 +3072,13 @@ def _instrument_generation_blocks(template: str) -> str:
                 position += 1
         insertions.append((position, GENERATION_START_MARKER))
     for match in end_matches:
-        position = match.start()
-        if match.group(0).lstrip().startswith("{%-"):
-            while position > 0 and template[position - 1].isspace():
-                position -= 1
+        # Keep the marker outside the generation block. Inserting a literal
+        # before an indented block-only end tag disables Jinja lstrip_blocks
+        # and changes Qwen serialization by leaking the indentation.
+        position = match.end()
+        if match.group(0).rstrip().endswith("-%}"):
+            while position < len(template) and template[position].isspace():
+                position += 1
         insertions.append((position, GENERATION_END_MARKER))
 
     instrumented = template
