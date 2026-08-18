@@ -29,11 +29,20 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Rerun Qwen3-1.7B with exact local snapshot revision evidence and the
   project-owned training-only assistant-mask wrapper; retain the placement
   diagnostic artifact
-- [ ] Rerun Qwen3-1.7B after correcting empty device-map handling so P4 can
+- [x] Rerun Qwen3-1.7B after correcting empty device-map handling so P4 can
   execute while the independent P5 prefix result remains fail-closed
-- [ ] Execute P6 training compatibility on all four checkpoints
-- [ ] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke and record the
-  license-filtered bundle decision
+- [x] Execute P6 training compatibility on all four checkpoints. Both Qwen2.5
+  checkpoints execute and pass P6; both Qwen3 checkpoints stop at the P5
+  prefix gate, so P6 is correctly not reached for them
+- [x] Run the comparable Qwen2.5-versus-Qwen3 P0-P6 smoke on one frozen lane
+  and lock. Qwen2.5 {3B, 1.5B} is technically eligible on every probe; Qwen3
+  {4B, 1.7B} fails only `prefix_preserved_after_tool_observation`, identically
+  at both sizes
+- [ ] Declare the intended release scope, then apply the license gate and
+  record the bundle decision. Blocked on that declaration, not on measurement:
+  the technically eligible bundle contains the non-commercial
+  `Qwen/Qwen2.5-3B-Instruct`, while the Apache-2.0 Qwen3 bundle is currently
+  ineligible
 - [ ] Function-calling dataset decision after license caveats are resolved
 - [ ] Repository license decision after the license table exists
 - [ ] File Meta gated-model access requests
