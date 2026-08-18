@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import tempfile
 import threading
 import unittest
@@ -187,19 +186,20 @@ class TrajectoryRecordTests(unittest.TestCase):
         barrier = threading.Barrier(2)
         sources: list[Path] = []
         sources_lock = threading.Lock()
-        real_replace = os.replace
+        real_named_temporary_file = tempfile.NamedTemporaryFile
 
-        def synchronized_replace(source: Path, destination: Path) -> None:
+        def synchronized_temporary_file(*args: object, **kwargs: object) -> object:
+            handle = real_named_temporary_file(*args, **kwargs)
             with sources_lock:
-                sources.append(Path(source))
+                sources.append(Path(handle.name))
             barrier.wait(timeout=5)
-            real_replace(source, destination)
+            return handle
 
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "trajectories.jsonl"
             with patch(
-                "evaluation.trajectory.os.replace",
-                side_effect=synchronized_replace,
+                "evaluation.trajectory.tempfile.NamedTemporaryFile",
+                side_effect=synchronized_temporary_file,
             ):
                 with ThreadPoolExecutor(max_workers=2) as executor:
                     futures = [

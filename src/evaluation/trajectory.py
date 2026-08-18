@@ -6,6 +6,7 @@ import json
 import math
 import os
 import tempfile
+import threading
 from collections.abc import Iterable, Mapping
 from os import PathLike
 from pathlib import Path
@@ -15,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError, f
 
 
 TRAJECTORY_SCHEMA_VERSION: Final = 1
+_REPLACE_LOCKS: Final = tuple(threading.Lock() for _ in range(64))
 Pathish: TypeAlias = str | PathLike[str]
 TrajectoryInput: TypeAlias = "TrajectoryRecord | Mapping[str, object]"
 
@@ -109,7 +111,14 @@ def write_trajectory_jsonl(
             stream.flush()
             os.fsync(stream.fileno())
         assert temporary is not None
-        os.replace(temporary, path)
+        # Windows can reject two simultaneous replacements of one destination
+        # even though both temporary files are distinct. Serialize only this
+        # final in-process operation; each writer still prepares and fsyncs its
+        # own complete artifact independently.
+        normalized_path = os.path.normcase(str(path.resolve()))
+        replace_lock = _REPLACE_LOCKS[hash(normalized_path) % len(_REPLACE_LOCKS)]
+        with replace_lock:
+            os.replace(temporary, path)
     except BaseException:
         if temporary is not None:
             temporary.unlink(missing_ok=True)

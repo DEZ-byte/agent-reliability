@@ -415,3 +415,14 @@ P5 with that exact tokenizer, and uses it for generation and P6. TRL's public
 `DataCollatorForLanguageModeling` remains the P6 label-construction check. No
 checkpoint has executed this corrected path yet, so support remains pending
 measured evidence.
+
+### D-041 — Concurrent trajectory replacement is serialized in-process
+Unique sibling temporary files prevent writers from corrupting one another,
+but Windows can still deny two simultaneous `os.replace` calls targeting the
+same result path. The writer therefore serializes only the final replacement
+step through a bounded set of in-process path locks. Encoding, file writing,
+flush, and fsync remain independent and concurrent.
+
+There is no ordering guarantee: the last completed replacement wins, but the
+destination is always one complete validated artifact. Cross-process writers
+must use separate output paths or an external run-level lock.
