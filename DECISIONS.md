@@ -690,3 +690,20 @@ The P1 probe now records `chat_template_kwargs` and
 `chat_template_kwargs_honored` per candidate, so no future run has to assume it
 again. A template that raises while being probed records the error as evidence
 instead of failing the run.
+
+### D-052 — Committed measurement records are frozen by hash
+`results/smoke_environment.json` was guarded against silent edits; the
+model-smoke artifacts, which carry the actual measurements a selection rests on,
+were not. Nothing detected a result being edited, re-signed, or deleted.
+
+`results/artifact_manifest.json` now records the SHA-256, byte length, recording
+commit, `config_sha256`, and evidence regime of every committed
+`model_smoke-*.json`. Four tests enforce it: every artifact matches its frozen
+hash, no listed artifact has been deleted, the manifest agrees with each
+artifact about whether it declares a gate demotion, and both evidence regimes
+remain present so the pre-D-046 failures cannot quietly disappear once the
+post-D-046 passes exist.
+
+Verified by tampering: flipping the recorded P5 failure in
+`model_smoke-qwen3-4b-1906997.json` to `passed` fails four tests. Adding a run
+means adding a manifest entry; it never means changing one.

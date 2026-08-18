@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import hashlib
 from contextlib import nullcontext
 import importlib
 import json
@@ -1846,6 +1847,65 @@ class ChatTemplateControlTests(unittest.TestCase):
         )
         self.assertIsInstance(result["enable_thinking"], str)
         self.assertIn("error", result["enable_thinking"])
+
+
+class ArtifactImmutabilityTests(unittest.TestCase):
+    """Measurement records are permanent. They may be added to, never edited."""
+
+    MANIFEST = smoke.PROJECT_ROOT / "results" / "artifact_manifest.json"
+
+    def _manifest(self) -> dict:
+        return json.loads(self.MANIFEST.read_text(encoding="utf-8"))
+
+    def _artifacts(self) -> list:
+        return sorted((smoke.PROJECT_ROOT / "results").glob("model_smoke-*.json"))
+
+    def test_every_committed_artifact_matches_its_frozen_hash(self) -> None:
+        recorded = self._manifest()["artifacts"]
+        for path in self._artifacts():
+            with self.subTest(artifact=path.name):
+                self.assertIn(
+                    path.name,
+                    recorded,
+                    "a result artifact is not listed in results/artifact_manifest.json",
+                )
+                raw = path.read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(raw).hexdigest(),
+                    recorded[path.name]["sha256"],
+                    "a committed measurement record was modified after the fact",
+                )
+                self.assertEqual(len(raw), recorded[path.name]["bytes"])
+
+    def test_no_listed_artifact_has_been_deleted(self) -> None:
+        present = {path.name for path in self._artifacts()}
+        for name in self._manifest()["artifacts"]:
+            with self.subTest(artifact=name):
+                self.assertIn(name, present, "a recorded measurement was removed")
+
+    def test_manifest_agrees_with_each_artifact_about_its_evidence_regime(self) -> None:
+        """The manifest cannot claim a demotion the artifact does not declare."""
+
+        recorded = self._manifest()["artifacts"]
+        for path in self._artifacts():
+            with self.subTest(artifact=path.name):
+                result = smoke.read_result(path)
+                self.assertEqual(
+                    bool(result.lane.gate_demotions),
+                    recorded[path.name]["declares_gate_demotion"],
+                )
+                self.assertEqual(
+                    result.config_sha256, recorded[path.name]["config_sha256"]
+                )
+
+    def test_both_evidence_regimes_are_retained(self) -> None:
+        """Pre-D-046 failures and post-D-046 runs must both survive."""
+
+        regimes = {
+            entry["declares_gate_demotion"]
+            for entry in self._manifest()["artifacts"].values()
+        }
+        self.assertEqual(regimes, {False, True})
 
 
 if __name__ == "__main__":
