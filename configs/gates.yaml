@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "predicates": {
+    "authenticated": {
+      "op": "eq",
+      "path": "session.authenticated",
+      "value": true
+    },
+    "order_id_exists": {
+      "op": "not_null",
+      "path": "order.id"
+    }
+  },
+  "tools": {
+    "update_order": {
+      "requires": ["authenticated", "order_id_exists"]
+    }
+  }
+}

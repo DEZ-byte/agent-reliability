@@ -1,0 +1,2 @@
+# Direct runtime dependency for the CPU-only reliability kernel.
+pydantic==2.13.4
