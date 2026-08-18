@@ -39,7 +39,9 @@ One unit is an existing evaluation episode identified by:
 ```
 
 The checkpoint, adapter, native inference template, prompt hashes, sampling
-configuration, gate-policy fingerprint, environment revision, and step cap
+configuration, gate-policy fingerprint, environment revision, and the effective
+`environment_turn_cap` defined in `RUNG_PROTOCOL.md` §1.1 (reference 20, or
+`min(20, upstream_cap)` when an upstream benchmark binds lower)
 are frozen by `arm_id`. A unit enters the correction analysis at most once.
 
 ### 2.2 Earliest eligible correction opportunity

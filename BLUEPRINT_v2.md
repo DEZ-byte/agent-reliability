@@ -79,7 +79,7 @@ resolves. Verify each link at M0. Accept the Meta gated licenses immediately
 | Scale check | `Qwen/Qwen2.5-1.5B-Instruct` **or** `Qwen/Qwen3-1.7B` | Apache-2.0 | Base + GRPO, Rungs 0 + 2 only |
 | Cross-family check | `meta-llama/Llama-3.2-3B-Instruct` | **Gated**, Llama Community License (derivative names must start with "Llama") | Base + GRPO, Rungs 0 + 2 only |
 | Scaffolded comparator | `meta-llama/Llama-3.1-8B-Instruct` | **Gated**, Llama Community License | **Never trained.** Base at Rungs 0/1/2 |
-| User simulator (eval only) | `Qwen/Qwen2.5-14B-Instruct` (fallback 7B if VRAM-tight) | Apache-2.0 | Runs in vLLM beside the policy model |
+| User simulator (eval only) | `Qwen/Qwen2.5-14B-Instruct` | Apache-2.0 | Runs in vLLM beside the policy model. No fallback is named: this table's own rule is that a checkpoint appears only if its ID resolves, and any substitute must first be added to `configs/model_candidates.json` with a verified revision and licence row, then adopted by a dated decision (see the user-simulator risk row in §11) |
 
 Dropped from v1 and why:
 - `mistralai/Ministral-3B-Instruct` — **does not exist** as open weights (2024
@@ -116,6 +116,15 @@ gates and, for small parents only, one 8B handoff (§8 and
 | Llama-3.1-8B | Base × {R0, R1, R2} | 3 |
 | **Total** | | **25** |
 
+**Training artifacts that are not arms.** §7.1 initializes GRPO from an SFT
+checkpoint, so the two H2 confirmatory configurations both require a
+**scale-model SFT checkpoint** that appears nowhere in this table and is never
+evaluated as an arm. It is a prerequisite of M3, must be trained from the same
+data and seed as the primary SFT run, and its GPU cost belongs in §9. The same
+applies to any checkpoint an ablation branches from: a required artifact is not
+the same thing as a reported arm, and neither may be silently borrowed from the
+other.
+
 Headline comparison: **primary Base×R0 → primary GRPO×R0 gap closure relative
 to 8B Base×R2-no-escalation**; primary GRPO×R2 is the separate “hybrid” row.
 Exact aggregation and token-ratio rules are in `HYPOTHESIS_PROTOCOL.md`.
@@ -130,6 +139,22 @@ Eval tiers (protocol in §7):
 - H2 confirmatory — the two additional scale-model reward variants run with
   n=8 under R1 audit on the frozen authorization manifest. They are not
   silently substituted with the full-composite production-grid checkpoint.
+
+### 4.1 Self-correction, and where it sits
+The project title names self-correction, and until now this document did not.
+It is **not** a fifth hypothesis and not an extra arm. `SELF_CORRECTION_SPEC.md`
+is normative: it defines one earliest rollback-safe correction opportunity per
+episode, freezes the failed prefix, and compares a neutral same-model resample,
+a diagnostic-aware same-model repair, and an immediate 8B handoff branching from
+that same evidence (D-029).
+
+Production R1/R2 traces support descriptive attribution only; causal language
+requires the matched branch bundle. Local action repair and deterministic
+end-to-end recovery are reported separately, and retry luck, gate prevention,
+and success after 8B escalation are never credited as small-model
+self-correction. The diagnostic branches run on the Tier-2 headline arms after
+M4 and are budgeted in §9 as a separate line; they do not alter H1-H3, and no
+H1-H3 verdict may cite them.
 
 ---
 
@@ -339,7 +364,7 @@ consulted mid-episode)
 | Arm class | Tool schemas | Policy manual | Few-shot |
 | :-- | :-- | :-- | :-- |
 | All arms, default | Yes (identical) | Yes | Zero-shot (tau2 convention) |
-| Internalization probe (H3) | Yes | **Removed** (trained + base arms, probe set only) | Zero-shot |
+| Internalization probe (H3) | Yes | **Removed** (trained + base arms, on the frozen Phase B tau2-retail test manifest — `HYPOTHESIS_PROTOCOL.md` is normative; there is no separate "probe set") | Zero-shot |
 
 Every system prompt is pinned verbatim in `configs/prompts/`. Prompt tokens
 and generated tokens are counted separately in all cost reporting.
@@ -358,8 +383,12 @@ R1/R2 rows are secondary because gates or retries could mask prompt dependence.
 
 Estimates to validate at M1 (record actuals in DECISIONS.md):
 - GRPO single-turn: 1.5B ≈ 4–8 h; 3–4B ≈ 8–15 h per run on a 4090.
-- Phase B eval: ~8–10 arms × ~114 tasks × n=4 (+n=8 on 7 arms) ≈ 6–8k episodes,
-  batched ≈ 30–60 GPU-hours.
+- Phase B eval, derived from §4 rather than estimated separately: 23
+  production-grid arms × the frozen tau2-retail **test split** (not the full
+  ~114-task set) × n=4, plus n=8 on the 7 Tier-2 headline arms and on the 2 H2
+  confirmatory configurations. Multiply the headline GRPO arm by its ≥2 seeds
+  (§7.4). Any figure here that disagrees with §4 is wrong by construction; §4 is
+  the source. Record the episode count and GPU-hours as measured actuals at M5.
 - Every trainer is idempotent-resumable (checkpoint + RNG + dataloader cursor
   every ~25 steps to HF Hub); assume any session can die.
 - The README reports actual spend ("all runs: $X on a single 4090") — this is
@@ -456,7 +485,7 @@ commits and tests — the commit history is part of the portfolio).
 | Llama gating delayed | Not approved by end of M1 | Switch to Qwen-only registry |
 | TRL/Unsloth breakage | Pinned env fails on upgrade | Stay on lockfile; upgrade only between milestones |
 | tau2 adapter overruns | >5 days on the adapter | Ship Phase A only; tau2 → future work |
-| User-sim too weak/slow | Episodes degenerate or eval > GPU budget | Drop to scripted user turns for Phase B, note the limitation |
+| User-sim too weak/slow | Episodes degenerate or eval > GPU budget | The simulator is a frozen provenance item (D-027). Swapping it invalidates every Phase B number already collected, including H1's Phase B stratum and all of H3. Response: stop, record a dated decision, relabel the affected results as a separate variant, and rerun the affected arms — never swap mid-campaign and never compare across the swap |
 
 ### Definition of done
 README with measured numbers + CIs for ≥6 pre-registered arms, one-command

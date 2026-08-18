@@ -707,3 +707,40 @@ post-D-046 passes exist.
 Verified by tampering: flipping the recorded P5 failure in
 `model_smoke-qwen3-4b-1906997.json` to `passed` fails four tests. Adding a run
 means adding a manifest entry; it never means changing one.
+
+### D-053 — Eight document contradictions closed
+An audit found eight places where two documents disagreed, or where a
+load-bearing term was used but never defined. None changed a measurement; all
+would have produced an unanswerable question later.
+
+1. **Compute versus arms.** §9 estimated "~8-10 arms x ~114 tasks" while §4
+   defines 23 production-grid arms plus 2 confirmatory configurations, and it
+   used the full tau2 task set rather than the test split and ignored the
+   >=2-seed rule. §9 now derives from §4 and says so, and states that any figure
+   disagreeing with §4 is wrong by construction.
+2. **H3 population.** §8.4 said "probe set only" for a set defined nowhere,
+   while `HYPOTHESIS_PROTOCOL.md` used the frozen Phase B test manifest. There
+   is now one population and one normative document.
+3. **The simulator risk response.** "Drop to scripted user turns for Phase B"
+   would silently swap a frozen provenance item that H1's Phase B stratum and
+   all of H3 depend on. The response is now: stop, record a dated decision,
+   relabel as a separate variant, and rerun the affected arms.
+4. **Self-correction.** It is half the project title and appeared nowhere in the
+   canonical blueprint. New §4.1 states what it is, that it is not a hypothesis
+   or an arm, that `SELF_CORRECTION_SPEC.md` is normative, and that no H1-H3
+   verdict may cite it.
+5. **The fallback 7B simulator.** Named with no ID, revision, or licence row, in
+   a table whose own rule is that a checkpoint appears only if its ID resolves.
+   The fallback is removed; a substitute requires a registry entry and a dated
+   decision.
+6. **The H2 SFT checkpoint.** Both confirmatory configurations initialize from a
+   scale-model SFT checkpoint that is in no arm, no milestone, and no budget.
+   §4 now separates required training artifacts from reported arms.
+7. **The 20-turn cap.** `SELF_CORRECTION_SPEC.md` froze a literal "step cap"
+   that `RUNG_PROTOCOL.md` defines as a derived `environment_turn_cap`. It now
+   cites the derived cap.
+8. **The frozen rerun rule.** Every `INVALID` verdict depended on it and nothing
+   defined it. `HYPOTHESIS_PROTOCOL.md` §6.9 now fixes the closed list of
+   infrastructure causes, sends ambiguous cases to the model-failure side, caps
+   reruns at two at the same seed, requires reruns to be exhausted before any
+   outcome is read, and requires rerun and `INVALID` counts to be reported.

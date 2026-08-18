@@ -453,6 +453,36 @@ An exact McNemar test is allowed only as a secondary test for genuinely paired
 binary `pass^1` episode outcomes, such as H3's present/removed pair. It is not a
 test for a fractional combinatorial `pass^k` task statistic.
 
+## 6.9 The frozen rerun rule
+
+Every `INVALID` verdict in this protocol depends on this rule, which was
+referenced in three places and defined in none. It is frozen with the rest of
+the eval configuration and its hash joins the freeze-artifact list.
+
+**Classification.** A run is reread as *infrastructure* only when its failure is
+attributable to the harness or the host, never to the policy. The closed list:
+CUDA out-of-memory, driver or device disappearance, host or process kill, disk
+or network failure while loading a pinned artifact, user-simulator or grader
+transport error, and harness exception raised outside the policy call. Anything
+the model did — refusal, parse failure, loop, model-caused timeout, sandbox
+violation, `environment_turn_cap` termination — is an observed failure with
+`Y=0` and is never rerun. When classification is ambiguous, the run is a model
+failure. The ambiguous case must not become the escape hatch.
+
+**Procedure.** Rerun at most **twice**, at the same seed, on the same frozen
+provenance tuple, with nothing else changed. Each attempt is logged with its
+classification, its raw error, and its attempt index; attempts are retained even
+when a later one succeeds. A succeeding rerun contributes its outcome normally.
+
+**Escalation.** After two failed reruns the endpoint is `INVALID`. It is never
+imputed, never replaced by a neighbouring run, and never counted as a model
+failure. Reruns are exhausted before any result is read, so an outcome can never
+influence the decision to rerun it.
+
+**Reporting.** The rerun count and the `INVALID` count are reported per arm
+beside the results. A `NOT YET EVALUABLE` project verdict is preferred to a
+verdict resting on a cell that was rerun into existence.
+
 ## 7. `NA`, `FAIL`, and `INVALID` rules
 
 | Condition | Numeric value | Protocol status |
