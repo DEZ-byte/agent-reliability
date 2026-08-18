@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "candidates": [
+    {
+      "name": "qwen2.5-3b-instruct",
+      "role": "primary_small",
+      "model_id": "Qwen/Qwen2.5-3B-Instruct",
+      "revision": "aa8e72537993ba99e69dfaafa59ed015b17504d1"
+    },
+    {
+      "name": "qwen3-4b",
+      "role": "primary_small",
+      "model_id": "Qwen/Qwen3-4B",
+      "revision": "1cfa9a7208912126459214e8b04321603b3df60c"
+    },
+    {
+      "name": "qwen2.5-1.5b-instruct",
+      "role": "scale_check",
+      "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+      "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
+    },
+    {
+      "name": "qwen3-1.7b",
+      "role": "scale_check",
+      "model_id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    }
+  ],
+  "probe": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a tool-using assistant. Use the registered tools when they are required."
+      },
+      {
+        "role": "user",
+        "content": "Use the calculator to compute 17 * 23."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "mutative": false,
+        "function": {
+          "name": "calculator",
+          "description": "Evaluate one arithmetic expression.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "expression": {
+                "type": "string",
+                "description": "The arithmetic expression to evaluate."
+              }
+            },
+            "required": ["expression"],
+            "additionalProperties": false
+          }
+        }
+      },
+      {
+        "type": "function",
+        "mutative": true,
+        "function": {
+          "name": "update_order",
+          "description": "Change the status of an existing order.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "description": "The existing order identifier."
+              },
+              "status": {
+                "type": "string",
+                "description": "The new order status."
+              }
+            },
+            "required": ["order_id", "status"],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "generation_cases": [
+      {
+        "name": "calculator-read-only",
+        "expected_tool": "calculator",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Return exactly one normalized tool call when a tool is required."
+          },
+          {
+            "role": "user",
+            "content": "Use the calculator to compute 17 * 23."
+          }
+        ]
+      },
+      {
+        "name": "order-update-mutative",
+        "expected_tool": "update_order",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Return exactly one normalized tool call when a tool is required."
+          },
+          {
+            "role": "user",
+            "content": "Use update_order to set order ORD-17 to shipped."
+          }
+        ]
+      }
+    ],
+    "training_trajectory": [
+      {
+        "role": "system",
+        "content": "MASK_SYSTEM_7A31 tool training smoke."
+      },
+      {
+        "role": "user",
+        "content": "MASK_USER_4B92 use the calculator."
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "calculator",
+              "arguments": {
+                "expression": "MASK_ASSISTANT_8C53"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "name": "calculator",
+        "content": "MASK_TOOL_RESULT_2D74"
+      }
+    ],
+    "mask_sentinels": {
+      "system": "MASK_SYSTEM_7A31",
+      "user": "MASK_USER_4B92",
+      "assistant": "MASK_ASSISTANT_8C53",
+      "tool": "MASK_TOOL_RESULT_2D74"
+    },
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "expected_template_markers": [
+      "calculator",
+      "update_order",
+      "expression",
+      "order_id",
+      "17 * 23"
+    ],
+    "seed": 17,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_new_tokens": 96,
+    "warmup_runs": 2,
+    "timed_runs": 3,
+    "max_decoded_output_chars": 4096,
+    "target_cuda_device_index": 0,
+    "quantization": "nf4",
+    "double_quant": true
+  }
+}

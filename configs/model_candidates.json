@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-08-18",
+  "roles": {
+    "primary_small": [
+      {
+        "id": "Qwen/Qwen2.5-3B-Instruct",
+        "revision": "aa8e72537993ba99e69dfaafa59ed015b17504d1",
+        "selection_status": "pending",
+        "license_id": "other",
+        "license_name": "qwen-research",
+        "access": "public"
+      },
+      {
+        "id": "Qwen/Qwen3-4B",
+        "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+        "selection_status": "pending",
+        "license_id": "apache-2.0",
+        "access": "public"
+      }
+    ],
+    "scale_check": [
+      {
+        "id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+        "selection_status": "pending",
+        "license_id": "apache-2.0",
+        "access": "public"
+      },
+      {
+        "id": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "selection_status": "pending",
+        "license_id": "apache-2.0",
+        "access": "public"
+      }
+    ],
+    "cross_family_check": [
+      {
+        "id": "meta-llama/Llama-3.2-3B-Instruct",
+        "revision": "0cb88a4f764b7a12671c53f0838cd831a0843b95",
+        "selection_status": "pending",
+        "license_id": "llama3.2",
+        "access": "manual_gate"
+      }
+    ],
+    "scaffolded_comparator": [
+      {
+        "id": "meta-llama/Llama-3.1-8B-Instruct",
+        "revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+        "selection_status": "pending",
+        "license_id": "llama3.1",
+        "access": "manual_gate"
+      }
+    ],
+    "user_simulator": [
+      {
+        "id": "Qwen/Qwen2.5-14B-Instruct",
+        "revision": "cf98f3b3bbb457ad9e2bb7baf9a0125b6b88caa8",
+        "selection_status": "pending",
+        "license_id": "apache-2.0",
+        "access": "public"
+      }
+    ],
+    "function_calling_dataset": [
+      {
+        "id": "Salesforce/xlam-function-calling-60k",
+        "revision": "26d14ebfe18b1f7b524bd39b404b50af5dc97866",
+        "selection_status": "pending",
+        "license_id": "cc-by-4.0",
+        "access": "automatic_gate"
+      },
+      {
+        "id": "glaiveai/glaive-function-calling-v2",
+        "revision": "e7f4b6456019f5d8bcb991ef0dd67d8ff23221ac",
+        "selection_status": "pending",
+        "license_id": "apache-2.0",
+        "access": "public"
+      }
+    ]
+  }
+}

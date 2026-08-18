@@ -178,3 +178,126 @@ Every JSONL record must carry `schema_version=1`; missing and unsupported
 versions fail validation. Existing in-memory records are revalidated from
 their current Python payload before writing, so shallow post-construction
 mutation cannot be silently coerced into a different JSON value.
+
+## 2026-08-18 — M0 live compatibility findings
+
+### D-024 — Re-evaluate the “TRL is single-turn” assumption
+The current TRL v1.8 documentation exposes multi-turn tool environments through
+`GRPOTrainer(environment_factory=...)`, requires `transformers>=5.2.0` for that
+path, and lists both Qwen2.5 and Qwen3 among tested model families:
+https://huggingface.co/docs/trl/v1.8.0/en/grpo_trainer and
+https://huggingface.co/docs/trl/en/openenv.
+
+This supersedes the implementation assumption in BLUEPRINT_v2.md §7.1 that
+stock TRL is single-turn by design. It does not change the milestone order:
+Phase A remains first because it is cheaper and independently shippable. Before
+M6, compare current TRL OpenEnv against `verifiers` with one small deterministic
+episode instead of pre-committing to either multi-turn backend.
+
+### D-025 — Library support claims are smoke-test inputs, not measurements
+TRL's official quickstart demonstrates GRPO with Qwen2.5, and Unsloth's official
+repository links a Qwen3 advanced-GRPO notebook. These establish candidate
+support paths only. They do not establish this project's VRAM fit, throughput,
+tool-template quality, or training stability. The Qwen2.5-versus-Qwen3 decision
+remains pending until both candidates produce comparable versioned smoke-result
+artifacts on the same named hardware and pinned environment.
+
+### D-026 — Keep inference and training chat templates distinct
+Transformers can return assistant-token masks only when the active template
+contains `{% generation %}` markers. Current TRL supplies separate patched
+training templates for Qwen2.5 and Qwen3; its Qwen3 patch also preserves the
+assistant prefix when a tool observation is appended:
+https://huggingface.co/docs/transformers/main_classes/tokenizer and
+https://huggingface.co/docs/trl/en/chat_templates.
+
+The smoke test must therefore hash and inspect both templates. Native model
+templates remain the inference baseline. TRL training templates are used for
+assistant-only loss only after a fixture proves correct assistant masking and
+multi-turn prefix preservation. A successful import alone is not sufficient.
+
+### D-027 — A benchmark result is identified by its full provenance tuple
+The M0 scan found two distinct tau2 code/data lines: Sierra's evolving official
+repository and Amazon's separately corrected `tau2-bench-verified` fork. The
+name “tau2” is therefore not enough to identify a comparable result.
+
+Before Phase B, pin the repository URL, immutable commit, task manifest,
+simulator checkpoint and prompt, reward basis, and dependency lock as one run
+artifact. Results from different tuples must remain in separate tables unless
+a deliberate bridge study reruns both variants. The choice of tuple remains
+pending; no existing score is treated as reproduced.
+
+### D-028 — License verification precedes, but does not substitute for, selection
+At the verified revisions, `Qwen/Qwen2.5-3B-Instruct` uses the non-commercial
+Qwen Research License, while `Qwen/Qwen3-4B` and both scale candidates use
+Apache-2.0. The xLAM dataset states CC BY 4.0 and documents its generation and
+verification pipeline, but its card also uses “research purposes only” wording.
+Glaive states Apache-2.0 only in metadata and supplies neither a full license
+file nor comparable provenance documentation.
+
+All model and dataset selections remain pending. The smoke test decides model
+fitness, while release-license acceptability is a separate hard constraint.
+xLAM is the provisional format-grounding preference, but it is not ingested or
+redistributed until its wording is resolved and its access terms are accepted.
+
+### D-029 — Self-correction requires a matched, same-model diagnostic branch
+`SELF_CORRECTION_SPEC.md` defines one earliest rollback-safe opportunity per
+episode and freezes the failed prefix before any comparison. A neutral
+same-model resample, a diagnostic-aware same-model repair, and an immediate 8B
+handoff then branch from that evidence. Production R1/R2 traces alone support
+descriptive attribution; causal language requires the matched branch bundle.
+
+Local action repair and deterministic end-to-end recovery are separate
+outcomes. Retry luck, gate prevention, and success after 8B escalation are
+reported separately and are never credited as small-model self-correction.
+These diagnostics do not replace production rollouts or alter H1–H3.
+
+### D-030 — Smoke dependencies use a two-stage lock lifecycle
+The kernel lock remains small and CPU-only. Before selection measurements,
+dependency reconnaissance may iterate without producing a result; it then
+freezes a provisional `requirements-smoke.lock` plus an immutable environment
+manifest. Every Qwen candidate is measured in a clean recreation of that same
+environment. The later training lock may change only as a new recorded
+artifact and cannot retroactively change the smoke result.
+
+### D-031 — Qwen selection compares two size-paired generation bundles
+The alternatives are Qwen2.5 {3B primary, 1.5B scale} and Qwen3 {4B primary,
+1.7B scale}. Both checkpoints in a bundle must pass the technical hard gates;
+the primary quality metrics rank bundles and the scale metrics serve as the
+next tie-breaker. This preserves the scale arm as a within-generation check.
+
+Qwen3 is scored with `enable_thinking=false` for parity with the direct
+Qwen2.5 tool-call condition and the generated-token objective. Thinking mode
+may be a labeled diagnostic only. Before a technical leader becomes the
+selected bundle, the intended release scope must declare whether
+non-commercial upstream model terms are acceptable and filter ineligible
+bundles. Imports alone do not establish training support: the final hard gate
+is a bounded executed forward/backward or tiny GRPO step.
+
+### D-032 — Rungs are state-machine treatments, not framework labels
+`RUNG_PROTOCOL.md` defines an environment turn, agent turn, model decision,
+and tool attempt separately. R0 permits one policy generation per natural
+agent turn, including in a conversational episode, with no same-turn model
+retry. M1 implements the framework-neutral Python R0/R1 core; M4 adds an R2
+adapter and LangGraph orchestration only after golden event/state parity.
+
+Exact call redispatch is allowed only for a versioned transient failure that
+proves no commit and idempotency. Parse, schema, non-transient tool, and gate
+failures require a fresh model decision when the rung budget permits. A small
+parent may hand off once to the frozen 8B; the 8B arm is explicitly
+`R2-no-escalation` and never escalates to itself.
+
+### D-033 — H1–H3 use frozen operational estimands
+`HYPOTHESIS_PROTOCOL.md` defines the confirmatory arms, denominators, zero
+handling, benchmark aggregation, paired seed matrix, confidence intervals, and
+verdict states before any model result exists. H1 adds primary Base×R0 to the
+headline n=8 set, forms gap closure from Base×R0 → GRPO×R0 relative to 8B
+Base×R2-no-escalation, and reports the generated-token ratio separately. H2
+uses matched scale-model {accuracy+format} versus {accuracy+format+gate}
+training runs and measures pre-enforcement attempted mutations under R1 audit
+mode. H3 uses paired policy-manual contexts under R0 so runtime gates cannot
+mask missing policy knowledge.
+
+McNemar is limited to genuinely paired binary pass^1 outcomes. Fractional
+`pass^k` contrasts use a hierarchical paired bootstrap and a task-level paired
+permutation statistic. Undefined denominators remain `NA` or `INVALID` under
+the protocol and can never become a favorable zero.

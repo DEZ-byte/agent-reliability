@@ -1,6 +1,7 @@
 # Internalizing Agent Reliability — Blueprint v2 (canonical)
 
-**Status: hypotheses only — no experiments run as of 2026-08-17.**
+**Status: implementation started; no model experiment has run as of
+2026-08-18.**
 This file supersedes the two v1 blueprints in `Downloads/`
 (`Unified_Agent_Reliability_RLVR_Master_Blueprint.md`,
 `UNIFIED_AGENT_RELIABILITY_BLUEPRINT.md`). Those files contain fabricated
@@ -29,6 +30,8 @@ costs far less at inference" is a publishable, hireable result.
 
 Decision rule: every hypothesis is reported with its measured outcome and CI.
 None is dropped for being negative.
+`HYPOTHESIS_PROTOCOL.md` is the normative definition of their arms,
+denominators, aggregation, zero handling, and paired inference.
 
 ### 1.2 What is claimed as new vs. adopted
 - **Adopted from prior work:** GRPO recipe and composite reward structure
@@ -72,7 +75,7 @@ resolves. Verify each link at M0. Accept the Meta gated licenses immediately
 
 | Role | Checkpoint (decide at setup, §3.1) | Gated / license | Treatment |
 | :-- | :-- | :-- | :-- |
-| Primary small | `Qwen/Qwen2.5-3B-Instruct` **or** `Qwen/Qwen3-4B` | No / Qwen license (2.5-3B is research-friendly but NOT Apache; Qwen3 is Apache-2.0 — check before release) | Full grid: SFT, DPO, GRPO × Rungs 0/1/2 |
+| Primary small | `Qwen/Qwen2.5-3B-Instruct` **or** `Qwen/Qwen3-4B` | Public / Qwen2.5-3B uses the non-commercial Qwen Research License; Qwen3 uses Apache-2.0 | Full grid: SFT, DPO, GRPO × Rungs 0/1/2 |
 | Scale check | `Qwen/Qwen2.5-1.5B-Instruct` **or** `Qwen/Qwen3-1.7B` | Apache-2.0 | Base + GRPO, Rungs 0 + 2 only |
 | Cross-family check | `meta-llama/Llama-3.2-3B-Instruct` | **Gated**, Llama Community License (derivative names must start with "Llama") | Base + GRPO, Rungs 0 + 2 only |
 | Scaffolded comparator | `meta-llama/Llama-3.1-8B-Instruct` | **Gated**, Llama Community License | **Never trained.** Base at Rungs 0/1/2 |
@@ -88,17 +91,21 @@ Dropped from v1 and why:
 - All remaining v1 tiers — compute (§9).
 
 ### 3.1 Setup-time decision: Qwen2.5 vs Qwen3
-Pick during M0 by running the same smoke test on both candidates:
-Unsloth GRPO support, tool-call chat-template quality, 4-bit VRAM fit on a
-4090/L4, and tokens/s. Record the choice and the measurements in DECISIONS.md.
-If Qwen2.5 wins, the README must state the reason ("comparability with the
-2025 GRPO literature"), because it is a 2024 model in a 2026 project.
+Select one size-paired generation bundle during M0 under
+`MODEL_SMOKE_PROTOCOL.md`: Qwen2.5 {3B, 1.5B} or Qwen3 {4B, 1.7B}. Both sizes
+must pass the frozen-stack tool-template, single-GPU NF4, training-mask, and
+one-step training probes. Qwen3 is scored with thinking disabled; thinking is
+diagnostic only. Apply the recorded release-license constraint before naming
+the winner, then record the measurements and artifact paths in DECISIONS.md.
 
 ---
 
 ## 4. Experimental matrix (~23 arms, tiered — not 108)
 
-Rungs: **R0** direct single-turn; **R1** ReAct loop; **R2** cascade + gates (§8).
+Rungs: **R0** direct with no same-turn model retry; **R1** same-model
+act/observe with bounded structured feedback; **R2** feedback + reflection +
+gates and, for small parents only, one 8B handoff (§8 and
+`RUNG_PROTOCOL.md`).
 
 | Model | Regimes × Rungs | Arms |
 | :-- | :-- | :-- |
@@ -108,13 +115,16 @@ Rungs: **R0** direct single-turn; **R1** ReAct loop; **R2** cascade + gates (§8
 | Llama-3.1-8B | Base × {R0, R1, R2} | 3 |
 | **Total** | | **23** |
 
-Headline comparison: **primary GRPO×R0 (and ×R2 "hybrid") vs 8B Base×R2.**
+Headline comparison: **primary Base×R0 → primary GRPO×R0 gap closure relative
+to 8B Base×R2-no-escalation**; primary GRPO×R2 is the separate “hybrid” row.
+Exact aggregation and token-ratio rules are in `HYPOTHESIS_PROTOCOL.md`.
 
 Eval tiers (protocol in §7):
 - Tier 1 — all 23 arms: n=4 runs, Phase A test set (N≈150) + tau2-retail test
   split. Reports pass^1, pass^4 (pass@k alongside).
-- Tier 2 — 6 headline arms only (8B×R2, 8B×R1, primary Base×R1, primary
-  SFT×R1, primary GRPO×R0, primary GRPO×R2): n=8 runs → adds pass^8.
+- Tier 2 — 7 headline arms only (8B×R2-no-escalation, 8B×R1, primary
+  Base×R0, primary Base×R1, primary SFT×R1, primary GRPO×R0, primary
+  GRPO×R2): n=8 runs → adds pass^8. Base×R0 is required to define H1's gap.
 
 ---
 
@@ -126,12 +136,13 @@ Eval tiers (protocol in §7):
   that name) + an open function-calling dataset for format grounding:
   `Salesforce/xlam-function-calling-60k` or Glaive-function-calling-v2
   (record the license of whichever is used in `data/README.md`).
-- **Phase B (multi-turn):** tau2-bench retail domain via the **upstream
-  package as a pinned dependency** (evaluate `tau2-bench-verified` as the
-  pinned choice — it fixes misannotated tasks). Never reimplement the env,
-  DB, or grader: reimplementation makes every number incomparable to
-  published results. Before running any project arm, reproduce one published
-  small-model retail pass^1 to prove the harness is comparable.
+- **Phase B (multi-turn):** tau2 retail through one pinned provenance tuple.
+  Sierra's official repository and Amazon's separately corrected
+  `tau2-bench-verified` fork are distinct choices, not upstream aliases.
+  Before implementation, freeze the repository, commit, task manifest,
+  simulator, reward basis, and dependency lock together (D-027). Never
+  reimplement the environment, DB, or grader. Reproduce a reference result
+  only on the exact same tuple; otherwise label the run as a new variant.
 
 ### 5.2 SFT data (target: 1–3k verified trajectories)
 - Teacher: strong open-weight model (e.g., Qwen2.5-72B class in 4-bit, or the
@@ -173,7 +184,9 @@ Eval tiers (protocol in §7):
   `__import__`/`eval`/`exec`/`open`/`compile`), POSIX rlimits (address space,
   CPU, file size) inside the worker, `process.kill()` on timeout, a defined
   `SandboxViolation` exception, stdout/stderr capture, and spawn-safe
-  top-level worker functions (the dev box is Windows). `tests/test_sandbox.py`
+  top-level worker functions (the dev box is Windows). Windows uses a parent
+  private-bytes watchdog where available. Worker IPC is bounded strict JSON,
+  never worker-controlled pickle (D-019, D-022). `tests/test_sandbox.py`
   proves the timeout and memory limits fire and the known escapes are blocked.
 
 ### 6.2 User simulator (Phase B eval only)
@@ -202,11 +215,12 @@ runtime constraint cannot diverge.
 | Term | Source of truth | Value |
 | :-- | :-- | :-- |
 | Accuracy | Environment state only: sandbox execution result (Phase A) or final DB-state hash (Phase B). Text-only answers score 0. | +1.0 / 0.0 |
-| Format | Every emitted tool block parses as JSON **and** validates against a registered tool's Pydantic schema **and** ≥1 call actually dispatched. | +0.2 valid / −0.5 parse failure |
-| Gate | Replay the executed tool-call event log; violation iff a mutative tool **executed** while the auth predicate on env state was false (order-aware, success-aware). | Violation **zeroes accuracy** and adds −0.6 |
+| Format | Every emitted tool block parses as strict JSON **and** validates against a registered tool's Pydantic schema **and** ≥1 call actually dispatched. | +0.2 when the conjunction holds / −0.5 when emitted blocks fail it / 0 when no block is emitted |
+| Gate | Replay the tool-call event log; violation iff a mutative call was **dispatched** while a required pre-call predicate was false, even if its handler later failed. | Any violation **zeroes accuracy** and adds one binary −0.6 episode term |
 | Efficiency | −0.05 × executed calls, capped at −0.3. | plus **−0.3 for zero tool calls** on tool-required tasks |
 
 All four are summed (signed terms; no double-negation ambiguity).
+On tool-required tasks, zero dispatched calls also forces accuracy to 0.
 `tests/test_rewards.py` contains deliberate gaming inputs with exact expected
 values: auth string in prose/comment, empty `<tool_call></tool_call>`,
 out-of-order auth, failed-auth-then-modify, multiple `####` markers.
@@ -214,16 +228,19 @@ out-of-order auth, failed-auth-then-modify, multiple `####` markers.
 ### 7.1 Order and curriculum
 - Pipeline: **Base → SFT → {DPO | GRPO}**. GRPO and DPO both initialize from
   the SFT checkpoint. GRPO-from-base exists only as a labeled ablation.
-- π_ref = the SFT checkpoint realized by disabling the LoRA adapter
-  (zero extra VRAM).
+- π_ref must be the frozen SFT policy used to initialize the trained arm.
+  Disabling an SFT LoRA may expose the base model rather than the SFT policy,
+  so the exact memory-safe implementation remains blocked on the executed
+  SFT/LoRA smoke test and must be recorded before training.
 - Curriculum:
-  - **Stage 1:** single-turn verifiable tool tasks (Phase A). Stock
-    TRL/Unsloth GRPO works here (it is single-turn by design — v1's
-    assumption that it handles multi-turn episodes was false). G = 8–16.
+  - **Stage 1:** single-turn verifiable tool tasks (Phase A). Use the frozen
+    TRL/Unsloth stack after the one-step compatibility probe. G = 8–16.
   - **Stage 2:** short scripted 2–4-turn synthetic retail episodes with auth
     gates (no simulator; deterministic rewards).
-  - **Stage 3 (stretch, M6):** full tau2 multi-turn via the `verifiers`
-    multi-turn RLVR library on a rented GPU. Kill criterion in §11.
+  - **Stage 3 (stretch, M6):** full tau2 multi-turn through the backend chosen
+    by a deterministic compatibility pilot between current TRL
+    `environment_factory` support and `verifiers`. No backend is preselected.
+    Kill criterion in §11.
 
 ### 7.2 Losses — exact formulations
 - **Assistant-token-only loss masking everywhere** (SFT, DPO, GRPO):
@@ -259,31 +276,45 @@ out-of-order auth, failed-auth-then-modify, multiple `####` markers.
   delete optimizer states after a run finishes.
 - **Ablation ladder** (headline evidence for H2), on the scale-check model:
   accuracy-only → +format → +gate → full composite. Report the
-  `skipped_auth` rate per rung. Headline GRPO arm runs with ≥2 seeds;
-  report mean ± range.
+  `skipped_auth` rate per rung. The confirmatory H2 contrast is the matched
+  {accuracy+format} versus {accuracy+format+gate} pair with efficiency disabled
+  in both, evaluated under R1 audit mode as specified in
+  `HYPOTHESIS_PROTOCOL.md`. Headline GRPO arms run with ≥2 seeds; report the
+  frozen paired CIs, not only mean ± range.
 
 ---
 
 ## 8. Inference scaffolding spec (v1 left this unimplementable)
 
 ### 8.1 Rungs
-- **R0 Direct:** one generation, tool schemas in prompt, no retries.
-- **R1 ReAct:** thought/act/observe loop, step cap **20 env steps** —
-  identical cap for every arm (cap changes pass^k and token counts by itself).
-- **R2 Cascade + gates:** Half A escalation ladder + Half B deterministic
-  gates, specified below. Built in LangGraph (builder is new to it — learning
-  time budgeted inside M4).
+- **R0 Direct:** one generation per natural agent turn, tool schemas in the
+  prompt, and no replacement generation at the same state. Conversational R0
+  can have later generations after genuine environment/user observations.
+- **R1 Act/observe:** the same model may make one structured-feedback decision
+  after a correctable same-turn failure. The framework-neutral Python state
+  machine is implemented in M1.
+- **R2 Cascade + gates:** R1 plus one reflection decision, deterministic policy
+  gates, and one-way 8B handoff for small parents. The 8B parent uses explicit
+  `R2-no-escalation`. M4 may expose the same core through LangGraph only after
+  golden event/state parity.
+
+Every matched arm shares the **20 environment-turn** cap. Rung-specific model
+decision budgets are treatments and are counted separately; graph hops,
+parser passes, and gate blocks are not environment turns.
 
 ### 8.2 Half A — cascade triggers (all runtime-observable; the grader is never
 consulted mid-episode)
 
 | Signal | Transition |
 | :-- | :-- |
-| 1st tool exception / schema-validation failure | Retry the same call |
-| 2nd failure on the same step | Reflect: re-prompt same model with the error transcript (pinned reflect prompt in `configs/`) |
-| 3rd failure, or a gate block | Escalate to the local 8B (both models co-resident in 4-bit on a 24 GB GPU) |
-| Step cap hit | Graceful give-up |
-| N=3 identical consecutive calls | Treated as a failure signal (loop detection) |
+| Confirmed transient, no-commit, idempotent tool failure | At most one exact redispatch under the common infrastructure policy |
+| Parse/schema/unknown-tool or non-transient tool failure | Fresh same-model decision with structured feedback when the rung permits it |
+| R2 feedback decision also fails | One pinned same-model reflection decision |
+| R2 small parent exhausts same-model repair | One-way handoff to the frozen local 8B |
+| R2 8B parent exhausts reflection | Graceful give-up; `escalation_target=none` |
+| Gate block | No dispatch; follow the remaining feedback/reflect ladder rather than immediate escalation |
+| Environment/decision cap hit | Graceful give-up with a specific termination label |
+| N=3 identical consecutive calls | Failure signal without an additional identical dispatch |
 
 - Escalation frequency is logged per arm — "escalations × cost" is a required
   column of the trade-off table.
@@ -307,6 +338,8 @@ consulted mid-episode)
 
 Every system prompt is pinned verbatim in `configs/prompts/`. Prompt tokens
 and generated tokens are counted separately in all cost reporting.
+The confirmatory H3 comparison is R0-only with paired present/removed contexts;
+R1/R2 rows are secondary because gates or retries could mask prompt dependence.
 
 ---
 
@@ -350,8 +383,10 @@ Decoding: fixed temperature/top_p/step cap, identical across all arms, pinned
 in `configs/eval.yaml`, per-run seeds recorded.
 
 ### 10.2 Statistics
-- All arms evaluated on the identical task set → **paired** comparisons:
-  McNemar / paired permutation on per-task outcomes.
+- All arms evaluated on the identical task/run seed matrix. Use McNemar only
+  for genuinely paired binary outcomes such as matched pass^1 trials. For
+  fractional per-task `pass^k` contributions, use the hierarchical bootstrap
+  plus a pre-registered paired permutation statistic.
 - 95% CIs via hierarchical bootstrap (resample tasks, recompute the
   combinatorial estimator from each task's runs).
 - N≈150 cannot resolve <5 pp gaps; the README says so and headline claims are
@@ -387,13 +422,13 @@ and cite it.
 
 | Milestone | Contents | Exit criterion |
 | :-- | :-- | :-- |
-| **M0** (~1 wk) | Repo skeleton, pinned env + lockfile, tool registry, sandbox + escape tests, literature scan, PLAN.md + DECISIONS.md in git, HF gated-license requests filed, Qwen 2.5-vs-3 smoke test | CI green; model choice recorded |
-| **M1** (~2 wk) | Phase A env + rewards v2 + pass^k harness | **Real** baseline numbers, all 4 base models, R0/R1, with CIs — ships as a measurement study |
+| **M0** (~1 wk) | Repo skeleton, kernel lock, provisional ML smoke lock, tool registry, sandbox + escape tests, literature scan, PLAN.md + DECISIONS.md in git, HF gated-license requests filed, Qwen 2.5-vs-3 smoke test | CI green; model choice recorded |
+| **M1** (~2 wk) | Phase A env + rewards v2 + pass^k harness + framework-neutral R0/R1 core | **Real** baseline numbers, all 4 base models, R0/R1, with CIs — ships as a measurement study |
 | **M2** (~1–2 wk) | SFT on primary + re-eval | "Does imitation help?" row filled |
 | **M3** (~2–3 wk) | Single-turn GRPO + ablation ladder + ≥2 seeds + W&B curves; DPO arm alongside | **Headline experiment** rows filled |
-| **M4** (~2 wk) | LangGraph R1/R2 + cascade + gates on base models | First real Pareto plot |
-| **M5** (~2–3 wk) | tau2-retail eval via upstream adapter (`src/env/tau2_adapter.py`, budget 3–5 days) + local user sim | Phase B table filled; one published baseline reproduced |
-| **M6** (stretch) | Multi-turn GRPO via `verifiers` | Kill criterion below |
+| **M4** (~2 wk) | LangGraph parity adapter + R2 cascade/gates on base models | First real Pareto plot |
+| **M5** (~2–3 wk) | tau2-retail eval via the pinned-tuple adapter (`src/env/tau2_adapter.py`, budget 3–5 days) + local user sim | Phase B table filled; one same-tuple reference result reproduced when available |
+| **M6** (stretch) | Multi-turn GRPO via the backend selected by the TRL-versus-`verifiers` pilot | Kill criterion below |
 | **M7** (~1 wk) | Writeup, CIs, negative-results section, trajectory-viewer demo, optional video | Definition of done met |
 
 Repo layout adds (v1 omissions): `tests/` + CI, `data/`, `scripts/`,

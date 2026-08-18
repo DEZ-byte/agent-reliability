@@ -38,9 +38,38 @@ Or run the local check wrapper:
 ./scripts/check.ps1 -Python .venv\Scripts\python.exe
 ```
 
-The ML training environment will receive a separate compatibility lock after
-the M0 Qwen/Unsloth/TRL smoke test; the current lock covers only the reliability
-kernel.
+The current lock covers only the reliability kernel. Before any measured model
+comparison, compatibility reconnaissance must produce a provisional ML smoke
+lock and immutable environment manifest. The later training lock is finalized
+after the Qwen decision without rewriting the smoke environment.
+
+## M0 evidence controls
+
+- [`RELATED_WORK.md`](RELATED_WORK.md) is a 15-source, primary-source-only
+  review. It records what is adopted, what may be distinguishing, and which
+  claims remain unsupported.
+- [`data/LICENSES.md`](data/LICENSES.md) records model and dataset access terms,
+  caveats, and immutable revisions. The machine-readable registry is
+  [`configs/model_candidates.json`](configs/model_candidates.json).
+- [`MODEL_SMOKE_PROTOCOL.md`](MODEL_SMOKE_PROTOCOL.md) pre-registers the Qwen
+  comparison. No model has won until comparable measured artifacts exist.
+- [`SELF_CORRECTION_SPEC.md`](SELF_CORRECTION_SPEC.md) separates same-model
+  diagnostic repair from retry luck, gate prevention, and 8B escalation.
+- [`RUNG_PROTOCOL.md`](RUNG_PROTOCOL.md) fixes R0/R1/R2 turn, retry, gate,
+  escalation, parity, and cost-accounting semantics.
+- [`HYPOTHESIS_PROTOCOL.md`](HYPOTHESIS_PROTOCOL.md) makes H1–H3 executable
+  with exact arms, denominators, zero handling, and paired inference.
+
+The model smoke command is offline by default. It validates the plan and
+records local environment facts without importing the optional ML stack or
+accessing a model repository:
+
+```powershell
+python scripts/smoke_models.py --output results/model_smoke-plan.json
+```
+
+Tokenizer/model access requires both `--run-load` and `--allow-download`.
+Do not treat the offline plan artifact as a benchmark result.
 
 ## Source of truth
 
