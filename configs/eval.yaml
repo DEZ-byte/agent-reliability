@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "Frozen evaluation configuration. BLUEPRINT_v2 section 10.1 requires these",
+    "pinned before any measured run, identical across every arm.",
+    "JSON syntax, a YAML 1.2 subset, for the same reason as configs/gates.yaml",
+    "(D-021): a strict standard-library loader and no extra dependency.",
+    "Changing any value here invalidates comparability with every artifact",
+    "already recorded under it, and needs a dated decision."
+  ],
+
+  "decoding": {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "max_new_tokens": 256,
+    "_comment": [
+      "Sampling, not greedy. pass^k asks whether a model succeeds on all k",
+      "independent attempts, which is only a question if the attempts can",
+      "differ. At temperature 0 every run is identical and pass^k collapses",
+      "to pass^1, measuring nothing the blueprint is about.",
+      "One setting is used for every model. Publishers recommend different",
+      "values per family, so adopting any one family's recommendation would",
+      "hand that family an advantage the comparison is supposed to measure.",
+      "See D-067."
+    ]
+  },
+
+  "runs": {
+    "tier_1_n": 4,
+    "tier_2_n": 8,
+    "seed_base": 20260820,
+    "_comment": [
+      "Each arm holds exactly one run array (section 10.1). A Tier-2 arm uses",
+      "n=8 instead of n=4, never in addition to it.",
+      "The seed for one episode is seed_base + run_index, applied per task, so",
+      "runs differ from each other and reproduce exactly on a rerun."
+    ]
+  },
+
+  "episode": {
+    "environment_turn_cap": 20,
+    "_comment": [
+      "RUNG_PROTOCOL section 1.1 reference cap, common to matched R0/R1/R2",
+      "arms. A rung never gains turns by having retry logic."
+    ]
+  },
+
+  "phase_a": {
+    "split_manifest": "configs/splits/phase_a_gsm8k.json",
+    "split": "test",
+    "rungs": ["R0", "R1"],
+    "_comment": [
+      "Prompts live in src/evaluation/rungs.py as SYSTEM_PROMPT and USER_PROMPT",
+      "and are hashed into every artifact, so a prompt edit is visible as a",
+      "changed harness hash rather than as an unexplained score change."
+    ]
+  },
+
+  "reporting": {
+    "k_values": [1, 4, 8],
+    "bootstrap_resamples": 10000,
+    "confidence": 0.95,
+    "required_alongside_accuracy": ["no_arithmetic_rate"],
+    "_comment": [
+      "D-064 makes the no-arithmetic rate a required companion to every Phase A",
+      "accuracy figure. A high accuracy beside a high no-arithmetic rate",
+      "describes tool-call compliance, not tool-assisted problem solving.",
+      "k=8 is reported only for arms whose array is n=8."
+    ]
+  }
+}
