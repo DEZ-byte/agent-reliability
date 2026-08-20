@@ -908,3 +908,27 @@ episode.
 The calculator declares no gates. It computes and returns a number without
 touching state a gate would protect, and `ToolSpec` rejects gates on a
 non-mutative tool.
+
+### D-061 — Phase A task data is GSM8K at a pinned revision, split by manifest
+`openai/gsm8k` config `main` at revision `740312add88f…`, MIT licensed, public,
+verified through the Hub API on 2026-08-20. MIT sits comfortably inside the
+`public-portfolio-permissive` scope, unlike the xLAM caveat in D-058.
+
+`scripts/build_phase_a_splits.py` writes `configs/splits/phase_a_gsm8k.json`:
+1,000 train tasks from the upstream train split, and 100 dev plus 150 test
+tasks drawn disjointly from the upstream test split. Only IDs, source indices,
+and content hashes are committed. The dataset is never redistributed here.
+
+The build is deterministic: a pinned revision, seed 20260820, and a sort before
+sampling. `--check` rebuilds and fails if one byte would differ, so the
+committed manifest is verifiable rather than trusted.
+
+GSM8K has no template field, so each item is its own template and the
+template-level splitting required by BLUEPRINT section 5.4 reduces to
+instance-level here. Exact-duplicate questions are dropped before sampling,
+which is the only paraphrase twin detectable without a similarity model. Tests
+assert that no task ID and no content hash appears in two splits, so a later
+change cannot quietly let a training item into the evaluation set.
+
+The split tests run offline against the committed manifest, because CI has no
+network. Regenerating is a separate, deliberate step.

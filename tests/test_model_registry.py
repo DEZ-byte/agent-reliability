@@ -18,6 +18,7 @@ EXPECTED_ROLES = {
     "scaffolded_comparator",
     "user_simulator",
     "function_calling_dataset",
+    "phase_a_task_dataset",
 }
 ALLOWED_ACCESS = {"public", "manual_gate", "automatic_gate"}
 ALLOWED_SELECTION_STATUSES = {"pending", "selected", "rejected"}
@@ -27,6 +28,7 @@ ALLOWED_LICENSE_IDS = {
     "cc-by-4.0",
     "llama3.1",
     "llama3.2",
+    "mit",
     "other",
 }
 ALLOWED_LICENSE_NAMES = {"qwen-research"}

@@ -99,6 +99,18 @@
         "license_id": "apache-2.0",
         "access": "public"
       }
+    ],
+    "phase_a_task_dataset": [
+      {
+        "id": "openai/gsm8k",
+        "revision": "740312add88f781978c0658806c59bc2815b9866",
+        "config": "main",
+        "selection_status": "selected",
+        "license_id": "mit",
+        "access": "public",
+        "release_eligibility": "eligible",
+        "release_decision": "D-061"
+      }
     ]
   }
 }
