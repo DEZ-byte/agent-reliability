@@ -92,8 +92,16 @@ def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def _load_eval_config() -> dict[str, Any]:
-    return json.loads(EVAL_CONFIG_PATH.read_text(encoding="utf-8"))
+def _load_eval_config(path: Path) -> dict[str, Any]:
+    """Read one frozen evaluation configuration.
+
+    The path is a parameter rather than a constant so a diagnostic run on the
+    dev split cannot be performed by editing the pinned test configuration in
+    place. Each configuration carries its own hash into every artifact it
+    produces, which is what keeps the two from being compared by accident.
+    """
+
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _load_tasks(config: dict[str, Any], limit: int | None) -> list[PhaseATask]:
@@ -312,6 +320,12 @@ def _measure(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=EVAL_CONFIG_PATH,
+        help="frozen evaluation config; defaults to the pinned test config",
+    )
     parser.add_argument("--episodes", required=True, help="trajectory JSONL path")
     parser.add_argument("--candidate", action="append", default=[])
     parser.add_argument("--limit", type=int, default=None)
@@ -322,7 +336,7 @@ def main() -> int:
     if args.run_load and not args.allow_download:
         parser.error("--run-load and --allow-download must be supplied together")
 
-    config = _load_eval_config()
+    config = _load_eval_config(args.config)
     candidates = _candidates(args.candidate)
     if args.candidate and not candidates:
         parser.error("no registry candidate matched --candidate")
@@ -331,7 +345,8 @@ def main() -> int:
         "schema_version": SCHEMA_VERSION,
         "created_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "kind": "phase_a_baseline",
-        "eval_config_sha256": _sha256_file(EVAL_CONFIG_PATH),
+        "eval_config": args.config.name,
+        "eval_config_sha256": _sha256_file(args.config),
         "split_manifest_sha256": _sha256_file(
             PROJECT_ROOT / config["phase_a"]["split_manifest"]
         ),
