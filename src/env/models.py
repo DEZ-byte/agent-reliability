@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 
 def contains_surrogate(text: str) -> bool:
-    """True when a string holds a surrogate codepoint.
+    r"""True when a string holds a surrogate codepoint.
 
     ``json`` accepts an escape such as ``\ud800`` and yields a ``str`` holding a
     lone surrogate. Python stores real codepoints, so any surrogate present here

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import pathlib
 import unittest
 
 from pydantic import BaseModel, ConfigDict
@@ -237,6 +238,51 @@ class SurrogateBoundaryTests(unittest.TestCase):
 
         payload = {"note": "café — 日本語", "n": [1, 2.5, None, True]}
         self.assertEqual(_json_clone(payload), payload)
+
+
+class SourceEncodabilityTests(unittest.TestCase):
+    """No source file may itself contain what the surrogate rule forbids.
+
+    A plain docstring turns a backslash-u escape into a real codepoint at
+    compile time, so merely naming the escape in prose can embed a lone
+    surrogate in the module. That breaks import on some interpreters and was
+    caught only by CI. Raw strings avoid it; this test enforces it.
+    """
+
+    def test_no_source_file_contains_an_unpaired_surrogate(self) -> None:
+        from env.models import contains_surrogate
+
+        # Shipped code only. Test fixtures deliberately carry the hostile
+        # value, which is the whole point of them.
+        root = pathlib.Path(__file__).resolve().parents[1]
+        checked = 0
+        for folder in ("src", "scripts"):
+            for path in sorted((root / folder).rglob("*.py")):
+                if "__pycache__" in path.parts:
+                    continue
+                checked += 1
+                text = path.read_text(encoding="utf-8")
+                with self.subTest(path=str(path.relative_to(root))):
+                    self.assertFalse(
+                        contains_surrogate(text),
+                        "source text contains an unpaired surrogate",
+                    )
+                    # The compiled module must also survive encoding, which is
+                    # where a docstring escape actually bites.
+                    compiled = compile(text, str(path), "exec")
+                    pending = [compiled]
+                    while pending:
+                        code = pending.pop()
+                        for const in code.co_consts:
+                            if isinstance(const, str):
+                                self.assertFalse(
+                                    contains_surrogate(const),
+                                    "a compiled constant contains an unpaired "
+                                    "surrogate (a docstring escape, most likely)",
+                                )
+                            elif hasattr(const, "co_consts"):
+                                pending.append(const)
+        self.assertGreater(checked, 10)
 
 
 if __name__ == "__main__":

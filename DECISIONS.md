@@ -778,3 +778,22 @@ obtaining clarification from the publisher; using xLAM but publishing neither
 the data nor adapters derived from it; or generating format-grounding data from
 an Apache-2.0 teacher instead. This is a licensing-risk judgement for the owner,
 not a technical finding, and it is recorded as open rather than assumed away.
+
+### D-056 — CI caught a lone surrogate inside the surrogate rule itself
+The first GitHub Actions run failed all four jobs. The cause was in
+`contains_surrogate`, the helper D-049 introduced: its docstring named the JSON
+escape for a lone surrogate in a plain (non-raw) string, so Python turned those
+six characters into a real U+D800 codepoint at compile time. The function
+written to keep unpaired surrogates out of the project contained one.
+
+The docstring is now a raw string. `tests/test_tools.py` adds a guard that
+compiles every module under `src/` and `scripts/`, walks nested code objects,
+and fails if any constant holds a surrogate. Nested traversal is required: a
+function docstring is not a module-level constant, and a first version of the
+guard missed the defect for exactly that reason. Test files are excluded on
+purpose, because their fixtures must carry the hostile value.
+
+Two things this establishes. The local suite passed on Python 3.12 with the
+defect present, so a green local run was not evidence; only CI, on a clean
+checkout, was. And the guard was verified by reintroducing the defect and
+watching it fail, not by assuming it would.
