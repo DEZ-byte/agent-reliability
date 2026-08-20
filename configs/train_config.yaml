@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "Frozen training configuration. BLUEPRINT_v2 section 7.4 requires these",
+    "pinned before any training run. JSON syntax, a YAML 1.2 subset, for the",
+    "same reason as configs/eval.yaml and configs/gates.yaml (D-021): a strict",
+    "standard-library loader and no extra dependency.",
+    "",
+    "This file's SHA-256 is written into every training artifact and its first",
+    "eight hex characters are the <confighash> in every checkpoint name, so a",
+    "value changed after a run invalidates the name that run was published",
+    "under. Add a dated decision rather than editing a value in place.",
+    "",
+    "Two kinds of value live here and they are kept apart on purpose.",
+    "Pre-registered values come from the blueprint and were fixed before any",
+    "measurement. Measured values are null until the measurement that sets them",
+    "exists, and every script refuses to run while a required one is null. That",
+    "is what stops a threshold being chosen after seeing which value flatters a",
+    "result."
+  ],
+
+  "sft": {
+    "epochs": 2,
+    "learning_rate": 0.0002,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.03,
+    "per_device_train_batch_size": 2,
+    "gradient_accumulation_steps": 8,
+    "max_seq_length": 1024,
+    "seed": 20260820,
+    "save_steps": 25,
+    "load_in_4bit": true,
+    "lora": {
+      "r": 16,
+      "alpha": 32,
+      "dropout": 0.0,
+      "target_modules": [
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+      ]
+    },
+    "_comment": [
+      "Pre-registered. Section 7.4 fixes LoRA r=16, alpha=32 and 4-bit, and",
+      "gives SFT 2-3 epochs; 2 is the low end because the retained set is on",
+      "the order of a thousand short rows and more passes over it buy",
+      "memorisation rather than capability. Checkpoint selection on dev covers",
+      "the difference either way.",
+      "Effective batch is 2 x 8 = 16. At roughly a thousand rows that is about",
+      "60 steps an epoch, so save_steps 25 produces a handful of checkpoints:",
+      "few enough that every one of them can be evaluated on dev rather than",
+      "some of them being ranked by a cheaper signal.",
+      "max_seq_length 1024 against a measured 293-token training row leaves",
+      "room for a longer question without truncating a trained span. Truncation",
+      "here is silent: the row still has labels and still trains."
+    ]
+  },
+
+  "generation": {
+    "rung": "R0",
+    "runs_per_task": 4,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "max_new_tokens": 256,
+    "enable_thinking": false,
+    "seed_base": 20260821,
+    "_comment": [
+      "Teacher rollouts over the frozen train split. Values match eval.yaml but",
+      "this is a generation config, not an evaluation config, and carries its",
+      "own hash: a run that borrowed eval.yaml's hash would claim comparability",
+      "it does not have.",
+      "seed_base differs from eval.yaml's so a generation seed and an evaluation",
+      "seed can never silently coincide.",
+      "Rung R0 only. R1 would add a second decision, but the Phase A loop ends",
+      "an episode as soon as a calculator call succeeds, so the dominant failure",
+      "- a well-formed call that computes the wrong thing - never reaches a",
+      "second decision. See D-069."
+    ]
+  },
+
+  "retention": {
+    "per_task_cap": 1,
+    "min_question_match_ratio": null,
+    "max_rows": null,
+    "_comment": [
+      "per_task_cap 1 keeps one passing trajectory per task so that easy tasks,",
+      "which pass on every sample, cannot crowd out hard ones that pass once.",
+      "min_question_match_ratio is the laundering filter's fourth rule and stays",
+      "null until measured on the dev split. It trades two failures against each",
+      "other - admitting answer-first expressions against discarding correct",
+      "work - and picking it after seeing the retained count would be choosing",
+      "the dataset rather than the rule.",
+      "max_rows is null until teacher coverage is measured. Pinning a target",
+      "before knowing the coverage would pin a number the build cannot reach."
+    ]
+  },
+
+  "selection": {
+    "split": "dev",
+    "rung": "R0",
+    "metric": "pass^1",
+    "checkpoints_evaluated": "all_saved",
+    "_comment": [
+      "Section 7.4's checkpoint selection rule, written before any dev number",
+      "exists. The metric, the rung and the candidate set are literals here so",
+      "that a tie or a disagreement between rungs cannot be resolved after the",
+      "fact in whichever direction happens to look better.",
+      "Every saved checkpoint is evaluated on dev. The dev winner is frozen and",
+      "runs on test exactly once. Training loss never selects a checkpoint: it",
+      "is computed on the training data and choosing by it is selection on the",
+      "training set."
+    ]
+  },
+
+  "format_grounding": {
+    "dataset": "Salesforce/xlam-function-calling-60k",
+    "fraction": null,
+    "_comment": [
+      "Section 5.1 defers this to a measured format error rate. The rate is",
+      "measured on dev, not on test, because a checkpoint trained on a decision",
+      "derived from test is no longer cleanly evaluated on test.",
+      "fraction stays null until that measurement is recorded in a decision."
+    ]
+  }
+}
