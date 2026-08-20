@@ -1132,7 +1132,7 @@ class ModelSmokeProbeTests(unittest.TestCase):
         )
 
     def test_qwen_training_template_patch_is_exact_and_rejects_ambiguity(self) -> None:
-        patched = smoke._build_qwen_training_template(
+        patched = smoke.build_qwen_training_template(
             QWEN_NATIVE_TRAINING_TEMPLATE
         )
         self.assertEqual(patched.count("{% generation %}"), 1)
@@ -1151,16 +1151,16 @@ class ModelSmokeProbeTests(unittest.TestCase):
             '{%- elif message.role == "tool" %}',
         )
         with self.assertRaisesRegex(ValueError, "exactly one assistant branch"):
-            smoke._build_qwen_training_template(ambiguous)
+            smoke.build_qwen_training_template(ambiguous)
 
         already_patched = QWEN_NATIVE_TRAINING_TEMPLATE.replace(
             "ASSISTANT", "{% generation %}ASSISTANT{% endgeneration %}"
         )
         with self.assertRaisesRegex(ValueError, "already contains generation tags"):
-            smoke._build_qwen_training_template(already_patched)
+            smoke.build_qwen_training_template(already_patched)
 
     def test_generation_end_marker_follows_indented_qwen_block_tag(self) -> None:
-        patched = smoke._build_qwen_training_template(
+        patched = smoke.build_qwen_training_template(
             QWEN_NATIVE_TRAINING_TEMPLATE.replace(
                 "ASSISTANT", "ASSISTANT\n    "
             )

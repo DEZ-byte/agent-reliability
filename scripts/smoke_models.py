@@ -42,6 +42,13 @@ RESULT_SCHEMA_VERSION: Final = 1
 DEFAULT_CONFIG: Final = Path(__file__).resolve().parents[1] / "configs" / "model_smoke.json"
 DEFAULT_OUTPUT: Final = Path(__file__).resolve().parents[1] / "results" / "model_smoke.json"
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from training.templates import (  # noqa: E402
+    MAX_TEMPLATE_SOURCE_CHARS,
+    MAX_TEMPLATE_TOKENS,
+    build_qwen_training_template,
+)
 MAX_CONFIG_BYTES: Final = 256 * 1024
 MAX_REGISTRY_BYTES: Final = 256 * 1024
 MAX_RESULT_BYTES: Final = 8 * 1024 * 1024
@@ -53,8 +60,6 @@ MAX_TOOL_SCHEMA_CHARS: Final = 16 * 1024
 MAX_GENERATION_CASES: Final = 8
 MAX_GENERATION_CALLS: Final = 64
 MAX_PERSISTED_PROMPT_CHARS: Final = 32 * 1024
-MAX_TEMPLATE_TOKENS: Final = 8192
-MAX_TEMPLATE_SOURCE_CHARS: Final = 256 * 1024
 MAX_ERROR_CHARS: Final = 4096
 MAX_P6_TOKENS: Final = 512
 P6_LORA_RANK: Final = 4
@@ -2506,7 +2511,7 @@ def _run_training_template_probe(
             raise ValueError("tokenizer did not resolve one usable string training template")
         if len(native_template) > MAX_TEMPLATE_SOURCE_CHARS:
             raise ValueError("training template source exceeds the character limit")
-        training_template = _build_qwen_training_template(native_template)
+        training_template = build_qwen_training_template(native_template)
 
         trajectory = [
             message.model_dump(mode="json", exclude_none=True)
@@ -3366,80 +3371,6 @@ def _run_minimal_training_probe(
             pass
 
 
-def _build_qwen_training_template(native_template: str) -> str:
-    if len(native_template) > MAX_TEMPLATE_SOURCE_CHARS:
-        raise ValueError("native Qwen template exceeds the character limit")
-    generation_tags = re.findall(
-        r"{%-?\s*(?:endgeneration|generation)\s*-?%}", native_template
-    )
-    if generation_tags:
-        raise ValueError("native Qwen template already contains generation tags")
-
-    role_access = r"(?:message\.role|message\[['\"]role['\"]\])"
-
-    def branch(role: str) -> list[re.Match[str]]:
-        pattern = re.compile(
-            r"{%-?\s*elif\s+"
-            + role_access
-            + r"\s*==\s*(['\"])"
-            + re.escape(role)
-            + r"\1\s*-?%}"
-        )
-        return list(pattern.finditer(native_template))
-
-    assistant_matches = branch("assistant")
-    tool_matches = branch("tool")
-    if len(assistant_matches) != 1 or len(tool_matches) != 1:
-        raise ValueError(
-            "native Qwen template must contain exactly one assistant branch and one tool branch"
-        )
-    assistant = assistant_matches[0]
-    tool = tool_matches[0]
-    if tool.start() <= assistant.end():
-        raise ValueError("native Qwen assistant branch must precede its tool sibling")
-
-    control_pattern = re.compile(r"{%-?\s*(.*?)\s*-?%}", re.DOTALL)
-    depth = 0
-    sibling_found = False
-    block_starts = ("if ", "for ", "macro ", "block ", "filter ", "with ", "call ")
-    block_ends = ("endif", "endfor", "endmacro", "endblock", "endfilter", "endwith", "endcall")
-    for control in control_pattern.finditer(
-        native_template, assistant.end(), tool.end()
-    ):
-        if control.start() == tool.start():
-            if depth != 0:
-                raise ValueError("native Qwen tool branch is not the assistant sibling")
-            sibling_found = True
-            break
-        statement = control.group(1).strip()
-        if statement.startswith(block_starts):
-            depth += 1
-        elif statement.startswith(block_ends):
-            if depth == 0:
-                raise ValueError("native Qwen assistant branch closes before the tool branch")
-            depth -= 1
-        elif depth == 0 and (
-            statement.startswith("elif ") or statement == "else"
-        ):
-            raise ValueError("native Qwen assistant branch has an ambiguous sibling")
-    if not sibling_found:
-        raise ValueError("native Qwen tool branch is not the assistant sibling")
-
-    generation_end_position = tool.start()
-    if tool.group(0).lstrip().startswith("{%-"):
-        while (
-            generation_end_position > assistant.end()
-            and native_template[generation_end_position - 1].isspace()
-        ):
-            generation_end_position -= 1
-
-    return (
-        native_template[: assistant.end()]
-        + "{% generation %}"
-        + native_template[assistant.end() : generation_end_position]
-        + "{% endgeneration %}"
-        + native_template[generation_end_position:]
-    )
 
 
 def _instrument_generation_blocks(template: str) -> str:
