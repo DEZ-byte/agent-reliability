@@ -144,6 +144,33 @@ def executed_answers(trace: EpisodeTrace) -> list[float]:
     return answers
 
 
+def answered_without_arithmetic(trace: EpisodeTrace) -> bool:
+    """True when the answer came from a call that computed nothing.
+
+    Execution-backed accuracy stops a model from writing a remembered answer in
+    prose, but not from recalling it and passing it straight to the calculator
+    as ``calculator("391")``. That call executes and returns the right number
+    having done no arithmetic.
+
+    This is recorded, not penalised. Whether it happens at all is a measurement
+    (see `src/evaluation/contamination.py`), and a reward term based on it would
+    be a change to the pre-registered reward, which needs its own decision.
+    """
+
+    from evaluation.contamination import expression_does_arithmetic
+
+    for event in reversed(trace.tool_events):
+        if not (event.dispatched and event.succeeded):
+            continue
+        if event.call.name != CALCULATOR_TOOL_NAME:
+            continue
+        expression = event.call.arguments.get("expression")
+        if not isinstance(expression, str):
+            return False
+        return not expression_does_arithmetic(expression)
+    return False
+
+
 def grade_episode(trace: EpisodeTrace, task: PhaseATask) -> EnvironmentOutcome:
     """Decide correctness from executed tool results only.
 

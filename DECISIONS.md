@@ -932,3 +932,33 @@ change cannot quietly let a training item into the evaluation set.
 
 The split tests run offline against the committed manifest, because CI has no
 network. Regenerating is a separate, deliberate step.
+
+### D-062 — Execution-backed accuracy does not stop laundered recall, and that is now measured
+D-060 stops a model scoring by writing a remembered answer in prose. It does not
+stop the model recalling the answer and passing it to the tool as
+`calculator("391")`. That call dispatches, succeeds, returns 391, and is graded
+correct while performing no arithmetic.
+
+This is a real gap in the pre-registered reward, found while building the
+contamination probe BLUEPRINT section 5.4 requires. It matters here more than it
+would elsewhere: GSM8K is public web text, the base checkpoints were trained on
+public web text, and Phase A is the milestone that produces the first baseline
+numbers.
+
+Two measurements now exist. `expression_does_arithmetic` parses a calculator
+expression and reports whether it computes anything; a bare literal, a
+parenthesised literal, and unparseable text all count as no. `RecallProbe`
+scores a no-tool attempt at a task, which is the direct question of whether the
+model can state the answer without computing it. Prose is read in exactly one
+place, `extract_final_number`, and its docstring says it must never score a
+task; measuring recall is the one thing it is for.
+
+**Recorded, not penalised.** `answered_without_arithmetic` is a diagnostic on
+the trace. Turning it into a reward term would change a pre-registered reward
+after seeing that it can be gamed, which needs its own decision and its own
+disclosure, exactly as D-046 did. The honest order is: measure how often it
+happens, then decide.
+
+The obligation this creates: no Phase A accuracy number may be reported without
+the recall rate and the no-arithmetic rate beside it. A baseline that looks
+strong while both are high has not been shown to reason.
