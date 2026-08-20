@@ -1,16 +1,19 @@
-"""Measure how much of the Phase A test split a base model already remembers.
+"""Measure what a base checkpoint can do on Phase A tasks with no tool.
 
 BLUEPRINT_v2 section 5.4 requires this before any Phase A baseline is read.
-Each task is put to the model with no tool available and no way to compute, so
-a correct answer means the model recalled it.
+
+Two conditions, because one number cannot answer both questions. Given room to
+think, these models solve GSM8K by reasoning in prose, so a correct answer there
+measures capability without a calculator and says nothing about memorisation.
+Starved of tokens, multi-step reasoning does not fit, so a correct answer is
+evidence the model recalled it. Reporting only the first and calling it recall
+would be a false label; an early version of this probe did exactly that.
 
 Offline by default. Loading a checkpoint needs --run-load and --allow-download,
 matching scripts/smoke_models.py, and a measured run refuses to start on a dirty
 worktree so every artifact names the exact source that produced it.
 
-This records a diagnostic, never a task score. A high recall rate does not
-invalidate a later baseline; it changes what that baseline means, which is why
-it is measured first rather than argued about afterwards.
+These are diagnostics, never task scores.
 """
 
 from __future__ import annotations
@@ -30,20 +33,45 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import ANSWER_TOLERANCE, parse_gsm8k_answer  # noqa: E402
-from evaluation.contamination import recall_rate, score_recall  # noqa: E402
+from evaluation.contamination import (  # noqa: E402
+    correct_rate,
+    score_no_tool_attempt,
+)
 
 SPLIT_PATH: Final = PROJECT_ROOT / "configs" / "splits" / "phase_a_gsm8k.json"
 REGISTRY_PATH: Final = PROJECT_ROOT / "configs" / "model_candidates.json"
 SCHEMA_VERSION: Final = 1
-MAX_NEW_TOKENS: Final = 256
 MAX_SEQUENCE_TOKENS: Final = 1024
 SEED: Final = 20260820
 
-PROMPT: Final = (
-    "Answer the question with a single final number and nothing else.\n"
-    "You have no tools and must not show working.\n\n"
+UNCONSTRAINED_MAX_NEW_TOKENS: Final = 256
+STARVED_MAX_NEW_TOKENS: Final = 12
+
+UNCONSTRAINED_PROMPT: Final = (
+    "Solve the problem. You have no tools available.\n"
+    "End your reply with the final number on its own line.\n\n"
+    "Question: {question}\n"
+)
+
+STARVED_PROMPT: Final = (
+    "Reply with only the final number. No words, no working, no units.\n\n"
     "Question: {question}\n"
     "Final answer:"
+)
+
+CONDITIONS: Final = (
+    (
+        "unconstrained",
+        UNCONSTRAINED_PROMPT,
+        UNCONSTRAINED_MAX_NEW_TOKENS,
+        "capability without a calculator",
+    ),
+    (
+        "token_starved",
+        STARVED_PROMPT,
+        STARVED_MAX_NEW_TOKENS,
+        "recall: too few tokens for multi-step reasoning",
+    ),
 )
 
 MEASURED_ROLES: Final = (
@@ -139,20 +167,53 @@ def _candidates() -> list[dict[str, str]]:
 def _plan(task_count: int, candidates: list[dict[str, str]]) -> dict[str, Any]:
     return {
         "purpose": (
-            "no-tool recall over the frozen Phase A test split; diagnostic "
-            "only, never a task score"
+            "no-tool measurement over the frozen Phase A test split; "
+            "diagnostic only, never a task score"
         ),
         "task_count": task_count,
         "candidates": candidates,
-        "prompt_template": PROMPT,
-        "decoding": {
-            "seed": SEED,
-            "greedy": True,
-            "max_new_tokens": MAX_NEW_TOKENS,
-        },
+        "conditions": [
+            {
+                "name": name,
+                "prompt_template": prompt,
+                "max_new_tokens": budget,
+                "measures": measures,
+            }
+            for name, prompt, budget, measures in CONDITIONS
+        ],
+        "decoding": {"seed": SEED, "greedy": True},
         "answer_tolerance": ANSWER_TOLERANCE,
         "gated_operations": ["checkpoint download and load", "generation"],
     }
+
+
+def _generate(
+    *, model: Any, tokenizer: Any, torch: Any, prompt: str, budget: int, pad: int
+) -> str:
+    messages = [{"role": "user", "content": prompt}]
+    try:
+        rendered = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+    except TypeError:
+        rendered = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+    inputs = tokenizer(rendered, return_tensors="pt").to("cuda:0")
+    torch.manual_seed(SEED)
+    with torch.inference_mode():
+        generated = model.generate(
+            **inputs,
+            max_new_tokens=budget,
+            do_sample=False,
+            pad_token_id=pad,
+        )
+    return tokenizer.decode(
+        generated[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
+    )
 
 
 def _measure(candidate: dict[str, str], tasks: list[dict[str, Any]]) -> dict[str, Any]:
@@ -188,52 +249,41 @@ def _measure(candidate: dict[str, str], tasks: list[dict[str, Any]]) -> dict[str
     if pad_token_id is None:
         pad_token_id = tokenizer.eos_token_id
 
-    probes = []
-    for task in tasks:
-        messages = [
-            {"role": "user", "content": PROMPT.format(question=task["question"])}
-        ]
-        try:
-            rendered = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-                enable_thinking=False,
+    by_condition: dict[str, list[Any]] = {}
+    for name, prompt_template, budget, _measures in CONDITIONS:
+        probes = []
+        for task in tasks:
+            completion = _generate(
+                model=model,
+                tokenizer=tokenizer,
+                torch=torch,
+                prompt=prompt_template.format(question=task["question"]),
+                budget=budget,
+                pad=pad_token_id,
             )
-        except TypeError:
-            rendered = tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
+            probes.append(
+                score_no_tool_attempt(
+                    task_id=task["task_id"],
+                    condition=name,
+                    gold_answer=task["gold_answer"],
+                    completion=completion,
+                    tolerance=ANSWER_TOLERANCE,
+                )
             )
-        inputs = tokenizer(rendered, return_tensors="pt").to("cuda:0")
-        torch.manual_seed(SEED)
-        with torch.inference_mode():
-            generated = model.generate(
-                **inputs,
-                max_new_tokens=MAX_NEW_TOKENS,
-                do_sample=False,
-                pad_token_id=pad_token_id,
-            )
-        completion = tokenizer.decode(
-            generated[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
-        )
-        probes.append(
-            score_recall(
-                task_id=task["task_id"],
-                gold_answer=task["gold_answer"],
-                completion=completion,
-                tolerance=ANSWER_TOLERANCE,
-            )
-        )
+        by_condition[name] = probes
 
     del model
     torch.cuda.empty_cache()
 
     return {
         "candidate": candidate,
-        "task_count": len(probes),
-        "recall_rate": recall_rate(probes),
-        "recalled_task_count": sum(1 for probe in probes if probe.recalled),
-        "probes": [probe.model_dump(mode="json") for probe in probes],
+        "task_count": len(tasks),
+        "no_tool_solve_rate": correct_rate(by_condition["unconstrained"]),
+        "immediate_answer_rate": correct_rate(by_condition["token_starved"]),
+        "probes": {
+            name: [probe.model_dump(mode="json") for probe in probes]
+            for name, probes in by_condition.items()
+        },
     }
 
 
@@ -261,7 +311,7 @@ def main() -> int:
         "created_at_utc": datetime.now(timezone.utc)
         .isoformat()
         .replace("+00:00", "Z"),
-        "kind": "phase_a_no_tool_recall",
+        "kind": "phase_a_no_tool_diagnostic",
         "plan": _plan(len(tasks), candidates),
         "split_manifest_sha256": _sha256_file(SPLIT_PATH),
         "registry_sha256": _sha256_file(REGISTRY_PATH),
@@ -300,10 +350,17 @@ def main() -> int:
     os.replace(temporary, path)
 
     summary = {
-        entry["candidate"]["id"]: entry.get("recall_rate", entry.get("error"))
+        entry["candidate"]["id"]: (
+            entry["error"]
+            if "error" in entry
+            else {
+                "no_tool_solve_rate": entry["no_tool_solve_rate"],
+                "immediate_answer_rate": entry["immediate_answer_rate"],
+            }
+        )
         for entry in result["results"]
     }
-    print(json.dumps({"output": str(path), "recall_rate": summary}))
+    print(json.dumps({"output": str(path), "rates": summary}))
     return 0
 
 

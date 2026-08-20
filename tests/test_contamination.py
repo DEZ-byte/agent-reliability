@@ -12,11 +12,11 @@ from env.phase_a import (
     grade_episode,
 )
 from evaluation.contamination import (
-    RecallProbe,
+    NoToolProbe,
+    correct_rate,
     expression_does_arithmetic,
     extract_final_number,
-    recall_rate,
-    score_recall,
+    score_no_tool_attempt,
 )
 
 TASK = PhaseATask(
@@ -94,43 +94,58 @@ class LaunderedAnswerTests(unittest.TestCase):
         self.assertFalse(answered_without_arithmetic(run("no tools here")))
 
 
-class RecallScoringTests(unittest.TestCase):
-    def test_a_correct_no_tool_answer_counts_as_recall(self) -> None:
-        probe = score_recall(
+class NoToolScoringTests(unittest.TestCase):
+    def test_a_correct_answer_is_scored_correct_under_its_condition(self) -> None:
+        probe = score_no_tool_attempt(
             task_id="gsm8k:test:0",
+            condition="token_starved",
             gold_answer=391.0,
-            completion="That works out to 391.",
+            completion="391",
             tolerance=1e-6,
         )
-        self.assertTrue(probe.recalled)
-        self.assertEqual(probe.extracted_answer, 391.0)
+        self.assertTrue(probe.correct)
+        self.assertEqual(probe.condition, "token_starved")
 
-    def test_a_wrong_or_absent_answer_does_not(self) -> None:
+    def test_a_wrong_or_absent_answer_is_not(self) -> None:
         for completion in ("It is 390.", "I am not sure."):
             with self.subTest(completion=completion):
-                probe = score_recall(
+                probe = score_no_tool_attempt(
                     task_id="t",
+                    condition="unconstrained",
                     gold_answer=391.0,
                     completion=completion,
                     tolerance=1e-6,
                 )
-                self.assertFalse(probe.recalled)
+                self.assertFalse(probe.correct)
+
+    def test_the_condition_is_a_closed_set(self) -> None:
+        """A probe cannot be recorded without saying which question it answers."""
+
+        with self.assertRaises(Exception):
+            score_no_tool_attempt(
+                task_id="t",
+                condition="whatever",  # type: ignore[arg-type]
+                gold_answer=1.0,
+                completion="1",
+                tolerance=1e-6,
+            )
 
     def test_rate_is_none_for_an_empty_probe_set(self) -> None:
-        self.assertIsNone(recall_rate([]))
+        self.assertIsNone(correct_rate([]))
 
-    def test_rate_counts_recalls(self) -> None:
+    def test_rate_counts_correct_probes(self) -> None:
         probes = [
-            RecallProbe(
+            NoToolProbe(
                 task_id=f"t{i}",
+                condition="token_starved",
                 gold_answer=1.0,
                 completion="1" if hit else "2",
                 extracted_answer=1.0 if hit else 2.0,
-                recalled=hit,
+                correct=hit,
             )
             for i, hit in enumerate([True, True, False, False])
         ]
-        self.assertEqual(recall_rate(probes), 0.5)
+        self.assertEqual(correct_rate(probes), 0.5)
 
 
 if __name__ == "__main__":

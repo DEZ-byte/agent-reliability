@@ -962,3 +962,32 @@ happens, then decide.
 The obligation this creates: no Phase A accuracy number may be reported without
 the recall rate and the no-arithmetic rate beside it. A baseline that looks
 strong while both are high has not been shown to reason.
+
+### D-063 — The no-tool probe measures two things, and the first is not memorisation
+The first version of this probe asked each model to answer with no tool and
+called the correct fraction a recall rate. Run on eight tasks, Qwen3-1.7B scored
+0.625, and the retained completions show why that label was wrong: the model was
+reasoning step by step in prose, ignoring an instruction not to show working.
+It was solving, not remembering. Reporting that as memorisation would have
+overstated contamination and understated capability, in the same document that
+forbids exactly this kind of mislabelling.
+
+The probe now runs two conditions against the same frozen test split:
+
+`unconstrained` gives 256 new tokens and asks for the answer at the end. It
+measures capability without a calculator, which is the honest floor a Phase A
+baseline is compared against.
+
+`token_starved` gives 12 new tokens and asks for the number alone. Multi-step
+arithmetic does not fit in twelve tokens, so a correct answer here is evidence
+the model recalled it. This is the contamination signal BLUEPRINT section 5.4
+asks for.
+
+Both are recorded per candidate as `no_tool_solve_rate` and
+`immediate_answer_rate`, and the probe type is a closed literal on every record,
+so a result cannot be stored without saying which question it answers. Raw
+completions are retained under both conditions, which is what made the original
+error visible.
+
+Neither number is a task score. Together with the no-arithmetic rate from D-062
+they set the context any Phase A accuracy figure must be read in.

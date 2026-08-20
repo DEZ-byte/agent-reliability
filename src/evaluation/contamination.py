@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import ast
 import re
-from typing import Final
+from typing import Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -34,16 +34,23 @@ _ARITHMETIC_NODES: Final = (
 )
 
 
-class RecallProbe(BaseModel):
-    """One no-tool attempt at a task, scored against the gold answer."""
+class NoToolProbe(BaseModel):
+    """One no-tool attempt at a task, scored against the gold answer.
+
+    ``condition`` matters more than the score. Given room to think, a model can
+    solve GSM8K in prose, and a correct answer says nothing about memorisation.
+    Only the token-starved condition, where multi-step reasoning does not fit,
+    is evidence that the answer was recalled rather than derived.
+    """
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
     task_id: str = Field(min_length=1)
+    condition: Literal["unconstrained", "token_starved"]
     gold_answer: float
     completion: str
     extracted_answer: float | None
-    recalled: bool
+    correct: bool
 
 
 def extract_final_number(text: str) -> float | None:
@@ -79,25 +86,31 @@ def expression_does_arithmetic(expression: str) -> bool:
     return any(isinstance(node, _ARITHMETIC_NODES) for node in ast.walk(tree))
 
 
-def score_recall(
-    *, task_id: str, gold_answer: float, completion: str, tolerance: float
-) -> RecallProbe:
-    """Score one no-tool completion."""
+def score_no_tool_attempt(
+    *,
+    task_id: str,
+    condition: Literal["unconstrained", "token_starved"],
+    gold_answer: float,
+    completion: str,
+    tolerance: float,
+) -> NoToolProbe:
+    """Score one no-tool completion under a named condition."""
 
     extracted = extract_final_number(completion)
-    recalled = extracted is not None and abs(extracted - gold_answer) <= tolerance
-    return RecallProbe(
+    correct = extracted is not None and abs(extracted - gold_answer) <= tolerance
+    return NoToolProbe(
         task_id=task_id,
+        condition=condition,
         gold_answer=gold_answer,
         completion=completion,
         extracted_answer=extracted,
-        recalled=recalled,
+        correct=correct,
     )
 
 
-def recall_rate(probes: list[RecallProbe]) -> float | None:
-    """Fraction of tasks answered correctly with no tool available."""
+def correct_rate(probes: list[NoToolProbe]) -> float | None:
+    """Fraction answered correctly. Read it together with the condition."""
 
     if not probes:
         return None
-    return sum(1 for probe in probes if probe.recalled) / len(probes)
+    return sum(1 for probe in probes if probe.correct) / len(probes)
