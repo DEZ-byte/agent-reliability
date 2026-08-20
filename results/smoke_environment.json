@@ -1,7 +1,7 @@
 {
-  "created_at_utc": "2026-08-20T04:14:53.303428+00:00",
+  "created_at_utc": "2026-08-20T04:15:20.121013+00:00",
   "dependency_check": {
-    "elapsed_seconds": 0.032,
+    "elapsed_seconds": 0.047,
     "returncode": 0,
     "status": "passed",
     "stderr_tail": "Checked 94 packages in 3ms\nAll installed packages are compatible\n",
@@ -48,7 +48,7 @@
         "version": "2.11.0+cu128"
       }
     },
-    "elapsed_seconds": 8.343,
+    "elapsed_seconds": 8.328,
     "environment_policy": {
       "captured_output_redacted": true,
       "huggingface_offline_flags_set": true,
@@ -57,7 +57,7 @@
     },
     "returncode": 0,
     "status": "passed",
-    "stderr_tail": "W0820 00:14:56.903000 11116 Lib\\site-packages\\torch\\distributed\\elastic\\multiprocessing\\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.\n",
+    "stderr_tail": "W0820 00:15:23.632000 26556 Lib\\site-packages\\torch\\distributed\\elastic\\multiprocessing\\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.\n",
     "stdout_tail": "\ud83e\udda5 Unsloth: Will patch your computer to enable 2x faster free finetuning.\n\ud83e\udda5 Unsloth Zoo will now patch everything to make training faster!\n__SMOKE_ENV_CHILD_JSON__={\"imports\": {\"agent.parser\": true, \"bitsandbytes\": \"0.50.1\", \"torch\": true, \"transformers\": \"5.5.0\", \"triton\": \"3.6.0\", \"trl\": \"0.24.0\", \"unsloth\": true, \"xformers\": \"0.0.35\"}, \"torch\": {\"cuda_available\": true, \"cuda_runtime_version\": \"12.8\", \"device_count\": 1, \"devices\": [{\"compute_capability\": [8, 9], \"index\": 0, \"name\": \"NVIDIA GeForce RTX 4060 Laptop GPU\", \"total_memory_bytes\": 8585216000}], \"version\": \"2.11.0+cu128\"}}\n"
   },
   "lane_id": "phase-a-windows-unsloth-trl024",
@@ -122,12 +122,12 @@
       "scripts/probe_smoke_environment.py": "ffdd4d1760aa5cbcbbb793ad45cae9f760135f3eca7d06de5c1b70e5214b1c06",
       "scripts/smoke_models.py": "26c02fc7e61fea5d42b064ffde07bdd3a277e8d3d3e17cbb8fadacfbe763e788"
     },
-    "git_commit": "ab5d43e0df5986aeff1d449350156a639ee84b3b",
+    "git_commit": "eda5d6b1980ca364c4b76adc4e7ef5c3fa179290",
     "git_status_check": {
       "returncode": 0,
       "status": "passed"
     },
-    "git_worktree_clean": false
+    "git_worktree_clean": true
   },
-  "status": "failed"
+  "status": "passed"
 }
