@@ -84,18 +84,18 @@
       {
         "id": "Salesforce/xlam-function-calling-60k",
         "revision": "26d14ebfe18b1f7b524bd39b404b50af5dc97866",
-        "selection_status": "pending",
-        "release_eligibility": "pending",
-        "release_decision": null,
+        "selection_status": "selected",
+        "release_eligibility": "eligible",
+        "release_decision": "D-058",
         "license_id": "cc-by-4.0",
         "access": "automatic_gate"
       },
       {
         "id": "glaiveai/glaive-function-calling-v2",
         "revision": "e7f4b6456019f5d8bcb991ef0dd67d8ff23221ac",
-        "selection_status": "pending",
-        "release_eligibility": "pending",
-        "release_decision": null,
+        "selection_status": "rejected",
+        "release_eligibility": "ineligible",
+        "release_decision": "D-058",
         "license_id": "apache-2.0",
         "access": "public"
       }

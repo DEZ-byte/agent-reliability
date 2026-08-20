@@ -824,3 +824,42 @@ The lesson is the one CI exists to teach: a green local suite proved only that
 the digests matched the machine that produced them. Content-addressed files must
 be exempt from any transformation the version-control system is allowed to
 apply.
+
+## 2026-08-20 — Function-calling dataset
+
+### D-058 — xLAM is adopted for format grounding, with its licence conflict stated rather than resolved
+The owner selected `Salesforce/xlam-function-calling-60k` and accepted that
+artifacts derived from it will be published under the
+`public-portfolio-permissive` scope of D-048. Glaive is not adopted.
+
+**The conflict, unresolved.** The machine-readable licence field is
+`cc-by-4.0`, confirmed live against the Hub API on 2026-08-20. The card's
+ethical-considerations prose separately describes the release as being for
+research purposes only (recorded in D-028; the card body is behind the access
+gate and was not re-fetched for this entry). Those two statements disagree about
+exactly this project's case: training a published adapter. This decision does
+not resolve that disagreement. It records that the owner weighed it, chose the
+declared licence field as controlling, and accepted the residual risk.
+
+**Why it is defensible.** CC BY 4.0 is the formal licence identifier the
+publisher set, it permits adaptation including commercially, and the
+research-purposes sentence sits in an ethics narrative rather than in licence
+terms. A reader can check both claims from this entry.
+
+**Why it is still a risk.** A publisher's stated intent is not nothing. If
+Salesforce clarifies that the narrower reading governs, adapters trained on this
+data may need withdrawing or relicensing. That cost is accepted knowingly, and
+this paragraph exists so the trade is visible rather than discovered later.
+
+**Obligations this creates.** CC BY 4.0 requires, on every released artifact
+derived from the data: attribution to Salesforce, a link to the licence, a
+copyright and disclaimer notice, and an explicit statement that changes were
+made. The access gate additionally requires citing APIGen. These go in the
+release checklist in `data/LICENSES.md`, not in a footnote.
+
+**Scope.** Format grounding only, mixed with teacher-generated trajectories per
+BLUEPRINT_v2 section 5.2. The raw dataset is never redistributed from this
+repository; only split and selection manifests referencing source IDs are
+committed. Whether any grounding data is needed at all is a separate question,
+answered at M1 by the measured format error rate: the four checkpoints already
+emit strictly valid, correctly-selected tool calls on every probe case.

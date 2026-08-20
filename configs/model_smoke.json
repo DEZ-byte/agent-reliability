@@ -46,7 +46,7 @@
   },
   "release_gate": {
     "registry_path": "configs/model_candidates.json",
-    "expected_registry_sha256": "967d822c9e1b41c4ffce9cded363a4036ed465d91826c3f0d276c3c5a48de30c",
+    "expected_registry_sha256": "a2409899174b8b06cedbc7e6a3dae7b217e0fd752f7a9077acd3c2364a91cfa2",
     "status": "resolved",
     "intended_release_scope": "public-portfolio-permissive",
     "decision_record": "D-048",

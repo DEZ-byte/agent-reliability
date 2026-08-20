@@ -72,3 +72,10 @@ dataset decision itself.
    model-name/branding notices beside any released weights or adapters.
 5. Run license and provenance review again before a public artifact release;
    upstream cards and terms can change after the verification date.
+6. For anything derived from `Salesforce/xlam-function-calling-60k`, CC BY 4.0
+   requires all of: attribution to Salesforce, a link to the licence, the
+   copyright and disclaimer notice, and an explicit statement that changes were
+   made. The access gate additionally requires citing APIGen. D-058 adopts this
+   dataset with its licence conflict stated rather than resolved: the declared
+   field is `cc-by-4.0`, while the card's ethics prose describes the release as
+   research-only. Read D-058 before releasing anything trained on it.

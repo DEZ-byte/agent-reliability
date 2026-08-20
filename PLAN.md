@@ -62,12 +62,14 @@ doing the work.
   resolved. Top-level `selection_eligible` is true for the first time; the two
   Qwen3 candidates carry `passed_with_demoted_gates`
 - [x] Accept the xLAM access gate (done by the owner)
-- [ ] Function-calling dataset decision — **still open (D-055)**: access is
-  granted, but xLAM's card declares CC BY 4.0 while its ethical section says
-  "research purposes only", which conflicts with the declared
-  `public-portfolio-permissive` scope for any published adapter trained on it.
-  Resolve by publisher clarification, by not publishing derivatives, or by
-  generating grounding data from an Apache-2.0 teacher
+- [x] Function-calling dataset decision: `Salesforce/xlam-function-calling-60k`
+  adopted, Glaive rejected (D-058). The licence conflict is recorded as accepted
+  rather than resolved, and the CC BY 4.0 attribution duties are in the
+  `data/LICENSES.md` release checklist
+- [ ] Confirm at M1 whether any format-grounding data is needed at all. All four
+  checkpoints already emit strictly valid, correctly-selected tool calls on
+  every probe case, so the measured format error rate decides how much xLAM data
+  is actually mixed in
 - [x] Repository license decision: Apache-2.0 (D-054). `LICENSE` is the
   canonical text; `NOTICE` records that it covers this repository only and that
   every upstream artifact keeps its own terms
