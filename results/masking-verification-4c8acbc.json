@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-20T22:56:03.112420Z",
+  "kind": "masking_verification",
+  "purpose": "Evidence that assistant-token-only loss masking holds on the real checkpoints, and that a training row begins with exactly the token sequence the evaluator generates from.",
+  "prompt_sha256": {
+    "system": "bd7895a093b3b21b482c21b9813ef539747527e778c585caf92296b3c4da0755",
+    "user": "b6f9739c2a651441320a36e444c6c6555e988db27bf7bce3cdf57bbd5a44e4f3"
+  },
+  "fixture_sha256": "78594f32f2b0290eea2f2e40c9d362734160a8646528e65a64386c139b050a21",
+  "source_commit": "4c8acbcfdac7f9f6078d394a2739d7b3b9233d07",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "results": [
+    {
+      "candidate": {
+        "role": "primary_small",
+        "id": "Qwen/Qwen2.5-3B-Instruct",
+        "revision": "aa8e72537993ba99e69dfaafa59ed015b17504d1",
+        "selection_status": "rejected"
+      },
+      "passed": false,
+      "error": "assistant mask is empty; the template marked no generation span"
+    },
+    {
+      "candidate": {
+        "role": "primary_small",
+        "id": "Qwen/Qwen3-4B",
+        "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+        "selection_status": "selected"
+      },
+      "native_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+      "training_template_sha256": "38ca7ab486311de72b1b1d74b31dedf53716fd18c7bb2ac5da96e4a7988063fb",
+      "native_template_marks_generation": false,
+      "total_tokens": 293,
+      "trained_tokens": 24,
+      "ignored_tokens": 269,
+      "trained_span_count": 1,
+      "trained_text": "<tool_call>\n{\"name\": \"calculator\", \"arguments\": {\"expression\": \"2 + 2*2\"}}\n</tool_call><|im_end|>",
+      "trained_text_sha256": "96f1a308b959f343594e54a6415730cd49f3bdc327d3b9a5a69b3b9989b7e68f",
+      "inference_prompt_tokens": 268,
+      "training_row_starts_with_inference_prompt": true,
+      "first_trained_token_is_first_generated_token": true,
+      "non_assistant_roles_leaked_into_trained_region": [],
+      "passed": true
+    },
+    {
+      "candidate": {
+        "role": "scale_check",
+        "id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+        "selection_status": "rejected"
+      },
+      "passed": false,
+      "error": "assistant mask is empty; the template marked no generation span"
+    },
+    {
+      "candidate": {
+        "role": "scale_check",
+        "id": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "selection_status": "selected"
+      },
+      "native_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+      "training_template_sha256": "38ca7ab486311de72b1b1d74b31dedf53716fd18c7bb2ac5da96e4a7988063fb",
+      "native_template_marks_generation": false,
+      "total_tokens": 293,
+      "trained_tokens": 24,
+      "ignored_tokens": 269,
+      "trained_span_count": 1,
+      "trained_text": "<tool_call>\n{\"name\": \"calculator\", \"arguments\": {\"expression\": \"2 + 2*2\"}}\n</tool_call><|im_end|>",
+      "trained_text_sha256": "96f1a308b959f343594e54a6415730cd49f3bdc327d3b9a5a69b3b9989b7e68f",
+      "inference_prompt_tokens": 268,
+      "training_row_starts_with_inference_prompt": true,
+      "first_trained_token_is_first_generated_token": true,
+      "non_assistant_roles_leaked_into_trained_region": [],
+      "passed": true
+    }
+  ],
+  "gated_on": [
+    "Qwen/Qwen3-4B",
+    "Qwen/Qwen3-1.7B"
+  ],
+  "status": "passed"
+}
