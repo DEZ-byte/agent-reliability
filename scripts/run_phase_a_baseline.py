@@ -36,8 +36,8 @@ from env.phase_a import (  # noqa: E402
     PhaseATask,
     build_phase_a_registry,
     calculator_tool_schema,
-    parse_gsm8k_answer,
 )
+from env.splits import load_split  # noqa: E402
 from agent.gates import GateEngine  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
 from evaluation.rungs import (  # noqa: E402
@@ -96,41 +96,20 @@ def _load_eval_config() -> dict[str, Any]:
     return json.loads(EVAL_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
-def _content_digest(question: str, answer: str) -> str:
-    payload = json.dumps(
-        {"question": question, "answer": answer}, sort_keys=True, ensure_ascii=False
-    )
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
 def _load_tasks(config: dict[str, Any], limit: int | None) -> list[PhaseATask]:
-    manifest_path = PROJECT_ROOT / config["phase_a"]["split_manifest"]
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    dataset = manifest["dataset"]
-    split = config["phase_a"]["split"]
+    """Delegate to the shared loader so evaluation and training agree.
 
-    from datasets import load_dataset
+    This used to assume every frozen task came from upstream `test`, which is
+    true for dev and test and false for train. One loader now derives the
+    upstream split per task and checks every content hash, so the training data
+    generator cannot disagree with the evaluator about what a task is.
+    """
 
-    rows = load_dataset(
-        dataset["id"], dataset["config"], split="test", revision=dataset["revision"]
+    return load_split(
+        PROJECT_ROOT / config["phase_a"]["split_manifest"],
+        config["phase_a"]["split"],
+        limit=limit,
     )
-    tasks: list[PhaseATask] = []
-    for entry in manifest["splits"][split]:
-        row = rows[entry["source_index"]]
-        if _content_digest(row["question"], row["answer"]) != entry["content_sha256"]:
-            raise BaselineError(
-                entry["task_id"] + " does not match its recorded content hash"
-            )
-        tasks.append(
-            PhaseATask(
-                task_id=entry["task_id"],
-                template_id=entry["template_id"],
-                question=row["question"],
-                gold_answer=parse_gsm8k_answer(row["answer"]),
-                source=dataset["id"],
-            )
-        )
-    return tasks[:limit] if limit else tasks
 
 
 def _candidates(selected: list[str]) -> list[dict[str, str]]:
