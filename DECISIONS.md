@@ -1034,3 +1034,100 @@ dated decision, and deciding it before the baseline exists would be guessing.
 
 Llama checkpoints are not measured here. Their weights are approved but not
 downloaded, and this artifact covers only the selected Qwen3 bundle.
+
+## 2026-08-20 — Pre-training design review
+
+### D-065 — H2 was unfalsifiable as scheduled, and five other design defects
+An external review raised ten claims. I had each verified independently against
+the files and the running code before changing anything. Twenty-three
+sub-claims were confirmed, four partly, none refuted. The review was right, and
+in two places the verification found the defect to be worse than reported.
+
+**The critical one: H2 could not have fired.** The two H2 configurations and the
+whole §7.4 ablation ladder were scheduled at M3, which trains on Phase A. The
+Phase A registry holds one non-mutative tool, so `GateEngine.replay` discards
+every event before a predicate is read and the gate term is identically 0.0 on
+every Phase A episode. Verified by execution: a correct episode scores
+`gate = 0.0` under an empty gate config and under one declaring an
+`authenticated` predicate alike. With efficiency disabled in both conditions,
+`F` and `FG` receive bit-identical rewards; under the frozen seeds and data
+order of §4.1 they receive identical gradients. The contrast would have measured
+GPU nondeterminism.
+
+Worse than reported, in two ways. The verification found the whole four-rung
+ladder inert for the same reason, not only the confirmatory pair. And §9 budgets
+the H2 evaluation at M5 against gate-bearing tau2 data, so the design trained on
+gate-free data at M3 and evaluated on gate-bearing data at M5 — a mismatch
+across milestones, not within one. The `NA: no observable control attempts`
+guard would not have caught it: that guard keys on the evaluation denominator,
+which would be healthy, so H2 would have returned a finite near-zero reduction,
+`FAIL`, and the pre-written sentence "gate rewards do not internalize the
+constraint". A false conclusion about the project's own distinguishing design
+choice.
+
+Fixed by making the dependency explicit and schedulable. Stage 2 was the only
+gate-bearing training data the blueprint named and belonged to no milestone; it
+now has one (M3b) and a risk-register row. `HYPOTHESIS_PROTOCOL.md` §4.1 gains a
+training-data requirement and two pre-outcome reported quantities, and §7 gains
+`INVALID: gate reward inert in training`, which is never `FAIL`.
+
+**The other five confirmed defects.**
+
+H1 credited "GRPO" for a closure the design cannot attribute to GRPO alone,
+since GRPO initialises from SFT. Reworded to credit the SFT-initialised
+pipeline, with SFT×R0 available as a labelled auxiliary decomposition.
+
+H3's three components are all task-set aggregates, so a model solving only
+manual-insensitive tasks passes every one while holding none of the manual's
+knowledge. The reviewer's fix — subset on tasks where the base shows an effect —
+selects on model outcomes, which §4.2 forbids for H2's manifest and which would
+invite regression to the mean. Instead `D_manual` is defined from environment
+metadata before any outcome is read, restricted cells are reported beside the
+full-manifest ones, and a support-overlap diagnostic is required before the
+internalization pattern may be claimed.
+
+§5.4 still said the execution-backed reward makes memorised answers score zero
+"regardless". D-062 had already refuted that and D-064 had measured the unaided
+solve rates that make the laundering path likely. The decisions were ahead of
+the spec, which is the direction that misleads a reader of the canonical
+document. §5.4 and the §7.0 accuracy row now both carry the caveat and the
+reporting duty.
+
+Stage 3 trains on full tau2 multi-turn, which needs user turns, while §6.2
+claimed training never depends on the simulator and discharged that only for
+Stages 1-2. Stage 3 is now named as the sole simulator-dependent training stage,
+and the §11 swap rule extends to checkpoints it produces.
+
+§4.1 scheduled the full C/R/E self-correction bundle on all seven Tier-2 arms.
+The normative documents exclude four outright and reduce two to C/R-only,
+because R1 has no escalation target. Exactly one arm supports the full bundle:
+primary GRPO×R2.
+
+**A correct piece of RL reasoning I had got wrong.** §7.3 listed the dense format
+term as a mitigation for zero-variance groups. GRPO advantages are
+group-relative, so a term identical across all G candidates shifts the mean,
+leaves the standard deviation untouched, and cancels exactly. Verified
+numerically: advantages computed with and without the format term are
+bit-identical when it does not vary. The condition under which it contributes
+nothing is zero within-group dispersion of that term — not "accuracy is still
+0", which is what §7.3 said — and that is precisely the state mitigation 1 is
+designed to produce. The mitigation self-extinguished in the regime it existed
+for. Replaced with the real one: log per-component within-group standard
+deviation, and resample or drop zero-variance groups rather than
+backpropagating a zero advantage.
+
+**Budget and staleness.** §9's Phase B estimate was written additively over a
+subset, double-counting the seven Tier-2 arms by 28 runs per task; it now states
+the correct decomposition. Five cost blocks the blueprint mandates elsewhere had
+no line — the four ladder rungs, the scale-model SFT checkpoint, H3's
+manual-removed re-runs, the self-correction branches, and Stage 2 itself — and
+now do. Six smaller staleness items were corrected, including a `(or 7B)`
+simulator fallback D-053 had already removed elsewhere, two wrong section
+cross-references, a settled dataset choice still presented as open, a duplicated
+PLAN entry both ticked and untitcked, and a 72B teacher example that no budgeted
+card can hold.
+
+**What this cost and what it bought.** No measurement changed; every fix is to a
+pre-registration, which is the only time such fixes are free. Had the review
+arrived after M3, the H2 result would have been a published false negative about
+the project's central claim.

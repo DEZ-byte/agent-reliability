@@ -13,11 +13,17 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Iterable
 from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from env.models import EnvironmentOutcome, EpisodeTrace, OutcomeSource
+from env.models import (
+    EnvironmentOutcome,
+    EpisodeTrace,
+    OutcomeSource,
+    ToolEvent,
+)
 from env.sandbox import SandboxViolation, run_code
 from env.tools import ToolRegistry, ToolSpec, ToolState
 
@@ -128,20 +134,41 @@ def build_phase_a_registry() -> ToolRegistry:
     return registry
 
 
+def is_answering_event(event: ToolEvent) -> bool:
+    """Whether one event is a calculator call that actually produced a number.
+
+    An episode's answer can only come from an event of this kind, so the
+    single-trace grader and the multi-decision rung loops decide correctness
+    from one predicate rather than two lookalike copies of it.
+    """
+
+    if not (event.dispatched and event.succeeded):
+        return False
+    if event.call.name != CALCULATOR_TOOL_NAME:
+        return False
+    return isinstance(event.output, (int, float)) and not isinstance(
+        event.output, bool
+    )
+
+
+def answer_from_events(events: Iterable[ToolEvent]) -> float | None:
+    """The episode's answer: the last successful calculator result, if any."""
+
+    answer: float | None = None
+    for event in events:
+        if is_answering_event(event):
+            answer = float(event.output)  # type: ignore[arg-type]
+    return answer
+
+
 def executed_answers(trace: EpisodeTrace) -> list[float]:
     """Numbers this episode actually obtained from a successful tool call."""
 
-    answers: list[float] = []
-    for event in trace.tool_events:
-        if not (event.dispatched and event.succeeded):
-            continue
-        if event.call.name != CALCULATOR_TOOL_NAME:
-            continue
-        if isinstance(event.output, (int, float)) and not isinstance(
-            event.output, bool
-        ):
-            answers.append(float(event.output))
-    return answers
+    return [
+        float(event.output)  # type: ignore[arg-type]
+        for event in trace.tool_events
+        if is_answering_event(event)
+    ]
 
 
 def answered_without_arithmetic(trace: EpisodeTrace) -> bool:
@@ -179,13 +206,13 @@ def grade_episode(trace: EpisodeTrace, task: PhaseATask) -> EnvironmentOutcome:
     the outcome is incorrect regardless of what it wrote.
     """
 
-    answers = executed_answers(trace)
-    if not answers:
+    answer = answer_from_events(trace.tool_events)
+    if answer is None:
         return EnvironmentOutcome(
             correct=False, source=OutcomeSource.SANDBOX_RESULT
         )
     correct = math.isclose(
-        answers[-1], task.gold_answer, rel_tol=0.0, abs_tol=ANSWER_TOLERANCE
+        answer, task.gold_answer, rel_tol=0.0, abs_tol=ANSWER_TOLERANCE
     )
     return EnvironmentOutcome(
         correct=correct, source=OutcomeSource.SANDBOX_RESULT

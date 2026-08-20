@@ -108,6 +108,9 @@ to paid compute or headline evaluation until M0's reward-gaming tests are green.
 - [ ] Contamination probe on the two Llama checkpoints, once their weights are
   downloaded
 - [ ] R0 and R1 baseline runner producing pass^k with confidence intervals
+- [ ] Build the Stage 2 gate-bearing environment (M3b). Until it exists, the
+  §7.4 ablation ladder and both H2 configurations have no data on which the
+  gate term can vary, and H2 is unanswerable rather than negative
 - [ ] First baseline table, every accuracy figure reported beside its
   no-arithmetic rate (D-064)
 
@@ -123,8 +126,6 @@ These are tracked rather than silently guessed:
   `HYPOTHESIS_PROTOCOL.md`.
 - Validate that the Phase B model combination fits the stated GPU budget.
 - Correct the reference-policy implementation after the SFT/LoRA smoke test.
-- Decide whether the public release may depend on non-commercial model terms;
-  apply that license filter before naming a Qwen bundle winner.
 - Reconcile current TRL OpenEnv multi-turn support with the M6 backend choice
   inside the separate TRL 1.8 environment lane.
 - Pin one tau2 repository, immutable revision, task set, simulator, and reward

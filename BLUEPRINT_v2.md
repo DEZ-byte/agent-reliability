@@ -33,7 +33,7 @@ costs far less at inference" is a publishable, hireable result.
 
 | ID | Hypothesis | Negative outcome (also ships) |
 | :-- | :-- | :-- |
-| H1 | GRPO with gate rewards on the primary ≤4B model closes ≥50% of the pass^4 gap to the fully scaffolded 8B baseline, at ≤30% of the 8B arm's generated tokens per episode. | Gap closure <50% → reported as "scaffolding retains the reliability lead; post-training buys partial closure at X% of the cost." |
+| H1 | The SFT-initialised GRPO pipeline on the primary ≤4B model closes ≥50% of the pass^4 gap to the fully scaffolded 8B baseline, at ≤30% of the 8B arm's generated tokens per episode. GRPO initialises from SFT (§7.1), so the measured closure credits the whole Base→SFT→GRPO pipeline; SFT×R0 reports pass^4 at Tier 1 and may be cited as a labelled auxiliary decomposition, never as a confirmatory one. | Gap closure <50% → reported as "scaffolding retains the reliability lead; post-training buys partial closure at X% of the cost." |
 | H2 | Adding the gate-reward term reduces the `skipped_auth` failure rate by ≥50% relative to an otherwise-identical GRPO run without it (ablation ladder, §7.4). | No reduction → gate rewards do not internalize the constraint; format+accuracy explain the gains. |
 | H3 | The GRPO-trained model retains ≥90% of its pass^1 when the domain policy manual is removed from the system prompt. Base-model degradation on the same probe set is a separately reported auxiliary criterion, not part of the H3 verdict. | Trained model still depends on the manual → policy knowledge was not internalized into weights; a weak base-model drop limits the interpretation but does not rewrite the H3 threshold. |
 
@@ -121,6 +121,16 @@ gates and, for small parents only, one 8B handoff (§8 and
 | Primary (≤4B) | {Base, SFT, DPO, GRPO} × {R0, R1, R2} | 12 |
 | Scale check (1.5–1.7B) | {Base, GRPO} × {R0, R2} | 4 |
 | Scale H2 confirmatory | GRPO-{accuracy+format, accuracy+format+gate} × R1-audit | 2 |
+
+**H2 requires gate-bearing training data, and Phase A has none.** The Phase A
+registry holds one non-mutative tool, so `GateEngine.replay` discards every
+event before a predicate is read and the gate term is identically 0.0 on every
+Phase A episode. Trained on Phase A alone the two H2 configurations receive
+bit-identical rewards, identical gradients under the frozen seeds and data
+order, and the contrast would measure GPU nondeterminism. The whole §7.4
+ladder is inert for the same reason. H2 therefore trains on Stage 2 (§7.1),
+which §11 now schedules, and never on Phase A. A null H2 obtained without
+gate-bearing training data is `INVALID`, not `FAIL`.
 | Llama-3.2-3B | {Base, GRPO} × {R0, R2} | 4 |
 | Llama-3.1-8B | Base × {R0, R1, R2} | 3 |
 | **Total** | | **25** |
@@ -138,7 +148,7 @@ Headline comparison: **primary Base×R0 → primary GRPO×R0 gap closure relativ
 to 8B Base×R2-no-escalation**; primary GRPO×R2 is the separate “hybrid” row.
 Exact aggregation and token-ratio rules are in `HYPOTHESIS_PROTOCOL.md`.
 
-Eval tiers (protocol in §7):
+Eval tiers (protocol in §10):
 - Tier 1 — all 23 production-grid arms: n=4 runs, Phase A test set
   (N≈150) + tau2-retail test split. Reports pass^1, pass^4 (pass@k
   alongside).
@@ -161,9 +171,15 @@ Production R1/R2 traces support descriptive attribution only; causal language
 requires the matched branch bundle. Local action repair and deterministic
 end-to-end recovery are reported separately, and retry luck, gate prevention,
 and success after 8B escalation are never credited as small-model
-self-correction. The diagnostic branches run on the Tier-2 headline arms after
-M4 and are budgeted in §9 as a separate line; they do not alter H1-H3, and no
-H1-H3 verdict may cite them.
+self-correction. The full matched C/R/E bundle runs on the one Tier-2 arm that
+supports it, primary GRPO×R2, after M4. Primary Base×R1 and primary SFT×R1
+take the C/R-only variant under the separately labelled denominator
+`RUNG_PROTOCOL.md` §7 requires. The two R0 arms and the two 8B-parent arms are
+out of scope: `SELF_CORRECTION_SPEC.md` scopes to small-model R1/R2, and
+`RUNG_PROTOCOL.md` §7 makes the bundle inapplicable to an 8B parent. R1 arms
+have no escalation target, which is why they cannot carry an E branch. These
+branches are budgeted in §9, do not alter H1-H3, and no H1-H3 verdict may cite
+them.
 
 ---
 
@@ -173,8 +189,10 @@ H1-H3 verdict may cite them.
 - **Phase A (single-turn, first):** "GSM8K wrapped in our own calculator/REPL
   tool environment" (there is no benchmark called "GSM8K-Tool" — never use
   that name) + an open function-calling dataset for format grounding:
-  `Salesforce/xlam-function-calling-60k` or Glaive-function-calling-v2
-  (record the license of whichever is used in `data/README.md`).
+  `Salesforce/xlam-function-calling-60k`, adopted by D-058 with its CC BY 4.0
+  attribution duties and its unresolved research-only wording both recorded in
+  `data/LICENSES.md`. Glaive was rejected. How much of it is actually mixed in
+  is settled at M1 by the measured format error rate, which may be zero.
 - **Phase B (multi-turn):** tau2 retail through one pinned provenance tuple.
   Sierra's official repository and Amazon's separately corrected
   `tau2-bench-verified` fork are distinct choices, not upstream aliases.
@@ -184,9 +202,12 @@ H1-H3 verdict may cite them.
   only on the exact same tuple; otherwise label the run as a new variant.
 
 ### 5.2 SFT data (target: 1–3k verified trajectories)
-- Teacher: strong open-weight model (e.g., Qwen2.5-72B class in 4-bit, or the
+- Teacher: strong open-weight model (a 32B class in 4-bit fits a 24 GB card; a
+  72B does not, at roughly 36 GB, so it is not a usable example here), or the
   largest that fits the rented GPU) run locally on RunPod. No API teacher.
-- Generation: teacher plays the agent on **train-split** tasks; every
+- Generation: teacher plays the agent on the Phase A train split frozen in
+  `configs/splits/phase_a_gsm8k.json`, and on the tau2-retail train split once
+  that manifest is pinned, if Stage 3 proceeds; every
   trajectory is graded by the deterministic grader; **only passing
   trajectories are kept** (rejection sampling — the grader doubles as the
   data filter).
@@ -205,10 +226,21 @@ H1-H3 verdict may cite them.
 - Split at the task-template level, so paraphrased twins never straddle splits.
 - tau2-retail is small (~100–115 tasks): test split is eval-only, never
   trained on, never used for checkpoint selection.
-- Contamination probe for the math set: base checkpoints attempt GSM8K test
-  items with tools disabled; report the memorization rate. The
-  execution-backed accuracy reward (§6.3) makes memorized text answers score
-  0 regardless.
+- Contamination probe for the math set, two conditions (D-063), because one
+  number cannot answer both questions. **Unconstrained** (256 new tokens)
+  measures what a checkpoint can solve without a calculator.
+  **Token-starved** (12 new tokens) measures recall, since multi-step
+  arithmetic does not fit. Report both, never one labelled as the other.
+- The execution-backed accuracy reward (§7.0) makes a memorised answer
+  written **in prose** score 0. It does **not** neutralise memorisation in
+  general: a model may recall the answer and launder it through the tool as
+  `calculator("391")`, which dispatches, succeeds, and scores +1.0 having
+  computed nothing (D-062). Measured unaided solve rates of 0.707 and 0.640
+  (D-064) make that path likely rather than hypothetical.
+- **Reporting duty.** Every Phase A accuracy figure is reported beside its
+  no-arithmetic rate. Where that rate is material, the accuracy number
+  describes tool-call compliance, not tool-assisted problem solving, and must
+  be described that way.
 
 ---
 
@@ -228,11 +260,13 @@ H1-H3 verdict may cite them.
   never worker-controlled pickle (D-019, D-022). `tests/test_sandbox.py`
   proves the timeout and memory limits fire and the known escapes are blocked.
 
-### 6.2 User simulator (Phase B eval only)
-- Local Qwen2.5-14B-Instruct (or 7B) served by vLLM next to the policy model
+### 6.2 User simulator (Phase B eval, and Stage 3 training if it proceeds)
+- Local Qwen2.5-14B-Instruct served by vLLM next to the policy model
   on the rented GPU. Pinned model ID, prompt, and temperature in `configs/`.
-- Training never depends on the simulator: GRPO Stage 1–2 rollouts use
-  single-turn tasks or scripted user turns (§7.1).
+- Training through Stage 2 never depends on the simulator: those rollouts use
+  single-turn tasks or scripted user turns (§7.1). Stage 3 is the sole
+  exception and inherits the §11 swap rule, which then invalidates trained
+  checkpoints as well as evaluation numbers.
 
 ### 6.3 Grading
 - Headline metric grader = tau2's deterministic basis: **DB-state check ×
@@ -253,7 +287,7 @@ runtime constraint cannot diverge.
 
 | Term | Source of truth | Value |
 | :-- | :-- | :-- |
-| Accuracy | Environment state only: sandbox execution result (Phase A) or final DB-state hash (Phase B). Text-only answers score 0. | +1.0 / 0.0 |
+| Accuracy | Environment state only: sandbox execution result (Phase A) or final DB-state hash (Phase B). Text-only answers score 0. A tool call that restates a remembered answer instead of computing it still scores +1.0; that is measured, not penalised (D-062), and reported per §5.4. | +1.0 / 0.0 |
 | Format | Every emitted tool block parses as strict JSON **and** validates against a registered tool's Pydantic schema **and** ≥1 call actually dispatched. | +0.2 when the conjunction holds / −0.5 when emitted blocks fail it / 0 when no block is emitted |
 | Gate | Replay the tool-call event log; violation iff a mutative call was **dispatched** while a required pre-call predicate was false, even if its handler later failed. | Any violation **zeroes accuracy** and adds one binary −0.6 episode term |
 | Efficiency | −0.05 × executed calls, capped at −0.3. | plus **−0.3 for zero tool calls** on tool-required tasks |
@@ -275,11 +309,18 @@ out-of-order auth, failed-auth-then-modify, multiple `####` markers.
   - **Stage 1:** single-turn verifiable tool tasks (Phase A). Use the frozen
     TRL/Unsloth stack after the one-step compatibility probe. G = 8–16.
   - **Stage 2:** short scripted 2–4-turn synthetic retail episodes with auth
-    gates (no simulator; deterministic rewards).
+    gates (no simulator; deterministic rewards). This is the only
+    gate-bearing training data the project defines, so H2 and the §7.4
+    ladder depend on it existing. Scheduled at M3b in §11. Its environment
+    is multi-turn, so the D-046 prefix gate must be re-armed and passed
+    first, and the selected Qwen3 bundle currently fails that check.
   - **Stage 3 (stretch, M6):** full tau2 multi-turn through the backend chosen
     by a deterministic compatibility pilot between current TRL
     `environment_factory` support and `verifiers`. No backend is preselected.
-    Kill criterion in §11.
+    Kill criterion in §11. User turns come from the frozen tau2 simulator of
+    the §5.1 provenance tuple, on the tau2-retail train split only. Stage 3
+    is therefore the single simulator-dependent training stage, and the §11
+    simulator-swap rule applies to any checkpoint it produces.
 
 ### 7.2 Losses — exact formulations
 - **Assistant-token-only loss masking everywhere** (SFT, DPO, GRPO):
@@ -298,8 +339,17 @@ out-of-order auth, failed-auth-then-modify, multiple `####` markers.
 1. SFT initialization guarantees non-zero early success probability.
 2. Rollout temperature T = 0.7–0.85 so the G candidates do not collapse to
    identical strings.
-3. The dense format term keeps gradient signal alive while accuracy is
-   still 0.
+3. The format term supplies gradient only while it still varies within a
+   group. Because Â_i is group-relative, a term identical across all G
+   candidates shifts the mean and leaves the standard deviation untouched, so
+   the advantage is bit-identical to one computed without it: the
+   contribution is exactly zero. Expect it to vanish once SFT makes
+   formatting uniform, which is mitigation 1's purpose. It is not a
+   mitigation for the regime this section is about; it helps only while some
+   rollouts still emit malformed blocks.
+3b. The real mitigation: log the per-step within-group standard deviation of
+   each reward component separately, and when a group's total reward variance
+   is zero, resample or drop it rather than backpropagating a zero advantage.
 4. Logged health alarms per step: fraction of zero-variance groups, fraction
    of zero-tool-call rollouts, mean KL, entropy.
 
@@ -314,8 +364,12 @@ out-of-order auth, failed-auth-then-modify, multiple `####` markers.
   the training config and W&B run ID. Keep adapters + tokenizer configs;
   delete optimizer states after a run finishes.
 - **Ablation ladder** (headline evidence for H2), on the scale-check model:
-  accuracy-only → +format → +gate → full composite. Report the
-  `skipped_auth` rate per rung. The confirmatory H2 contrast is the matched
+  accuracy-only → +format → +gate → full composite, trained on Stage 2
+  gate-bearing data. Report the `skipped_auth` rate per rung. Every rung of
+  this ladder is a separately trained configuration with its own cost; the
+  four rungs are budgeted in §9 and are not part of §4's 25 evaluated arms.
+  Run on gate-free data the ladder collapses, because the gate term cannot
+  vary. The confirmatory H2 contrast is the matched
   {accuracy+format} versus {accuracy+format+gate} pair with efficiency disabled
   in both, evaluated under R1 audit mode as specified in
   `HYPOTHESIS_PROTOCOL.md`. Headline GRPO arms run with ≥2 seeds; report the
@@ -392,12 +446,25 @@ R1/R2 rows are secondary because gates or retries could mask prompt dependence.
 
 Estimates to validate at M1 (record actuals in DECISIONS.md):
 - GRPO single-turn: 1.5B ≈ 4–8 h; 3–4B ≈ 8–15 h per run on a 4090.
-- Phase B eval, derived from §4 rather than estimated separately: 23
-  production-grid arms × the frozen tau2-retail **test split** (not the full
-  ~114-task set) × n=4, plus n=8 on the 7 Tier-2 headline arms and on the 2 H2
-  confirmatory configurations. Multiply the headline GRPO arm by its ≥2 seeds
-  (§7.4). Any figure here that disagrees with §4 is wrong by construction; §4 is
-  the source. Record the episode count and GPU-hours as measured actuals at M5.
+- Phase B eval, derived from §4. Each arm holds exactly ONE run array (§10.1),
+  so a Tier-2 arm's n=8 array replaces its n=4 array rather than adding to it.
+  The decomposition is therefore: **16 Tier-1-only arms × n=4, plus 7 Tier-2
+  arms × n=8, plus 2 H2 confirmatory configurations × n=8**, each over the
+  frozen tau2-retail test split (not the full ~114-task set). Writing this
+  additively double-counts the Tier-2 arms by 28 runs per task.
+- Seeds: every configuration carrying a confirmatory claim runs ≥2 seeds —
+  the headline GRPO arms and both H2 configurations (§7.4) — not one arm.
+- Costs §4 cannot supply, because they are not evaluated arms. Each needs its
+  own line, and none may be folded into an arm's budget:
+  - the four §7.4 ablation rungs, each a separate training run on Stage 2 data;
+  - the scale-model SFT checkpoint both H2 configurations initialise from (§4);
+  - H3's manual-removed re-runs, base and trained, per seed at n=8 (§8.4);
+  - the §4.1 self-correction branches: 3 continuations per eligible
+    opportunity on primary GRPO×R2, 2 on each C/R-only arm;
+  - Stage 2 environment construction and its training run (§7.1, M3b).
+- Any figure here that disagrees with §4 about an **arm** is wrong by
+  construction; §4 is the source for arms. §4 is silent about the items above,
+  so this section is their only source. Record all of it as measured actuals.
 - Every trainer is idempotent-resumable (checkpoint + RNG + dataloader cursor
   every ~25 steps to HF Hub); assume any session can die.
 - The README reports actual spend ("all runs: $X on a single 4090") — this is
@@ -472,6 +539,7 @@ and cite it.
 | **M1** (~2 wk) | Phase A env + rewards v2 + pass^k harness + framework-neutral R0/R1 core | **Real** baseline numbers, all 4 base models, R0/R1, with CIs — ships as a measurement study |
 | **M2** (~1–2 wk) | SFT on primary + re-eval | "Does imitation help?" row filled |
 | **M3** (~2–3 wk) | Single-turn GRPO + ablation ladder + ≥2 seeds + W&B curves; DPO arm alongside | Phase A GRPO rows and `H1-PhaseA provisional` filled; project-level H1 remains `NA` until M5 |
+| **M3b** (~2 wk) | Stage 2 gate-bearing environment: scripted 2-4-turn retail episodes with auth gates, deterministic rewards, no simulator. Then the §7.4 ladder and the two H2 configurations, trained on it | Gate term varies in training; H2 becomes answerable. Blocked until the D-046 prefix gate is re-armed and passed, because Stage 2 is multi-turn |
 | **M4** (~2 wk) | LangGraph parity adapter + R2 cascade/gates on base models | First real Pareto plot |
 | **M5** (~2–3 wk) | tau2-retail eval via the pinned-tuple adapter (`src/env/tau2_adapter.py`, budget 3–5 days) + local user sim | Phase B table filled; one same-tuple reference result reproduced when available |
 | **M6** (stretch) | Multi-turn GRPO via the backend selected by the TRL-versus-`verifiers` pilot | Kill criterion below |
@@ -489,6 +557,7 @@ commits and tests — the commit history is part of the portfolio).
 
 | Risk | Early indicator | Response |
 | :-- | :-- | :-- |
+| Stage 2 blocked or unbuilt | D-046 prefix gate not re-armed, or M3b slips past M4 | H2 and the §7.4 ladder are reported `INVALID: gate reward inert in training`, never `FAIL`. Ship H1 and H3 without them, and say plainly that the gate-reward question was not tested |
 | Multi-turn GRPO stalls | No reward slope within 2 calendar weeks of M6 start | Ship the single-turn headline; multi-turn → future work |
 | GPU overspend | >$30 in any month | Stop new runs and queue the remainder. Keep project H1 `NA`/provisional until its frozen n=8 and both benchmark strata complete; any k=4/N=100 result is a separately versioned exploratory row. |
 | Llama gating delayed | Not approved by end of M1 | Switch to Qwen-only registry |
