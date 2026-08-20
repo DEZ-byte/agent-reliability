@@ -17,7 +17,7 @@
     "masking-verification-4c8acbc.json": {
       "sha256": "98a6c1a1b4bf0254fe6ef8aeb944aacc128d4849a33e5c721fd34f95fbcdad0d",
       "bytes": 3550,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "e2878c219a4e6a8ef89d7ab7136d07a0aca0caeb",
       "kind": "masking_verification"
     },
     "model_smoke-all-05b6450.json": {
