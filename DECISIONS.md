@@ -863,3 +863,21 @@ repository; only split and selection manifests referencing source IDs are
 committed. Whether any grounding data is needed at all is a separate question,
 answered at M1 by the measured format error rate: the four checkpoints already
 emit strictly valid, correctly-selected tool calls on every probe case.
+
+### D-059 — Meta gated access is granted and the pinned revisions still match
+Verified on 2026-08-20 against the authenticated Hub API. Both
+`meta-llama/Llama-3.2-3B-Instruct` and `meta-llama/Llama-3.1-8B-Instruct`
+resolve, and each returns exactly the revision recorded in
+`configs/model_candidates.json` (`0cb88a4f…` and `0e9e39f…`). Access was checked
+by resolving the pinned commit, not by trusting the approval email, because an
+approval says nothing about whether the revision this project depends on still
+exists.
+
+Weights are not downloaded. That is an M1 step: roughly 16 GB across the two
+checkpoints, and it belongs in a watched run rather than a background one.
+
+The Llama Community License obligations recorded in `data/LICENSES.md` apply
+from here on. `meta-llama/Llama-3.2-3B-Instruct` is trained in this project, so
+any released derivative must carry "Built with Llama" and a name beginning with
+"Llama". `meta-llama/Llama-3.1-8B-Instruct` is inference-only (D-048's
+comparator) and produces no derivative weights.

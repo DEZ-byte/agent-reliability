@@ -74,10 +74,11 @@ doing the work.
   canonical text; `NOTICE` records that it covers this repository only and that
   every upstream artifact keeps its own terms
 - [x] File Meta gated-model access requests (submitted by the owner)
-- [ ] Meta approval received for `meta-llama/Llama-3.2-3B-Instruct` and
-  `meta-llama/Llama-3.1-8B-Instruct` — **waiting on Meta**, not on work here.
-  Both are required before M1 baselines; the Qwen-only arms can proceed
-  meanwhile
+- [x] Meta approval received for `meta-llama/Llama-3.2-3B-Instruct` and
+  `meta-llama/Llama-3.1-8B-Instruct`. Verified 2026-08-20 through the
+  authenticated Hub API: both repositories resolve, and each pinned revision in
+  `configs/model_candidates.json` matches the resolved commit exactly. Weights
+  are not downloaded yet; that is M1 work
 
 ## M6 environment lane
 
