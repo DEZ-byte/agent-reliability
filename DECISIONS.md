@@ -881,3 +881,30 @@ from here on. `meta-llama/Llama-3.2-3B-Instruct` is trained in this project, so
 any released derivative must carry "Built with Llama" and a name beginning with
 "Llama". `meta-llama/Llama-3.1-8B-Instruct` is inference-only (D-048's
 comparator) and produces no derivative weights.
+
+## 2026-08-20 — M1 Phase A environment
+
+### D-060 — Phase A accuracy is the last executed calculator result
+`src/env/phase_a.py` wraps GSM8K in this project's own calculator tool. The
+grading rule is the reason the wrapper exists.
+
+An episode's answer is the value returned by its last successful `calculator`
+dispatch. Prose is never read, so a model that writes the correct number
+without calling anything scores zero accuracy and takes the zero-tool-call
+penalty. This is section 7.0's execution-backed accuracy applied to a
+single-turn math task, and it is what makes a memorised GSM8K answer worthless
+here.
+
+Three supporting choices. Numbers are compared with an absolute tolerance of
+1e-6 rather than by string, because a model may reach an integer answer through
+division and land on a float. The gold answer is read from GSM8K's `####`
+marker and a missing marker raises rather than defaulting, since an ungradeable
+task must not silently become a wrong score. The calculator evaluates only
+inside the existing sandbox, so imports, dunder access, and long-running code
+are rejected at the boundary; a sandbox violation is recorded as a failed
+dispatch, which is scored evidence, rather than an exception that ends the
+episode.
+
+The calculator declares no gates. It computes and returns a number without
+touching state a gate would protect, and `ToolSpec` rejects gates on a
+non-mutative tool.
