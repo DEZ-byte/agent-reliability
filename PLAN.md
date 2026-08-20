@@ -107,12 +107,14 @@ to paid compute or headline evaluation until M0's reward-gaming tests are green.
   rather than arithmetic
 - [ ] Contamination probe on the two Llama checkpoints, once their weights are
   downloaded
-- [ ] R0 and R1 baseline runner producing pass^k with confidence intervals
+- [x] R0 and R1 baseline runner producing pass^k with confidence intervals
 - [ ] Build the Stage 2 gate-bearing environment (M3b). Until it exists, the
   §7.4 ablation ladder and both H2 configurations have no data on which the
   gate term can vary, and H2 is unanswerable rather than negative
-- [ ] First baseline table, every accuracy figure reported beside its
-  no-arithmetic rate (D-064)
+- [x] First baseline table, every accuracy figure reported beside its
+  no-arithmetic rate (D-064). Recorded in D-068: the R1 rung is not
+  distinguishable from R0 on the 4B, because 85-91% of failures are a
+  well-formed call with wrong arithmetic, which a format retry cannot repair
 
 ## Open specification issues
 

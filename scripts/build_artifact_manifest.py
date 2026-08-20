@@ -28,7 +28,11 @@ MANIFEST_PATH: Final = RESULTS_DIR / "artifact_manifest.json"
 
 # Every family of committed measurement record. The manifest test walks the
 # same list, so a family absent here is a family nothing protects.
-ARTIFACT_GLOBS: Final = ("model_smoke-*.json", "contamination-*.json")
+ARTIFACT_GLOBS: Final = (
+    "model_smoke-*.json",
+    "contamination-*.json",
+    "baseline-*.json",
+)
 
 SCHEMA_VERSION: Final = 1
 

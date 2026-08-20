@@ -1180,3 +1180,99 @@ row no longer says the two conditions "trained on identical rewards", which is
 exact only when the constant is zero. `data/README.md` no longer says no dataset
 has been selected, which D-058 and D-061 falsified. Stray parenthesis in the
 teacher bullet removed.
+
+---
+
+### D-067 — Evaluation decoding is frozen at temperature 0.7, one setting for every model
+**Date:** 2026-08-20 · **Status:** accepted · **Supersedes:** nothing
+
+`configs/eval.yaml` now pins decoding, run counts, seeds, the turn cap and the
+reporting rules before the first measured run, as section 10.1 requires. Two
+choices in it need justifying, because neither was pinned anywhere in the
+existing documents and both are expensive to revisit.
+
+**Sampling rather than greedy, at temperature 0.7 and top_p 0.95.** pass^k asks
+whether a model succeeds on all k independent attempts. At temperature 0 the k
+attempts are identical, pass^k equals pass^1 by construction, and the number
+measures nothing this project is about. Sampling is therefore not a tuning
+preference here; it is what makes the metric a metric. 0.7 with top_p 0.95 is
+the ordinary default for this family of checkpoints.
+
+**One setting for every model, not each publisher's recommendation.** Model
+cards recommend different decoding per family. Adopting each family's own
+recommendation would let a family's tuning enter a comparison that is supposed
+to isolate training and scaffolding, and no later analysis could separate the
+two. A shared setting disadvantages whichever family the setting suits least.
+That cost is accepted, and it is stated rather than hidden, because the
+alternative is a confound.
+
+**What this costs.** Every artifact recorded under this configuration is
+comparable only to other artifacts recorded under it. Changing any value in
+`configs/eval.yaml` invalidates the comparison with everything already measured
+and needs its own dated decision. The file's SHA-256 is written into every
+result artifact, so a silent change shows up as a changed hash rather than as
+an unexplained score movement.
+
+---
+
+### D-068 — First Phase A baseline: the failure is wrong arithmetic, not malformed calls
+**Date:** 2026-08-20 · **Status:** accepted · **Supersedes:** nothing
+
+The first measured run of the project. Both Qwen3 checkpoints, both rungs, the
+frozen 150-task GSM8K test split, four runs per task: 2,400 episodes. Recorded
+in `results/baseline-phase_a-3cc174f.json` and frozen by hash.
+
+| model | rung | pass^1 [95% CI] | pass^4 [95% CI] | pass@4 | no-arith |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3-4B | R0 | 0.598 [0.522, 0.673] | 0.547 [0.467, 0.627] | 0.647 | 0.000 |
+| Qwen3-4B | R1 | 0.608 [0.532, 0.683] | 0.567 [0.487, 0.647] | 0.647 | 0.003 |
+| Qwen3-1.7B | R0 | 0.303 [0.237, 0.373] | 0.247 [0.180, 0.320] | 0.353 | 0.015 |
+| Qwen3-1.7B | R1 | 0.333 [0.262, 0.405] | 0.287 [0.213, 0.360] | 0.380 | 0.017 |
+
+**The reliability gap the project exists to study is present and measurable.**
+pass@4 minus pass^4 is 0.100 for the 4B and 0.107 for the 1.7B under R0. About
+a tenth of all tasks are solved on some attempts and failed on others. Reporting
+pass@4 alone would describe these models as 10 points better than they are when
+every attempt has to hold.
+
+**R1 is not distinguishable from R0 on the larger model, and barely so on the
+smaller one.** A paired permutation test on per-task pass^4, 20,000 resamples,
+same tasks and same seeds: 4B +0.020, p=0.25; 1.7B +0.040, p=0.031. The 1.7B
+result is nominally significant and should still not be leaned on. Only 6 of
+150 tasks disagree between the rungs, there is no correction for testing two
+models, and a result resting on 6 discordant tasks is one relabelled task away
+from crossing 0.05 in either direction. The honest summary is that one extra
+model decision buys little here, and that any gain is small enough to need more
+tasks to pin down.
+
+**Why it buys little is the useful part, and it constrains what scaffolding can
+do.** R1's second decision only fires when the first produced no action at all.
+That happened in 22 of 600 episodes for the 4B and 62 of 600 for the 1.7B. When
+it did fire it worked reasonably well — roughly 28% of retried episodes reached
+a correct answer on both models. But it cannot fire on the dominant failure. Of
+the 4B's R0 failures, 219 were a well-formed calculator call that computed the
+wrong thing and 22 were a missing call; for the 1.7B, 356 against 62. Between
+85% and 91% of failures are the model calling the tool correctly and getting the
+arithmetic wrong.
+
+This bounds the R-rungs from measurement rather than from argument. Feedback
+scaffolding of this kind repairs the form of a call. The failures here are
+overwhelmingly in the content of the call, where a retry that is told only that
+nothing parsed has nothing to act on. It is a reason to expect the training arms
+to have room the scaffolding arms do not, and it is a prediction that can now be
+checked rather than assumed. It does not yet support H1, which needs the
+trained arms measured.
+
+**Laundering is near zero in the untrained checkpoints:** 0.000 to 0.017. The
+D-062 risk is real but is not inflating these particular numbers. The rate must
+keep being reported after training, when a reward for a passing call is exactly
+the pressure that would raise it.
+
+**One observation that is suggestive and not yet a result.** D-064 measured
+unaided prose accuracy on the same 150 tasks at 0.707 for the 4B and 0.640 for
+the 1.7B. With a calculator, pass^1 is 0.598 and 0.303. The tool interface
+appears to cost accuracy, drastically so for the smaller model. This is not a
+controlled contrast: the probe was greedy, the baseline samples at 0.7, and the
+prompts differ. The gap for the 1.7B is far too large to be explained by
+decoding alone, but the clean version — same decoding, same tasks, tool against
+no tool — has not been run, so nothing is claimed from it yet.

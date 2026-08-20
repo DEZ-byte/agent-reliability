@@ -2,10 +2,16 @@
   "schema_version": 1,
   "purpose": "Frozen content hashes for every committed measurement artifact. These files are permanent records, not regenerable state. A test fails if any hash changes or any artifact is missing from this list, so a result cannot be edited, re-signed, or quietly dropped. Adding a new run means adding a new entry; it never means changing an existing one.",
   "artifacts": {
+    "baseline-phase_a-3cc174f.json": {
+      "sha256": "db617437172448572e3dd44b26d39fca8f6d507ac0d8494e277f1d17f2fa7c61",
+      "bytes": 4803,
+      "recorded_in_commit": null,
+      "kind": "phase_a_baseline"
+    },
     "contamination-qwen3-57b2bc2.json": {
       "sha256": "c76a4173877a0dbce5f84a861894138d63b3dae6765df35a5896bc7c04272cb3",
       "bytes": 325186,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "277285b2422238bc5ead0fd00af43aca1ce91e9b",
       "kind": "phase_a_no_tool_diagnostic"
     },
     "model_smoke-all-05b6450.json": {

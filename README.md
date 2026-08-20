@@ -9,9 +9,9 @@ second costs GPU time once.
 
 This repository measures which one actually wins, and by how much.
 
-> **Status: no reliability results yet.** The measurement harness is built and
-> tested, and the model stack is chosen from real measurements. The experiment
-> itself has not run. Every hypothesis in
+> **Status: baselines measured, no trained arms yet.** The untrained Phase A
+> baselines are in [the first results](#first-results-untrained-baselines)
+> below. Nothing has been trained, so every hypothesis in
 > [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) is still open.
 
 ## The question
@@ -99,6 +99,58 @@ reach the answer in its head may compute mentally and pass the result to the
 tool as `calculator("391")`, scoring correct having computed nothing. That is
 detected, reported alongside every accuracy figure, and recorded in D-062 and
 D-064.
+
+## First results: untrained baselines
+
+Both selected checkpoints, both rungs, the frozen 150-task test split, four
+runs per task. 2,400 episodes. No training yet, so this is the floor everything
+later gets compared against.
+
+`R0` is one model decision per turn. `R1` is one extra decision that sees a
+factual description of why the first one failed. Nothing else differs.
+
+| Model | Rung | pass^1 | pass^4 | pass@4 | Answered without computing |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `Qwen3-4B` | R0 | 0.598 [0.522-0.673] | 0.547 [0.467-0.627] | 0.647 | 0.0% |
+| `Qwen3-4B` | R1 | 0.608 [0.532-0.683] | 0.567 [0.487-0.647] | 0.647 | 0.3% |
+| `Qwen3-1.7B` | R0 | 0.303 [0.237-0.373] | 0.247 [0.180-0.320] | 0.353 | 1.5% |
+| `Qwen3-1.7B` | R1 | 0.333 [0.262-0.405] | 0.287 [0.213-0.360] | 0.380 | 1.7% |
+
+**The reliability gap is real and it is about 10 points.** `pass@4` counts a
+task as solved if any of four attempts worked. `pass^4` counts it only if all
+four worked. The distance between those columns is the band of tasks these
+models solve *sometimes* - 10.0 points for the 4B, 10.7 for the 1.7B. A
+benchmark reporting only `pass@4` would describe these models as a tenth better
+than they are when every attempt has to hold. That gap is the thing this project
+is trying to close.
+
+**The retry rung barely helps, and the reason is the interesting part.** Paired
+permutation test on per-task `pass^4`, same tasks and seeds: the 4B gains 0.020
+(p=0.25) and the 1.7B gains 0.040 (p=0.031). Only 3 and 6 tasks out of 150
+actually disagree between the rungs, so even the nominally significant one is
+too thin to lean on. Read it as: one extra decision buys little here.
+
+Why it buys little is a measurement, not a guess. `R1`'s second decision only
+fires when the first produced no tool call at all - 3.7% of episodes for the 4B,
+10.3% for the 1.7B. When it does fire it works, converting about 28% of those
+into correct answers. But it cannot touch the dominant failure. Between **85%
+and 91% of all failures are a perfectly well-formed calculator call that
+computes the wrong thing.**
+
+That is a bound on what runtime scaffolding of this kind can do, derived from
+data rather than argument: a retry told only that nothing parsed has nothing to
+work with when the parse was fine and the reasoning was not. It predicts the
+training arms have room the scaffolding arms do not. It does not demonstrate
+that - no arm has been trained. It just makes the claim checkable.
+
+**Nothing is being laundered yet.** The last column is the D-062 failure mode:
+solving in your head and passing the answer to the calculator as
+`calculator("391")`. It sits between 0.0% and 1.7%, so it is not inflating these
+numbers. It gets reported after every training run too, because a reward for a
+passing tool call is exactly the pressure that would push it up.
+
+Full numbers in [`results/baseline-phase_a-3cc174f.json`](results/baseline-phase_a-3cc174f.json),
+frozen by hash. Reasoning in [`DECISIONS.md`](DECISIONS.md) D-068.
 
 ## Quick start
 

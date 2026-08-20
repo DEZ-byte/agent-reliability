@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-20T07:42:29.359157Z",
+  "kind": "phase_a_baseline",
+  "eval_config_sha256": "33b487c57e5d5ed7e37b16efe4d2e32f36e993e6e83f8544750537cab661741d",
+  "split_manifest_sha256": "eac01714886fde0885693c0fa2ec667f283d8f314460c94e036fc6b6bec142b3",
+  "registry_sha256": "d01529f7b5377c55a5e8ca0b0dbd52e2efa8a00f8b3600cea5f4e0fc2082a181",
+  "prompt_sha256": {
+    "system": "bd7895a093b3b21b482c21b9813ef539747527e778c585caf92296b3c4da0755",
+    "user": "b6f9739c2a651441320a36e444c6c6555e988db27bf7bce3cdf57bbd5a44e4f3"
+  },
+  "decoding": {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "max_new_tokens": 256,
+    "_comment": [
+      "Sampling, not greedy. pass^k asks whether a model succeeds on all k",
+      "independent attempts, which is only a question if the attempts can",
+      "differ. At temperature 0 every run is identical and pass^k collapses",
+      "to pass^1, measuring nothing the blueprint is about.",
+      "One setting is used for every model. Publishers recommend different",
+      "values per family, so adopting any one family's recommendation would",
+      "hand that family an advantage the comparison is supposed to measure.",
+      "See D-067."
+    ]
+  },
+  "candidates_planned": [
+    {
+      "role": "primary_small",
+      "id": "Qwen/Qwen3-4B",
+      "revision": "1cfa9a7208912126459214e8b04321603b3df60c"
+    },
+    {
+      "role": "scale_check",
+      "id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    }
+  ],
+  "executed": true,
+  "results": [
+    {
+      "candidate": {
+        "role": "primary_small",
+        "id": "Qwen/Qwen3-4B",
+        "revision": "1cfa9a7208912126459214e8b04321603b3df60c"
+      },
+      "rungs": {
+        "R0": {
+          "tasks": 150,
+          "runs_per_task": 4,
+          "episodes": 600,
+          "model_decisions": 600,
+          "metrics": {
+            "pass^1": 0.5983333333333334,
+            "pass@1": 0.5983333333333334,
+            "pass^1_ci95": [
+              0.5216666666666666,
+              0.6733333333333333
+            ],
+            "pass^4": 0.5466666666666666,
+            "pass@4": 0.6466666666666666,
+            "pass^4_ci95": [
+              0.4666666666666667,
+              0.6266666666666667
+            ]
+          },
+          "no_arithmetic_rate": 0.0,
+          "no_arithmetic_episodes": 0,
+          "tasks_solved_at_least_once": 97
+        },
+        "R1": {
+          "tasks": 150,
+          "runs_per_task": 4,
+          "episodes": 600,
+          "model_decisions": 622,
+          "metrics": {
+            "pass^1": 0.6083333333333333,
+            "pass@1": 0.6083333333333333,
+            "pass^1_ci95": [
+              0.5316666666666666,
+              0.6833333333333333
+            ],
+            "pass^4": 0.5666666666666667,
+            "pass@4": 0.6466666666666666,
+            "pass^4_ci95": [
+              0.4866666666666667,
+              0.6466666666666666
+            ]
+          },
+          "no_arithmetic_rate": 0.0033333333333333335,
+          "no_arithmetic_episodes": 2,
+          "tasks_solved_at_least_once": 97
+        }
+      }
+    },
+    {
+      "candidate": {
+        "role": "scale_check",
+        "id": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+      },
+      "rungs": {
+        "R0": {
+          "tasks": 150,
+          "runs_per_task": 4,
+          "episodes": 600,
+          "model_decisions": 600,
+          "metrics": {
+            "pass^1": 0.30333333333333334,
+            "pass@1": 0.30333333333333334,
+            "pass^1_ci95": [
+              0.23666666666666666,
+              0.37333333333333335
+            ],
+            "pass^4": 0.24666666666666667,
+            "pass@4": 0.35333333333333333,
+            "pass^4_ci95": [
+              0.18,
+              0.32
+            ]
+          },
+          "no_arithmetic_rate": 0.015,
+          "no_arithmetic_episodes": 9,
+          "tasks_solved_at_least_once": 53
+        },
+        "R1": {
+          "tasks": 150,
+          "runs_per_task": 4,
+          "episodes": 600,
+          "model_decisions": 662,
+          "metrics": {
+            "pass^1": 0.3333333333333333,
+            "pass@1": 0.3333333333333333,
+            "pass^1_ci95": [
+              0.26166666666666666,
+              0.405
+            ],
+            "pass^4": 0.2866666666666667,
+            "pass@4": 0.38,
+            "pass^4_ci95": [
+              0.21333333333333335,
+              0.36
+            ]
+          },
+          "no_arithmetic_rate": 0.016666666666666666,
+          "no_arithmetic_episodes": 10,
+          "tasks_solved_at_least_once": 57
+        }
+      }
+    }
+  ],
+  "source_commit": "3cc174f092ce9ad4fdf6b65b3584d01aae8564d5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "task_count": 150
+}
