@@ -1,0 +1,24 @@
+# This project's integrity model is content hashing: results/artifact_manifest.json
+# and results/smoke_environment.json record SHA-256 digests of committed files,
+# and configs are pinned by digest inside every measurement artifact.
+#
+# Git's end-of-line translation breaks that. With core.autocrlf=true, a Windows
+# checkout rewrites LF to CRLF, so the same commit produces different bytes on
+# different machines and every recorded digest fails away from the machine that
+# wrote it. CI caught exactly this.
+#
+# Normalise to LF in the working tree on every platform so a digest means the
+# same thing everywhere.
+
+* text=auto eol=lf
+
+# Evidence files: never translated, under any local setting.
+results/*.json   -text
+configs/*.json   -text
+*.lock           -text
+
+# Genuinely binary.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.safetensors binary

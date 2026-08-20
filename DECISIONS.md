@@ -797,3 +797,30 @@ Two things this establishes. The local suite passed on Python 3.12 with the
 defect present, so a green local run was not evidence; only CI, on a clean
 checkout, was. And the guard was verified by reintroducing the defect and
 watching it fail, not by assuming it would.
+
+### D-057 — Line-ending translation is disabled for every hashed file
+The second CI run failed all four jobs again. The cause was not the code: it was
+Git rewriting bytes on checkout.
+
+This project's integrity model is content hashing. `results/artifact_manifest.json`
+records a SHA-256 per measurement artifact, `results/smoke_environment.json`
+records one per source file, and every artifact pins `config_sha256` and
+`release_registry_sha256`. All of those digests were computed against a Windows
+working tree with `core.autocrlf=true`, where the checked-out files carry CRLF
+while the stored blobs carry LF. The same commit therefore produced different
+bytes on Windows and Linux, and every recorded digest failed on any machine but
+the one that wrote it. Reproduced in a clean clone: the artifact hashed to
+`501bac8f…` on disk, and normalising CRLF to LF reproduced the recorded
+`281af3ef…` exactly.
+
+`.gitattributes` now sets `* text=auto eol=lf`, so source is LF in the working
+tree on every platform, and marks `results/*.json`, `configs/*.json` and
+`*.lock` as `-text`, so the files whose bytes are hashed are never translated by
+any local setting. The evidence files keep the exact bytes they were recorded
+with rather than being rewritten to match a convention, which is the right
+trade for frozen measurement records (D-052).
+
+The lesson is the one CI exists to teach: a green local suite proved only that
+the digests matched the machine that produced them. Content-addressed files must
+be exempt from any transformation the version-control system is allowed to
+apply.
