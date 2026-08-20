@@ -97,6 +97,20 @@ doing the work.
 See `BLUEPRINT_v2.md` for the full experimental matrix. Work does not proceed
 to paid compute or headline evaluation until M0's reward-gaming tests are green.
 
+## M1 — Phase A baselines
+
+- [x] Phase A calculator environment with execution-backed grading (D-060)
+- [x] GSM8K pinned and train/dev/test manifests frozen (D-061)
+- [x] Memorisation and laundered-recall detection (D-062, D-063)
+- [x] Contamination measured on the selected bundle (D-064). Recall is at
+  chance; unaided solve rate is 64-71%, so Phase A measures tool discipline
+  rather than arithmetic
+- [ ] Contamination probe on the two Llama checkpoints, once their weights are
+  downloaded
+- [ ] R0 and R1 baseline runner producing pass^k with confidence intervals
+- [ ] First baseline table, every accuracy figure reported beside its
+  no-arithmetic rate (D-064)
+
 ## Open specification issues
 
 These are tracked rather than silently guessed:

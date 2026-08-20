@@ -991,3 +991,46 @@ error visible.
 
 Neither number is a task score. Together with the no-arithmetic rate from D-062
 they set the context any Phase A accuracy figure must be read in.
+
+## 2026-08-20 — Phase A contamination measured
+
+### D-064 — GSM8K memorisation is at chance; unaided capability is high, which moves the risk
+Measured over the frozen 150-task Phase A test split, greedy, seed 20260820,
+artifact `results/contamination-qwen3-57b2bc2.json` at commit `57b2bc2`.
+
+| Checkpoint | Unaided solve rate | 95% CI | Immediate answer rate | 95% CI | Shuffled-guess baseline |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `Qwen/Qwen3-4B` | 0.707 (106/150) | [0.629, 0.774] | 0.040 (6/150) | [0.018, 0.085] | 0.015 |
+| `Qwen/Qwen3-1.7B` | 0.640 (96/150) | [0.561, 0.712] | 0.013 (2/150) | [0.004, 0.047] | 0.012 |
+
+**Contamination is not a problem here.** The token-starved rate is the recall
+signal, and for the 1.7B it is 0.013 against a shuffled-guess baseline of 0.012,
+which is chance. For the 4B it is 0.040 against 0.015, slightly above chance with
+a confidence interval that reaches down near it. All six 4B hits are small round
+numbers (3, 4, 7, 10, 300, 360), exactly where a guess coincides. Treat 0.040 as
+an upper bound, not an estimate. GSM8K memorisation does not threaten Phase A.
+
+**The unaided solve rate is the finding that matters.** Both checkpoints solve
+most of this split by reasoning in prose with no calculator: 0.707 and 0.640.
+Phase A therefore does not measure whether these models can do arithmetic. It
+measures whether they will use a tool correctly and repeatably, which is what
+this project is actually about, so the instrument is still the right one.
+
+**It does relocate the risk, and sharply.** D-062 recorded that a model can
+recall an answer and launder it through the tool as `calculator("391")`, scoring
+correct while computing nothing. That was written as a hypothetical. These
+numbers make it likely rather than hypothetical: a model that can reach the
+answer unaided two times in three has every reason to compute mentally and pass
+the result to the tool. `answered_without_arithmetic` therefore stops being a
+curiosity and becomes a required reported quantity.
+
+**Consequences, pre-committed now rather than after seeing baselines.** Every
+Phase A accuracy figure is reported beside its no-arithmetic rate. If that rate
+is material, the accuracy number describes tool-call compliance, not
+tool-assisted problem solving, and must be described that way. Whether the
+no-arithmetic case should carry a reward penalty is deliberately still open:
+changing a pre-registered reward after learning it can be gamed needs its own
+dated decision, and deciding it before the baseline exists would be guessing.
+
+Llama checkpoints are not measured here. Their weights are approved but not
+downloaded, and this artifact covers only the selected Qwen3 bundle.

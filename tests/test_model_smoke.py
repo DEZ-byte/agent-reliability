@@ -5,6 +5,7 @@ import hashlib
 from contextlib import nullcontext
 import importlib
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -1858,7 +1859,16 @@ class ArtifactImmutabilityTests(unittest.TestCase):
         return json.loads(self.MANIFEST.read_text(encoding="utf-8"))
 
     def _artifacts(self) -> list:
-        return sorted((smoke.PROJECT_ROOT / "results").glob("model_smoke-*.json"))
+        """Every measurement family, taken from the manifest builder itself.
+
+        Importing the list keeps the guard and the builder from drifting apart:
+        a new family added to one is automatically covered by the other.
+        """
+
+        sys.path.insert(0, str(smoke.PROJECT_ROOT / "scripts"))
+        import build_artifact_manifest
+
+        return build_artifact_manifest.artifact_paths()
 
     def test_every_committed_artifact_matches_its_frozen_hash(self) -> None:
         recorded = self._manifest()["artifacts"]
@@ -1884,10 +1894,17 @@ class ArtifactImmutabilityTests(unittest.TestCase):
                 self.assertIn(name, present, "a recorded measurement was removed")
 
     def test_manifest_agrees_with_each_artifact_about_its_evidence_regime(self) -> None:
-        """The manifest cannot claim a demotion the artifact does not declare."""
+        """The manifest cannot claim a demotion the artifact does not declare.
+
+        Only model-smoke artifacts carry a lane and a gate-demotion state.
+        Other measurement families are covered by the hash and deletion guards.
+        """
 
         recorded = self._manifest()["artifacts"]
+        checked = 0
         for path in self._artifacts():
+            if not path.name.startswith("model_smoke-"):
+                continue
             with self.subTest(artifact=path.name):
                 result = smoke.read_result(path)
                 self.assertEqual(
@@ -1897,6 +1914,8 @@ class ArtifactImmutabilityTests(unittest.TestCase):
                 self.assertEqual(
                     result.config_sha256, recorded[path.name]["config_sha256"]
                 )
+                checked += 1
+        self.assertGreater(checked, 0)
 
     def test_both_evidence_regimes_are_retained(self) -> None:
         """Pre-D-046 failures and post-D-046 runs must both survive."""
@@ -1904,6 +1923,7 @@ class ArtifactImmutabilityTests(unittest.TestCase):
         regimes = {
             entry["declares_gate_demotion"]
             for entry in self._manifest()["artifacts"].values()
+            if "declares_gate_demotion" in entry
         }
         self.assertEqual(regimes, {False, True})
 

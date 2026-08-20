@@ -75,6 +75,31 @@ still enforced for any multi-turn work.
 These are compatibility measurements. They say nothing about how good any model
 is at the task.
 
+### Contamination: measured, and mostly reassuring
+
+GSM8K is public web text and these models were trained on public web text, so a
+good score could be recall rather than reasoning. Measured over the frozen
+150-task test split, two conditions:
+
+| Checkpoint | Solves it unaided | Answers with no room to think |
+| :-- | :-- | :-- |
+| `Qwen/Qwen3-4B` | 70.7% [62.9-77.4] | 4.0% [1.8-8.5] |
+| `Qwen/Qwen3-1.7B` | 64.0% [56.1-71.2] | 1.3% [0.4-4.7] |
+
+The second column is the memorisation signal: 12 tokens is not enough to do
+multi-step arithmetic, so a correct answer there was recalled. Shuffling the
+model's own guesses against random tasks produces 1.5% and 1.2%, so both sit at
+or barely above chance. **GSM8K memorisation does not threaten this study.**
+
+The first column is the finding that matters. Both models already solve most of
+this split by reasoning in prose, with no calculator. Phase A therefore does not
+test arithmetic; it tests whether a model uses a tool correctly and repeatably,
+which is the actual subject. It also makes one risk concrete: a model that can
+reach the answer in its head may compute mentally and pass the result to the
+tool as `calculator("391")`, scoring correct having computed nothing. That is
+detected, reported alongside every accuracy figure, and recorded in D-062 and
+D-064.
+
 ## Quick start
 
 Python 3.11 or 3.12. If `python` on your PATH is newer, use the `py` launcher —

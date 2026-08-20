@@ -1,74 +1,90 @@
 {
   "schema_version": 1,
-  "purpose": "Frozen content hashes for every committed model-smoke artifact. These files are permanent measurement records, not regenerable state. A test fails if any hash changes or any artifact is missing from this list, so a result cannot be edited, re-signed, or quietly dropped. Adding a new run means adding a new entry; it never means changing an existing one.",
+  "purpose": "Frozen content hashes for every committed measurement artifact. These files are permanent records, not regenerable state. A test fails if any hash changes or any artifact is missing from this list, so a result cannot be edited, re-signed, or quietly dropped. Adding a new run means adding a new entry; it never means changing an existing one.",
   "artifacts": {
+    "contamination-qwen3-57b2bc2.json": {
+      "sha256": "c76a4173877a0dbce5f84a861894138d63b3dae6765df35a5896bc7c04272cb3",
+      "bytes": 325186,
+      "recorded_in_commit": null,
+      "kind": "phase_a_no_tool_diagnostic"
+    },
     "model_smoke-all-05b6450.json": {
       "sha256": "d3babb8a24f100e30fba590d2d8006d4185aeaa82a5609a61294138b60e16d0a",
       "bytes": 250317,
-      "recorded_in_commit": "4f01869805ec8fbc74035a4b657d6c9f1eeef4a5",
+      "recorded_in_commit": "f5da131fb28ff0efff79aad2851bac6da3332583",
+      "kind": "model_smoke",
       "config_sha256": "56c9c2e08533cfc6b3cab8c97f807cbaa79deafe91d5db5f08d66fdde4602506",
       "declares_gate_demotion": true
     },
     "model_smoke-qwen2.5-1.5b-instruct-070dfe2.json": {
       "sha256": "d9afe529cc61ca189f2a9231be1edb7a9e7bec95a06336b90da2002f91e0286e",
       "bytes": 56554,
-      "recorded_in_commit": "e51103e9d2e2c81f2579c6aa48a68f8a5b32cad3",
+      "recorded_in_commit": "7d4f93ce9f8b846c27b9cd7783507ff589a22a90",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen2.5-1.5b-instruct-7e5c079.json": {
       "sha256": "62992e7dc848d98b6443c73f36bcba8b58e75a011a121c8aa0ade398ed92cc96",
       "bytes": 53403,
-      "recorded_in_commit": "9fad0cb8690190beb758fe3b98cb979f383e0d55",
+      "recorded_in_commit": "49993afc4b6c6c67ea165ad1b7fa4ad17ad08272",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen2.5-3b-instruct-e51103e.json": {
       "sha256": "9df7f4fe6d51ec9e8b1dd3a6394bcff346fbbfb7eb69b759b43bdd5ee64aec88",
       "bytes": 56541,
-      "recorded_in_commit": "19069974e28680d9fadaff2e7358d0d5089d372e",
+      "recorded_in_commit": "9da850810505d7a2ba165ffe4632cc124175ceca",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen3-1.7b-3e2522f.json": {
       "sha256": "cc491bd2f9f8eb6f9435bd34f854cb90e7ade063e96bfafb09bd35b3e598c987",
       "bytes": 38889,
-      "recorded_in_commit": "07e6a7ec43e8302e16c36610a7f702d89f561035",
+      "recorded_in_commit": "25da551c55ccc925a573c8969ada15bd0edc5ff2",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen3-1.7b-6824196.json": {
       "sha256": "c93f8b24017512febc353c9806ab698d91629fde204609ab7251db5ce952c57f",
       "bytes": 14731,
-      "recorded_in_commit": "5138d547d5f3750f6fd8ce5ea173b12c501b07b6",
+      "recorded_in_commit": "08b05082cc18a8a9baccf3af9d886878e9111cd5",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen3-1.7b-6dedfc8.json": {
       "sha256": "6d8c6c2098465336f9f28ef98947914e64631714ad0f5c829aa065ac98488ee2",
       "bytes": 51561,
-      "recorded_in_commit": "7e5c0797bfb4139c3f488f6b05a341460d90876c",
+      "recorded_in_commit": "6056aa3fad66cf3d5e9dd6144f919ddcfda88e7b",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen3-1.7b-e78f127.json": {
       "sha256": "8e45ff14e746335b899bebd11a060ca0c51dfeb257130f205dcb3ec1a3e882c6",
       "bytes": 67409,
-      "recorded_in_commit": "911a0b132bc176895002f3df2a84c80a11a1a83a",
+      "recorded_in_commit": "188294ba5431f8910e92413f5545163807b636d6",
+      "kind": "model_smoke",
       "config_sha256": "57901682f8bc4576292483229289f22f5894cafb852ed357a9068b38fe24e170",
       "declares_gate_demotion": true
     },
     "model_smoke-qwen3-4b-1906997.json": {
       "sha256": "281af3ef87372b8fcc652fcea12d4d96f993a1bec35f49f54f683ab413f2ae50",
       "bytes": 51556,
-      "recorded_in_commit": "65209fb3fb5f772acec198a4be6189d593077d80",
+      "recorded_in_commit": "cffaae04ae4a35da11424aac64ba93da137cc520",
+      "kind": "model_smoke",
       "config_sha256": "15bb16885b95fbb3f371719309269c0c9122cad2214721ce1a37487e0aef43d0",
       "declares_gate_demotion": false
     },
     "model_smoke-qwen3-4b-911a0b1.json": {
       "sha256": "b05085c540b7377d520195bfef3296eda4b1172c79395890ba112e2fb11c905d",
       "bytes": 67418,
-      "recorded_in_commit": "5d418b8db6d1409f25ec9867a614be851c54367d",
+      "recorded_in_commit": "dda270157d1ec14bf1e821803b32cbe1201dc791",
+      "kind": "model_smoke",
       "config_sha256": "57901682f8bc4576292483229289f22f5894cafb852ed357a9068b38fe24e170",
       "declares_gate_demotion": true
     }
