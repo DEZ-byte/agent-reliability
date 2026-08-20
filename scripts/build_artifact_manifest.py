@@ -33,6 +33,7 @@ ARTIFACT_GLOBS: Final = (
     "contamination-*.json",
     "baseline-*.json",
     "masking-*.json",
+    "sft-*.json",
 )
 
 SCHEMA_VERSION: Final = 1

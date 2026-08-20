@@ -19,6 +19,10 @@ checkpoints/
 wandb/
 data/raw/
 data/processed/
+# Generated trajectories and built SFT rows are bulk. The committed record is
+# configs/splits/sft_phase_a.json plus the hashed summary in results/.
+data/teacher/
+data/sft/
 results/**/*.jsonl
 results/**/*.parquet
 notebooks/.ipynb_checkpoints/
