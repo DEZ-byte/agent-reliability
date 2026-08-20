@@ -32,6 +32,7 @@ ARTIFACT_GLOBS: Final = (
     "model_smoke-*.json",
     "contamination-*.json",
     "baseline-*.json",
+    "masking-*.json",
 )
 
 SCHEMA_VERSION: Final = 1
