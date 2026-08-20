@@ -226,9 +226,8 @@ evidence than it did as a hard gate.
   checkpoint and make no training-quality claim from this microstep.
 - Save loss finiteness, peak VRAM, effective batch/token counts, and any
   failure as raw result data. Do not use this microstep as a quality metric.
-- The P6 code path is implemented and covered by mock-only focused tests, but
-  no checkpoint has executed it. All four real P6 artifacts are mandatory
-  before a bundle can be selected.
+- All four checkpoints have executed P6 and passed it. The artifacts are
+  listed in `results/artifact_manifest.json` and frozen by hash.
 
 The retained first Qwen3-1.7B artifact records the pre-correction P1/P3 private
 metadata and P5 native-template failures. It is not overwritten by the
@@ -242,14 +241,25 @@ runner-debugging evidence rather than model-quality evidence.
 
 First apply the release-license constraint recorded for the intended public
 artifact. An ineligible bundle may retain its technical measurements but
-cannot be selected. Each remaining generation bundle must pass P1–P6 for both
-its primary and scale checkpoint.
+cannot be selected. Each remaining generation bundle must clear P1–P6 for both
+its primary and scale checkpoint. "Clear" includes clearing them under a
+recorded gate demotion: a candidate whose P5 status is
+`passed_with_demoted_gates` has not passed P5 under the pre-registered
+eleven-check rule, and must never be described as having passed P1–P6 without
+that qualifier.
 
-The machine-readable `release_gate` remains pending with
-`eligible_bundles=[]`. It pins the model registry by SHA-256. A future resolved
-gate must match each bundle's registry-backed `release_eligibility`, cite one
-recorded `D-###` decision, and reproduce that decision's exact release-scope
-and eligible-bundle markers. Top-level selection stays ineligible even if all
+**Resolved.** The `release_gate` is resolved by D-048 to
+`eligible_bundles=["qwen3"]` under the release scope
+`public-portfolio-permissive`. Both Qwen2.5 checkpoints cleared all eleven P5
+checks; both Qwen3 checkpoints cleared ten and rely on the D-046 demotion for
+the eleventh, so the selected bundle is correctly described as Phase-A
+single-turn eligible with one demoted check, not as having passed P1–P6.
+Qwen3 won on licence, not on measurement.
+
+The gate pins the model registry by SHA-256. A resolved gate must match each
+bundle's registry-backed `release_eligibility`, cite one recorded `D-###`
+decision, and reproduce that decision's exact release-scope and
+eligible-bundle markers. Top-level selection stays ineligible even if all
 four candidates pass technically until at least one complete bundle is
 release-eligible.
 

@@ -1131,3 +1131,52 @@ card can hold.
 pre-registration, which is the only time such fixes are free. Had the review
 arrived after M3, the H2 result would have been a published false negative about
 the project's central claim.
+
+### D-066 — Closing the leftovers the D-065 sweep missed
+A follow-up review found four real leftovers and five mechanical ones. All are
+confirmed and fixed. Three sat in text D-065 had edited immediately beside,
+which is the ordinary failure mode of a large sweep: the sentence being changed
+gets attention and its neighbour does not.
+
+**The arms table was broken by my own edit.** The H2 note was inserted between
+the Scale H2 row and the Llama rows, splitting the §4 table so its last three
+rows rendered as a headerless fragment. Moved below the table.
+
+**§4 still asserted the double-count §9 had just corrected.** Tier 1 read "all
+23 production-grid arms: n=4" and Tier 2 "adds pass^8", which is the additive
+reading. Since §9 now declares §4 the source for arms, the false sentence had
+moved into the section of record. Tier 1 is now the 16 arms that are not Tier 2,
+and Tier 2 is n=8 **instead of** n=4, with all 23 arms still reporting pass^1
+and pass^4.
+
+**§9 sent the H2 pair to the wrong population.** It costed all three groups
+"each over the frozen tau2-retail test split", but §4 and
+`HYPOTHESIS_PROTOCOL.md` §4.2 put the confirmatory pair on the frozen
+authorization manifest, which is different and smaller. Separated and costed on
+its own.
+
+**An undefined word inside a licence condition.** D-065 gated the
+internalization claim on "non-trivial support overlap". §5.4 of the same
+document exists to replace exactly that kind of word — it swaps "materially" for
+0.10 — so this was a fresh instance of the defect the protocol already
+prohibits. `Overlap_H3 >= 0.25` is now frozen with a stated numerator and
+denominator, reported whatever the verdict.
+
+**MODEL_SMOKE_PROTOCOL.md was never swept.** It still said no checkpoint had
+executed P6 and that the release gate was pending with `eligible_bundles=[]`,
+both false since D-048, and its "must pass P1-P6" wording carried no demotion
+qualifier — which together produce the exact sentence D-048 forbids about the
+selected bundle. Rewritten, including the qualifier.
+
+**Also.** The H2 negative-outcome column still carried the false sentence
+unconditionally; it is now conditional on the gate term having demonstrably
+varied in training, with `INVALID` otherwise. The §11 simulator-swap rule now
+also covers an SFT checkpoint trained on simulator-assisted trajectories, not
+only checkpoints Stage 3 produces. M3 no longer claims the ablation ladder that
+M3b owns. §7.4 now says why ladder rungs 2 and 3 are trained fresh rather than
+reusing the confirmatory checkpoints: a ladder whose rungs differ in curriculum
+as well as reward cannot attribute a difference to the reward. The `INVALID`
+row no longer says the two conditions "trained on identical rewards", which is
+exact only when the constant is zero. `data/README.md` no longer says no dataset
+has been selected, which D-058 and D-061 falsified. Stray parenthesis in the
+teacher bullet removed.

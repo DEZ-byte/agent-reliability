@@ -424,10 +424,20 @@ support-overlap diagnostic: the count and fraction of the trained model's
 manual-present successes falling on tasks where the base is manual-sensitive at
 task level.
 
+Freeze the overlap threshold as a number before any outcome is read, for the
+same reason §5.4 replaces "materially" with 0.10:
+
+```text
+Overlap_H3 = |{t in D_manual : trained succeeds with manual, base is
+               manual-sensitive at task level}| / |D_manual|
+Pass when   Overlap_H3 >= 0.25
+```
+
 The full internalization pattern may be stated only when H3 passes, the base
-auxiliary criterion passes, `DiD_H3 > 0`, **and** `P_TP|D_manual > 0` with
-non-trivial support overlap. Otherwise the write-up must say which component
-failed, or that retention was carried by manual-insensitive tasks.
+auxiliary criterion passes, `DiD_H3 > 0`, `P_TP|D_manual > 0`, **and**
+`Overlap_H3 >= 0.25`. Otherwise the write-up must say which component failed,
+or that retention was carried by manual-insensitive tasks. `Overlap_H3` is
+reported with its count and denominator whatever the verdict.
 
 `Retention_H3` on the full frozen manifest remains the unchanged verdict
 statistic. The restricted cells are additional evidence, not a redefinition.
@@ -538,7 +548,7 @@ verdict resting on a cell that was rerun into existence.
 | `Gap_H1 <= 0` | `Closure_H1=NA` | H1 gap criterion `NA: no positive reference gap`; never auto-pass. |
 | Finite H1 closure below 0.50 or token ratio above 0.30 | Finite measured value | H1 `FAIL`. |
 | H2 control attempted-action denominator is zero | Control rate and reduction `NA` | H2 `NA: no observable control attempts`. |
-| Gate-term standard deviation across the `FG` training corpus is zero | Reward contrast undefined | H2 `INVALID: gate reward inert in training`; never `FAIL`. The two conditions trained on identical rewards, so no conclusion about gate rewards is available. |
+| Gate-term standard deviation across the `FG` training corpus is zero | Reward contrast undefined | H2 `INVALID: gate reward inert in training`; never `FAIL`. With zero variance the gate term has no gradient influence in either condition, whatever its constant value, so no conclusion about gate rewards is available. Report the §4.1 training-side quantities, which distinguish a corpus with no gated attempts from a policy that never violates one. |
 | H2 gate-treatment denominator is zero while paired control is positive | Treatment rate `NA` | H2 `FAIL: degenerate no-action treatment`. |
 | H2 control rate is zero with a positive denominator | Reduction `NA` | H2 `NA: no control failures to reduce`. |
 | Finite H2 reduction below 0.50 | Finite measured value | H2 `FAIL`. |
