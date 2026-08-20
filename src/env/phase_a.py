@@ -115,6 +115,33 @@ def _calculator_handler(args: BaseModel, state: ToolState) -> float:
     return value
 
 
+def calculator_tool_schema() -> dict[str, object]:
+    """The calculator as an OpenAI-style tool schema.
+
+    Derived from `CalculatorArgs` so the schema a model is shown and the schema
+    its call is validated against cannot drift apart. Passed to
+    `apply_chat_template(tools=...)`, which is how these checkpoints were
+    actually trained to emit tool calls; a hand-written format instruction gets
+    the opening tag right and then stops early.
+    """
+
+    parameters = CalculatorArgs.model_json_schema()
+    parameters.pop("title", None)
+    for field in parameters.get("properties", {}).values():
+        field.pop("title", None)
+    parameters["additionalProperties"] = False
+    return {
+        "type": "function",
+        "function": {
+            "name": CALCULATOR_TOOL_NAME,
+            "description": (
+                "Evaluate one arithmetic expression and return its numeric value."
+            ),
+            "parameters": parameters,
+        },
+    }
+
+
 def build_phase_a_registry() -> ToolRegistry:
     """Register the Phase A tool set.
 

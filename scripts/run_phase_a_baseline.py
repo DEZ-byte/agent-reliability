@@ -32,7 +32,12 @@ from typing import Any, Final
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from env.phase_a import PhaseATask, build_phase_a_registry, parse_gsm8k_answer  # noqa: E402
+from env.phase_a import (  # noqa: E402
+    PhaseATask,
+    build_phase_a_registry,
+    calculator_tool_schema,
+    parse_gsm8k_answer,
+)
 from agent.gates import GateEngine  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
 from evaluation.rungs import (  # noqa: E402
@@ -180,18 +185,23 @@ def _make_policy(model: Any, tokenizer: Any, torch: Any, config: dict[str, Any],
     pad = tokenizer.pad_token_id
     if pad is None:
         pad = tokenizer.eos_token_id
+    tools = [calculator_tool_schema()]
 
     def policy(messages: list[dict[str, str]]) -> str:
+        # Render through the model's own tool interface. These checkpoints were
+        # trained on it, and the smoke probe measured 100% strict validity
+        # under it; a described format produced unterminated calls instead.
         try:
             rendered = tokenizer.apply_chat_template(
                 messages,
+                tools=tools,
                 tokenize=False,
                 add_generation_prompt=True,
                 enable_thinking=False,
             )
         except TypeError:
             rendered = tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
+                messages, tools=tools, tokenize=False, add_generation_prompt=True
             )
         inputs = tokenizer(rendered, return_tensors="pt").to("cuda:0")
         torch.manual_seed(seed)

@@ -91,13 +91,16 @@ class EpisodeResult:
         }
 
 
+# The tool-call format is supplied by the model's own chat template, through
+# `apply_chat_template(tools=...)`. Hand-writing the format here produced a
+# well-formed opening tag and then an early stop, because the checkpoints were
+# trained on the native interface rather than on a described one.
 SYSTEM_PROMPT: Final = (
-    "You solve arithmetic word problems using a calculator tool.\n"
-    "Emit exactly one tool call, in this form and nothing else:\n"
-    '<tool_call>{"name": "calculator", "arguments": {"expression": "<expr>"}}'
-    "</tool_call>\n"
-    "The expression must compute the answer. Do not put the answer in it "
-    "directly, and do not write the answer in prose."
+    "You solve arithmetic word problems. Use the calculator tool to compute the "
+    "answer, then stop.\n"
+    "The expression you pass must do the arithmetic. Do not pass an answer you "
+    "worked out yourself, and do not state the answer in prose: only a value "
+    "returned by the tool counts."
 )
 
 USER_PROMPT: Final = "Question: {question}"
