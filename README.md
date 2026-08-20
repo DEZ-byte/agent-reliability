@@ -1,142 +1,148 @@
-# Internalizing Agent Reliability
+# agent-reliability
 
-Research code for measuring how much verifiable-reward post-training can close
-the tool-execution reliability gap between a small language model and a larger,
-runtime-scaffolded comparator.
+There are two ways to make a tool-using AI agent reliable. You can wrap a big
+model in runtime machinery that retries, reflects, and escalates. Or you can
+train a small model until it behaves correctly on its own.
 
-> Status: implementation has started; no benchmark or model-quality results
-> have been produced. Retained Qwen3-1.7B artifacts record negative
-> compatibility attempts and runner corrections. H1–H3 in
-> [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) remain open.
+The first costs you tokens and latency on every single request, forever. The
+second costs GPU time once.
 
-## Current scope
+This repository measures which one actually wins, and by how much.
 
-The first milestone is a CPU-only reliability kernel:
+> **Status: no reliability results yet.** The measurement harness is built and
+> tested, and the model stack is chosen from real measurements. The experiment
+> itself has not run. Every hypothesis in
+> [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) is still open.
+
+## The question
+
+> How much of the `pass^k` reliability gap between a small (≤4B) tool-calling
+> model and a runtime-scaffolded 8B model can verifiable-reward post-training
+> close, and at what token, latency, and GPU cost?
+
+`pass^k` is the fraction of tasks where **all k** independent attempts succeed.
+It is a harsh metric on purpose. A model that solves a task once in four tries
+is not reliable, and averaging hides that.
+
+Both answers get published. "Training loses to scaffolding, but runs far
+cheaper" is a real finding, and it ships in the same format as the flattering
+version.
+
+## What is actually built
+
+A CPU-only reliability kernel, fully tested:
 
 ```text
-model completion -> parse -> validate/dispatch -> event log
-                                           |-> gate replay -> reward
-                                           `-> trajectory -> pass^k metrics
+model output -> parse -> validate -> dispatch -> event log
+                                         |-> gate replay -> reward
+                                         `-> trajectory -> pass^k
 ```
 
-This slice deliberately excludes model downloads, training, benchmark claims,
-and paid APIs. The runtime gate and the training reward use the same predicate
-engine so their semantics can be tested before GPU work begins.
+One idea holds this together. The deterministic gate that blocks an unsafe
+action at runtime is the **same code** that computes the gate penalty during
+training. They cannot drift apart, because there is only one of them.
+
+Every reward is computed from what the environment actually executed. Nothing
+is scored by reading the model's prose. Writing "I authenticated the user" earns
+nothing; calling `authenticate_user` and having it succeed is the only thing
+that counts.
+
+## What has been measured
+
+Four checkpoints were run through a seven-stage compatibility probe on one
+frozen software stack. All four load in 4-bit on a single 8 GB GPU, emit
+strictly valid tool calls, and complete a real LoRA training step.
+
+| Checkpoint | Tool-call validity | Training step |
+| :-- | :-- | :-- |
+| `Qwen/Qwen2.5-3B-Instruct` | 11 of 11 checks | passed |
+| `Qwen/Qwen2.5-1.5B-Instruct` | 11 of 11 checks | passed |
+| `Qwen/Qwen3-4B` | 10 of 11 checks | passed |
+| `Qwen/Qwen3-1.7B` | 10 of 11 checks | passed |
+
+**Selected: Qwen3 {4B, 1.7B}.** Not because it measured better. Qwen2.5 did.
+Qwen3 won on licence: `Qwen/Qwen2.5-3B-Instruct` is non-commercial, and this is
+a public repository. That reasoning is written down in full, including the
+awkward part, in [`DECISIONS.md`](DECISIONS.md) D-048.
+
+The eleventh check both Qwen3 models fail is tokenized-prefix stability when a
+tool reply is appended. It is a multi-turn property, and this phase is
+single-turn, so it was re-scoped to a recorded diagnostic (D-046). That
+decision was made *after* seeing the results, and the artifacts say so: those
+runs record `passed_with_demoted_gates`, never plain `passed`. The gate is
+still enforced for any multi-turn work.
+
+These are compatibility measurements. They say nothing about how good any model
+is at the task.
 
 ## Quick start
 
-Python 3.11 or 3.12 is supported for the initial kernel.
+Python 3.11 or 3.12. If `python` on your PATH is newer, use the `py` launcher —
+the editable install enforces the version bound.
 
 ```powershell
-python -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.lock
 .venv\Scripts\python -m pip install --no-deps --editable .
 .venv\Scripts\python -m unittest discover -s tests -v
 ```
 
-Or run the local check wrapper:
+That runs the whole kernel on one direct dependency, pydantic. No GPU, no
+model downloads, no API keys.
 
-```powershell
-./scripts/check.ps1 -Python .venv\Scripts\python.exe
-```
+For the GPU stack used by the model probe, see
+[`MODEL_SMOKE_PROTOCOL.md`](MODEL_SMOKE_PROTOCOL.md). It is a separate frozen
+environment (Unsloth 2026.8.18, TRL 0.24.0, Transformers 5.5.0) installed from
+`requirements-smoke.lock`, and its evidence does not transfer to the later
+multi-turn lane.
 
-The kernel lock above covers only the reliability kernel. The Phase-A/M0 model
-smoke uses a separate Windows stack: Unsloth 2026.8.18, TRL 0.24.0, and
-Transformers 5.5.0. Recreate that environment in the ignored `.venv` directory
-from the generated smoke lock:
+## How this repo defends its own numbers
 
-```powershell
-if (Test-Path -LiteralPath .venv) { Remove-Item -LiteralPath .venv -Recurse -Force }
-py -3.12 -m venv .venv
-.venv\Scripts\python.exe -m pip install uv==0.12.5
-.venv\Scripts\uv.exe pip sync requirements-smoke.lock --python .venv\Scripts\python.exe
-```
+Most of the engineering here exists to make dishonesty difficult:
 
-`requirements-smoke.lock` already includes the repository as an editable
-project, so the sync command is the complete install. Do not add a second
-editable-install step. Before any measured comparison, the provisional lock
-and an immutable environment manifest must be frozen after compatibility
-checks and recreated cleanly.
+Every committed measurement is frozen by SHA-256 in
+[`results/artifact_manifest.json`](results/artifact_manifest.json). Editing a
+recorded failure into a pass fails four tests. Line-ending translation is
+disabled for hashed files, because it silently broke every digest off-machine
+until CI caught it.
 
-After committing the exact source used by the smoke, record the model-free
-dependency, offline-import, and CUDA manifest:
+Rewards are tested against deliberate cheating: authentication mentioned in a
+comment, empty tool tags, out-of-order calls. A relaxed gate cannot be quietly
+relaxed — it has to be declared in a config, bound to a dated decision by exact
+text, and it changes the recorded probe status.
 
-```powershell
-.venv\Scripts\python.exe scripts\probe_smoke_environment.py --output results\smoke_environment.json
-```
+`pass^k` and `pass@k` are computed with the unbiased estimators from a single
+run array, and were checked against an independent implementation across 7,312
+cases.
 
-The manifest fails when the Git tree is dirty, the configured lock hash has
-changed, or an installed locked distribution has a different version.
+## Reading order
 
-The later M6 live multi-turn lane uses TRL 1.8 `environment_factory` without
-Unsloth. It needs a separate lock and manifest. Compatibility evidence does
-not transfer between the two lanes.
+Start here, then go deeper as needed:
 
-## M0 evidence controls
+- [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md) — the experiment: hypotheses, arms,
+  rewards, compute budget, milestones, and what happens when something fails.
+- [`PLAN.md`](PLAN.md) — what is done, what is next, what is blocked.
+- [`DECISIONS.md`](DECISIONS.md) — every decision with a date and a reason.
+  Append-only. Some entries are parsed by the runner, so it is not edited in
+  place.
+- [`RELATED_WORK.md`](RELATED_WORK.md) — 15 verified primary sources, plus an
+  explicit list of claims this project has **not** earned.
 
-- [`RELATED_WORK.md`](RELATED_WORK.md) is a 15-source, primary-source-only
-  review. It records what is adopted, what may be distinguishing, and which
-  claims remain unsupported.
-- [`data/LICENSES.md`](data/LICENSES.md) records model and dataset access terms,
-  caveats, and immutable revisions. The machine-readable registry is
-  [`configs/model_candidates.json`](configs/model_candidates.json).
-- [`MODEL_SMOKE_PROTOCOL.md`](MODEL_SMOKE_PROTOCOL.md) pre-registers the Qwen
-  comparison. No model has won until comparable measured artifacts exist.
-- [`SELF_CORRECTION_SPEC.md`](SELF_CORRECTION_SPEC.md) separates same-model
-  diagnostic repair from retry luck, gate prevention, and 8B escalation.
-- [`RUNG_PROTOCOL.md`](RUNG_PROTOCOL.md) fixes R0/R1/R2 turn, retry, gate,
-  escalation, parity, and cost-accounting semantics.
-- [`HYPOTHESIS_PROTOCOL.md`](HYPOTHESIS_PROTOCOL.md) makes H1–H3 executable
-  with exact arms, denominators, zero handling, and paired inference.
-
-The model smoke command is offline by default. It validates the plan and
-records local environment facts without importing the optional ML stack or
-accessing a model repository:
-
-```powershell
-.venv\Scripts\python.exe scripts\smoke_models.py --output results/model_smoke-plan.json
-```
-
-Tokenizer/model access requires both `--run-load` and `--allow-download`.
-The current runner implements P0-P6. P5 checks multi-message serialization and
-assistant-token masking, not a live multi-turn environment. It preserves the
-native inference template and derives a project-owned, training-only Qwen
-wrapper whose rendered text and token IDs must match the native template
-exactly. Ambiguous template structures fail closed. Immutable model identity
-comes from the exact local Hugging Face snapshot commit, with any exposed
-loader metadata required to agree. P6 reuses the exact P5 mask through the TRL
-collator, attaches a rank-4 `q_proj`/`v_proj` LoRA adapter, obtains a same-model
-reference with the PEFT adapter disabled, and runs one ephemeral SGD microstep
-without writing a checkpoint. This code path has mock-only test coverage; it
-has not run on any model checkpoint and makes no quality claim. P6 must execute
-for all four checkpoints before selection.
-
-The first Qwen3-1.7B attempt is retained at
-[`results/model_smoke-qwen3-1.7b-6824196.json`](results/model_smoke-qwen3-1.7b-6824196.json).
-It records the private-revision-metadata and native-template masking failures
-that motivated the corrected probes. The artifact does not select a model or
-establish quality.
-
-The next attempt is retained at
-[`results/model_smoke-qwen3-1.7b-3e2522f.json`](results/model_smoke-qwen3-1.7b-3e2522f.json).
-It proves the revision and assistant-mask corrections, and it exposed a false
-placement failure caused by an empty Unsloth device map despite all parameters
-being on `cuda:0`. The raw artifact is diagnostic evidence, not a model result.
-
-The machine-readable release gate is still pending. It pins the candidate
-registry by SHA-256 and derives eligible bundles from each checkpoint's
-registry state. Selection stays disabled until all four checkpoints pass
-P1-P6 and a recorded release decision resolves at least one complete bundle.
-Do not treat the offline plan artifact as a benchmark result.
-
-## Source of truth
-
-- [`BLUEPRINT_v2.md`](BLUEPRINT_v2.md): canonical research and experiment plan.
-- [`DECISIONS.md`](DECISIONS.md): append-only architectural decision log.
-- [`PLAN.md`](PLAN.md): implementation checklist and current work boundary.
+The normative specs, once you need exact definitions:
+[`HYPOTHESIS_PROTOCOL.md`](HYPOTHESIS_PROTOCOL.md) (how each hypothesis is
+scored), [`RUNG_PROTOCOL.md`](RUNG_PROTOCOL.md) (what each scaffolding level
+may do), [`SELF_CORRECTION_SPEC.md`](SELF_CORRECTION_SPEC.md), and
+[`data/LICENSES.md`](data/LICENSES.md).
 
 ## Reporting policy
 
-No value is presented as a measured result unless it is generated from a
-linked run artifact. Negative results will be reported in the same format as
-positive results.
+No number appears here unless a linked run artifact produced it. Negative
+results are reported in the same format as positive ones. Where a standard was
+relaxed, the relaxation is recorded with its date, its motive, and what it
+costs.
+
+## Licence
+
+Apache-2.0 for this repository's own code and documentation. Model weights,
+adapters, and third-party datasets keep their own terms — see
+[`NOTICE`](NOTICE) and [`data/LICENSES.md`](data/LICENSES.md).

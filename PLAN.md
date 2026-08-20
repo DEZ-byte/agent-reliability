@@ -1,7 +1,8 @@
 # Implementation plan
 
-This plan follows the milestones in `BLUEPRINT_v2.md`. Checked items must have
-tests or an artifact in the repository; a design note alone does not count.
+Milestones come from `BLUEPRINT_v2.md`. A box is only ticked when there is a
+test or a committed artifact behind it. Writing a design note does not count as
+doing the work.
 
 ## M0 — reproducible reliability kernel
 

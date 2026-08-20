@@ -1,13 +1,15 @@
 # Internalizing Agent Reliability — Blueprint v2 (canonical)
 
-**Status: implementation started; no model experiment has run as of
-2026-08-18.**
-This file supersedes the two v1 blueprints in `Downloads/`
-(`Unified_Agent_Reliability_RLVR_Master_Blueprint.md`,
-`UNIFIED_AGENT_RELIABILITY_BLUEPRINT.md`). Those files contain fabricated
-results tables, a nonexistent model checkpoint, and unimplementable specs.
-Do not copy content from them into the repo. All decisions here are logged
-with dates in [DECISIONS.md](DECISIONS.md).
+**Status as of 2026-08-18: no reliability experiment has run.** The harness is
+built and tested, and four checkpoints have been measured for compatibility, so
+the model bundle is chosen (D-048). None of that says how well any model
+performs. H1-H3 below are open.
+
+This file replaces two earlier drafts kept outside the repository. They are not
+a fallback: they contained a results table with invented numbers, a checkpoint
+that does not exist, and specifications that could not be implemented. Nothing
+is copied forward from them. Every decision since is dated in
+[DECISIONS.md](DECISIONS.md).
 
 ---
 
@@ -16,6 +18,13 @@ with dates in [DECISIONS.md](DECISIONS.md).
 > How much of the pass^k reliability gap between a small (≤4B) tool-calling
 > model and a runtime-scaffolded 8B model can verifiable-reward post-training
 > close — and at what token, latency, and GPU cost?
+
+Plainly: a big model wrapped in retry-and-reflect machinery is reliable but pays
+for it on every request. A small trained model pays once. Which is the better
+trade, and by how much?
+
+`pass^k` is the fraction of tasks where all k independent attempts succeed. It
+is deliberately harsh, because a task solved one time in four is not solved.
 
 Both directions of the answer ship. "Post-training loses to scaffolding but
 costs far less at inference" is a publishable, hireable result.

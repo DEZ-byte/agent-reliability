@@ -1,5 +1,10 @@
 # H1-H3 measurement protocol
 
+**What this is for.** A hypothesis like "closes at least half the gap" sounds
+precise until you try to compute it. Half of which gap? Averaged how? What
+counts when a run crashes? This document answers those questions *before* any
+data exists, so the answers cannot be chosen later to suit the result.
+
 **Status:** pre-measurement protocol. No result is reported or implied here.
 **Purpose:** make the existing H1-H3 thresholds executable without changing
 them. This document fixes the confirmatory arms, benchmark aggregation,

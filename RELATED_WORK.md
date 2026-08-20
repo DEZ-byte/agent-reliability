@@ -1,5 +1,10 @@
 # Related work: verifiable tool use and self-correction
 
+**What this is for.** Two things. First, to check that this project is not
+reinventing something already published. Second, and more useful, to write down
+which claims the literature does *not* support, so they cannot drift into the
+final report as if they were settled.
+
 **Verification date:** 2026-08-18
 **Scope:** a targeted M0 scan, not a systematic review. Only original papers,
 official technical reports, and official project repositories are used below.

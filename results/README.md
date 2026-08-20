@@ -1,35 +1,56 @@
 # Results
 
-No benchmark or model-quality experiment has run. `smoke_environment.json` is
-a model-free dependency, import, and CUDA compatibility record. It is not model
-quality evidence.
+**No reliability experiment has run yet.** Nothing in this folder says how good
+any model is at anything. These files record whether the software stack works,
+which is a different question.
 
-`model_smoke-qwen3-1.7b-6824196.json` is the retained negative artifact from
-the first real Qwen3-1.7B compatibility attempt. It records why immutable
-revision validation and P5 masking did not pass under the original probes. It
-does not select a model. Future attempts must use separate artifacts rather
-than overwrite this failure.
+## What is here
 
-`model_smoke-qwen3-1.7b-3e2522f.json` is the retained diagnostic from the next
-attempt. Exact snapshot evidence and assistant masking passed, while the old
-placement check rejected an empty Unsloth device map even though every actual
-parameter was on `cuda:0`, no offload target was present, and runtime NF4
-evidence passed. It is preserved as runner-debugging evidence; a corrected
-placement rerun remains separate and pending.
+`artifact_manifest.json` is the index. It records a SHA-256, a byte length, and
+the recording commit for every measurement file. It is the authoritative list;
+if a file is not in it, or its hash has moved, the test suite fails.
 
-Generated experiment tables must be derived from versioned trajectory logs,
-and every displayed measurement must link to its artifact.
+`smoke_environment.json` records the installed packages, the CUDA device, and a
+hash of every source file the probe depends on. It refuses to record anything
+while the Git tree is dirty, so a manifest always corresponds to committed code.
 
-## Demoted gates
+`model_smoke-<candidate>-<commit>.json` files are compatibility runs. The commit
+suffix ties each one to the exact source that produced it. Several are failures,
+kept on purpose.
 
-From D-046 (2026-08-18), a P5 probe may report `passed_with_demoted_gates`. That
-status means the probe cleared its hard gates only because a pre-registered
-check — `prefix_preserved_after_tool_observation` — was re-scoped to a Phase-A
-diagnostic. It is not a P5 pass under the pre-registered eleven-check rule, and
-`passed_under_preregistered_p5_rule` in the same artifact says so directly.
+## Why the failures are still here
 
-Artifacts written before D-046 recorded a genuine hard failure under the stronger
-rule. They are retained unmodified and are never reinterpreted as passes; their
-`config_sha256` differs from every post-D-046 artifact, so the two evidence
-regimes are distinguishable by hash alone. Never write "Qwen3 passed P1-P6"
-without the qualifier.
+A measurement record is never edited or deleted, including when it is
+unflattering. Two examples:
+
+`model_smoke-qwen3-1.7b-6824196.json` is the first real attempt. Revision
+validation and assistant masking both failed. Keeping it is what makes the later
+success meaningful.
+
+`model_smoke-qwen3-1.7b-3e2522f.json` recorded a *false* failure: the placement
+check rejected an empty Unsloth device map even though every parameter was on
+`cuda:0` with no offload. That artifact is the evidence that motivated fixing
+the check, and it stays as it was written.
+
+`model_smoke-all-05b6450.json` is the run that matters most so far. All four
+checkpoints, one lane, one lock, gate resolved.
+
+## Reading a status honestly
+
+A P5 probe can report `passed_with_demoted_gates`. That is **not** a pass under
+the pre-registered rule. It means the probe cleared its hard gates only because
+`prefix_preserved_after_tool_observation` was re-scoped to a diagnostic by D-046
+(2026-08-18), and `passed_under_preregistered_p5_rule` in the same file says
+`false`.
+
+Artifacts written before D-046 recorded a genuine hard failure under the
+stronger rule. They are never reinterpreted as passes. Their `config_sha256`
+differs from every later artifact, so the two evidence regimes can be told apart
+by hash alone.
+
+Never write "Qwen3 passed P1-P6" without the qualifier.
+
+## Rule for anything generated from these files
+
+Every table or plot must be produced from the versioned logs, and every number
+shown must link back to the artifact it came from.

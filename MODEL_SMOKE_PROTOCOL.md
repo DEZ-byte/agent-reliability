@@ -1,10 +1,16 @@
 # Qwen model-selection smoke protocol
 
-**Status:** pre-measurement protocol. The current runner implements P0-P6. Two
-Qwen3-1.7B attempts are retained as runner diagnostics; a corrected placement
-rerun remains pending, and P6 has not executed on any checkpoint. All four
-checkpoint executions remain required before selection. No candidate has been
-selected and no performance number has been recorded.
+**What this is for.** Two model families could serve this project. Rather than
+picking by release date or vendor claim, this protocol makes them earn it: the
+same probes, the same frozen software stack, the same prompts, the same GPU.
+
+**Status:** complete for the Phase-A lane. All four checkpoints have executed
+P0-P6, and D-048 selected the Qwen3 bundle. Both Qwen2.5 checkpoints cleared
+all eleven P5 checks; both Qwen3 checkpoints cleared ten and rely on the D-046
+demotion for the eleventh, which their artifacts record as
+`passed_with_demoted_gates`. Earlier failing attempts are retained unmodified.
+These are compatibility measurements. No performance or quality number has been
+recorded, and none is implied.
 
 ## Purpose
 

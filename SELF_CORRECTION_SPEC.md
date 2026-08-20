@@ -1,5 +1,11 @@
 # Self-correction measurement specification
 
+**What this is for.** When an agent fails and then succeeds, it is tempting to
+call that self-correction. Usually it is not: it may be retry luck, a gate that
+blocked the mistake, or a bigger model taking over. This document defines what
+would have to be true to call it self-correction, and keeps the other three
+explanations separate.
+
 **Status:** pre-registered design; no correction measurements exist yet.
 **Scope:** secondary diagnostic analysis for existing small-model R1/R2
 evaluation arms. An 8B parent cannot enter the 8B-handoff branch.

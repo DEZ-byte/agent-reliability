@@ -1,10 +1,20 @@
 # Model and dataset provenance
 
-Verified on **2026-08-18** against the publishers' Hugging Face repositories
-and the available license text or repository metadata. The revisions below are
-full default-branch commit SHAs, not floating `main` references. They identify
-what was reviewed; they do not imply that a candidate has been selected or
-downloaded.
+**What this is for.** A permissive licence on this repository does not make the
+models or datasets permissive. Each one carries its own terms, and two of them
+carry terms that would quietly constrain anything released from this project.
+This file records which, and at exactly which revision.
+
+Verified on **2026-08-18** against the publishers' Hugging Face repositories and
+the available license text or repository metadata. The revisions below are full
+default-branch commit SHAs, not floating `main` references, so a claim here can
+be rechecked against the exact bytes it was made about.
+
+Since verification, D-048 selected the Qwen3 bundle under a
+`public-portfolio-permissive` release scope, and the four Qwen candidates have
+been downloaded and measured. The non-commercial term on
+`Qwen/Qwen2.5-3B-Instruct` is why the technically stronger bundle was not
+chosen.
 
 This is an engineering provenance record, not legal advice. A repository code
 license will not relicense model weights, adapters, generated training data, or

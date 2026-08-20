@@ -1,5 +1,10 @@
 # Runtime scaffold rung protocol
 
+**What this is for.** The whole study compares a trained model against a
+scaffolded one. That comparison is worthless if the scaffold gets a bigger
+budget, more retries, or a longer leash. This document pins down exactly what
+R0, R1 and R2 may each do, so neither side can win by being handed more.
+
 **Status:** pre-measurement specification. No rung result, scaffold winner, or
 cost/quality trade-off has been measured. All numeric result cells remain
 `TBD` until they are generated from versioned trajectory artifacts.
