@@ -15,10 +15,12 @@ tests or an artifact in the repository; a design note alone does not count.
 - [x] Exact `pass^k` and `pass@k` estimators with known-answer tests
 - [x] Versioned trajectory JSONL round trip
 - [x] End-to-end CPU fixture and local check wrapper
-- [ ] First GitHub Actions run green on Windows and Linux — **blocked on the
-  owner**: the repository has no git remote, and creating or publishing one is
-  the owner's decision. The workflow exists and the suite is green locally on
-  Windows; the Linux job and the POSIX rlimit test have never run
+- [x] First GitHub Actions run green on Windows and Linux. All four jobs pass
+  (ubuntu/windows x 3.11/3.12) at `8f8b086`. It took three runs: the first two
+  exposed defects a green local suite had hidden — a lone surrogate compiled
+  into `contains_surrogate`'s own docstring (D-056), and end-of-line translation
+  breaking every recorded content hash away from the machine that wrote it
+  (D-057). The POSIX rlimit test now executes on Linux for the first time
 - [x] Ten-to-fifteen-source verified literature scan
 - [x] Immutable model/dataset registry and license provenance table
 - [x] Freeze the provisional Phase-A/M0 Windows smoke lock after all four
