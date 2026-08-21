@@ -23,7 +23,7 @@
     "contamination-sft-qwen3-1.7b-3611b99.json": {
       "sha256": "edef39e512852050d96e961235ea19afd6fd95d9f1342400bb111ff6ca8a5795",
       "bytes": 155677,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "4de6c16368c05585ecbed63099e2f041adda8815",
       "kind": "phase_a_no_tool_diagnostic"
     },
     "masking-verification-4c8acbc.json": {
