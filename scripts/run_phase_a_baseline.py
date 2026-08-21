@@ -174,7 +174,21 @@ def _bootstrap_pass_k(
     return (lower, upper)
 
 
-def _make_policy(model: Any, tokenizer: Any, torch: Any, config: dict[str, Any], seed: int):
+def _make_policy(
+    model: Any,
+    tokenizer: Any,
+    torch: Any,
+    config: dict[str, Any],
+    seed: int,
+    token_log: list[int] | None = None,
+):
+    """One sampled generation per call, counting what it actually generated.
+
+    The token count is taken here rather than by re-tokenising the decoded
+    string, because decoding drops special tokens and the re-tokenised length
+    is a different number. H1 is a cost claim as well as an accuracy claim,
+    and a cost measured with a proxy is not a cost.
+    """
     decoding = config["decoding"]
     pad = tokenizer.pad_token_id
     if pad is None:
@@ -208,9 +222,10 @@ def _make_policy(model: Any, tokenizer: Any, torch: Any, config: dict[str, Any],
                 top_p=decoding["top_p"],
                 pad_token_id=pad,
             )
-        return tokenizer.decode(
-            generated[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
-        )
+        new_tokens = generated[0][inputs["input_ids"].shape[1] :]
+        if token_log is not None:
+            token_log.append(int(new_tokens.shape[0]))
+        return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
     return policy
 
@@ -295,6 +310,7 @@ def _measure(
     for rung in (rungs or config["phase_a"]["rungs"]):
         rows: list[list[int]] = []
         laundered = 0
+        generated_tokens: list[int] = []
         # The harness metric implements only the first of the project's three
         # retention rules, so it misses `391 + 0` and reports roughly half the
         # true rate. It is kept unchanged because every frozen artifact was
@@ -307,7 +323,12 @@ def _measure(
             outcomes: list[int] = []
             for run_index in range(n_runs):
                 policy = _make_policy(
-                    model, tokenizer, torch, config, seed_base + run_index
+                    model,
+                    tokenizer,
+                    torch,
+                    config,
+                    seed_base + run_index,
+                    token_log=generated_tokens,
                 )
                 result = run_episode(
                     task=task,
@@ -360,6 +381,13 @@ def _measure(
             "episodes": total_episodes,
             "model_decisions": decisions,
             "metrics": metrics,
+            "generated_tokens_total": sum(generated_tokens),
+            "generated_tokens_per_episode": sum(generated_tokens) / total_episodes
+            if total_episodes
+            else None,
+            "generated_tokens_per_decision": sum(generated_tokens) / len(generated_tokens)
+            if generated_tokens
+            else None,
             "no_arithmetic_rate": laundered / total_episodes if total_episodes else None,
             "no_arithmetic_episodes": laundered,
             "laundered_strict_rate": laundered_strict / total_episodes
