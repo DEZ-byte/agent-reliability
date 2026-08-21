@@ -117,6 +117,12 @@
       "bytes": 1315,
       "recorded_in_commit": "4da98ec8d839742bd285b8ed0a0e4f9b911644ea",
       "kind": "sft_dataset"
+    },
+    "sft-run-qwen3-1.7b-e0ed20b.json": {
+      "sha256": "b344f0fe2cb731f2038f22312e6a76159d6a7ad80d93a43de856dae77423f1f6",
+      "bytes": 1676,
+      "recorded_in_commit": "51f0c2568f2a8b190cca46cf2d411272305c0921",
+      "kind": "sft_run"
     }
   }
 }
