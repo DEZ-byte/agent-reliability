@@ -155,10 +155,22 @@ call rather than its shape.
   pinned, both local, nothing rented. This deviates from §5.2's "32B class"
   teacher, so it trains the scale-check model only and does not answer H1 for
   the primary model
-- [ ] Generation over the 1,000-task train split with the 4B
-- [ ] SFT run on the 1.7B, checkpoint selection on dev, then test exactly once
-- [ ] Report SFT against its own baseline, naming the teacher, with the
-  no-arithmetic rate beside every accuracy figure
+- [x] Generation over the 1,000-task train split with the 4B. 4,000 episodes,
+  684 tasks yielding a usable trajectory, one row each
+- [x] SFT run on the 1.7B, checkpoint selection on dev, then test exactly once
+- [x] Report SFT against its own baseline, naming the teacher, with the
+  no-arithmetic rate beside every accuracy figure (D-073)
+- [ ] Re-run the token-starved recall probe on checkpoint-75. D-064 covers
+  base weights only, so no post-training recall number exists and the word
+  "recall" cannot be used of the trained arm
+- [ ] A second SFT training seed. Until one exists, +0.222 is one run rather
+  than an effect size, and this is the only open item that could change how
+  the result is interpreted
+- [ ] Per-episode generated-token accounting in the rung evaluator. Without
+  it `TokenRatio_H1` is unmeasurable, so no cost side of H1 can be reported
+- [ ] Report the strict laundering rate beside the harness one. The evaluator
+  implements only the first of the project's three retention rules, so every
+  published `no_arithmetic_rate` understates laundering by roughly half
 
 Still open for the primary model: the pre-registered larger teacher.
 `Qwen/Qwen3-32B` at `9216db5781bf21249d130ec9da846c4624c16137` and
