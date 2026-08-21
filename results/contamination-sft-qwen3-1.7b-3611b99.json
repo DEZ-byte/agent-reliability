@@ -1,0 +1,2466 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-21T09:13:18.938160Z",
+  "kind": "phase_a_no_tool_diagnostic",
+  "adapter": {
+    "path": "checkpoints\\qwen3-1.7b-sft\\checkpoint-75",
+    "weights_sha256": "ae54bfc8f46380883b5342885808862e551f50ce62d140a493bf2ebd5980edad"
+  },
+  "plan": {
+    "purpose": "no-tool measurement over the frozen Phase A test split; diagnostic only, never a task score",
+    "task_count": 150,
+    "candidates": [
+      {
+        "role": "scale_check",
+        "id": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+      }
+    ],
+    "conditions": [
+      {
+        "name": "unconstrained",
+        "prompt_template": "Solve the problem. You have no tools available.\nEnd your reply with the final number on its own line.\n\nQuestion: {question}\n",
+        "max_new_tokens": 256,
+        "measures": "capability without a calculator"
+      },
+      {
+        "name": "token_starved",
+        "prompt_template": "Reply with only the final number. No words, no working, no units.\n\nQuestion: {question}\nFinal answer:",
+        "max_new_tokens": 12,
+        "measures": "recall: too few tokens for multi-step reasoning"
+      }
+    ],
+    "decoding": {
+      "seed": 20260820,
+      "greedy": true
+    },
+    "answer_tolerance": 1e-06,
+    "gated_operations": [
+      "checkpoint download and load",
+      "generation"
+    ]
+  },
+  "split_manifest_sha256": "eac01714886fde0885693c0fa2ec667f283d8f314460c94e036fc6b6bec142b3",
+  "registry_sha256": "d01529f7b5377c55a5e8ca0b0dbd52e2efa8a00f8b3600cea5f4e0fc2082a181",
+  "executed": true,
+  "results": [
+    {
+      "candidate": {
+        "role": "scale_check",
+        "id": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+      },
+      "task_count": 150,
+      "no_tool_solve_rate": 0.66,
+      "immediate_answer_rate": 0.03333333333333333,
+      "probes": {
+        "unconstrained": [
+          {
+            "task_id": "gsm8k:test:8",
+            "condition": "unconstrained",
+            "gold_answer": 45.0,
+            "completion": "To solve this problem, we need to calculate the total distance John travels during the 4-hour trip, considering the different speeds and time segments.\n\n### Step-by-step breakdown:\n\n1. **First 2 hours at 0 mph (standstill traffic):**\n   - Time: 2 hours\n   - Distance: $ 2 \\text{ hours} \\times 0 \\text{ mph} = 0 \\text{ miles} $\n\n2. **Next 0.5 hours at 30 mph:**\n   - Time: 0.5 hours\n   - Distance: $ 0.5 \\text{ hours} \\times 30 \\text{ mph} = 15 \\text{ miles} $\n\n3. **Remaining time: 4 - 2 - 0.5 = 1.5 hours at 80 mph:**\n   - Time: 1.5 hours\n   - Distance: $ 1.5 \\text{ hours} \\times 80 \\text{ mph} = 120 \\text{ miles} $\n\n4. **Total distance:**\n   - $ 0 + 15 + 120 = 135 \\text{ miles} $\n\n",
+            "extracted_answer": 135.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:17",
+            "condition": "unconstrained",
+            "gold_answer": 57500.0,
+            "completion": "To calculate Jill's annual salary, we can break it down into her earnings from teaching and coaching.\n\n1. **Teaching earnings**:\n   - Hourly rate: $20\n   - Hours per week: 35\n   - Weeks per year: 50\n   - Total teaching earnings per year: $20 * 35 * 50 = $35,000\n\n2. **Coaching earnings**:\n   - Hourly rate: $30\n   - Hours per week: 15\n   - Weeks per year: 50\n   - Total coaching earnings per year: $30 * 15 * 50 = $22,500\n\n3. **Total annual salary**:\n   - $35,000 (teaching) + $22,500 (coaching) = **$57,500**\n\nFinal answer: **57500**",
+            "extracted_answer": 57500.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:20",
+            "condition": "unconstrained",
+            "gold_answer": 15.0,
+            "completion": "Let's break the problem down step by step.\n\n---\n\n### Step 1: Determine the amount of water in the orange drink\n\n- Total orange drink: 10 liters\n- Two-thirds of it is water:  \n  $$\n  \\text{Water in orange drink} = 10 \\times \\frac{2}{3} = \\frac{20}{3} \\approx 6.67 \\text{ liters}\n  $$\n\n---\n\n### Step 2: Determine the amount of water in the pineapple drink\n\n- Total pineapple drink: 15 liters\n- Three-fifths of it is water:  \n  $$\n  \\text{Water in pineapple drink} = 15 \\times \\frac{3}{5} = 9 \\text{ liters}\n  $$\n\n---\n\n### Step 3: Total water in the mixture\n\n- Water from orange drink: $ \\frac{20}{3} $\n- Water from pineapple drink: 9\n- Total water in the 24 liters:  \n  $$\n  \\text{Total water} = \\frac{20}{3} + 9 = \\frac{20}{3} + \\frac{27}{3} =",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:23",
+            "condition": "unconstrained",
+            "gold_answer": 8.0,
+            "completion": "</think>\n\nThe candle burns for 4 hours (from 1:00 PM to 5:00 PM). Since it melts 2 centimeters every hour, the total length melted is:\n\n$$\n2 \\text{ cm/hour} \\times 4 \\text{ hours} = 8 \\text{ cm}\n$$\n\nSo, the candle will be **8 centimeters shorter** after burning from 1:00 PM to 5:00 PM.",
+            "extracted_answer": 0.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:28",
+            "condition": "unconstrained",
+            "gold_answer": 25.0,
+            "completion": "</think>\n\nTo find the distance between Henry's first and second stops:\n\n- Total trip distance: 60 miles  \n- First stop: 20 miles from the start  \n- Second stop: 15 miles before the end (i.e., 60 - 15 = 45 miles from the start)  \n\nDistance between the first and second stops:  \n$$\n45 - 20 = 25 \\text{ miles}\n$$\n\nFinal answer:  \n$$\n\\boxed{25}\n$$",
+            "extracted_answer": 25.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:34",
+            "condition": "unconstrained",
+            "gold_answer": 23.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Raymond has 40 jewels.**  \n   So, $ R = 40 $.\n\n2. **Aaron has 5 more jewels than half of Raymond's jewels.**  \n   So, $ A = \\frac{1}{2}R + 5 = \\frac{1}{2}(40) + 5 = 20 + 5 = 25 $.\n\n3. **Siobhan has 2 fewer jewels than Aaron.**  \n   So, $ S = A - 2 = 25 - 2 = 23 $.\n\n**Final answer:**  \n$$\n\\boxed{23}\n$$",
+            "extracted_answer": 23.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:44",
+            "condition": "unconstrained",
+            "gold_answer": 20.0,
+            "completion": "To solve this problem, we need to calculate the **net profit** for Charlie by considering the costs and revenue from making and selling 20 candles.\n\n---\n\n### Step 1: Determine the number of pounds of beeswax needed\n\n- He makes 20 candles.\n- Each candle requires **1 pound of beeswax**.\n- So, he needs **20 pounds of beeswax**.\n\n---\n\n### Step 2: Calculate the cost of beeswax and wicks\n\n- Cost of beeswax: $10.00 per pound\n- Total cost for 20 pounds: $10.00 × 20 = $200.00\n\n---\n\n### Step 3: Calculate the cost of supplies\n\n- One pound of beeswax and the wicks cost $10.00.\n- So, the cost of supplies is $10.00 per pound × 20 pounds = $200.00\n\n---\n\n### Step 4: Calculate the revenue from selling 20 candles\n\n- Each candle is sold for $2.00.\n- Total revenue: $2.00 × 20 = $40.00\n\n---\n\n",
+            "extracted_answer": 40.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:45",
+            "condition": "unconstrained",
+            "gold_answer": 104.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Average time per article**: 4 hours\n- **Monday**: 5 articles\n- **Tuesday**: 2/5 times more articles than Monday → $ 5 \\times \\frac{2}{5} = 2 $ articles\n- **Wednesday**: Twice the number of articles she wrote on Tuesday → $ 2 \\times 2 = 4 $ articles\n\nNow, calculate the total number of hours spent writing:\n\n- **Monday**: $ 5 \\times 4 = 20 $ hours\n- **Tuesday**: $ 2 \\times 4 = 8 $ hours\n- **Wednesday**: $ 4 \\times 4 = 16 $ hours\n\n**Total hours** = $ 20 + 8 + 16 = 44 $ hours\n\n**Final answer**:  \n$$\n\\boxed{44}\n$$",
+            "extracted_answer": 44.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:54",
+            "condition": "unconstrained",
+            "gold_answer": 40.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Patchy** has had **3 times** the number of kittens as the other cat.\n- **Trixie** has had **12** kittens.\n- So, **Patchy** has had $ 3 \\times 12 = 36 $ kittens.\n- Total number of kittens = $ 36 + 12 = 48 $.\n\n**Final answer: 48**",
+            "extracted_answer": 48.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:55",
+            "condition": "unconstrained",
+            "gold_answer": 14.0,
+            "completion": "</think>\n\nJean starts with 30 lollipops. She eats 2, leaving her with 28 lollipops. She wants to package 2 lollipops in one bag. \n\nSo, the number of bags she can fill is:\n\n$$\n\\frac{28}{2} = 14\n$$\n\nFinal answer: **14**",
+            "extracted_answer": 14.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:59",
+            "condition": "unconstrained",
+            "gold_answer": 187.0,
+            "completion": "</think>\n\nTo find the total number of raspberries, we calculate the total number of fruit in the clusters and the individual fruit:\n\n- 6 clusters of 20 fruit each: $6 \\times 20 = 120$\n- 67 individual fruit: $67$\n\nTotal raspberries = $120 + 67 = 187$\n\nFinal answer: $\\boxed{187}$",
+            "extracted_answer": 187.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:66",
+            "condition": "unconstrained",
+            "gold_answer": 48.0,
+            "completion": "To solve this problem, we need to calculate the total number of people from all the schools that have been sent to the tournament.\n\n- Each school has:\n  - 1 girls' basketball team with 5 players\n  - 1 boys' basketball team with 5 players\n  - 1 coach for each team (2 coaches per school)\n\n- There are 4 schools.\n\nSo, the total number of people is:\n\n- Girls' players: $4 \\text{ schools} \\times 5 \\text{ girls' players} = 20$\n- Boys' players: $4 \\text{ schools} \\times 5 \\text{ boys' players} = 20$\n- Coaches: $4 \\text{ schools} \\times 2 \\text{ coaches} = 8$\n\nTotal = $20 + 20 + 8 = 48$\n\nFinal answer: $\\boxed{48}$",
+            "extracted_answer": 48.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:74",
+            "condition": "unconstrained",
+            "gold_answer": 88.0,
+            "completion": "To calculate the total revenue Artie makes, we need to round each flower price to the nearest dollar and then multiply by the number of pots sold:\n\n- Marigolds: $2.74 → $3 per pot (rounded to nearest dollar)  \n  Total for marigolds: $3 × 12 = $36\n\n- Petunias: $1.87 → $2 per pot (rounded to nearest dollar)  \n  Total for petunias: $2 × 9 = $18\n\n- Begonias: $2.12 → $2 per pot (rounded to nearest dollar)  \n  Total for begonias: $2 × 17 = $34\n\nTotal revenue: $36 + $18 + $34 = **$88**\n\nFinal answer: **88**",
+            "extracted_answer": 88.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:75",
+            "condition": "unconstrained",
+            "gold_answer": 60.0,
+            "completion": "To solve this problem, we need to find the **average square footage** of a 4-level sandcastle, where each level has **half the square footage** of the level below it, and the **top level** has a square footage of **16**.\n\n---\n\n### Step-by-step breakdown:\n\n1. **Top level (level 4):**  \n   $$\n   \\text{Level 4} = 16\n   $$\n\n2. **Level 3:**  \n   $$\n   \\text{Level 3} = \\frac{16}{2} = 8\n   $$\n\n3. **Level 2:**  \n   $$\n   \\text{Level 2} = \\frac{8}{2} = 4\n   $$\n\n4. **Level 1:**  \n   $$\n   \\text{Level 1} = \\frac{4}{2} = 2\n   $$\n\n5. **Total square footage of all levels:**  \n   $$\n   16 + 8 + 4 + 2 = 2 + 4 + 8 + 16 = 30\n   $$\n\n6. **Average square footage:**  \n   $$\n  ",
+            "extracted_answer": 6.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:83",
+            "condition": "unconstrained",
+            "gold_answer": 600.0,
+            "completion": "To find the total number of thorns, we calculate:\n\n- Total number of roses: $3 \\text{ rose bushes} \\times 25 \\text{ roses per bush} = 75 \\text{ roses}$\n- Total number of thorns: $75 \\text{ roses} \\times 8 \\text{ thorns per rose} = 600 \\text{ thorns}$\n\nFinal answer: $\\boxed{600}$",
+            "extracted_answer": 600.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:86",
+            "condition": "unconstrained",
+            "gold_answer": 22.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **First ring**: The alarm rang **4 times**.\n2. **Second ring**: It rang for **3 times as long as the first time**. Since the first ring took 4 seconds, the second ring took $3 \\times 4 = 12$ seconds.\n3. **Third ring**: It rang for **half as long as the second time**. The second ring took 12 seconds, so the third ring took $12 / 2 = 6$ seconds.\n\nNow, the total number of times the alarm rang is the sum of the durations of each ring, but the question asks for the **number of times** the alarm rang, not the total time. So we just sum the number of times it rang:\n\n- First ring: 4 times\n- Second ring: 3 times (as long as the first time)\n- Third ring: 1 time (since it only rang once, but the question says \"rings for half as long as the second time\" — this is a bit ambiguous, but we interpret it as the number of times it rang is **1**).\n\nSo the total number of times the alarm rang is:\n\n$$\n4",
+            "extracted_answer": 4.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:90",
+            "condition": "unconstrained",
+            "gold_answer": 225.0,
+            "completion": "To determine how many pounds of potato salad Ted needs to bring, we calculate the total amount of potato salad required for all the diners:\n\n- **Adults:** 20 adults × 10 lbs = 200 lbs  \n- **Children:** 5 children × 5 lbs = 25 lbs  \n\nTotal potato salad needed = 200 lbs + 25 lbs = **225 lbs**\n\nFinal answer: **225**",
+            "extracted_answer": 225.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:92",
+            "condition": "unconstrained",
+            "gold_answer": 4.0,
+            "completion": "Let's define the variables:\n\n- Let $ J $ be the age of Jackson.\n- Let $ C $ be the age of Corey.\n- Let $ A $ be the age of Amy.\n- Let $ J $ be the age of Jackson.\n- Let $ S $ be the age of James (given as 10).\n\nFrom the problem:\n\n1. $ A = J + 5 $ (Amy is 5 years older than Jackson)\n2. $ A = C - 2 $ (Amy is 2 years younger than Corey)\n3. $ S = C - 1 $ (James is 1 year younger than Corey)\n\nWe are given that $ S = 10 $, so:\n\n$$\nC = S + 1 = 10 + 1 = 11\n$$\n\nNow, from equation 2:\n\n$$\nA = C - 2 = 11 - 2 = 9\n$$\n\nFrom equation 1:\n\n$$\nA = J + 5 \\Rightarrow J = A - 5 = 9 - 5 = 4\n$$\n\nSo, Jackson is $ \\boxed{4} $ years old.",
+            "extracted_answer": 4.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:96",
+            "condition": "unconstrained",
+            "gold_answer": 3.0,
+            "completion": "</think>\n\nLet's break the problem down step by step:\n\n1. Harry slept **9 hours**.\n2. James slept **2/3 of what Harry slept**:\n   $$\n   \\text{James' sleep} = \\frac{2}{3} \\times 9 = 6 \\text{ hours}\n   $$\n3. The difference in sleep between Harry and James:\n   $$\n   9 - 6 = 3 \\text{ hours}\n   $$\n\n**Final Answer:** $\\boxed{3}$",
+            "extracted_answer": 3.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:98",
+            "condition": "unconstrained",
+            "gold_answer": 5.0,
+            "completion": "Let's break down the problem step by step:\n\n- Total cars on the motorway: 30\n- 5 cars took an exit and didn't drive through the traffic jam\n- The remaining cars drove through the traffic jam:\n  - First 15 minutes: 20 cars\n  - Remaining 15 minutes: 5 cars (already accounted for in the exit)\n- So, the number of cars that drove through the traffic jam in the first 15 minutes is:\n\n$$\n30 - 5 = 25 \\text{ cars}\n$$\n\nBut wait, the problem says \"20 more cars drive through in the remaining 15 minutes of the jam.\" That means the 20 cars drove through the first 15 minutes, and the 5 cars took an exit.\n\nSo the total number of cars that drove through the traffic jam is:\n\n$$\n20 + 5 = 25\n$$\n\nBut the question asks: **how many cars drove through the traffic jam in the first 15 minutes?**\n\nSo the answer is:\n\n$$\n\\boxed{20}\n$$",
+            "extracted_answer": 20.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:99",
+            "condition": "unconstrained",
+            "gold_answer": 58.0,
+            "completion": "Mary starts with 18 new potted plants. She already has $2 \\times 40 = 80$ potted plants. She gives away 1 plant from each of the 40 ledges, so she gives away $40$ plants. \n\nTotal plants she remains with:  \n$$\n80 - 40 + 18 = 58\n$$\n\nFinal answer:  \n$$\n\\boxed{58}\n$$",
+            "extracted_answer": 58.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:102",
+            "condition": "unconstrained",
+            "gold_answer": 26.0,
+            "completion": "</think>\n\nTo solve this problem, we need to determine how many glasses of water John drinks in a week.\n\n- John drinks **1 glass of water** every **weekday** (Monday to Friday).\n- He drinks **1 glass of water** on **Sunday** as well (since he has one before he goes to bed).\n- He **does not drink water on the weekends** (Saturday and Sunday), but he drinks **1 glass of soda** on the weekend.\n\nSo, the total number of glasses of water he drinks in a week is:\n\n- 5 weekdays (Monday to Friday) = 5 glasses\n- 1 Sunday = 1 glass\n\nTotal = 5 + 1 = **6 glasses of water** in a week.\n\nFinal answer: **6**",
+            "extracted_answer": 6.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:110",
+            "condition": "unconstrained",
+            "gold_answer": 45.0,
+            "completion": "To find the average number of fruit roll-ups eaten by Marcell and Beatrice, we need to calculate the total number of roll-ups they ate and then divide by 2.\n\n- **Beatrice's roll-ups**: 2 roll-ups wide and 24 rolls up long. So, she ate $2 \\times 24 = 48$ roll-ups.\n- **Marcell's roll-ups**: 3 roll-ups wide and 14 rolls up long. So, he ate $3 \\times 14 = 42$ roll-ups.\n\nTotal roll-ups eaten: $48 + 42 = 90$\n\nAverage number of roll-ups eaten: $\\frac{90}{2} = 45$\n\n**Final Answer: 45**",
+            "extracted_answer": 45.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:118",
+            "condition": "unconstrained",
+            "gold_answer": 4.0,
+            "completion": "Let's break down the problem step by step:\n\n- **First day**: 2 containers, each with 5 vehicles → Total vehicles = $2 \\times 5 = 10$.\n- **Second day**: Let the number of containers be $x$, each with 5 vehicles → Total vehicles = $5x$.\n- **Total vehicles after second day**: $10 + 5x = 30$.\n- Solve for $x$:\n  $$\n  5x = 30 - 10 = 20\n  $$\n  $$\n  x = \\frac{20}{5} = 4\n  $$\n\n**Answer:** $\\boxed{4}$ containers were imported on the second day.",
+            "extracted_answer": 4.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:119",
+            "condition": "unconstrained",
+            "gold_answer": 95200.0,
+            "completion": "Let's break the problem into steps:\n\n---\n\n### **Step 1: Adrien's salary four years ago**\nAdrien's salary four years ago was **$40,000**.\n\n---\n\n### **Step 2: Adrien's salary after 4 years**\nHis salary increased by **30%** initially (from Lylah's salary), and then by **40%** in the next 4 years.\n\nBut we are told that **Adrien's salary four years ago was $40,000**, and we are to find **his salary four years later**.\n\nSo, we calculate his salary **4 years later**:\n\n$$\n\\text{Adrien's salary 4 years later} = 40,000 \\times (1 + 0.30) \\times (1 + 0.40) = 40,000 \\times 1.30 \\times 1.40 = 40,000 \\times 1.82 = 72,800\n$$\n\n---\n\n### **Step 3: Lylah's salary four years ago**\nWe are told that Adrien's salary was **3",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:129",
+            "condition": "unconstrained",
+            "gold_answer": 10000.0,
+            "completion": "</think>\n\nTo calculate the hospital's profit, we need to determine the total revenue and total cost for the day.\n\n### Step 1: Total number of patients per day\n- 500 people per day.\n\n### Step 2: Total time spent by patients per day\n- Each patient is seen for 24 minutes.\n- Total time per day = $ 500 \\times 24 $ minutes = 12,000 minutes.\n- Convert to hours: $ \\frac{12,000}{60} = 200 $ hours.\n\n### Step 3: Revenue from patients\n- The hospital charges $200 per hour.\n- Total revenue = $ 200 \\times 200 = 40,000 $ dollars.\n\n### Step 4: Cost of services\n- The doctors charge $150 per hour.\n- Total cost = $ 150 \\times 200 = 30,000 $ dollars.\n\n### Step 5: Profit\n- Profit = Revenue - Cost = $ 40,000 - $ 30,000 = $ 10,000.\n\n",
+            "extracted_answer": 10000.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:139",
+            "condition": "unconstrained",
+            "gold_answer": 70.0,
+            "completion": "Let's define the number of blue gumballs as $ b $ and the number of pink gumballs as $ p $.\n\nWe are given:\n- $ b = 12 $\n- $ p = 4b + 22 $\n\nSubstitute $ b = 12 $ into the equation:\n$$\np = 4(12) + 22 = 48 + 22 = 70\n$$\n\nFinal answer: $ \\boxed{70} $",
+            "extracted_answer": 70.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:141",
+            "condition": "unconstrained",
+            "gold_answer": 400.0,
+            "completion": "Let's break down the problem step by step:\n\n1. Let the number of **baby bees** be $ B $.\n2. The number of **worker bees** is twice the number of baby bees: $ 2B $.\n3. The number of **queens** is half the number of baby bees: $ \\frac{B}{2} $.\n4. The total number of bees is 700:  \n   $$\n   B + 2B + \\frac{B}{2} = 700\n   $$\n\nNow solve the equation:\n\n$$\nB + 2B + \\frac{B}{2} = 700\n$$\n$$\n3B + \\frac{B}{2} = 700\n$$\n$$\n\\frac{6B + B}{2} = 700\n$$\n$$\n\\frac{7B}{2} = 700\n$$\n$$\n7B = 1400\n$$\n$$\nB = \\frac{1400}{7} = 200\n$$\n\nSo, the number of **worker bees** is $ 2B = 2 \\times ",
+            "extracted_answer": 2.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:147",
+            "condition": "unconstrained",
+            "gold_answer": 75.0,
+            "completion": "Let's break down the problem step by step.\n\n---\n\n### Step 1: Initial loss of bees\n\n- **30 bees leave the hive in the first 6 hours.**\n\n---\n\n### Step 2: Return of bees\n\n- **1/2 that many bees return in the next 6 hours.**\n  - That is: $ \\frac{1}{2} \\times 30 = 15 $ bees return.\n\n---\n\n### Step 3: Total bees that left the hive\n\n- **30 bees left the hive in the first 6 hours.**\n- **15 bees returned in the next 6 hours.**\n\nSo, **30 - 15 = 15 bees** have **not** returned yet.\n\n---\n\n### Step 4: Bees that left before returning\n\n- **2 times as many bees as she saw first leave the hive fly from the hive and leave in the next 6 hours.**\n  - That is: $ 2 \\times 30 = 60 $ bees left the hive in the first 6 hours.\n\nBut wait — this is **not** the same as the 30 bees that left the hive. This is a **confusion** in the problem",
+            "extracted_answer": 30.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:148",
+            "condition": "unconstrained",
+            "gold_answer": 30.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Cost of an adult ticket**: $12  \n- **Cost of a child ticket**: $10  \n- **Brittany's mom gave the cashier money for 1 adult ticket and 1 child ticket**  \n- **She received $8 in change**  \n\nSo, the total amount she gave the cashier is:  \n$$\n12 + 10 = 22 \\text{ dollars}\n$$\n\nThe total amount she received in change is $8.  \nSo, the amount she gave the cashier is:  \n$$\n22 - 8 = 14 \\text{ dollars}\n$$\n\n**Final answer:**  \n$$\n\\boxed{14}\n$$",
+            "extracted_answer": 14.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:149",
+            "condition": "unconstrained",
+            "gold_answer": 16.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Charlie has 3 times as many Facebook friends as Dorothy.**  \n   Let $ D $ be the number of friends Dorothy has on Facebook.  \n   Then, Charlie has $ 3D $ friends.\n\n2. **Charlie has 12 friends on Facebook.**  \n   So, $ 3D = 12 $  \n   Solving for $ D $:  \n   $ D = \\frac{12}{3} = 4 $\n\n3. **James has four times as many friends on Facebook as Dorothy.**  \n   So, James has $ 4D = 4 \\times 4 = 16 $.\n\n**Final Answer:**  \n$$\n\\boxed{16}\n$$",
+            "extracted_answer": 16.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:160",
+            "condition": "unconstrained",
+            "gold_answer": 16.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Monday**: Depth = 17 feet  \n- **Tuesday**: Depth = 17 + 7 = 24 feet  \n- **Wednesday**: Depth = 24 × (2/3) = 16 feet  \n\n**Final answer:** 16 feet",
+            "extracted_answer": 16.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:165",
+            "condition": "unconstrained",
+            "gold_answer": 77.0,
+            "completion": "</think>\n\nTo find out how much money Elvira will have left for her clothing, we subtract the total cost of the computer and accessories from her budget:\n\n- Total budget: €1500  \n- Cost of computer: €1090  \n- Cost of screen, keyboard, and mouse: €157  \n- Cost of CD burner: €74  \n- Cost of printer: €102  \n\nTotal cost of accessories:  \n157 + 74 + 102 = €333  \n\nTotal cost of computer and accessories:  \n1090 + 333 = €1423  \n\nRemaining budget for clothing:  \n1500 - 1423 = €177  \n\nFinal answer: **€177**",
+            "extracted_answer": 177.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:168",
+            "condition": "unconstrained",
+            "gold_answer": 18.0,
+            "completion": "Let's solve the problem step by step.\n\nGiven:\n- Ethel has $8.\n- Jimmy has $2 more than twice the money Ethel has.\n\nSo, Jimmy's money = 2 × Ethel's money + 2\n\nSubstitute the value of Ethel's money:\n- Jimmy's money = 2 × 8 + 2 = 16 + 2 = **18**\n\nFinal answer: **18**",
+            "extracted_answer": 18.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:170",
+            "condition": "unconstrained",
+            "gold_answer": 150.0,
+            "completion": "Let's break down the costs:\n\n- Hat: $25\n- Jacket: 3 times the hat = $3 × 25 = $75\n- Pants: Average of hat and jacket = (25 + 75) / 2 = $50\n\nTotal cost per uniform = $25 + $75 + $50 = **$150**\n\nFinal answer: **150**",
+            "extracted_answer": 150.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:171",
+            "condition": "unconstrained",
+            "gold_answer": 1210.0,
+            "completion": "To find the total number of legs Jake sees, we calculate the legs from each group:\n\n- Spiders: $80 \\times 8 = 640$ legs\n- Insects: $90 \\times 6 = 540$ legs\n- Mutant invertebrates: $3 \\times 10 = 30$ legs\n\nTotal legs: $640 + 540 + 30 = 1110$\n\nFinal answer: $\\boxed{1110}$",
+            "extracted_answer": 1110.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:179",
+            "condition": "unconstrained",
+            "gold_answer": 130.0,
+            "completion": "</think>\n\nLloyd earned $10/hour for the first week:  \n$10 × 5 = $50\n\nLloyd earned $10/hour for the second week:  \n$10 × 8 = $80\n\nTotal earnings for the first two weeks:  \n$50 + $80 = $130\n\nFinal answer:  \n**$130**",
+            "extracted_answer": 130.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:185",
+            "condition": "unconstrained",
+            "gold_answer": 30.0,
+            "completion": "Let's break it down step by step:\n\n- Jenna picked half as many apples as her mom.\n- Her mom picked 20 apples.\n- So Jenna picked $ \\frac{20}{2} = 10 $ apples.\n- Total apples picked by both: $ 20 + 10 = 30 $.\n\nFinal answer: $ \\boxed{30} $",
+            "extracted_answer": 30.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:190",
+            "condition": "unconstrained",
+            "gold_answer": 360.0,
+            "completion": "John collects peaches for 3 hours, and he can collect 2 peaches per minute.\n\nFirst, convert 3 hours to minutes:  \n$ 3 \\text{ hours} \\times 60 \\text{ minutes/hour} = 180 \\text{ minutes} $\n\nThen, multiply by the rate of 2 peaches per minute:  \n$ 180 \\text{ minutes} \\times 2 \\text{ peaches/minute} = 360 \\text{ peaches} $\n\nFinal answer:  \n$\\boxed{360}$",
+            "extracted_answer": 360.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:192",
+            "condition": "unconstrained",
+            "gold_answer": 91.0,
+            "completion": "</think>\n\nTo solve this problem, we need to account for the following:\n\n- **Initial trees**: 50\n- **Trees planted per year**: 10\n- **Trees chopped down per year**: 2\n- **Trees dying per year**: 30% of the current trees\n- **Time period**: 10 years\n\n---\n\n### Step-by-step breakdown:\n\n1. **Net change per year**:\n   - Trees planted: 10\n   - Trees chopped down: 2\n   - Trees dying: 30% of the current trees\n   - Net change per year = 10 - 2 - (0.3 × current trees)\n\n2. **Net change per year**:\n   - Net change = 8 - 0.3 × current trees\n\n3. **Initial trees**: 50\n\n4. **After 10 years**, the number of trees left is calculated iteratively.\n\n---\n\n### Iterative Calculation (Year-by-Year):\n\nWe'll use a loop to simulate the process year by year.\n\nLet’s define the formula for the number of trees at the start of year $ n $:\n\n$$\n\\text{trees}_{n+1} = \\text{trees}_n",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:193",
+            "condition": "unconstrained",
+            "gold_answer": 24.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Initial number of pink flamingos**: 18\n2. **On Saturday**, they took back **one third** of the flamingos:\n   $$\n   \\frac{1}{3} \\times 18 = 6 \\text{ pink flamingos}\n   $$\n   So, the remaining pink flamingos are:\n   $$\n   18 - 6 = 12 \\text{ pink flamingos}\n   $$\n   The number of white flamingos added on Saturday is:\n   $$\n   6 \\text{ white flamingos}\n   $$\n\n3. **On Sunday**, they added **18 pink flamingos**:\n   - Pink flamingos: $12 + 18 = 30$\n   - White flamingos: $6$\n\n4. **At noon on Sunday**, the number of pink flamingos is 30, and the number of white flamingos is 6.\n\n5. **Difference in pink and white flamingos**:\n   $$\n   30 - 6 = \\boxed{24}\n   $$\n\n**Final Answer**: $\\boxed{24}$",
+            "extracted_answer": 24.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:202",
+            "condition": "unconstrained",
+            "gold_answer": 100.0,
+            "completion": "</think>\n\nJosie's farm has 10 acres, and each acre produces 5 tons of grapes per year. Each ton of grapes makes 2 barrels of wine.\n\nSo, the total number of barrels of wine produced per year is:\n\n$$\n10 \\text{ acres} \\times 5 \\text{ tons/acre} \\times 2 \\text{ barrels/ton} = 100 \\text{ barrels of wine}\n$$\n\nFinal answer: **100**",
+            "extracted_answer": 100.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:204",
+            "condition": "unconstrained",
+            "gold_answer": 98.0,
+            "completion": "Janet initially had:\n- 22 green pens\n- 10 yellow pens\n\nShe bought:\n- 6 bags of blue pens, each with 9 pens: $6 \\times 9 = 54$ blue pens\n- 2 bags of red pens, each with 6 pens: $2 \\times 6 = 12$ red pens\n\nTotal pens now:\n- Green: 22\n- Yellow: 10\n- Blue: 54\n- Red: 12\n\nTotal pens = $22 + 10 + 54 + 12 = 98$\n\nFinal answer: $\\boxed{98}$",
+            "extracted_answer": 98.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:209",
+            "condition": "unconstrained",
+            "gold_answer": 145.0,
+            "completion": "Let's define the variables:\n\n- Let $ x $ be the cost of one cup.\n- The total cost of half a dozen plates is $ 6000 \\times 6 = 36000 $.\n- The total cost of twenty dozen cups is $ 20 \\times 12 \\times x = 240x $.\n- The problem states that the cost of twenty dozen cups is $1200 less than the total cost of half a dozen plates.\n\nSo, we can write the equation:\n\n$$\n240x = 36000 - 1200\n$$\n\n$$\n240x = 34800\n$$\n\n$$\nx = \\frac{34800}{240} = 145\n$$\n\n**Final Answer:**\n$$\n\\boxed{145}\n$$",
+            "extracted_answer": 145.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:218",
+            "condition": "unconstrained",
+            "gold_answer": 45.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Harriet's current age** is given as **21 years**.\n\n2. **Adrian's age** is **three times Harriet's age**:\n   $$\n   \\text{Adrian's age} = 3 \\times 21 = 63\n   $$\n\n3. **Zack's age** is **twice Harriet's age** (since Harriet is half the age of Zack):\n   $$\n   \\text{Zack's age} = 2 \\times 21 = 42\n   $$\n\n4. **Total age of the three** is:\n   $$\n   21 + 63 + 42 = 126\n   $$\n\n5. **Average age** is:\n   $$\n   \\text{Average} = \\frac{126}{3} = 42\n   $$\n\n**Final answer:**\n$$\n\\boxed{42}\n$$",
+            "extracted_answer": 42.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:230",
+            "condition": "unconstrained",
+            "gold_answer": 276000.0,
+            "completion": "To calculate the total cost Mark pays for everything:\n\n1. **Total cost of the cars**:  \n   $ 12 \\text{ cars} \\times \\$20,000 = \\$240,000 $\n\n2. **Tax on the cars**:  \n   $ 10\\% \\times \\$240,000 = \\$24,000 $\n\n3. **Registration cost**:  \n   $ 12 \\text{ cars} \\times \\$1,000 = \\$12,000 $\n\n4. **Total cost**:  \n   $ \\$240,000 + \\$24,000 + \\$12,000 = \\$276,000 $\n\nFinal answer:  \n**\\$276,000**",
+            "extracted_answer": 276000.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:232",
+            "condition": "unconstrained",
+            "gold_answer": 75.0,
+            "completion": "Let's break down the problem step by step:\n\n- There are **50 ants** in the garden.\n- Dax picked **half as many bugs** as ants, so the number of bugs is:\n  $$\n  \\frac{50}{2} = 25\n  $$\n- The total number of insects is the sum of ants and bugs:\n  $$\n  50 + 25 = 75\n  $$\n\n**Final answer:**  \n$$\n\\boxed{75}\n$$",
+            "extracted_answer": 75.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:240",
+            "condition": "unconstrained",
+            "gold_answer": 21.0,
+            "completion": "Let's solve the problem step by step.\n\n1. Let $ R $ be the number of candies Robert has.\n2. James has 6 more candies than Robert, so James has $ R + 6 $.\n3. John has twice as many candies as Robert, so John has $ 2R $.\n4. We are told that John has 54 candies, so:\n   $$\n   2R = 54 \\Rightarrow R = 27\n   $$\n5. Then, James has $ R + 6 = 27 + 6 = 33 $.\n6. The difference between John and James is:\n   $$\n   54 - 33 = 21\n   $$\n\n**Final Answer:**\n$$\n\\boxed{21}\n$$",
+            "extracted_answer": 21.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:245",
+            "condition": "unconstrained",
+            "gold_answer": 7.0,
+            "completion": "Let's define the variables:\n\n- Let $ x $ be the number of fish in each aquarium.\n\nWe are told:\n\n- The number of snails in the first aquarium is 4.\n- The number of snails in the second aquarium is 32.\n- The difference between the number of snails in the two aquariums is twice the amount of fish in both aquariums.\n\nSo, the difference in the number of snails is:\n$$\n32 - 4 = 28\n$$\n\nThis difference is twice the number of fish in both aquariums:\n$$\n28 = 2x\n$$\n\nSolving for $ x $:\n$$\nx = \\frac{28}{2} = 14\n$$\n\nSo, the number of fish in each aquarium is $ \\boxed{14} $.",
+            "extracted_answer": 14.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:248",
+            "condition": "unconstrained",
+            "gold_answer": 300.0,
+            "completion": "</think>\n\nThe chef bought 4 bags of onions, each weighing 50 pounds.  \nTotal weight = 4 × 50 = 200 pounds.  \nCost = 200 pounds × $1.50 = $300.  \n\nFinal answer: **$300**",
+            "extracted_answer": 300.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:249",
+            "condition": "unconstrained",
+            "gold_answer": 5600.0,
+            "completion": "Let's break down the problem step by step.\n\n---\n\n### Step 1: Determine how many cookies Sue ate on Monday and Tuesday\n\n- **Monday:**\n  - Sue ate 4 times as many cookies as her sister.\n  - Her sister ate 5 cookies on Monday.\n  - So Sue ate $ 4 \\times 5 = 20 $ cookies on Monday.\n\n- **Tuesday:**\n  - Sue ate twice as many cookies as her sister.\n  - Her sister ate 13 cookies on Tuesday.\n  - So Sue ate $ 2 \\times 13 = 26 $ cookies on Tuesday.\n\n- **Total cookies Sue ate:**\n  $$\n  20 + 26 = 46 \\text{ cookies}\n  $$\n\n---\n\n### Step 2: Calculate the total calories Sue consumed\n\n- 1 cookie = 200 calories\n- Total calories for Sue: $ 46 \\times 200 = 9200 $ calories\n\n---\n\n### Step 3: Determine how many cookies Sue's sister ate\n\n- Sue's sister ate 5 cookies on Monday and 13 on Tuesday.\n- Total cookies eaten by her sister: $ 5 + 13",
+            "extracted_answer": 13.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:271",
+            "condition": "unconstrained",
+            "gold_answer": 20.0,
+            "completion": "</think>\n\nTo find the total number of windows, we calculate the windows in each house and then double it (since there are 2 houses):\n\n- Each house has 3 bedrooms, each with 2 windows: $3 \\times 2 = 6$ windows per bedroom.\n- Each house has $3 \\times 2 = 6$ windows in the bedrooms.\n- Each house has 4 additional windows not connected to bedrooms: $4$ windows.\n- Total windows per house: $6 + 4 = 10$.\n- Total for 2 houses: $10 \\times 2 = 20$.\n\nFinal answer: $\\boxed{20}$",
+            "extracted_answer": 20.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:273",
+            "condition": "unconstrained",
+            "gold_answer": 315.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Body of the sweater**: 900 stitches  \n2. **Collar**: 1/10 of the body = $ \\frac{900}{10} = 90 $ stitches  \n3. **Rosette**: Twice the collar = $ 2 \\times 90 = 180 $ stitches  \n4. **Total stitches used**:  \n   $ 900 + 90 + 180 = 1170 $  \n   But the total is given as 1800 stitches, so the remaining stitches are for the **two sleeves**.\n\n5. **Total stitches for the two sleeves**:  \n   $ 1800 - 1170 = 630 $  \n6. **Each sleeve**: $ \\frac{630}{2} = 315 $\n\n**Final Answer**: $ \\boxed{315} $",
+            "extracted_answer": 315.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:274",
+            "condition": "unconstrained",
+            "gold_answer": 3200.0,
+            "completion": "To find the total cost, we calculate the cost of each type of seed separately and then add them together:\n\n- Cost of tomato seeds: $40 × 20 = 800$\n- Cost of celery seeds: $30 × 80 = 2400$\n\nTotal cost = $800 + $2400 = $3200$\n\nFinal answer: **3200**",
+            "extracted_answer": 3200.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:278",
+            "condition": "unconstrained",
+            "gold_answer": 40.0,
+            "completion": "Let's denote the current ages of Mico and Marco as $ x $ and $ y $, respectively.\n\nWe are given:\n$$\nx + y = 20\n$$\n\nWe are asked to find the sum of their ages in 10 years. That would be:\n$$\n(x + 10) + (y + 10) = x + y + 20 = 20 + 20 = 40\n$$\n\n**Answer: 40**",
+            "extracted_answer": 40.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:286",
+            "condition": "unconstrained",
+            "gold_answer": 90.0,
+            "completion": "Kelly has:\n- 5 quarters = 5 × 25 = 125 cents\n- 2 dimes = 2 × 10 = 20 cents\n- Total money = 125 + 20 = 145 cents\n\nShe buys a can of pop for 55 cents.\n\nMoney left = 145 - 55 = **90 cents**\n\nFinal answer: **90**",
+            "extracted_answer": 90.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:299",
+            "condition": "unconstrained",
+            "gold_answer": 31800.0,
+            "completion": "</think>\n\nTo calculate the annual cost for John's driving service:\n\n1. **Distance per day**: 30 miles one way (to work) and 30 miles back (to home), so total per day:  \n   $ 30 + 30 = 60 $ miles.\n\n2. **Miles driven per day**:  \n   $ 60 $ miles.\n\n3. **Miles driven per week**:  \n   $ 60 \\times 5 = 300 $ miles.\n\n4. **Miles driven per year**:  \n   $ 300 \\times 52 = 15,600 $ miles.\n\n5. **Cost per mile**:  \n   $ 2 $ dollars.\n\n6. **Total driving cost per year**:  \n   $ 15,600 \\times 2 = 31,200 $ dollars.\n\n7. **Bonus per month**:  \n   $ 150 $.\n\n8. **Total annual cost**:  \n   $ 31,200 + (150 \\times 12) = 31,200 + 1,800 = 33,000 $",
+            "extracted_answer": 33000.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:308",
+            "condition": "unconstrained",
+            "gold_answer": 6.0,
+            "completion": "Let's break down the costs:\n\n- **Cost of 1 tub of ice cream**: $13  \n- **Cost of 1 packet of milk**: $11 - $0.5 = $10.5  \n- **Total cost for 2 tubs of ice cream**: $13 × 2 = $26  \n- **Total cost for 4 packets of milk**: $10.5 × 4 = $42  \n- **Total cost for 2 tubs and 4 packets**: $26 + $42 = $68  \n\n**Final answer**: $68",
+            "extracted_answer": 68.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:311",
+            "condition": "unconstrained",
+            "gold_answer": 91.0,
+            "completion": "To solve this problem, we can break it down into parts:\n\n1. **Number of people who eat 3 eggs per day:**\n   - 3 people\n\n2. **Number of people who eat 2 eggs per day:**\n   - 5 total people - 3 people = 2 people\n\n3. **Total eggs consumed per day:**\n   - $3 \\times 3 + 2 \\times 2 = 9 + 4 = 13$ eggs per day\n\n4. **Total eggs consumed in a week (7 days):**\n   - $13 \\times 7 = 91$ eggs\n\n**Final answer:**\n```\n91\n```",
+            "extracted_answer": 91.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:323",
+            "condition": "unconstrained",
+            "gold_answer": 75.0,
+            "completion": "To solve this problem, we need to account for the cooling effect of the ice cubes and the weakening effect of the cream.\n\n### Step-by-step breakdown:\n\n1. **Initial Setup:**\n   - Each ice cube cools the coffee by **13 degrees**.\n   - The coffee is **12 milliliters weaker** per ice cube.\n   - The coffee is cooled by **65 degrees**.\n   - She adds **15 milliliters of cream**, which weakens the coffee by **some amount** (we'll determine this).\n\n2. **Total Cooling:**\n   - The coffee is cooled by **65 degrees**.\n   - The ice cubes cool it by **13 degrees**.\n   - The cream weakens the coffee by **x milliliters**.\n\n3. **Total Weakening:**\n   - Total weakening = 65 (cooling) + 13 (ice) + x (cream) = **78 + x** milliliters.\n\n4. **Initial Weakening:**\n   - The coffee is initially **12 milliliters weaker** per ice cube.\n   - She uses **65 degrees** of cooling, which would weaken the coffee by **65 milliliters",
+            "extracted_answer": 65.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:330",
+            "condition": "unconstrained",
+            "gold_answer": 31.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n1. **Total spent on the trip**: $43  \n2. **Rewards earned**:  \n   - For every $20 spent, the customer earns $1 off.  \n   - $43 ÷ 20 = 2.15 → 2 full rewards (2 × $1 = $2)  \n   - Remaining amount: $43 - $2 = $41  \n3. **Coupon applied**: The coupon took **twice the amount of rewards** off the price.  \n   - Rewards = $2  \n   - Coupon = 2 × $2 = $4  \n4. **Final amount paid**:  \n   - Total spent: $43  \n   - Subtract rewards: $43 - $2 = $41  \n   - Subtract coupon: $41 - $4 = **$37**\n\n**Final answer: $37**",
+            "extracted_answer": 37.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:338",
+            "condition": "unconstrained",
+            "gold_answer": 60.0,
+            "completion": "Let the number of students in the two equal groups be $ x $, and the number in the smallest group be $ x - 10 $.\n\nWe are told the total number of students is 200:\n\n$$\n2x + (x - 10) = 200\n$$\n\nSimplify:\n\n$$\n3x - 10 = 200\n$$\n\n$$\n3x = 210\n$$\n\n$$\nx = 70\n$$\n\nSo the smallest group has $ x - 10 = 60 $ students.\n\n**Final Answer: 60**",
+            "extracted_answer": 60.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:341",
+            "condition": "unconstrained",
+            "gold_answer": 260.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Pink frog weighs 50 pounds.**\n2. **Pink frog weighs the same as a blue beetle, the same as a green toad, and 10 pounds less than a yellow snake.**\n   - So, the **blue beetle** = **pink frog** = **50 pounds**\n   - The **green toad** = **pink frog** = **50 pounds**\n   - The **yellow snake** = **pink frog + 10 pounds** = **50 + 10 = 60 pounds**\n3. **The pink frog weighs 20 pounds more than a red bird.**\n   - So, **red bird** = **pink frog - 20 pounds** = **50 - 20 = 30 pounds**\n4. **The container weighs 20 pounds.**\n5. **Total weight of the container carrying one of each animal** = **50 (pink frog) + 50 (blue beetle) + 50 (green toad) + 30 (red bird) + 20 (container)** = **160 pounds**\n\n**Final Answer: 160",
+            "extracted_answer": 160.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:348",
+            "condition": "unconstrained",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\nTo find the **percentage more** the factory is making per day now compared to when they made tractors, we need to compare the **profit per day** from both types of products.\n\n---\n\n### Step 1: Calculate the profit per day from tractors\n- 10 tractors per day\n- $100 per tractor\n- Total profit from tractors:  \n  $$\n  10 \\times 100 = 1000 \\text{ dollars}\n  $$\n\n---\n\n### Step 2: Calculate the profit per day from silos\n- 5 silos per day\n- $220 per silo\n- Total profit from silos:  \n  $$\n  5 \\times 220 = 1100 \\text{ dollars}\n  $$\n\n---\n\n### Step 3: Calculate the difference in profit\n$$\n1100 - 1000 = 100 \\text{ dollars}\n$$\n\n---\n\n### Step 4: Calculate the percentage increase\n$$\n\\text{Percentage increase} = \\left( \\frac{100}{1000} \\right) \\times 100 = 1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:352",
+            "condition": "unconstrained",
+            "gold_answer": 21.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Initial amount**: Andrea had $36.\n2. **Spent on sweater**: She spent the rest of her money on an $11 sweater.\n3. **Gave her brother**: She gave her brother $4.\n4. **Amount saved**: Let the amount she saved be $ x $.\n\nSo, the total amount she spent is:\n$$\n11 + 4 = 15\n$$\n\nShe had $36 initially, and she spent $15, so the amount she saved is:\n$$\n36 - 15 = 21\n$$\n\nThus, the answer is:\n$$\n\\boxed{21}\n$$",
+            "extracted_answer": 21.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:367",
+            "condition": "unconstrained",
+            "gold_answer": 19.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Customers kicked out for refusing to wear masks**: 3 people.\n2. **Shoplifting**: Let the number of people kicked out for shoplifting be $ x $.\n3. **Physical violence over goods on sale**: This is 3 times the number of shoplifters, so $ 3x $.\n4. **Total kicked out**: 50 people.\n\nSo, the total number of people kicked out is:\n$$\n3 + x + 3x + \\text{(other reasons)} = 50\n$$\n\nSimplify:\n$$\n3 + x + 3x + y = 50\n$$\n$$\n3 + 4x + y = 50\n$$\n$$\n4x + y = 47\n$$\n\nWe are asked to find the number of people kicked out for **other reasons**, which is $ y $.\n\nWe are not given any other information, so we can't solve for $ y $ directly. However, the question asks for the number of people kicked out for **other reasons**, and the total is 50. So we can write:\n\n$$\ny = 50 - (3 + x +",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:368",
+            "condition": "unconstrained",
+            "gold_answer": 18.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Sara's score**: 8 points.\n2. **Erin's score after scoring 14 points**: 14 points.\n3. **Erin's score is three times more than Sara's score**:  \n   $$\n   \\text{Erin's score} = 3 \\times \\text{Sara's score} = 3 \\times 8 = 24\n   $$\n\n4. **Erin's score before scoring 14 points**:  \n   $$\n   \\text{Erin's score before} = 24 - 14 = 10\n   $$\n\n**Final Answer**: $\\boxed{10}$",
+            "extracted_answer": 10.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:372",
+            "condition": "unconstrained",
+            "gold_answer": 5.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Tuesday's class**: 1 hour  \n- **Thursday's class**: 2 hours  \n- **Saturday's class**: Twice as long as Tuesday's class → $ 2 \\times 1 = 2 $ hours  \n\nNow, sum these up:\n\n$$\n1 + 2 + 2 = 5 \\text{ hours}\n$$\n\n**Final answer:**  \n$$\n\\boxed{5}\n$$",
+            "extracted_answer": 5.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:377",
+            "condition": "unconstrained",
+            "gold_answer": 50.0,
+            "completion": "Let's break down the problem step by step.\n\n---\n\n### Step 1: Determine the number of apples sold on Monday\n\nLucy sold all the apples she picked on Monday and got $56 from selling them at $4 per apple.\n\n$$\n\\text{Number of apples sold on Monday} = \\frac{56}{4} = 14\n$$\n\n---\n\n### Step 2: Determine the number of apples picked on Tuesday\n\nShe picked 12 apples on Tuesday.\n\n$$\n\\text{Apples picked on Tuesday} = 12\n$$\n\n---\n\n### Step 3: Determine the number of apples picked on Wednesday\n\nShe picked **double** the number of apples she picked on Tuesday.\n\n$$\n\\text{Apples picked on Wednesday} = 2 \\times 12 = 24\n$$\n\n---\n\n### Step 4: Total apples picked over the three days\n\n$$\n\\text{Total apples picked} = 14 + 12 + 24 = 50\n$$\n\n---\n\n### Final Answer:\n\n$$\n\\boxed{50}\n$$",
+            "extracted_answer": 50.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:378",
+            "condition": "unconstrained",
+            "gold_answer": 15.0,
+            "completion": "Let's break down the problem step by step:\n\n- Total socks needed to wash: 50\n- Socks she washed: 10 pairs of socks = 10 × 2 = 20 socks\n- Loose socks she washed: 15 socks\n\nTotal socks washed: 20 + 15 = 35 socks\n\nSocks missed: 50 - 35 = **15 socks**\n\nFinal answer: **15**",
+            "extracted_answer": 15.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:380",
+            "condition": "unconstrained",
+            "gold_answer": 803.0,
+            "completion": "To solve this, we need to calculate the monthly payment Karan has to make. Since she borrowed $3,650 for five months at an interest rate of 10%, we first calculate the total interest and then divide the total amount by the number of months.\n\n1. **Total interest** = Principal × Interest rate × Time  \n   = $3,650 × 0.10 × 5/12  \n   = $3,650 × 0.10 × 0.4166667  \n   ≈ $3,650 × 0.0416667  \n   ≈ $151.67\n\n2. **Total amount to be paid** = Principal + Total interest  \n   = $3,650 + $151.67  \n   ≈ $3,801.67\n\n3. **Monthly payment** = Total amount / Number of months  \n   = $3,801.67 / 5  \n   ≈ $760.34\n\n**Final Answer: $760.34**",
+            "extracted_answer": 760.34,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:382",
+            "condition": "unconstrained",
+            "gold_answer": 350.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Axel has:**\n  - Silver pesos: 50\n  - Gold pesos: 80\n\n- **Anna has:**\n  - Silver pesos: Twice Axel's silver pesos = $ 2 \\times 50 = 100 $\n  - Gold pesos: 40 more than Axel's gold pesos = $ 80 + 40 = 120 $\n\n- **Total number of pesos together:**\n  - Silver: $ 50 + 100 = 150 $\n  - Gold: $ 80 + 120 = 200 $\n  - Total: $ 150 + 200 = 350 $\n\n**Final answer:**\n```\n350\n```",
+            "extracted_answer": 350.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:383",
+            "condition": "unconstrained",
+            "gold_answer": 2.0,
+            "completion": "To solve this problem, we need to calculate the **profit per hour** that Millie makes from her lemonade stand.\n\n---\n\n### Step 1: Total number of cups of lemonade\n- She buys enough supplies to make **3 pitchers**, each holding **12 cups**.\n- Total cups = $ 3 \\times 12 = 36 $ cups.\n\n---\n\n### Step 2: Total revenue from selling all lemonade\n- She sells **4 cups per hour**.\n- Total revenue = $ 4 \\times 36 = 144 $ dollars.\n\n---\n\n### Step 3: Total cost of supplies\n- She spends **$18** to buy supplies.\n\n---\n\n### Step 4: Total profit\n- Profit = Revenue - Cost = $ 144 - 18 = 126 $ dollars.\n\n---\n\n### Step 5: Profit per hour\n- She runs the stand for a certain number of hours, but the problem asks for **profit per hour** that she makes from the stand.\n- Since she sells **4 cups per hour**, and she sells all the lemonade, the **profit per hour** is:\n  $$\n  \\text{Profit per hour} = \\frac",
+            "extracted_answer": 4.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:391",
+            "condition": "unconstrained",
+            "gold_answer": 15.0,
+            "completion": "Let the number of popsicles Betty has be $ 5x $ and the number Sam has be $ 6x $, based on the ratio 5:6.\n\nWe are given that the total number of popsicles is 165:\n\n$$\n5x + 6x = 165\n$$\n\n$$\n11x = 165\n$$\n\n$$\nx = \\frac{165}{11} = 15\n$$\n\nSo, Betty has $ 5x = 5 \\times 15 = 75 $ popsicles, and Sam has $ 6x = 6 \\times 15 = 90 $ popsicles.\n\nThe difference is:\n\n$$\n90 - 75 = 15\n$$\n\n**Final Answer: 15**",
+            "extracted_answer": 15.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:396",
+            "condition": "unconstrained",
+            "gold_answer": 3.0,
+            "completion": "Jenny has 12 slices of pizza.\n\n- She gives 1/3 to Bill:  \n  $ \\frac{1}{3} \\times 12 = 4 $ slices to Bill.\n\n- She gives 1/4 to Mark:  \n  $ \\frac{1}{4} \\times 12 = 3 $ slices to Mark.\n\n- Total given to Bill and Mark:  \n  $ 4 + 3 = 7 $ slices.\n\n- Jenny eats 2 slices:  \n  $ 12 - 7 - 2 = 3 $ slices left.\n\nFinal answer:  \n**3**",
+            "extracted_answer": 3.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:401",
+            "condition": "unconstrained",
+            "gold_answer": 14400.0,
+            "completion": "</think>\n\nTo solve this, we need to calculate the total earnings over a year (12 months):\n\n1. **Number of weeks in a year**:  \n   $ 4 \\text{ weeks/month} \\times 12 \\text{ months} = 48 \\text{ weeks} $\n\n2. **Number of days in a year**:  \n   $ 4 \\text{ days/week} \\times 48 \\text{ weeks} = 192 \\text{ days} $\n\n3. **Total earnings**:  \n   $ 192 \\text{ days} \\times 50 \\text{ dollars/day} = 9600 \\text{ dollars} $\n\n**Final answer**:  \n$$\n\\boxed{9600}\n$$",
+            "extracted_answer": 9600.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:405",
+            "condition": "unconstrained",
+            "gold_answer": 50.0,
+            "completion": "To solve this problem, we need to calculate the total cost of the meat and cheese required for 20 people.\n\n1. **Number of sandwiches needed**:  \n   Each sandwich serves 4 people, so for 20 people, we need:  \n   $$\n   \\frac{20}{4} = 5 \\text{ sandwiches}\n   $$\n\n2. **Meat required**:  \n   Each sandwich requires 1 pound of meat, so for 5 sandwiches:  \n   $$\n   5 \\text{ sandwiches} \\times 1 \\text{ pound of meat} = 5 \\text{ pounds of meat}\n   $$\n\n3. **Cheese required**:  \n   Each sandwich requires 1 pound of cheese, so for 5 sandwiches:  \n   $$\n   5 \\text{ sandwiches} \\times 1 \\text{ pound of cheese} = 5 \\text{ pounds of cheese}\n   $$\n\n4. **Cost of meat**:  \n   $$\n   5 \\text{ pounds} \\times \\$7.00/\\text{pound} = \\$35.00\n   $$\n\n5. **Cost of cheese**:  \n   $$\n   5 \\text{ pounds",
+            "extracted_answer": 5.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:410",
+            "condition": "unconstrained",
+            "gold_answer": 3.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Initial amount**: Sally had $10.\n\n2. **Taffy purchase**:\n   - She bought 2 pounds of taffy.\n   - The deal is \"Buy 1 pound at $3, get 1 pound 1/2 off.\"\n   - For 2 pounds, she gets:\n     - 1 pound at $3\n     - 1 pound at $3 * 0.5 = $1.50\n   - Total cost for taffy: $3 + $1.50 = $4.50\n\n3. **Mixed bag of seashells**: $1.50\n\n4. **Magnetic magnets**: 4 magnets at $0.25 each:\n   - 4 * $0.25 = $1.00\n\n5. **Total spent**:\n   - Taffy: $4.50\n   - Seashells: $1.50\n   - Magnets: $1.00\n   - Total: $4.50 + $1.50 + $1.00 = $7.00\n\n6. **Money left",
+            "extracted_answer": 6.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:414",
+            "condition": "unconstrained",
+            "gold_answer": 56.0,
+            "completion": "</think>\n\nTo find the total cost of the discounted blouses:\n\n- Each blouse is discounted by 30%, so the discounted price is:\n  $$\n  20 \\times (1 - 0.30) = 20 \\times 0.70 = 14\n  $$\n\n- Misha picks out 4 blouses:\n  $$\n  14 \\times 4 = 56\n  $$\n\n**Final Answer: 56**",
+            "extracted_answer": 56.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:416",
+            "condition": "unconstrained",
+            "gold_answer": 56.0,
+            "completion": "Let's define the variables:\n\n- Let $ c $ be the number of camels.\n- Let $ d $ be the number of dromedaries.\n\nWe are given the following:\n\n1. Total number of heads: $ c + d = 180 $\n2. Total number of humps: $ 2c + d = 304 $\n\nWe can solve this system of equations:\n\nFrom the first equation: $ c = 180 - d $\n\nSubstitute into the second equation:\n\n$ 2(180 - d) + d = 304 $\n\nSimplify:\n\n$ 360 - 2d + d = 304 $\n\n$ 360 - d = 304 $\n\n$ d = 360 - 304 = 56 $\n\nSo, the number of dromedaries is $ \\boxed{56} $.",
+            "extracted_answer": 56.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:420",
+            "condition": "unconstrained",
+            "gold_answer": 17000.0,
+            "completion": "To solve the problem:\n\n- The first bank gave him $4000.\n- The second company gave him twice as much as the first bank: $4000 × 2 = $8000.\n- Total amount received from the banks: $4000 + $8000 = $12000.\n- He initially had $5000 in capital.\n\nSo, his total capital now is:\n\n$$\n5000 + 12000 = \\boxed{17000}\n$$",
+            "extracted_answer": 17000.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:430",
+            "condition": "unconstrained",
+            "gold_answer": 132.0,
+            "completion": "</think>\n\nCharlotte's order includes:\n- Pot and pans: $120.00\n- Mixing bowls: $20.00\n- Utensils: 5 × $5.00 = $25.00\n\nTotal cost before discount:  \n$120.00 + $20.00 + $25.00 = $165.00\n\nDiscount: 20% off  \nDiscount amount: $165.00 × 0.20 = $33.00\n\nFinal amount after discount:  \n$165.00 - $33.00 = **$132.00**\n\nFinal answer: **$132.00**",
+            "extracted_answer": 132.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:431",
+            "condition": "unconstrained",
+            "gold_answer": 1.0,
+            "completion": "Let's calculate the total cost of the items Dora wants to buy:\n\n- Skipping rope: $6  \n- Board game: $11  \n- Playground ball: $2  \n\nTotal cost = $6 + $11 + $2 = **$19**\n\nDora has saved $2 from her allowance and her mother gave her $16, so she has $2 + $16 = **$18**.\n\nDora needs $19 - $18 = **$1** more to buy all the items.\n\nFinal answer: **$1**",
+            "extracted_answer": 1.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:434",
+            "condition": "unconstrained",
+            "gold_answer": 5.0,
+            "completion": "Let's break down the problem step by step.\n\nLet:\n- $ c $ = number of candy bars George bought\n- $ 3 $ = number of chips he bought (given)\n- $ 0.40 $ = price per chip\n- $ 0.75 $ = price per candy bar\n- $ 5 $ = total amount spent (given)\n- $ 0.01 $ = amount left after purchase (given)\n\n### Step 1: Total cost of chips\nHe bought 3 chips at 40 cents each:\n$$\n3 \\times 0.40 = 1.20\n$$\n\n### Step 2: Total cost of candy bars\nLet $ c $ be the number of candy bars. Then the cost of candy bars is:\n$$\n0.75c\n$$\n\n### Step 3: Total amount spent\n$$\n1.20 + 0.75c = 5 - 0.01 = 4.99\n$$\n\n### Step 4: Solve for $ c $\n$$\n1.20 + 0.75c = 4.99\n$$\n$$\n0.75c = 4",
+            "extracted_answer": 4.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:442",
+            "condition": "unconstrained",
+            "gold_answer": 49.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Initial temperature**: 40 degrees.\n2. **Baking time**: 3 hours.\n3. **Oven temperature increase**: 5 degrees per hour.\n4. **Window opening**: 30 minutes (0.5 hours) of window open, which cools the house by 2 degrees for every 10 minutes (i.e., 0.2 degrees per 10 minutes).\n5. **Cooling effect**: 2 degrees per 10 minutes for 30 minutes → $ \\frac{2}{10} \\times 30 = 6 $ degrees cooled.\n\nNow calculate the final temperature:\n\n- **Oven increase**: $ 3 \\times 5 = 15 $ degrees.\n- **Cooling effect**: $ 6 $ degrees.\n- **Net change**: $ 15 - 6 = 9 $ degrees.\n- **Final temperature**: $ 40 + 9 = 49 $ degrees.\n\n**Final answer**: $\\boxed{49}$",
+            "extracted_answer": 49.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:445",
+            "condition": "unconstrained",
+            "gold_answer": 6.0,
+            "completion": "Let's break down the problem step by step:\n\n---\n\n### **1. Calculate the distance the horse runs in 30 minutes at 32MPH:**\n\n- Time = 30 minutes = 0.5 hours\n- Speed = 32 miles per hour\n- Distance = Speed × Time = 32 × 0.5 = **16 miles**\n\n---\n\n### **2. Calculate the amount of hay the horse eats:**\n\n- The horse eats **1/2 a bail of hay per mile**\n- So, for 16 miles, the horse eats:  \n  $$\n  \\frac{1}{2} \\times 16 = 8 \\text{ bails of hay}\n  $$\n\n---\n\n### **3. Calculate the cost of the hay:**\n\n- Each bail costs $3\n- Total cost = 8 bails × $3 = **$24**\n\n---\n\n### **4. Calculate the change from the $5 bills:**\n\n- Michael has **6 five-dollar bills** = $30\n- He spends $24 on hay\n- Change = $30 - $24 = **$6**\n\n---\n\n### **Final Answer:**\n$$\n\\boxed{6",
+            "extracted_answer": 6.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:451",
+            "condition": "unconstrained",
+            "gold_answer": 11050.0,
+            "completion": "Let's break this down step by step:\n\n1. **Original cost per balloon**:  \n   The total cost for 20 balloons was $900, so the original cost per balloon is:  \n   $$\n   \\frac{900}{20} = 45\n   $$\n\n2. **New cost per balloon after the price increase**:  \n   The cost per balloon increased by $20, so the new cost is:  \n   $$\n   45 + 20 = 65\n   $$\n\n3. **Total cost for 170 balloons at the new price**:  \n   $$\n   170 \\times 65 = 11050\n   $$\n\n**Final answer**:  \n$$\n\\boxed{11050}\n$$",
+            "extracted_answer": 11050.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:452",
+            "condition": "unconstrained",
+            "gold_answer": 50.0,
+            "completion": "</think>\n\nTo find the average speed, we need to calculate the total distance traveled and divide it by the total time taken.\n\n1. **Distance for the first part of the trip:**\n   $$\n   \\text{Distance}_1 = 60 \\text{ mph} \\times 2 \\text{ hours} = 120 \\text{ miles}\n   $$\n\n2. **Distance for the second part of the trip:**\n   $$\n   \\text{Distance}_2 = 30 \\text{ mph} \\times 1 \\text{ hour} = 30 \\text{ miles}\n   $$\n\n3. **Total distance:**\n   $$\n   \\text{Total distance} = 120 + 30 = 150 \\text{ miles}\n   $$\n\n4. **Total time:**\n   $$\n   \\text{Total time} = 2 + 1 = 3 \\text{ hours}\n   $$\n\n5. **Average speed:**\n   $$\n   \\text{Average speed} = \\frac{\\text{Total distance}}{\\text{Total time}} = \\frac{150}{3} = 50 \\text{ mph}\n",
+            "extracted_answer": 50.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:458",
+            "condition": "unconstrained",
+            "gold_answer": 35.0,
+            "completion": "</think>\n\nTo find the percentage of all the puppies that have spots, we first calculate the total number of puppies and the total number with spots.\n\n- Total puppies: $8 + 12 = 20$\n- Total spotted puppies: $3 + 4 = 7$\n- Percentage of spotted puppies: $\\frac{7}{20} \\times 100 = 35\\%$\n\nFinal answer: $\\boxed{35}$",
+            "extracted_answer": 35.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:465",
+            "condition": "unconstrained",
+            "gold_answer": 30.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Total number of cards:**\n   - 6 decks × 25 cards = 150 basketball cards\n   - 5 boxes × 40 cards = 200 baseball cards\n   - Total cards = 150 + 200 = **350 cards**\n\n2. **Cards kept by Miss Maria:**\n   - She keeps 50 cards.\n\n3. **Cards given to students:**\n   - Total cards given to students = 350 - 50 = **300 cards**\n\n4. **Number of students:**\n   - Each student gets 10 cards.\n   - Number of students = 300 ÷ 10 = **30 students**\n\n**Final Answer:**\n```\n30\n```",
+            "extracted_answer": 30.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:472",
+            "condition": "unconstrained",
+            "gold_answer": 6.0,
+            "completion": "Let's define the variables:\n\n- Let $ x $ be the number of carrot sticks Matt eats.\n- According to the problem, the number of cookies he eats is $ \\frac{x}{2} + 2 $.\n\nWe are told that Matt wants to eat **5 cookies** in total. So we set up the equation:\n\n$$\n\\frac{x}{2} + 2 = 5\n$$\n\nSubtract 2 from both sides:\n\n$$\n\\frac{x}{2} = 3\n$$\n\nMultiply both sides by 2:\n\n$$\nx = 6\n$$\n\nSo, Matt has to eat **6 carrot sticks**.\n\nFinal answer:  \n$$\n\\boxed{6}\n$$",
+            "extracted_answer": 6.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:476",
+            "condition": "unconstrained",
+            "gold_answer": 5.0,
+            "completion": "Let's solve the problem step by step:\n\n1. Total amount spent: $300  \n2. Price per book: $15  \n3. Number of books = Total amount / Price per book = $300 / $15 = 20 books  \n4. Number of children: 4  \n5. Books per child = Total books / Number of children = 20 / 4 = 5  \n\nFinal answer: $\\boxed{5}$",
+            "extracted_answer": 5.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:477",
+            "condition": "unconstrained",
+            "gold_answer": 20.0,
+            "completion": "To solve this, we use the principle of inclusion-exclusion.\n\n- Total number of kids: 32  \n- Kids allergic to dairy: 9  \n- Kids allergic to peanuts: 6  \n- Kids allergic to both: 3  \n\nWe want to find the number of kids **not** allergic to anything.\n\n### Step 1: Use the inclusion-exclusion principle to find the number of kids allergic to **at least one** food.\n\nLet:\n- $ A $ = number of kids allergic to dairy = 9  \n- $ B $ = number of kids allergic to peanuts = 6  \n- $ A \\cap B $ = number of kids allergic to both = 3  \n\nUsing the formula:\n$$\n|A \\cup B| = |A| + |B| - |A \\cap B| = 9 + 6 - 3 = 12\n$$\n\nSo, 12 kids are allergic to **at least one** food.\n\n### Step 2: Subtract from the total number of kids to find those not allergic to anything.\n\n$$\n\\text{Not allergic to anything} = 32 - |A \\cup B| = 32 - 12 = \\boxed{20}\n",
+            "extracted_answer": 20.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:485",
+            "condition": "unconstrained",
+            "gold_answer": 220.0,
+            "completion": "Let's break down the problem step by step:\n\n- Let the cost of the shoes be $ S $.\n- The cost of the handbag is $ H $.\n- The cost of the shoes is given as $ S = 80 $.\n- The handbag cost is $ 20 $ less than 3 times the shoes' cost:  \n  $$\n  H = 3S - 20\n  $$\n\nSubstitute $ S = 80 $ into the equation:\n$$\nH = 3(80) - 20 = 240 - 20 = 220\n$$\n\nSo, the cost of the handbag is **$220**.\n\nFinal answer:  \n$$\n\\boxed{220}\n$$",
+            "extracted_answer": 220.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:498",
+            "condition": "unconstrained",
+            "gold_answer": 40.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Ashley's oranges**:  \n   - 5 boxes  \n   - 10 oranges per box  \n   - Total oranges: $ 5 \\times 10 = 50 $ oranges\n\n2. **Brianne's oranges**:  \n   - 20 more than Ashley: $ 50 + 20 = 70 $ oranges\n\n3. **Total oranges**:  \n   - $ 50 + 70 = 120 $ oranges\n\n4. **Number of pies**:  \n   - Each pie needs 3 oranges  \n   - Total pies: $ \\frac{120}{3} = 40 $\n\n**Final Answer**:  \n$$\n\\boxed{40}\n$$",
+            "extracted_answer": 40.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:507",
+            "condition": "unconstrained",
+            "gold_answer": 2.0,
+            "completion": "To solve this, we need to calculate the total cost of the two bus trips over five days and then compare it to the cost of the weekly bus pass.\n\n1. **Cost of two trips per day**:  \n   $2.20 × 2 = 4.40$ per day\n\n2. **Total cost for 5 days**:  \n   $4.40 × 5 = 22.00$\n\n3. **Cost of the weekly bus pass**:  \n   $20.00\n\n4. **Savings**:  \n   $22.00 - 20.00 = 2.00$\n\n**Final answer**:  \n$$\n\\boxed{2.00}\n$$",
+            "extracted_answer": 2.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:510",
+            "condition": "unconstrained",
+            "gold_answer": 525.0,
+            "completion": "To determine the calorie deficit Andy needs each day to lose 30 lbs by July 19th, we can use the following formula:\n\n$$\n\\text{Calories needed to lose 1 lb} = 3500 \\text{ calories}\n$$\n\n$$\n\\text{Total calories needed to lose 30 lbs} = 3500 \\times 30 = 105,000 \\text{ calories}\n$$\n\nSince Andy wants to lose 30 lbs by July 19th, and he has 12 months (365 days) to do this, the total number of days is 365. The calorie deficit per day is:\n\n$$\n\\text{Calorie deficit per day} = \\frac{105,000}{365} \\approx 286.4 \\text{ calories}\n$$\n\nSo, Andy needs a calorie deficit of approximately **286 calories per day** to reach his goal.\n\nFinal answer: **286**",
+            "extracted_answer": 286.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:519",
+            "condition": "unconstrained",
+            "gold_answer": 280.0,
+            "completion": "Let's break down the problem step by step:\n\n- Rob takes **2 hours** to shingle the house.\n- Royce takes **40 minutes more than double Rob's time**.\n\nFirst, convert Rob's time to minutes:\n$$\n2 \\text{ hours} = 120 \\text{ minutes}\n$$\n\nNow, calculate Royce's time:\n$$\n\\text{Royce's time} = 2 \\times 120 + 40 = 240 + 40 = 280 \\text{ minutes}\n$$\n\nFinal answer:\n$$\n\\boxed{280}\n$$",
+            "extracted_answer": 280.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:521",
+            "condition": "unconstrained",
+            "gold_answer": 39.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Total problems to complete:** 100  \n2. **Monday night:** Chris completes 12 problems.  \n   - Remaining problems after Monday: $ 100 - 12 = 88 $  \n3. **Tuesday:** He completes 3 times as many as he did on Monday.  \n   - That is $ 3 \\times 12 = 36 $ problems.  \n   - Remaining problems after Tuesday: $ 88 - 36 = 52 $  \n4. **Wednesday:** He completes one-quarter of the remaining problems.  \n   - That is $ \\frac{1}{4} \\times 52 = 13 $ problems.  \n   - Remaining problems after Wednesday: $ 52 - 13 = 39 $  \n\n**Final answer:** $\\boxed{39}$",
+            "extracted_answer": 39.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:522",
+            "condition": "unconstrained",
+            "gold_answer": 29.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Tony** picks 6 quarts per hour.\n- **Bobby** picks 1 less quart per hour than Tony, so:\n  $$\n  6 - 1 = 5 \\text{ quarts per hour}\n  $$\n- **Kathy** picks twice as many as Bobby:\n  $$\n  2 \\times 5 = 10 \\text{ quarts per hour}\n  $$\n- **Ricky** picks 2 fewer quarts per hour than Kathy:\n  $$\n  10 - 2 = 8 \\text{ quarts per hour}\n  $$\n\nNow, summing up the total per hour:\n$$\n6 + 5 + 10 + 8 = 29\n$$\n\n**Final Answer:**\n$$\n\\boxed{29}\n$$",
+            "extracted_answer": 29.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:534",
+            "condition": "unconstrained",
+            "gold_answer": 300.0,
+            "completion": "Let's define the variables:\n\n- Let $ b $ be the number of shells brought by the boys.\n- Let $ g $ be the number of shells brought by the girls.\n\nFrom the problem:\n\n- The boys brought 60 shells each, and there are 2 groups (boys and girls), so the total number of kids is 20.\n- The boys are in two equal groups, so the number of boys is $ \\frac{20}{2} = 10 $, and the number of girls is also $ \\frac{20}{2} = 10 $.\n\nBut the problem says the boys were divided into two equal groups, and each boy brought 60 shells. So the total number of shells brought by the boys is $ 10 \\times 60 = 600 $.\n\nNow, the girls brought an amount equal to the number of shells brought by the boys plus four times as many seashells as the boys. So the total number of shells brought by the girls is:\n\n$$\ng = 60 + 4 \\times 60 = 60 + 240 = 300\n$$\n\nSince there are 10 girls, the number",
+            "extracted_answer": 10.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:552",
+            "condition": "unconstrained",
+            "gold_answer": 450.0,
+            "completion": "To calculate Antonella's earnings:\n\n1. **First, determine the commission for the first $1000:**\n   $$\n   1000 \\times 0.30 = 300\n   $$\n\n2. **Next, determine the commission for the remaining $1500 (since $2500 - $1000 = $1500):**\n   $$\n   1500 \\times 0.10 = 150\n   $$\n\n3. **Add the two amounts together:**\n   $$\n   300 + 150 = 450\n   $$\n\n**Final Answer:**\n$$\n\\boxed{450}\n$$",
+            "extracted_answer": 450.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:555",
+            "condition": "unconstrained",
+            "gold_answer": 2.0,
+            "completion": "</think>\n\nJohn earns $2 per hour and works 5 hours a day for 4 days a week.  \nSo, his weekly earnings are:  \n$$\n5 \\text{ hours/day} \\times 4 \\text{ days/week} \\times 2 \\text{ dollars/hour} = 40 \\text{ dollars/week}\n$$\n\nTo save $80, the number of weeks needed is:  \n$$\n\\frac{80}{40} = 2 \\text{ weeks}\n$$\n\nFinal answer:  \n$$\n\\boxed{2}\n$$",
+            "extracted_answer": 2.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:585",
+            "condition": "unconstrained",
+            "gold_answer": 40.0,
+            "completion": "Let's break down the problem step by step:\n\n- **Tabitha's pay rate:** $10 per hour\n- **Jill's hours:**\n  - Saturday: 2 hours\n  - Sunday: 1 hour\n- **John's hours:**\n  - Saturday: 2 × 2 = 4 hours (twice Jill's Saturday hours)\n  - Sunday: 3 × 1 = 3 hours (three times Jill's Sunday hours)\n\n**Total hours for Jill:**\n- Saturday: 2 hours\n- Sunday: 1 hour\n- Total: 2 + 1 = 3 hours\n\n**Total hours for John:**\n- Saturday: 4 hours\n- Sunday: 3 hours\n- Total: 4 + 3 = 7 hours\n\n**Total earnings for Jill:**\n- $10/hour × 3 hours = $30\n\n**Total earnings for John:**\n- $10/hour × 7 hours = $70\n\n**Difference in earnings:**\n- $70 (John) - $30 (Jill) = **$40**\n\n**Final Answer:**\n$$\n\\boxed{40}\n$$",
+            "extracted_answer": 40.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:587",
+            "condition": "unconstrained",
+            "gold_answer": 30.0,
+            "completion": "Let's define the variables:\n\n- Let $ B $ be the number of blue jelly beans.\n- The jar contains 1% fewer red jelly beans than blue, so the number of red jelly beans is $ B - 0.01B = 0.99B $.\n- The jar contains 1% more green jelly beans than blue, so the number of green jelly beans is $ B + 0.01B = 1.01B $.\n\nThe total number of jelly beans is given as 4500:\n\n$$\nB + 0.99B + 1.01B = 4500\n$$\n\n$$\n(1 + 0.99 + 1.01)B = 4500\n$$\n\n$$\n3.0B = 4500\n$$\n\n$$\nB = \\frac{4500}{3} = 1500\n$$\n\nNow, the number of green jelly beans is $ 1.01B = 1.01 \\times 1500 = 1515 $\n\nThe number of red jelly beans is $ 0.99B =",
+            "extracted_answer": 0.99,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:590",
+            "condition": "unconstrained",
+            "gold_answer": 319.0,
+            "completion": "To determine the total number of seats Alex needs, we need to account for the people who are attending the event and the people who are bringing their spouses.\n\n1. **Alex herself** is attending the event.\n2. **100 people** invited by Alex.\n3. Each of these 100 people will bring **2 friends**.\n4. **10 people** are called to invite their friends.\n5. **8 of those 10** are bringing their spouses.\n\nLet's calculate the total number of attendees:\n\n- Alex: 1\n- Invited people: 100\n- Friends brought by invited people: $100 \\times 2 = 200$\n- Friends brought by the 10 people called: $10 \\times 2 = 20$\n- Spouses brought by the 8 people: $8 \\times 1 = 8$\n\nTotal attendees = $1 + 100 + 200 + 20 + 8 = 329$\n\nSo, the final answer is:\n\n```\n329\n```",
+            "extracted_answer": 329.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:593",
+            "condition": "unconstrained",
+            "gold_answer": 3.0,
+            "completion": "To solve this problem, we need to determine how many days it will take for the beanstalk to grow taller than 20 feet, starting at 4 feet and doubling every day.\n\nWe can model the height of the beanstalk as a geometric sequence:\n\n- Day 0 (initial height): 4 feet\n- Day 1: 4 × 2 = 8 feet\n- Day 2: 8 × 2 = 16 feet\n- Day 3: 16 × 2 = 32 feet\n\nWe want the height to be **greater than 20 feet**. Let's solve the inequality:\n\n$$\n4 \\times 2^n > 20\n$$\n\nDivide both sides by 4:\n\n$$\n2^n > 5\n$$\n\nTake the logarithm base 2 of both sides:\n\n$$\nn > \\log_2(5) \\approx 2.32\n$$\n\nSince $ n $ must be an integer (days), we round up to the next whole number:\n\n$$\nn = 3\n$$\n\nSo, it will take **3 days** for the beanstalk to be taller than Mark's window.\n\n**Final Answer: 3**",
+            "extracted_answer": 3.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:594",
+            "condition": "unconstrained",
+            "gold_answer": 42.0,
+            "completion": "</think>\n\nTo find the total grams of protein John gets per week:\n\n1. **Daily protein from mushrooms**:  \n   $ 200 \\text{ grams} \\times \\frac{3 \\text{ grams of protein}}{100 \\text{ grams of mushrooms}} = 6 \\text{ grams of protein per day} $\n\n2. **Weekly protein**:  \n   $ 6 \\text{ grams/day} \\times 7 \\text{ days/week} = 42 \\text{ grams of protein per week} $\n\n**Final answer**:  \n**42**",
+            "extracted_answer": 42.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:598",
+            "condition": "unconstrained",
+            "gold_answer": 69.0,
+            "completion": "</think>\n\nTo solve this problem, we need to determine how many gumballs Colby can buy with his available coins, given that each gumball costs 5 cents (a nickel).\n\n### Step 1: Convert all coins to cents\n- Quarters: 25 cents each → 8 quarters = $8 \\times 25 = 200$ cents  \n- Dimes: 10 cents each → 6 dimes = $6 \\times 10 = 60$ cents  \n- Nickels: 5 cents each → 14 nickels = $14 \\times 5 = 70$ cents  \n- Pennies: 1 cent each → 15 pennies = $15 \\times 1 = 15$ cents  \n\n### Step 2: Add up the total amount of money Colby has\n$$\n200 + 60 + 70 + 15 = 345 \\text{ cents}\n$$\n\n### Step 3: Divide by the cost of one gumball (5 cents)\n$$\n\\frac{345}{5} = 69\n$$\n\n### Final Answer:\n$$\n\\boxed{",
+            "extracted_answer": 69.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:600",
+            "condition": "unconstrained",
+            "gold_answer": 10.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Initial weight**: 8 pounds.\n2. **Increase by 50%**:  \n   $ 8 + (8 \\times 0.5) = 8 + 4 = 12 $ pounds.\n3. **He uses a weight two pounds lighter than that**:  \n   $ 12 - 2 = 10 $ pounds.\n\n**Final answer**: $\\boxed{10}$",
+            "extracted_answer": 10.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:606",
+            "condition": "unconstrained",
+            "gold_answer": 6.0,
+            "completion": "To solve this problem, we need to determine how many years it takes for the tires to reach their total number of rotations, given the number of rotations per 2 miles, the distance driven per month, and the total number of rotations each tire can undergo.\n\n---\n\n### Step 1: Total number of rotations per month\n\n- Distance driven per month: 400 miles\n- Rotations per 2 miles: 725 rotations\n\nSo, the number of rotations per month is:\n$$\n\\frac{400 \\text{ miles}}{2 \\text{ miles}} \\times 725 \\text{ rotations} = 200 \\times 725 = 145,000 \\text{ rotations per month}\n$$\n\n---\n\n### Step 2: Total number of rotations per year\n\n$$\n145,000 \\text{ rotations/month} \\times 12 \\text{ months/year} = 1,740,000 \\text{ rotations/year}\n$$\n\n---\n\n### Step 3: Total number of rotations the tire can undergo\n\n$$\n10,440,000 \\text{ rotations}\n$$\n\n---\n\n### Step",
+            "extracted_answer": 10440000.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:609",
+            "condition": "unconstrained",
+            "gold_answer": 7.0,
+            "completion": "To find the total amount of butter needed, we can break the problem into steps:\n\n1. **Butter per dozen croissants**: $ \\frac{1}{4} $ pound of butter per dozen croissants.\n2. **Number of dozens made per day**: 4 dozen.\n3. **Number of days**: 7 days.\n4. **Total butter needed**: $ 4 \\text{ dozen/day} \\times 7 \\text{ days} \\times \\frac{1}{4} \\text{ pound/dozen} $.\n\nNow, calculate:\n\n$$\n4 \\times 7 \\times \\frac{1}{4} = 7 \\text{ pounds of butter}\n$$\n\n**Final answer**: $ \\boxed{7} $",
+            "extracted_answer": 7.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:617",
+            "condition": "unconstrained",
+            "gold_answer": 5.0,
+            "completion": "To solve this problem, we need to calculate the total amount of meat that needs to be sold and divide it by the amount Prince sells per hour.\n\n1. **Total weight of the bull**: 750 kg  \n2. **Amount sold per hour**: 15 kg  \n3. **Hours per day**: 10  \n4. **Total days required** = (Total weight of the bull) / (Amount sold per hour per day)  \n\nSo, the total number of days required is:\n\n$$\n\\text{Days} = \\frac{750}{15 \\times 10} = \\frac{750}{150} = 5\n$$\n\n**Final answer**: 5 days",
+            "extracted_answer": 5.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:621",
+            "condition": "unconstrained",
+            "gold_answer": 3000.0,
+            "completion": "To calculate the total cost of John's physical therapy:\n\n- Total weeks: 6\n- Sessions per week: 2\n- Hours per session: 2\n- Cost per hour: $125\n\nTotal hours = 6 weeks × 2 sessions/week × 2 hours/session = 24 hours\n\nTotal cost = 24 hours × $125/hour = $3000\n\nFinal answer: **$3000**",
+            "extracted_answer": 3000.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:623",
+            "condition": "unconstrained",
+            "gold_answer": 8.0,
+            "completion": "Let's solve the problem step by step.\n\n1. Charmaine is currently 16 years old in 12 years.  \n   So, her current age is:  \n   $ 16 - 12 = 4 $ years old.\n\n2. To find her age 4 years from now, we add 4 to her current age:  \n   $ 4 + 4 = 8 $.\n\n**Final answer: 8**",
+            "extracted_answer": 8.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:631",
+            "condition": "unconstrained",
+            "gold_answer": 4800.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Price of a diamond Jewell** = $2000 (given).\n\n2. **Price of a gold Jewell** = $ \\frac{4}{5} \\times 2000 = 1600 $.\n\n3. **Price of a silver Jewell** = $2000 - 400 = 1600 $.\n\n4. **Total price for all three jewels** = $1600 + 1600 + 2000 = 5200.\n\n**Final answer:**  \n$$\n\\boxed{5200}\n$$",
+            "extracted_answer": 5200.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:635",
+            "condition": "unconstrained",
+            "gold_answer": 4.0,
+            "completion": "To determine how many classes Manny can miss before they don't sign him up again, we need to find the maximum number of classes he can miss such that the total cost of the classes is still within the budget.\n\n- Total cost of classes: $60\n- Cost per class: $10 (the threshold)\n- Total classes: 10\n\nIf he misses $x$ classes, he will have taken $10 - x$ classes.\n\nThe total cost is then:  \n$$\n(10 - x) \\times 10 \\leq 60\n$$\n\nSolving for $x$:\n\n$$\n10 - x \\leq 6\n$$\n$$\nx \\geq 4\n$$\n\nSo, Manny can miss **4** classes before the cost exceeds $10 per class.\n\nFinal answer:  \n$$\n\\boxed{4}\n$$",
+            "extracted_answer": 4.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:637",
+            "condition": "unconstrained",
+            "gold_answer": 17.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Paisley ran 4 miles.**  \n   So, $ P = 4 $.\n\n2. **Reggie ran 5 times what Paisley ran.**  \n   So, $ R = 5 \\times P = 5 \\times 4 = 20 $.\n\n3. **Reggie ran 3 miles farther than Lynn.**  \n   So, $ R = L + 3 $, and we can solve for $ L $:  \n   $ L = R - 3 = 20 - 3 = 17 $.\n\n4. **Lynn ran 17 miles.**\n\n### Final Answer:\n$$\n\\boxed{17}\n$$",
+            "extracted_answer": 17.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:645",
+            "condition": "unconstrained",
+            "gold_answer": 48.0,
+            "completion": "</think>\n\nThe bag of flour is divided into 8 portions of 2 kg each, so the total weight of the flour in one bag is:\n\n$$\n8 \\times 2 = 16 \\text{ kg}\n$$\n\nSince there are 3 bags, the total weight is:\n\n$$\n3 \\times 16 = 48 \\text{ kg}\n$$\n\nFinal answer: **48**",
+            "extracted_answer": 48.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:655",
+            "condition": "unconstrained",
+            "gold_answer": 10.0,
+            "completion": "Shiela has written $ \\frac{1}{3} $ of the 15-page paper. The number of pages she has already written is:\n\n$$\n\\frac{1}{3} \\times 15 = 5 \\text{ pages}\n$$\n\nThe number of pages she has left to write is:\n\n$$\n15 - 5 = 10 \\text{ pages}\n$$\n\nFinal answer: **10**",
+            "extracted_answer": 10.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:666",
+            "condition": "unconstrained",
+            "gold_answer": 120.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Arelia has $120** (given).\n2. **Kassidy has 3/4 of Arelia's money**:\n   $$\n   \\text{Kassidy} = \\frac{3}{4} \\times 120 = 90\n   $$\n3. **Rayna has 60 more than Kassidy**:\n   $$\n   \\text{Rayna} = 90 + 60 = 150\n   $$\n4. **Total money**:\n   $$\n   \\text{Total} = 120 + 90 + 150 = 360\n   $$\n5. **They share the total equally**:\n   $$\n   \\text{Each person gets} = \\frac{360}{3} = 120\n   $$\n\n**Final answer:**\n$$\n\\boxed{120}\n$$",
+            "extracted_answer": 120.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:673",
+            "condition": "unconstrained",
+            "gold_answer": 9.0,
+            "completion": "Let's define the variables:\n\n- Let $ S $ be the number of books Sally has.\n- Janey has $ 2S + 3 $ books.\n\nWe are told that Janey has 21 books:\n\n$$\n2S + 3 = 21\n$$\n\nSubtract 3 from both sides:\n\n$$\n2S = 18\n$$\n\nDivide both sides by 2:\n\n$$\nS = 9\n$$\n\nSo, Sally has **9** books.\n\nFinal answer:  \n$$\n\\boxed{9}\n$$",
+            "extracted_answer": 9.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:677",
+            "condition": "unconstrained",
+            "gold_answer": 36.0,
+            "completion": "Let's break this down:\n\n- Carol has 20 signatures.\n- Jennifer has 44 signatures.\n- Total so far: $20 + 44 = 64$ signatures.\n- They have 3 more weeks of summer.\n- They want to reach 100 signatures in total.\n\nSo, the number of signatures they need to collect in the remaining 3 weeks is:\n\n$$\n100 - 64 = 36\n$$\n\n**Answer: 36**",
+            "extracted_answer": 36.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:682",
+            "condition": "unconstrained",
+            "gold_answer": 80.0,
+            "completion": "Let the original length of the dress be $ x $ cm.\n\n- She extends the dress by 50% of its original length: $ x + 0.5x = 1.5x $\n- She adds 20 cm to the bottom: $ 1.5x + 20 $\n- The final length is 140 cm: $ 1.5x + 20 = 140 $\n\nSolving for $ x $:\n\n$$\n1.5x + 20 = 140 \\\\\n1.5x = 120 \\\\\nx = \\frac{120}{1.5} = 80\n$$\n\nFinal answer: $ \\boxed{80} $",
+            "extracted_answer": 80.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:689",
+            "condition": "unconstrained",
+            "gold_answer": 7.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Cost of one lollipop**: $0.40  \n   **Cost of one candy**: Let's find this first.\n\n2. **Total cost of 5 lollipops and 4 candies**:  \n   $$\n   5 \\times 0.40 + 4 \\times x = 3.20\n   $$  \n   $$\n   2.00 + 4x = 3.20\n   $$  \n   $$\n   4x = 1.20\n   $$  \n   $$\n   x = 0.30\n   $$\n\n3. **Cost of one candy**: $0.30\n\n4. **Cost of 10 lollipops and 10 candies**:  \n   $$\n   10 \\times 0.40 + 10 \\times 0.30 = 4.00 + 3.00 = 7.00\n   $$\n\n**Final Answer**: $\\boxed{7.00}$",
+            "extracted_answer": 7.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:692",
+            "condition": "unconstrained",
+            "gold_answer": 32.0,
+            "completion": "To find the price of a crate of fruit, we need to calculate the cost of each type of fruit in the crate and then sum them up.\n\n- **Apples**: 12 apples × $0.5 = $6\n- **Bananas**: 5 bananas × (2 × $0.5) = 5 × $1 = $5\n- **Oranges**: 7 oranges × (3 × $0.5) = 7 × $1.5 = $10.5\n\nNow, summing these up:\n\n$$\n6 + 5 + 10.5 = \\boxed{21.5}\n$$\n\nThe price for a crate of fruit is **$21.5**.",
+            "extracted_answer": 21.5,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:694",
+            "condition": "unconstrained",
+            "gold_answer": 9.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Number of high chairs**: 8 (given).\n2. **Number of regular chairs**: 5 times the number of high chairs = $ 5 \\times 8 = 40 $.\n3. **Total chairs**: $ 40 + 8 = 48 $.\n4. **Total number of people**: 42 adults + 15 babies = 57 people.\n5. **Chairs needed**: Since there are 57 people, and the restaurant has 48 chairs, they need $ 57 - 48 = 9 $ more chairs.\n\n**Answer**: $\\boxed{9}$",
+            "extracted_answer": 9.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:702",
+            "condition": "unconstrained",
+            "gold_answer": 2800.0,
+            "completion": "Let's define the variables:\n\n- Gissela's truck can haul $ G $ pounds.\n- Gordy's truck can haul $ G + 800 $ pounds.\n- Gary's truck can haul $ x $ pounds.\n\nFrom the problem:\n\n1. Gissela's truck: $ G $\n2. Gordy's truck: $ G + 800 $\n3. Gary's truck: $ x $\n4. Total weight of all three trucks: $ G + (G + 800) + x = 11,600 $\n\nSo we have the equation:\n\n$$\nG + (G + 800) + x = 11,600\n$$\n\n$$\n2G + 800 + x = 11,600\n$$\n\n$$\nx = 11,600 - 2G - 800\n$$\n\n$$\nx = 10,800 - 2G\n$$\n\nNow, we also know that Gissela's truck can haul 4,000 pounds:\n\n$$\nG = 4000\n$$\n\nSubstitute $ G = 4000 $ into",
+            "extracted_answer": 4000.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:715",
+            "condition": "unconstrained",
+            "gold_answer": 385000.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Original price per computer**: $700  \n2. **Number of computers**: 500  \n3. **Price per computer after increase**: $700 × 1.10 = $770  \n4. **Total cost**: 500 × 770 = 385,000\n\n**Final answer**: 385,000",
+            "extracted_answer": 385000.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:719",
+            "condition": "unconstrained",
+            "gold_answer": 175.0,
+            "completion": "To solve this problem, we need to determine the total weight of rice given to the cousin and the brother.\n\n- Total sacks of rice: 20\n- Sacks given to cousin: 3\n- Sacks given to brother: 4\n- Weight per sack: 25 kg\n\nTotal sacks given to cousin and brother: $3 + 4 = 7$ sacks\n\nTotal weight given to cousin and brother: $7 \\times 25 = 175$ kg\n\nFinal answer: $\\boxed{175}$",
+            "extracted_answer": 175.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:721",
+            "condition": "unconstrained",
+            "gold_answer": 2450.0,
+            "completion": "To solve this problem, we need to calculate the total number of taps Helga made during a 5-minute dance session, where she raised her arms for 2 minutes and tapped her feet otherwise.\n\n---\n\n### Step 1: Taps during arms-up time\n- Helga raises her arms for 2 minutes.\n- During this time, her tap rate is **200 taps per minute per foot**.\n- Since she is using **both feet**, the total taps per minute is:\n  $$\n  200 \\text{ taps/min} \\times 2 \\text{ feet} = 400 \\text{ taps/min}\n  $$\n- Over 2 minutes, the total taps during arms-up time:\n  $$\n  400 \\text{ taps/min} \\times 2 \\text{ min} = 800 \\text{ taps}\n  $$\n\n---\n\n### Step 2: Taps during feet-tapping time\n- She dances for a total of 5 minutes.\n- She raises her arms for 2 minutes, so she taps her feet for:\n  $$\n  5 - 2 = 3 \\text{ minutes}\n  $$\n- During these 3 minutes,",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:722",
+            "condition": "unconstrained",
+            "gold_answer": 255.0,
+            "completion": "Ron saves money by not having to pay the fine and by not having to buy the asphalt. \n\n- The fine is $120.\n- The cost of the asphalt is $25 × 3 = $75.\n\nSo, the total amount saved is:\n$$\n\\text{Total saved} = \\text{Fine} + \\text{Cost of asphalt} = 120 + 75 = 195\n$$\n\nFinal answer: **195**",
+            "extracted_answer": 195.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:727",
+            "condition": "unconstrained",
+            "gold_answer": 112.0,
+            "completion": "Let's break down the problem step by step:\n\n1. **Students' cars**:\n   - There are 64 students.\n   - Each student's car has 4 windows.\n   - Hannah smashes **1/4** of the students' cars.\n   - Number of students' cars smashed:  \n     $$\n     \\frac{1}{4} \\times 64 = 16 \\text{ cars}\n     $$\n   - Total windows from students:  \n     $$\n     16 \\times 4 = 64 \\text{ windows}\n     $$\n\n2. **Teachers' cars**:\n   - There are 32 teachers.\n   - Each teacher's car has 2 windows.\n   - Hannah smashes **3/4** of the teachers' cars.\n   - Number of teachers' cars smashed:  \n     $$\n     \\frac{3}{4} \\times 32 = 24 \\text{ cars}\n     $$\n   - Total windows from teachers:  \n     $$\n     24 \\times 2 = 48 \\text{ windows}\n     $$\n\n3. **Total windows smashed**:\n   $$\n   64 + 48 =",
+            "extracted_answer": 48.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:731",
+            "condition": "unconstrained",
+            "gold_answer": 1.0,
+            "completion": "To solve this problem, we need to calculate the total number of smores needed and then determine how many boxes of graham crackers are required.\n\n---\n\n### Step 1: Calculate the total number of smores needed\n\n- **Number of kids**: 9 kids  \n  - Each kid wants 2 smores:  \n    $ 9 \\times 2 = 18 $ smores\n\n- **Number of adults**: 6 adults  \n  - Each adult wants 1 smore:  \n    $ 6 \\times 1 = 6 $ smores\n\n- **Total smores needed**:  \n  $ 18 + 6 = 24 $ smores\n\n---\n\n### Step 2: Determine the number of boxes needed\n\n- Each box contains 3 sleeves of graham crackers, and each sleeve makes 8 smores:  \n  - Each box makes: $ 3 \\times 8 = 24 $ smores\n\n- Since they need 24 smores, and each box makes 24 smores, they need **1 box**.\n\n---\n\n### ✅ Final Answer:\n$$\n\\boxed{1}\n$$",
+            "extracted_answer": 1.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:734",
+            "condition": "unconstrained",
+            "gold_answer": 17.0,
+            "completion": "Let's calculate the total weight of Cindy's books step by step:\n\n- **Math books**: 2 pounds each, and she has 2 books → $2 \\times 2 = 4$ pounds\n- **Science books**: 2 pounds each, and she has 2 books → $2 \\times 2 = 4$ pounds\n- **French book**: 4 pounds\n- **English book**: 3 pounds\n- **History book**: Twice as much as her English book → $2 \\times 3 = 6$ pounds\n\nNow, summing all these up:\n\n$$\n4 + 4 + 4 + 4 + 3 + 6 = 25 \\text{ pounds}\n$$\n\n**Final Answer: 25**",
+            "extracted_answer": 25.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:738",
+            "condition": "unconstrained",
+            "gold_answer": 4.0,
+            "completion": "Let's solve the problem step by step.\n\n1. Let the number of books Steven has be $ S $.\n2. Alice has 6 more books than Steven: $ A = S + 6 $.\n3. Clara has two times as many books as Steven: $ C = 2S $.\n4. We are told that Clara has 20 books: $ 2S = 20 $.\n5. Solving for $ S $: $ S = 10 $.\n6. Then, Alice has $ A = 10 + 6 = 16 $.\n7. The difference between Clara and Alice is $ 20 - 16 = 4 $.\n\nFinal answer: $ \\boxed{4} $",
+            "extracted_answer": 4.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:741",
+            "condition": "unconstrained",
+            "gold_answer": 28.0,
+            "completion": "Let's break the problem down step by step:\n\n1. **Initial number of birds**: 12\n2. **Birds scared away**: $ \\frac{1}{3} \\times 12 = 4 $\n3. **Remaining birds**: $ 12 - 4 = 8 $\n4. **20 more birds joined**: $ 8 + 20 = 28 $\n\n**Final answer**: $ \\boxed{28} $",
+            "extracted_answer": 28.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:758",
+            "condition": "unconstrained",
+            "gold_answer": 133.0,
+            "completion": "</think>\n\nTo find the amount you will pay after the discount, we first calculate the discount amount and then subtract it from the original price.\n\n- Original price: $140  \n- Discount rate: 5%  \n- Discount amount: $140 × 0.05 = $7  \n- Final price: $140 - $7 = $133\n\nFinal answer: **$133**",
+            "extracted_answer": 133.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:761",
+            "condition": "unconstrained",
+            "gold_answer": 27.0,
+            "completion": "Let's solve the problem step by step:\n\n1. **Total puppies = P + G** (where P = Pomeranians, G = girls)\n2. **Pomeranians = 2/3 of total puppies** → $ P = \\frac{2}{3}T $\n3. **Girls = 1/3 of Pomeranians** → $ G = \\frac{1}{3}P $\n4. Given that $ G = 6 $, so:\n   $$\n   6 = \\frac{1}{3}P \\Rightarrow P = 18\n   $$\n5. Then, total puppies $ T = \\frac{2}{3}P = \\frac{2}{3} \\times 18 = 12 $\n\n**Final Answer:**\n$$\n\\boxed{12}\n$$",
+            "extracted_answer": 12.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:767",
+            "condition": "unconstrained",
+            "gold_answer": 60.0,
+            "completion": "To find the total cost for Sam to make 4 liters of juice:\n\n- 1 liter of juice requires 5 kg of oranges.\n- 4 liters of juice require $ 4 \\times 5 = 20 $ kg of oranges.\n- Each kilogram of oranges costs $3.\n\nTotal cost = $ 20 \\times 3 = 60 $.\n\nFinal answer: **60**",
+            "extracted_answer": 60.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:773",
+            "condition": "unconstrained",
+            "gold_answer": 10.0,
+            "completion": "Anthony had 50 pencils.\n\n1. He gave 1/2 of his pencils to Brandon:\n   - Pencils given to Brandon: $ \\frac{1}{2} \\times 50 = 25 $\n   - Pencils remaining after giving to Brandon: $ 50 - 25 = 25 $\n\n2. He then gave 3/5 of the remaining pencils to Charlie:\n   - Pencils given to Charlie: $ \\frac{3}{5} \\times 25 = 15 $\n   - Pencils remaining after giving to Charlie: $ 25 - 15 = 10 $\n\nSo, Anthony kept **10 pencils**.\n\nFinal answer: **10**",
+            "extracted_answer": 10.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:774",
+            "condition": "unconstrained",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\nTo find the total time Jack is gone from home, we calculate the time he spends driving to the museum and back, and then add the time he spends at the museum.\n\n1. **Distance to the museum**: 150 miles  \n2. **Speed to the museum**: 75 mph  \n3. **Time to the museum**: $ \\frac{150}{75} = 2 $ hours  \n4. **Time to return**: $ \\frac{150}{75} = 2 $ hours  \n5. **Time at the museum**: 6 hours  \n\nTotal time gone from home:  \n$ 2 + 2 + 6 = 10 $ hours  \n\nFinal answer:  \n**10**",
+            "extracted_answer": 10.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:780",
+            "condition": "unconstrained",
+            "gold_answer": 25.0,
+            "completion": "Let's break down the problem step by step.\n\n### Step 1: Define the variables\n- Let $ x $ be the number of enemies Emma jumps on.\n- Then Ava jumps on $ x + 8 $ enemies.\n- Let $ y $ be the number of berries Emma collects.\n- Then Ava collects $ y + 3 $ berries.\n- The time Emma finishes the level is 4 seconds faster than Ava, but we are not told the time for either, so we don't use that.\n\n### Step 2: Calculate the scores\n- **Enemy points for Ava**: $ (x + 8) \\times 10 $\n- **Berry points for Ava**: $ (y + 3) \\times 5 $\n- **Time points for Ava**: $ 4 \\times 30 = 120 $ (since she finishes 4 seconds slower, she gets 30 points for each second)\n\n### Step 3: Total score for Ava\n$$\n\\text{Ava's score} = 10(x + 8) + 5(y + 3) + 120\n$$\n\n### Step 4: Total score for Emma\n- Emma jumps on $ x $ enemies.\n-",
+            "extracted_answer": 4.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:782",
+            "condition": "unconstrained",
+            "gold_answer": 54.0,
+            "completion": "Let's break down the problem step by step.\n\n- **Usual day**: They ride 3 times a day.\n- **Two days a week**: They ride twice the usual amount, i.e., $3 \\times 2 = 6$ times on those days.\n- **The other 5 days**: They ride 3 times a day.\n\nSo, the total number of rides per week is:\n\n$$\n(3 \\text{ rides/day}) \\times 5 \\text{ days} + (6 \\text{ rides/day}) \\times 2 \\text{ days} = 15 + 12 = 27\n$$\n\n**Final answer:**\n$$\n\\boxed{27}\n$$",
+            "extracted_answer": 27.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:791",
+            "condition": "unconstrained",
+            "gold_answer": 100.0,
+            "completion": "Let's break down the problem step by step:\n\n- Initial number of people on the train: 172\n- People who get off at the first stop: 47\n- People who get on at the first stop: 13\n- People who get off at the next stop: 38\n\nNow, calculate the new number of people on the train after each stop:\n\n1. After the first stop:\n   $$\n   172 - 47 + 13 = 138\n   $$\n\n2. After the next stop:\n   $$\n   138 - 38 = 100\n   $$\n\nSo, the final number of people on the train is:\n\n$$\n\\boxed{100}\n$$",
+            "extracted_answer": 100.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:792",
+            "condition": "unconstrained",
+            "gold_answer": 75.0,
+            "completion": "</think>\n\nDamien gets 10 bottle caps per day, and each bottle cap is worth $0.25.  \nSo, the daily earnings are:  \n$10 \\times 0.25 = 2.5$ dollars per day.\n\nFor a 30-day month:  \n$2.5 \\times 30 = 75$ dollars.\n\nFinal answer:  \n**75**",
+            "extracted_answer": 75.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:797",
+            "condition": "unconstrained",
+            "gold_answer": 540.0,
+            "completion": "To find the total time Carrie will be caroling, we calculate the time for each song:\n\n- \"Deck the Halls\" is sung twice:  \n  $ 150 \\text{ seconds} \\times 2 = 300 \\text{ seconds} $\n\n- \"Jingle Bells\" is sung once:  \n  $ 240 \\text{ seconds} $\n\nTotal time:  \n$ 300 + 240 = 540 \\text{ seconds} $\n\nFinal answer:  \n**540**",
+            "extracted_answer": 540.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:798",
+            "condition": "unconstrained",
+            "gold_answer": 20.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n---\n\n### **Billy's Pay:**\n- **Initial rate:** $10/hour\n- **After 2 months:** $10 + $0.50 = $10.50/hour\n- **After 1 year (first anniversary):** $10.50 + $1.00 = $11.50/hour\n- **Total hours worked:** 20\n- **Total earnings for Billy:**  \n  $$\n  20 \\times 11.50 = 230 \\text{ dollars}\n  $$\n\n---\n\n### **Sally's Pay:**\n- **Starting salary:** $10 + $0.50 = $10.50/hour\n- **Total hours worked:** 20\n- **Total earnings for Sally:**  \n  $$\n  20 \\times 10.50 = 210 \\text{ dollars}\n  $$\n\n---\n\n### **Difference in Earnings:**\n$$\n230 - 210 = \\boxed{20} \\text{ dollars}\n$$\n\n---\n\n**Final Answer:** $\\boxed{",
+            "extracted_answer": 20.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:812",
+            "condition": "unconstrained",
+            "gold_answer": 79.0,
+            "completion": "</think>\n\nLet's calculate the total number of petals in the vase:\n\n- 3 flowers with 5 petals each: $3 \\times 5 = 15$\n- 4 flowers with 6 petals each: $4 \\times 6 = 24$\n- 5 flowers with 4 petals each: $5 \\times 4 = 20$\n- 6 flowers with 7 petals each: $6 \\times 7 = 42$\n\nTotal petals before dropping: $15 + 24 + 20 + 42 = 101$\n\nShe drops 1 petal from each of the 4 flowers (since she drops 1 of each), so she loses $4$ petals.\n\nTotal petals in the vase: $101 - 4 = \\boxed{97}$",
+            "extracted_answer": 97.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:814",
+            "condition": "unconstrained",
+            "gold_answer": 11.0,
+            "completion": "</think>\n\nTo solve this problem, we need to determine how much money Jack and his friends spend playing games over 4 hours.\n\n---\n\n### Step 1: Determine the time each person can play per game\n\n- **Jack**: 20 minutes per game\n- **Friend 1 (worse)**: 20 minutes / 2 = 10 minutes per game\n- **Friend 2 (better)**: 20 minutes * 1.5 = 30 minutes per game\n\n---\n\n### Step 2: Total time spent playing\n\n- Total time = 4 hours = 240 minutes\n\n---\n\n### Step 3: Calculate the number of games each person can play\n\n- **Jack**: 240 / 20 = 12 games\n- **Friend 1**: 240 / 10 = 24 games\n- **Friend 2**: 240 / 30 = 8 games\n\n---\n\n### Step 4: Total money spent\n\n- Jack: 12 games * 1 quarter = 12 quarters\n- Friend 1: 24 games * 1 quarter = 24 quarters\n- Friend 2: 8 games",
+            "extracted_answer": 8.0,
+            "correct": false
+          }
+        ],
+        "token_starved": [
+          {
+            "task_id": "gsm8k:test:8",
+            "condition": "token_starved",
+            "gold_answer": 45.0,
+            "completion": "</think>\n\nTo find the final distance from home, we calculate",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:17",
+            "condition": "token_starved",
+            "gold_answer": 57500.0,
+            "completion": "</think>\n\n</think>\n\nTo calculate Jill's annual salary:\n\n-",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:20",
+            "condition": "token_starved",
+            "gold_answer": 15.0,
+            "completion": "</think>\n\nLet's break this down step by step.\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:23",
+            "condition": "token_starved",
+            "gold_answer": 8.0,
+            "completion": "</think>\n\n</think>\n\n12",
+            "extracted_answer": 12.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:28",
+            "condition": "token_starved",
+            "gold_answer": 25.0,
+            "completion": "</think>\n\n</think>\n\n15",
+            "extracted_answer": 15.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:34",
+            "condition": "token_starved",
+            "gold_answer": 23.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:44",
+            "condition": "token_starved",
+            "gold_answer": 20.0,
+            "completion": "</think>\n\n10.00 - (20 *",
+            "extracted_answer": 20.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:45",
+            "condition": "token_starved",
+            "gold_answer": 104.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:54",
+            "condition": "token_starved",
+            "gold_answer": 40.0,
+            "completion": "</think>\n\n</think>\n\n57",
+            "extracted_answer": 57.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:55",
+            "condition": "token_starved",
+            "gold_answer": 14.0,
+            "completion": "</think>\n\n10",
+            "extracted_answer": 10.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:59",
+            "condition": "token_starved",
+            "gold_answer": 187.0,
+            "completion": "</think>\n\n1227",
+            "extracted_answer": 1227.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:66",
+            "condition": "token_starved",
+            "gold_answer": 48.0,
+            "completion": "</think>\n\n</think>\n\n16",
+            "extracted_answer": 16.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:74",
+            "condition": "token_starved",
+            "gold_answer": 88.0,
+            "completion": "</think>\n\n</think>\n\n12*2 + 9*",
+            "extracted_answer": 9.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:75",
+            "condition": "token_starved",
+            "gold_answer": 60.0,
+            "completion": "</think>\n\nTo find the average square footage of a level,",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:83",
+            "condition": "token_starved",
+            "gold_answer": 600.0,
+            "completion": "</think>\n\n25 * 25 * 8 =",
+            "extracted_answer": 8.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:86",
+            "condition": "token_starved",
+            "gold_answer": 22.0,
+            "completion": "</think>\n\nTo find the total number of times the alarm rang",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:90",
+            "condition": "token_starved",
+            "gold_answer": 225.0,
+            "completion": "</think>\n\n</think>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:92",
+            "condition": "token_starved",
+            "gold_answer": 4.0,
+            "completion": "</think>\n\nLet's solve the problem step by step.\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:96",
+            "condition": "token_starved",
+            "gold_answer": 3.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the difference in hours Harry",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:98",
+            "condition": "token_starved",
+            "gold_answer": 5.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:99",
+            "condition": "token_starved",
+            "gold_answer": 58.0,
+            "completion": "</think>\n\n18 + (40 * 2)",
+            "extracted_answer": 2.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:102",
+            "condition": "token_starved",
+            "gold_answer": 26.0,
+            "completion": "</think>\n\n5\n\nExplanation: John drinks 5 glasses of",
+            "extracted_answer": 5.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:110",
+            "condition": "token_starved",
+            "gold_answer": 45.0,
+            "completion": "</think>\n\n</think>\n\nTo find the average number of fruit roll",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:118",
+            "condition": "token_starved",
+            "gold_answer": 4.0,
+            "completion": "</think>\n\n</think>\n\n5",
+            "extracted_answer": 5.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:119",
+            "condition": "token_starved",
+            "gold_answer": 95200.0,
+            "completion": "</think>\n\nLet's break this down step by step.\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:129",
+            "condition": "token_starved",
+            "gold_answer": 10000.0,
+            "completion": "</think>\n\n150 * 24 * 5",
+            "extracted_answer": 5.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:139",
+            "condition": "token_starved",
+            "gold_answer": 70.0,
+            "completion": "</think>\n\nLet's solve the problem step by step.\n\nLet",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:141",
+            "condition": "token_starved",
+            "gold_answer": 400.0,
+            "completion": "</think>\n\n140",
+            "extracted_answer": 140.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:147",
+            "condition": "token_starved",
+            "gold_answer": 75.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:148",
+            "condition": "token_starved",
+            "gold_answer": 30.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:149",
+            "condition": "token_starved",
+            "gold_answer": 16.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the problem step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:160",
+            "condition": "token_starved",
+            "gold_answer": 16.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the depth on Wednesday step",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:165",
+            "condition": "token_starved",
+            "gold_answer": 77.0,
+            "completion": "</think>\n\n</think>\n\n1500 - (10",
+            "extracted_answer": 10.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:168",
+            "condition": "token_starved",
+            "gold_answer": 18.0,
+            "completion": "</think>\n\nLet's break it down:\n\n- Ethel has",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:170",
+            "condition": "token_starved",
+            "gold_answer": 150.0,
+            "completion": "</think>\n\nLet's calculate the total cost of one uniform:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:171",
+            "condition": "token_starved",
+            "gold_answer": 1210.0,
+            "completion": "</think>\n\n</think>\n\n80*8 + 90",
+            "extracted_answer": 90.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:179",
+            "condition": "token_starved",
+            "gold_answer": 130.0,
+            "completion": "</think>\n\n50 + 80 = 13",
+            "extracted_answer": 13.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:185",
+            "condition": "token_starved",
+            "gold_answer": 30.0,
+            "completion": "</think>\n\n</think>\n\n50",
+            "extracted_answer": 50.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:190",
+            "condition": "token_starved",
+            "gold_answer": 360.0,
+            "completion": "</think>\n\n60",
+            "extracted_answer": 60.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:192",
+            "condition": "token_starved",
+            "gold_answer": 91.0,
+            "completion": "</think>\n\n</think>\n\n10 years × (50 -",
+            "extracted_answer": 50.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:193",
+            "condition": "token_starved",
+            "gold_answer": 24.0,
+            "completion": "</think>\n\n</think>\n\nLet's break it down step by step",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:202",
+            "condition": "token_starved",
+            "gold_answer": 100.0,
+            "completion": "</think>\n\n500",
+            "extracted_answer": 500.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:204",
+            "condition": "token_starved",
+            "gold_answer": 98.0,
+            "completion": "</think>\n\n22 + 10 + (6*",
+            "extracted_answer": 6.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:209",
+            "condition": "token_starved",
+            "gold_answer": 145.0,
+            "completion": "</think>\n\nLet's define the variables:\n\n- Let $ x",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:218",
+            "condition": "token_starved",
+            "gold_answer": 45.0,
+            "completion": "</think>\n\nFirst, we are given that Harriet is ",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:230",
+            "condition": "token_starved",
+            "gold_answer": 276000.0,
+            "completion": "</think>\n\n</think>\n\n12 * 20,0",
+            "extracted_answer": 200.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:232",
+            "condition": "token_starved",
+            "gold_answer": 75.0,
+            "completion": "</think>\n\n</think>\n\n50 ants, and Dax picked",
+            "extracted_answer": 50.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:240",
+            "condition": "token_starved",
+            "gold_answer": 21.0,
+            "completion": "</think>\n\n</think>\n\nLet's solve the problem step by step",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:245",
+            "condition": "token_starved",
+            "gold_answer": 7.0,
+            "completion": "</think>\n\nLet the number of fish in the first aquarium be",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:248",
+            "condition": "token_starved",
+            "gold_answer": 300.0,
+            "completion": "</think>\n\n300",
+            "extracted_answer": 300.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:249",
+            "condition": "token_starved",
+            "gold_answer": 5600.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:271",
+            "condition": "token_starved",
+            "gold_answer": 20.0,
+            "completion": "</think>\n\n</think>\n\n12 + 4 = 1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:273",
+            "condition": "token_starved",
+            "gold_answer": 315.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the problem step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:274",
+            "condition": "token_starved",
+            "gold_answer": 3200.0,
+            "completion": "</think>\n\n20*40 + 80*",
+            "extracted_answer": 80.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:278",
+            "condition": "token_starved",
+            "gold_answer": 40.0,
+            "completion": "</think>\n\n20",
+            "extracted_answer": 20.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:286",
+            "condition": "token_starved",
+            "gold_answer": 90.0,
+            "completion": "</think>\n\n15",
+            "extracted_answer": 15.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:299",
+            "condition": "token_starved",
+            "gold_answer": 31800.0,
+            "completion": "</think>\n\n</think>\n\n150 * 52 =",
+            "extracted_answer": 52.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:308",
+            "condition": "token_starved",
+            "gold_answer": 6.0,
+            "completion": "</think>\n\nLet's calculate the total cost of 2 tub",
+            "extracted_answer": 2.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:311",
+            "condition": "token_starved",
+            "gold_answer": 91.0,
+            "completion": "</think>\n\nLet's break it down:\n\n- 3 people",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:323",
+            "condition": "token_starved",
+            "gold_answer": 75.0,
+            "completion": "</think>\n\n</think>\n\n15",
+            "extracted_answer": 15.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:330",
+            "condition": "token_starved",
+            "gold_answer": 31.0,
+            "completion": "</think>\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:338",
+            "condition": "token_starved",
+            "gold_answer": 60.0,
+            "completion": "</think>\n\nLet the number of students in the two equal groups",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:341",
+            "condition": "token_starved",
+            "gold_answer": 260.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the information step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:348",
+            "condition": "token_starved",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\n</think>\n\n100 (tractor revenue) /",
+            "extracted_answer": 100.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:352",
+            "condition": "token_starved",
+            "gold_answer": 21.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the problem step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:367",
+            "condition": "token_starved",
+            "gold_answer": 19.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:368",
+            "condition": "token_starved",
+            "gold_answer": 18.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the problem step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:372",
+            "condition": "token_starved",
+            "gold_answer": 5.0,
+            "completion": "</think>\n\nLet's break it down:\n\n- Tuesday: ",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:377",
+            "condition": "token_starved",
+            "gold_answer": 50.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:378",
+            "condition": "token_starved",
+            "gold_answer": 15.0,
+            "completion": "</think>\n\n5",
+            "extracted_answer": 5.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:380",
+            "condition": "token_starved",
+            "gold_answer": 803.0,
+            "completion": "</think>\n\nLet's calculate the total interest first:  \nInterest",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:382",
+            "condition": "token_starved",
+            "gold_answer": 350.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the total number of pesos",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:383",
+            "condition": "token_starved",
+            "gold_answer": 2.0,
+            "completion": "</think>\n\n</think>\n\nThe final answer is: **$1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:391",
+            "condition": "token_starved",
+            "gold_answer": 15.0,
+            "completion": "</think>\n\nLet the number of popsicles Betty has be $",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:396",
+            "condition": "token_starved",
+            "gold_answer": 3.0,
+            "completion": "</think>\n\n</think>\n\n12 - (1/3 *",
+            "extracted_answer": 3.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:401",
+            "condition": "token_starved",
+            "gold_answer": 14400.0,
+            "completion": "</think>\n\n12000",
+            "extracted_answer": 12000.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:405",
+            "condition": "token_starved",
+            "gold_answer": 50.0,
+            "completion": "</think>\n\n</think>\n\n100",
+            "extracted_answer": 100.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:410",
+            "condition": "token_starved",
+            "gold_answer": 3.0,
+            "completion": "</think>\n\nLet's break down the costs:\n\n- Taff",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:414",
+            "condition": "token_starved",
+            "gold_answer": 56.0,
+            "completion": "</think>\n\n</think>\n\n160",
+            "extracted_answer": 160.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:416",
+            "condition": "token_starved",
+            "gold_answer": 56.0,
+            "completion": "</think>\n\nLet the number of camels be $ c $",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:420",
+            "condition": "token_starved",
+            "gold_answer": 17000.0,
+            "completion": "</think>\n\n</think>\n\n20000",
+            "extracted_answer": 20000.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:430",
+            "condition": "token_starved",
+            "gold_answer": 132.0,
+            "completion": "</think>\n\n120 + 20 + (5",
+            "extracted_answer": 5.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:431",
+            "condition": "token_starved",
+            "gold_answer": 1.0,
+            "completion": "</think>\n\n</think>\n\nFirst, calculate the total cost of the",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:434",
+            "condition": "token_starved",
+            "gold_answer": 5.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the problem step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:442",
+            "condition": "token_starved",
+            "gold_answer": 49.0,
+            "completion": "</think>\n\n</think>\n\nLet's break it down step by step",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:445",
+            "condition": "token_starved",
+            "gold_answer": 6.0,
+            "completion": "</think>\n\n</think>\n\nFirst, calculate the distance the horse runs",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:451",
+            "condition": "token_starved",
+            "gold_answer": 11050.0,
+            "completion": "</think>\n\n</think>\n\nLet's break it down step by step",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:452",
+            "condition": "token_starved",
+            "gold_answer": 50.0,
+            "completion": "</think>\n\n1.5",
+            "extracted_answer": 1.5,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:458",
+            "condition": "token_starved",
+            "gold_answer": 35.0,
+            "completion": "</think>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:465",
+            "condition": "token_starved",
+            "gold_answer": 30.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the total number of cards",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:472",
+            "condition": "token_starved",
+            "gold_answer": 6.0,
+            "completion": "</think>\n\nLet's define the variables:\n\n- Let $ x",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:476",
+            "condition": "token_starved",
+            "gold_answer": 5.0,
+            "completion": "</think>\n\n</think>\n\n300 ÷ 15",
+            "extracted_answer": 15.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:477",
+            "condition": "token_starved",
+            "gold_answer": 20.0,
+            "completion": "</think>\n\n</think>\n\nLet's solve this step by step.\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:485",
+            "condition": "token_starved",
+            "gold_answer": 220.0,
+            "completion": "</think>\n\nLet's break it down step by step:\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:498",
+            "condition": "token_starved",
+            "gold_answer": 40.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the total number of oranges",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:507",
+            "condition": "token_starved",
+            "gold_answer": 2.0,
+            "completion": "</think>\n\n110",
+            "extracted_answer": 110.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:510",
+            "condition": "token_starved",
+            "gold_answer": 525.0,
+            "completion": "</think>\n\n</think>\n\n150",
+            "extracted_answer": 150.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:519",
+            "condition": "token_starved",
+            "gold_answer": 280.0,
+            "completion": "</think>\n\n<tool_call>\n\nLet's break it down:\n\n- Rob",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:521",
+            "condition": "token_starved",
+            "gold_answer": 39.0,
+            "completion": "</think>\n\nLet's break it down step by step:\n\n-",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:522",
+            "condition": "token_starved",
+            "gold_answer": 29.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:534",
+            "condition": "token_starved",
+            "gold_answer": 300.0,
+            "completion": "</think>\n\nLet's define the variables:\n\n- Let $ b",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:552",
+            "condition": "token_starved",
+            "gold_answer": 450.0,
+            "completion": "</think>\n\n1000 * 0.3 +",
+            "extracted_answer": 0.3,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:555",
+            "condition": "token_starved",
+            "gold_answer": 2.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the total amount John saves",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:585",
+            "condition": "token_starved",
+            "gold_answer": 40.0,
+            "completion": "</think>\n\n</think>\n\nFirst, calculate the total hours worked by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:587",
+            "condition": "token_starved",
+            "gold_answer": 30.0,
+            "completion": "</think>\n\nLet's define the variables:\n\n- Let $ B",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:590",
+            "condition": "token_starved",
+            "gold_answer": 319.0,
+            "completion": "</think>\n\n</think>\n\n</think>\n\n100 + 1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:593",
+            "condition": "token_starved",
+            "gold_answer": 3.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the height of the bean",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:594",
+            "condition": "token_starved",
+            "gold_answer": 42.0,
+            "completion": "100 grams of mushrooms per day = 3 grams",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:598",
+            "condition": "token_starved",
+            "gold_answer": 69.0,
+            "completion": "</think>\n\n</think>\n\nTo find out how many gumballs",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:600",
+            "condition": "token_starved",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\n</think>\n\nLet's break it down step by step",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:606",
+            "condition": "token_starved",
+            "gold_answer": 6.0,
+            "completion": "</think>\n\n</think>\n\nLet's calculate the total number of rotations",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:609",
+            "condition": "token_starved",
+            "gold_answer": 7.0,
+            "completion": "</think>\n\n1/4 * 4 * 7 =",
+            "extracted_answer": 7.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:617",
+            "condition": "token_starved",
+            "gold_answer": 5.0,
+            "completion": "</think>\n\n15 * 10 = 15",
+            "extracted_answer": 15.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:621",
+            "condition": "token_starved",
+            "gold_answer": 3000.0,
+            "completion": "</think>\n\n125 * 2 * 6 *",
+            "extracted_answer": 6.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:623",
+            "condition": "token_starved",
+            "gold_answer": 8.0,
+            "completion": "</think>\n\n32",
+            "extracted_answer": 32.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:631",
+            "condition": "token_starved",
+            "gold_answer": 4800.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:635",
+            "condition": "token_starved",
+            "gold_answer": 4.0,
+            "completion": "</think>\n\n10",
+            "extracted_answer": 10.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:637",
+            "condition": "token_starved",
+            "gold_answer": 17.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:645",
+            "condition": "token_starved",
+            "gold_answer": 48.0,
+            "completion": "</think>\n\n16",
+            "extracted_answer": 16.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:655",
+            "condition": "token_starved",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\n</think>\n\n15 - (15 × ",
+            "extracted_answer": 15.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:666",
+            "condition": "token_starved",
+            "gold_answer": 120.0,
+            "completion": "</think>\n\nLet's break down the problem step by step:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:673",
+            "condition": "token_starved",
+            "gold_answer": 9.0,
+            "completion": "</think>\n\nLet's solve the problem step by step.\n\nLet",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:677",
+            "condition": "token_starved",
+            "gold_answer": 36.0,
+            "completion": "</think>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n<tool_call>\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:682",
+            "condition": "token_starved",
+            "gold_answer": 80.0,
+            "completion": "</think>\n\nLet the original length of the dress be $ x",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:689",
+            "condition": "token_starved",
+            "gold_answer": 7.0,
+            "completion": "</think>\n\nLet's calculate the cost of 10 l",
+            "extracted_answer": 10.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:692",
+            "condition": "token_starved",
+            "gold_answer": 32.0,
+            "completion": "</think>\n\nTo calculate the price of the crate, we need",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:694",
+            "condition": "token_starved",
+            "gold_answer": 9.0,
+            "completion": "</think>\n\n</think>\n\nLet's break down the problem step by",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:702",
+            "condition": "token_starved",
+            "gold_answer": 2800.0,
+            "completion": "</think>\n\nLet's define the variables:\n\n- Gissela",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:715",
+            "condition": "token_starved",
+            "gold_answer": 385000.0,
+            "completion": "</think>\n\n500 * 700 * ",
+            "extracted_answer": 700.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:719",
+            "condition": "token_starved",
+            "gold_answer": 175.0,
+            "completion": "</think>\n\n</think>\n\n20 sacks - 3 sacks -",
+            "extracted_answer": 3.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:721",
+            "condition": "token_starved",
+            "gold_answer": 2450.0,
+            "completion": "</think>\n\nTo find the total number of taps, we need",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:722",
+            "condition": "token_starved",
+            "gold_answer": 255.0,
+            "completion": "</think>\n\nThe amount Ron saves is the difference between the cost",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:727",
+            "condition": "token_starved",
+            "gold_answer": 112.0,
+            "completion": "</think>\n\nTo find the total number of windows Hannah smashed:\n\n",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:731",
+            "condition": "token_starved",
+            "gold_answer": 1.0,
+            "completion": "</think>\n\n</think>\n\n1. Total number of smores needed",
+            "extracted_answer": 1.0,
+            "correct": true
+          },
+          {
+            "task_id": "gsm8k:test:734",
+            "condition": "token_starved",
+            "gold_answer": 17.0,
+            "completion": "</think>\n\nTo find the total weight of Cindy's books,",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:738",
+            "condition": "token_starved",
+            "gold_answer": 4.0,
+            "completion": "</think>\n\nLet's solve the problem step by step.\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:741",
+            "condition": "token_starved",
+            "gold_answer": 28.0,
+            "completion": "</think>\n\n</think>\n\n12 - (12 * ",
+            "extracted_answer": 12.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:758",
+            "condition": "token_starved",
+            "gold_answer": 133.0,
+            "completion": "</think>\n\n140 * 0.95 =",
+            "extracted_answer": 0.95,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:761",
+            "condition": "token_starved",
+            "gold_answer": 27.0,
+            "completion": "</think>\n\nLet's solve the problem step by step:\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:767",
+            "condition": "token_starved",
+            "gold_answer": 60.0,
+            "completion": "</think>\n\n</think>\n\n100",
+            "extracted_answer": 100.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:773",
+            "condition": "token_starved",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\nLet's break it down step by step:\n\n1",
+            "extracted_answer": 1.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:774",
+            "condition": "token_starved",
+            "gold_answer": 10.0,
+            "completion": "</think>\n\n</think>\n\n54",
+            "extracted_answer": 54.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:780",
+            "condition": "token_starved",
+            "gold_answer": 25.0,
+            "completion": "</think>\n\nTo calculate the difference between Ava and Emma's scores",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:782",
+            "condition": "token_starved",
+            "gold_answer": 54.0,
+            "completion": "</think>\n\nLet's break it down:\n\n- They ride **",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:791",
+            "condition": "token_starved",
+            "gold_answer": 100.0,
+            "completion": "172 - 47 + 13 -",
+            "extracted_answer": 13.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:792",
+            "condition": "token_starved",
+            "gold_answer": 75.0,
+            "completion": "</think>\n\n</think>\n\n250",
+            "extracted_answer": 250.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:797",
+            "condition": "token_starved",
+            "gold_answer": 540.0,
+            "completion": "</think>\n\n</think>\n\n150 + 150",
+            "extracted_answer": 150.0,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:798",
+            "condition": "token_starved",
+            "gold_answer": 20.0,
+            "completion": "</think>\n\n</think>\n\nFirst, calculate Billy's starting salary:",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:812",
+            "condition": "token_starved",
+            "gold_answer": 79.0,
+            "completion": "</think>\n\n</think>\n\nTo find the total number of petals in",
+            "extracted_answer": null,
+            "correct": false
+          },
+          {
+            "task_id": "gsm8k:test:814",
+            "condition": "token_starved",
+            "gold_answer": 11.0,
+            "completion": "</think>\n\n</think>\n\n1. Let's define the time each",
+            "extracted_answer": 1.0,
+            "correct": false
+          }
+        ]
+      }
+    }
+  ],
+  "source_commit": "3611b99a24d7ff407a7420ef69c91354b1b21780",
+  "platform": "Windows-11-10.0.26200-SP0"
+}

@@ -20,6 +20,12 @@
       "recorded_in_commit": "277285b2422238bc5ead0fd00af43aca1ce91e9b",
       "kind": "phase_a_no_tool_diagnostic"
     },
+    "contamination-sft-qwen3-1.7b-3611b99.json": {
+      "sha256": "edef39e512852050d96e961235ea19afd6fd95d9f1342400bb111ff6ca8a5795",
+      "bytes": 155677,
+      "recorded_in_commit": null,
+      "kind": "phase_a_no_tool_diagnostic"
+    },
     "masking-verification-4c8acbc.json": {
       "sha256": "98a6c1a1b4bf0254fe6ef8aeb944aacc128d4849a33e5c721fd34f95fbcdad0d",
       "bytes": 3550,
