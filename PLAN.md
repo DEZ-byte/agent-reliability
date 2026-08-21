@@ -116,6 +116,46 @@ to paid compute or headline evaluation until M0's reward-gaming tests are green.
   distinguishable from R0 on the 4B, because 85-91% of failures are a
   well-formed call with wrong arithmetic, which a format retry cannot repair
 
+## M2 — Phase A SFT
+
+The measurement that shapes this stage: 85-91% of failures are a well-formed,
+schema-valid tool call that computes the wrong thing (D-068). Format repair
+cannot reach that, which is why the retained set is about the content of the
+call rather than its shape.
+
+- [x] Assistant-token-only loss masking, with guards for the failures that are
+  silent (D-046 template patch shared into `src/training/`). An unmarked
+  template returns an all-zero mask rather than raising, so the module refuses
+  to return labels it cannot prove
+- [x] Masking verified on the real checkpoints and frozen as an artifact. Both
+  selected checkpoints train 24 tokens of 293, and a training row begins with
+  exactly the token sequence the evaluator generates from
+- [x] Laundering filter that decoration cannot pass (D-071). `391 + 0` parses
+  as arithmetic and computes nothing
+- [x] Split loader fixed so train tasks load from upstream train, and shared
+  with the evaluator
+- [x] Dev-split diagnostic config, so no training decision is derived from the
+  split the checkpoint is scored on
+- [x] `configs/train_config.yaml` pinned: pre-registered values from section
+  7.4, measured values from dev, none left null (D-069, D-070, D-071)
+- [x] Trajectory generation, dataset selection with a dev/test leakage guard,
+  and a trainer that asserts the stack's silent traps shut
+- [ ] End-to-end pilot on a small train slice, so rented GPU hours are not
+  spent debugging the pipeline
+- [ ] Teacher registry entry with a resolved revision, and its adoption
+  decision. `Qwen/Qwen3-32B` and `Qwen/Qwen3-14B` both resolve as Apache-2.0
+  and ungated
+- [ ] Teacher generation over the 1,000-task train split on rented GPU
+- [ ] SFT run, checkpoint selection on dev, then test exactly once
+- [ ] Report SFT against its own baseline, with the no-arithmetic rate beside
+  every accuracy figure
+
+Not in M2, and why: `r1_recovery` trajectories. Phase A ends an episode as soon
+as a calculator call succeeds, so the dominant failure never reaches a second
+decision, and revealing wrongness at runtime would leak the grader. Measured
+yield is one task in 100 for the 4B. Self-correction data comes from Stage 2
+(D-069).
+
 ## Open specification issues
 
 These are tracked rather than silently guessed:
