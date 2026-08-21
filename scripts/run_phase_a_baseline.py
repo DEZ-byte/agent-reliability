@@ -34,6 +34,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import (  # noqa: E402
     PhaseATask,
+    is_answering_event,
     build_phase_a_registry,
     calculator_tool_schema,
 )
@@ -48,6 +49,12 @@ from evaluation.rungs import (  # noqa: E402
 
 EVAL_CONFIG_PATH: Final = PROJECT_ROOT / "configs" / "eval.yaml"
 REGISTRY_PATH: Final = PROJECT_ROOT / "configs" / "model_candidates.json"
+# Pinned in configs/train_config.yaml by D-071 and read once, so the evaluator
+# and the dataset builder cannot disagree about what laundering means.
+_LAUNDERING_MATCH_RATIO: Final = json.loads(
+    (PROJECT_ROOT / "configs" / "train_config.yaml").read_text(encoding="utf-8")
+)["retention"]["min_question_match_ratio"]
+
 SCHEMA_VERSION: Final = 1
 MAX_SEQUENCE_TOKENS: Final = 2048
 
@@ -208,6 +215,32 @@ def _make_policy(model: Any, tokenizer: Any, torch: Any, config: dict[str, Any],
     return policy
 
 
+def _strict_laundering(result: Any, task: PhaseATask) -> bool:
+    """Judge the answering expression under all of the retention rules.
+
+    `EpisodeResult.answered_without_arithmetic` asks only whether the
+    expression did any arithmetic at all, which `391 + 0` passes while
+    computing nothing. This asks the question `training.retention` asks, so an
+    accuracy figure can be read beside the rate that actually matters.
+    """
+
+    from training.retention import laundering_verdict
+
+    for event in reversed(result.tool_events):
+        if not is_answering_event(event):
+            continue
+        expression = event.call.arguments.get("expression")
+        if not isinstance(expression, str):
+            return False
+        return laundering_verdict(
+            expression=expression,
+            question=task.question,
+            gold_answer=task.gold_answer,
+            min_question_match_ratio=_LAUNDERING_MATCH_RATIO,
+        ).laundered
+    return False
+
+
 def _measure(
     candidate: dict[str, str],
     tasks: list[PhaseATask],
@@ -262,6 +295,12 @@ def _measure(
     for rung in (rungs or config["phase_a"]["rungs"]):
         rows: list[list[int]] = []
         laundered = 0
+        # The harness metric implements only the first of the project's three
+        # retention rules, so it misses `391 + 0` and reports roughly half the
+        # true rate. It is kept unchanged because every frozen artifact was
+        # recorded under it; the strict rate is reported beside it (D-073).
+        laundered_strict = 0
+        laundered_strict_correct = 0
         total_episodes = 0
         decisions = 0
         for task in tasks:
@@ -284,6 +323,11 @@ def _measure(
                 decisions += result.counters.policy_model_decision_count
                 if result.answered_without_arithmetic:
                     laundered += 1
+                verdict = _strict_laundering(result, task)
+                if verdict:
+                    laundered_strict += 1
+                    if result.correct:
+                        laundered_strict_correct += 1
                 episodes_out.write(
                     json.dumps(
                         {"candidate": candidate["id"], **result.to_json()},
@@ -318,6 +362,11 @@ def _measure(
             "metrics": metrics,
             "no_arithmetic_rate": laundered / total_episodes if total_episodes else None,
             "no_arithmetic_episodes": laundered,
+            "laundered_strict_rate": laundered_strict / total_episodes
+            if total_episodes
+            else None,
+            "laundered_strict_episodes": laundered_strict,
+            "laundered_strict_and_correct_episodes": laundered_strict_correct,
             "tasks_solved_at_least_once": solved,
         }
 
