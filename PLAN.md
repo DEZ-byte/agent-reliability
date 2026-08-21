@@ -151,20 +151,23 @@ call rather than its shape.
   0.045, because a model already assigns high probability to text it generated.
   Self-distillation has almost nothing to teach here, which is the measured
   version of the section 5.2 argument for a larger teacher
-- [ ] Teacher adoption decision, and only then a registry entry. Both
-  candidates resolve as Apache-2.0, ungated:
-  `Qwen/Qwen3-32B` at `9216db5781bf21249d130ec9da846c4624c16137` and
-  `Qwen/Qwen3-14B` at `40c069824f4251a91eefaf281ebe4c544efd3e18`.
-  They stay out of `configs/model_candidates.json` until one is adopted,
-  because `configs/model_smoke.json` pins the registry by SHA-256 as part of
-  the resolved D-048 release gate, and re-pinning a resolved gate for a model
-  nobody has adopted would weaken the gate for no gain. Until then the teacher
-  runs with an explicit `--revision`, which the generator requires rather than
-  guessing
-- [ ] Teacher generation over the 1,000-task train split on rented GPU
-- [ ] SFT run, checkpoint selection on dev, then test exactly once
-- [ ] Report SFT against its own baseline, with the no-arithmetic rate beside
-  every accuracy figure
+- [x] Teacher decision (D-072). Qwen3-4B teaches Qwen3-1.7B, both already
+  pinned, both local, nothing rented. This deviates from §5.2's "32B class"
+  teacher, so it trains the scale-check model only and does not answer H1 for
+  the primary model
+- [ ] Generation over the 1,000-task train split with the 4B
+- [ ] SFT run on the 1.7B, checkpoint selection on dev, then test exactly once
+- [ ] Report SFT against its own baseline, naming the teacher, with the
+  no-arithmetic rate beside every accuracy figure
+
+Still open for the primary model: the pre-registered larger teacher.
+`Qwen/Qwen3-32B` at `9216db5781bf21249d130ec9da846c4624c16137` and
+`Qwen/Qwen3-14B` at `40c069824f4251a91eefaf281ebe4c544efd3e18` both resolve as
+Apache-2.0 and ungated. They stay out of `configs/model_candidates.json` until
+one is adopted, because `configs/model_smoke.json` pins the registry by SHA-256
+as part of the resolved D-048 release gate, and re-pinning a resolved gate for
+an unadopted model would weaken it for nothing. Until then a teacher runs with
+an explicit `--revision`, which the generator requires rather than guessing.
 
 Not in M2, and why: `r1_recovery` trajectories. Phase A ends an episode as soon
 as a calculator call succeeds, so the dominant failure never reaches a second
