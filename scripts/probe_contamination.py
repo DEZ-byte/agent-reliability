@@ -216,7 +216,11 @@ def _generate(
     )
 
 
-def _measure(candidate: dict[str, str], tasks: list[dict[str, Any]]) -> dict[str, Any]:
+def _measure(
+    candidate: dict[str, str],
+    tasks: list[dict[str, Any]],
+    adapter: Path | None = None,
+) -> dict[str, Any]:
     from unsloth import FastLanguageModel  # patches transformers; import first
 
     import torch
@@ -244,6 +248,13 @@ def _measure(candidate: dict[str, str], tasks: list[dict[str, Any]]) -> dict[str
         random_state=SEED,
         disable_log_stats=True,
     )
+    if adapter is not None:
+        # Recall is a property of the weights being probed. D-064 measured the
+        # base checkpoints, so a trained arm needs its own probe rather than
+        # inheriting a number measured before it existed.
+        from peft import PeftModel
+
+        model = PeftModel.from_pretrained(model, str(adapter))
     FastLanguageModel.for_inference(model)
     pad_token_id = tokenizer.pad_token_id
     if pad_token_id is None:
@@ -292,6 +303,17 @@ def main() -> int:
     parser.add_argument("--output", required=True)
     parser.add_argument("--candidate", action="append", default=[])
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--adapter",
+        type=Path,
+        default=None,
+        help="LoRA adapter to probe on top of the base checkpoint",
+    )
+    parser.add_argument(
+        "--split",
+        default=None,
+        help="override the split named in the eval config",
+    )
     parser.add_argument("--run-load", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     args = parser.parse_args()
@@ -312,6 +334,14 @@ def main() -> int:
         .isoformat()
         .replace("+00:00", "Z"),
         "kind": "phase_a_no_tool_diagnostic",
+        "adapter": None
+        if args.adapter is None
+        else {
+            "path": str(args.adapter),
+            "weights_sha256": hashlib.sha256(
+                (args.adapter / "adapter_model.safetensors").read_bytes()
+            ).hexdigest(),
+        },
         "plan": _plan(len(tasks), candidates),
         "split_manifest_sha256": _sha256_file(SPLIT_PATH),
         "registry_sha256": _sha256_file(REGISTRY_PATH),
@@ -334,7 +364,9 @@ def main() -> int:
 
     for candidate in candidates:
         try:
-            result["results"].append(_measure(candidate, tasks))
+            result["results"].append(
+                _measure(candidate, tasks, adapter=args.adapter)
+            )
         except Exception as exc:  # Model and runtime errors are result data.
             result["results"].append(
                 {
