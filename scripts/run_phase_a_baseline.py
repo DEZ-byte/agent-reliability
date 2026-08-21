@@ -213,6 +213,8 @@ def _measure(
     tasks: list[PhaseATask],
     config: dict[str, Any],
     episodes_out,
+    adapter: Path | None = None,
+    rungs: list[str] | None = None,
 ) -> dict[str, Any]:
     from unsloth import FastLanguageModel  # patches transformers; import first
 
@@ -241,6 +243,13 @@ def _measure(
         random_state=config["runs"]["seed_base"],
         disable_log_stats=True,
     )
+    if adapter is not None:
+        # A trained arm is the base checkpoint plus its adapter. Loading the
+        # adapter after `for_inference` would patch the base module and leave
+        # the wrapper unpatched, so the order here is load, attach, prepare.
+        from peft import PeftModel
+
+        model = PeftModel.from_pretrained(model, str(adapter))
     FastLanguageModel.for_inference(model)
 
     n_runs = config["runs"]["tier_1_n"]
@@ -250,7 +259,7 @@ def _measure(
     gate_engine = GateEngine.from_mapping({})
 
     per_rung: dict[str, Any] = {}
-    for rung in config["phase_a"]["rungs"]:
+    for rung in (rungs or config["phase_a"]["rungs"]):
         rows: list[list[int]] = []
         laundered = 0
         total_episodes = 0
@@ -329,6 +338,18 @@ def main() -> int:
     parser.add_argument("--episodes", required=True, help="trajectory JSONL path")
     parser.add_argument("--candidate", action="append", default=[])
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--adapter",
+        type=Path,
+        default=None,
+        help="LoRA adapter directory to evaluate on top of the base checkpoint",
+    )
+    parser.add_argument(
+        "--rung",
+        action="append",
+        default=[],
+        help="restrict to these rungs; defaults to every rung in the config",
+    )
     parser.add_argument("--run-load", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     args = parser.parse_args()
@@ -356,6 +377,16 @@ def main() -> int:
             "user": _sha256_text(USER_PROMPT),
         },
         "decoding": config["decoding"],
+        "adapter": None
+        if args.adapter is None
+        else {
+            "path": str(args.adapter),
+            "config_sha256": _sha256_file(args.adapter / "adapter_config.json"),
+            "weights_sha256": _sha256_file(
+                args.adapter / "adapter_model.safetensors"
+            ),
+        },
+        "rungs_measured": args.rung or config["phase_a"]["rungs"],
         "candidates_planned": candidates,
         "executed": bool(args.run_load),
         "results": [],
@@ -381,7 +412,14 @@ def main() -> int:
         for candidate in candidates:
             try:
                 result["results"].append(
-                    _measure(candidate, tasks, config, episodes_out)
+                    _measure(
+                        candidate,
+                        tasks,
+                        config,
+                        episodes_out,
+                        adapter=args.adapter,
+                        rungs=args.rung or None,
+                    )
                 )
             except Exception as exc:  # Model and runtime errors are result data.
                 result["results"].append(
