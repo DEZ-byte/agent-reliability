@@ -123,6 +123,12 @@
       "bytes": 1676,
       "recorded_in_commit": "51f0c2568f2a8b190cca46cf2d411272305c0921",
       "kind": "sft_run"
+    },
+    "sft-selection-qwen3-1.7b-72ff036.json": {
+      "sha256": "0ac691dc8806c435eb5fb07a25e6f2a36e3a81a4f78d308d7cdcec831bee71d0",
+      "bytes": 2846,
+      "recorded_in_commit": null,
+      "kind": "checkpoint_selection"
     }
   }
 }
