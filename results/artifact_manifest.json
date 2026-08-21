@@ -178,6 +178,12 @@
       "recorded_in_commit": "84364253bb2c24f26d9f9918530e4eb45c184158",
       "kind": "checkpoint_selection"
     },
+    "sft-selection-qwen3-1.7b-seed20260824-fbb9cd4.json": {
+      "sha256": "6ed19ca3a79cbb7ddc2d1e11eb4ac1f1f9f22801a576e561848d787b26b68213",
+      "bytes": 2939,
+      "recorded_in_commit": null,
+      "kind": "checkpoint_selection"
+    },
     "sft-test-qwen3-1.7b-c16530e.json": {
       "sha256": "ee9a4d4e7fee3901690f27ae504da313a981a79bc24ae4025af1baacc753ffd5",
       "bytes": 3347,
