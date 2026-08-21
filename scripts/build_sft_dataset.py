@@ -44,6 +44,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import calculator_tool_schema  # noqa: E402
 from training.config import config_sha256, load_train_config  # noqa: E402
+from training.retention import completion_shape  # noqa: E402
 
 TRAIN_CONFIG_PATH: Final = PROJECT_ROOT / "configs" / "train_config.yaml"
 SPLIT_MANIFEST_PATH: Final = PROJECT_ROOT / "configs" / "splits" / "phase_a_gsm8k.json"
@@ -143,12 +144,20 @@ def select(
         per_task[row["task_id"]] += 1
         kept.append(row)
 
+    shapes: Counter[str] = Counter(
+        completion_shape(row["messages"][-1]["content"]) for row in kept
+    )
     stats = {
         "candidates": len(candidates),
         "usable": len(usable),
         "selected": len(kept),
         "dropped_to_per_task_cap": dropped_to_cap,
         "distinct_tasks": len(per_task),
+        # Rejection sampling keeps whatever the policy emitted. A row whose
+        # prose works the answer out before calling the tool is ordinary
+        # chain-of-thought, and it is also one step from the D-062 failure, so
+        # the split is reported rather than assumed.
+        "completion_shapes": dict(shapes.most_common()),
     }
     return kept, stats
 

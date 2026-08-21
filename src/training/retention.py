@@ -172,6 +172,36 @@ def laundering_verdict(
     return verdict(False, None)
 
 
+def completion_shape(completion: str) -> str:
+    """What a retained completion looks like around its tool call.
+
+    Worth counting rather than assuming. Rejection sampling keeps whatever the
+    policy happened to emit, and on the pilot that ranged from an 87-character
+    bare call to a 513-character worked solution that stated the answer in
+    prose before calling the calculator.
+
+    The second shape is the one to watch. It is ordinary chain-of-thought and
+    it plausibly helps accuracy, but it is also one step from the failure D-062
+    names: a model that has already computed the answer in prose has every
+    opportunity to pass it to the tool instead of recomputing it.
+    """
+
+    stripped = completion.strip()
+    open_tag = stripped.find("<tool_call>")
+    close_tag = stripped.rfind("</tool_call>")
+    if open_tag < 0 or close_tag < 0:
+        return "no_tool_call"
+    before = stripped[:open_tag].strip()
+    after = stripped[close_tag + len("</tool_call>") :].strip()
+    if before and after:
+        return "prose_around_tool_call"
+    if before:
+        return "prose_then_tool_call"
+    if after:
+        return "tool_call_then_prose"
+    return "bare_tool_call"
+
+
 def rejection_counts(verdicts: Iterable[LaunderingVerdict]) -> dict[str, int]:
     """How many candidates each rule rejected. Reported, never suppressed."""
 
@@ -185,6 +215,7 @@ def rejection_counts(verdicts: Iterable[LaunderingVerdict]) -> dict[str, int]:
 __all__ = [
     "MIN_LITERAL_OCCURRENCES",
     "LaunderingVerdict",
+    "completion_shape",
     "laundering_verdict",
     "numbers_in_text",
     "numeric_literals",
