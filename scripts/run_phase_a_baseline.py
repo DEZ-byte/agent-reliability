@@ -345,6 +345,16 @@ def main() -> int:
         help="LoRA adapter directory to evaluate on top of the base checkpoint",
     )
     parser.add_argument(
+        "--teacher",
+        default=None,
+        help="model that generated the training data, for a trained arm",
+    )
+    parser.add_argument(
+        "--teacher-deviation",
+        default=None,
+        help="decision id recording how the teacher deviates from the plan",
+    )
+    parser.add_argument(
         "--rung",
         action="append",
         default=[],
@@ -365,7 +375,14 @@ def main() -> int:
     result: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "created_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "kind": "phase_a_baseline",
+        # An arm carrying an adapter is not a baseline. The distinction is
+        # in the artifact rather than only in the filename, because a reader
+        # filtering on kind would otherwise pool a trained arm with the
+        # untrained measurements it is supposed to be compared against.
+        "kind": "phase_a_baseline" if args.adapter is None else "phase_a_sft_arm",
+        "teacher": None
+        if not args.teacher
+        else {"id": args.teacher, "deviates_from": args.teacher_deviation},
         "eval_config": args.config.name,
         "eval_config_sha256": _sha256_file(args.config),
         "split_manifest_sha256": _sha256_file(

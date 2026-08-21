@@ -112,6 +112,12 @@
       "recorded_in_commit": "4da98ec8d839742bd285b8ed0a0e4f9b911644ea",
       "kind": "sft_trajectory_candidates"
     },
+    "sft-comparison-qwen3-1.7b-89a7fbb.json": {
+      "sha256": "9320b3399798bdc1d2bb0ab3f86f54501c66cf27fae2766dead10aa451ca9f85",
+      "bytes": 6845,
+      "recorded_in_commit": null,
+      "kind": "paired_arm_comparison"
+    },
     "sft-comparison-qwen3-1.7b-c16530e.json": {
       "sha256": "53d62e6c86f817ab48423fa2337aa87b6c75fbc15ada793c8ea0ba1ae9561f2b",
       "bytes": 2067,
