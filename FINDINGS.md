@@ -81,16 +81,23 @@ Reported as `pass@4` this is +33 points. Reported strictly it's +15.
 
 `D-073`
 
-### It reproduced, and it was cheaper
+### It reproduced three times, and it was cheaper
 
-A second training run varying both initialisation and data order landed at
-+0.212 against the first run's +0.222 on `pass^1`. The trained model also spends
-0.78× the tokens of the untrained one.
+Three training runs, each varying initialisation and data order, landed at
++0.222, +0.212 and +0.248 on `pass^1`. The trained model also spends 0.78× the
+tokens of the untrained one.
 
-Two runs give a range, not a variance estimate, and no interval on the effect
-size is claimed from that.
+The more useful number is what the spread says about the experiment. Between
+runs the standard deviation is 0.019; within a single run the confidence
+interval is about 0.069 either side. The training is steadier than 150 test
+tasks can measure, so the way to sharpen this result is a bigger test split,
+not more seeds.
 
-`D-074`
+Dev told a slightly different story: peaks of 0.4725, 0.4700 and 0.4975. A
+project that ran once and happened to draw the third seed would have reported a
+better number, with nothing in that single run to say so.
+
+`D-074` · `D-075`
 
 ### What improved was tool use, not arithmetic
 

@@ -9,18 +9,23 @@ what "it works" has to mean when something downstream depends on it.
 ## Result
 
 Qwen3-1.7B, fine-tuned on 684 verified tool-use trajectories written by
-Qwen3-4B. Evaluated on 150 held-out tasks, touched once. Two independent
-training runs.
+Qwen3-4B. Evaluated on 150 held-out tasks, touched once per run. Three
+independent training runs.
 
 | Metric | Base | Trained | Change |
 | :-- | --: | --: | --: |
-| Solves it once (`pass^1`) | 0.303 | 0.515–0.525 | +0.21 to +0.22 |
-| Solves it 4 times out of 4 (`pass^4`) | 0.247 | 0.393–0.413 | +0.15 to +0.17 |
+| Solves it once (`pass^1`) | 0.303 | 0.515–0.552 | +0.227 (SD 0.019) |
+| Solves it 4 times out of 4 (`pass^4`) | 0.247 | 0.393–0.460 | +0.176 (SD 0.034) |
 | Solves it at least once in 4 (`pass@4`) | 0.353 | 0.627–0.680 | +0.27 to +0.33 |
-| Tokens generated per task | 45.9 | 35.8 | 0.78× |
+| Tokens generated per task | 45.9 | 35.4–35.8 | 0.78× |
 
-Paired against the same tasks, `pass^1` rose by 0.222 (95% CI 0.155 to 0.290)
-on the first run and 0.212 (0.143 to 0.280) on the second.
+Paired against the same tasks, `pass^1` rose by 0.222, 0.212 and 0.248 on the
+three runs, with 95% intervals of roughly ±0.07 each.
+
+Worth knowing: the spread between runs is small next to the uncertainty within
+one. The standard deviation across seeds is 0.019, while a single run's interval
+is about 0.069 wide either side. Training is more stable than 150 tasks can
+resolve, which means more test tasks would buy more than more seeds.
 
 It also got cheaper. The trained model spends about a fifth fewer tokens per
 task while answering 21 points more of them correctly, which is roughly what
