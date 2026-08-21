@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-21T07:47:45.407761Z",
+  "kind": "paired_arm_comparison",
+  "method": "Paired permutation test on per-task pass^k, sign-flipping each task's difference. Section 10.2 requires paired inference; two arms on the same frozen split share every task, and overlapping confidence intervals are not a test.",
+  "baseline_label": "Qwen3-1.7B base",
+  "treatment_label": "Qwen3-1.7B SFT (4B teacher), checkpoint-75",
+  "baseline_candidate": "Qwen/Qwen3-1.7B",
+  "treatment_candidate": "Qwen/Qwen3-1.7B",
+  "permutation_seed": 20260820,
+  "comparisons": [
+    {
+      "k": 1,
+      "tasks_compared": 150,
+      "baseline": 0.30333333333333334,
+      "treatment": 0.525,
+      "difference": 0.22166666666666668,
+      "tasks_improved": 62,
+      "tasks_regressed": 12,
+      "tasks_discordant": 74,
+      "p_value_two_sided": 0.0,
+      "resamples": 20000,
+      "rung": "R0"
+    },
+    {
+      "k": 4,
+      "tasks_compared": 150,
+      "baseline": 0.24666666666666667,
+      "treatment": 0.3933333333333333,
+      "difference": 0.14666666666666664,
+      "tasks_improved": 31,
+      "tasks_regressed": 9,
+      "tasks_discordant": 40,
+      "p_value_two_sided": 0.0008,
+      "resamples": 20000,
+      "rung": "R0"
+    },
+    {
+      "k": 1,
+      "tasks_compared": 150,
+      "baseline": 0.3333333333333333,
+      "treatment": 0.53,
+      "difference": 0.1966666666666667,
+      "tasks_improved": 61,
+      "tasks_regressed": 14,
+      "tasks_discordant": 75,
+      "p_value_two_sided": 0.0,
+      "resamples": 20000,
+      "rung": "R1"
+    },
+    {
+      "k": 4,
+      "tasks_compared": 150,
+      "baseline": 0.2866666666666667,
+      "treatment": 0.3933333333333333,
+      "difference": 0.10666666666666663,
+      "tasks_improved": 29,
+      "tasks_regressed": 13,
+      "tasks_discordant": 42,
+      "p_value_two_sided": 0.01825,
+      "resamples": 20000,
+      "rung": "R1"
+    }
+  ],
+  "source_commit": "c16530e6b00db3613d452d9edb9bf7b78e9cf074",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

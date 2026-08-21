@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-21T07:09:06.461891Z",
+  "kind": "phase_a_baseline",
+  "eval_config": "eval.yaml",
+  "eval_config_sha256": "33b487c57e5d5ed7e37b16efe4d2e32f36e993e6e83f8544750537cab661741d",
+  "split_manifest_sha256": "eac01714886fde0885693c0fa2ec667f283d8f314460c94e036fc6b6bec142b3",
+  "registry_sha256": "d01529f7b5377c55a5e8ca0b0dbd52e2efa8a00f8b3600cea5f4e0fc2082a181",
+  "prompt_sha256": {
+    "system": "bd7895a093b3b21b482c21b9813ef539747527e778c585caf92296b3c4da0755",
+    "user": "b6f9739c2a651441320a36e444c6c6555e988db27bf7bce3cdf57bbd5a44e4f3"
+  },
+  "decoding": {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "max_new_tokens": 256,
+    "_comment": [
+      "Sampling, not greedy. pass^k asks whether a model succeeds on all k",
+      "independent attempts, which is only a question if the attempts can",
+      "differ. At temperature 0 every run is identical and pass^k collapses",
+      "to pass^1, measuring nothing the blueprint is about.",
+      "One setting is used for every model. Publishers recommend different",
+      "values per family, so adopting any one family's recommendation would",
+      "hand that family an advantage the comparison is supposed to measure.",
+      "See D-067."
+    ]
+  },
+  "adapter": {
+    "path": "checkpoints\\qwen3-1.7b-sft\\checkpoint-75",
+    "config_sha256": "72975c690b8d1da8105659be6fe36e450ba01d1c924cbe5d94ccaa64c4045156",
+    "weights_sha256": "ae54bfc8f46380883b5342885808862e551f50ce62d140a493bf2ebd5980edad"
+  },
+  "rungs_measured": [
+    "R0",
+    "R1"
+  ],
+  "candidates_planned": [
+    {
+      "role": "scale_check",
+      "id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    }
+  ],
+  "executed": true,
+  "results": [
+    {
+      "candidate": {
+        "role": "scale_check",
+        "id": "Qwen/Qwen3-1.7B",
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+      },
+      "rungs": {
+        "R0": {
+          "tasks": 150,
+          "runs_per_task": 4,
+          "episodes": 600,
+          "model_decisions": 600,
+          "metrics": {
+            "pass^1": 0.525,
+            "pass@1": 0.525,
+            "pass^1_ci95": [
+              0.455,
+              0.595
+            ],
+            "pass^4": 0.3933333333333333,
+            "pass@4": 0.68,
+            "pass^4_ci95": [
+              0.32,
+              0.47333333333333333
+            ]
+          },
+          "no_arithmetic_rate": 0.0016666666666666668,
+          "no_arithmetic_episodes": 1,
+          "tasks_solved_at_least_once": 102
+        },
+        "R1": {
+          "tasks": 150,
+          "runs_per_task": 4,
+          "episodes": 600,
+          "model_decisions": 612,
+          "metrics": {
+            "pass^1": 0.53,
+            "pass@1": 0.53,
+            "pass^1_ci95": [
+              0.46,
+              0.6
+            ],
+            "pass^4": 0.3933333333333333,
+            "pass@4": 0.6866666666666666,
+            "pass^4_ci95": [
+              0.32,
+              0.47333333333333333
+            ]
+          },
+          "no_arithmetic_rate": 0.0016666666666666668,
+          "no_arithmetic_episodes": 1,
+          "tasks_solved_at_least_once": 103
+        }
+      }
+    }
+  ],
+  "source_commit": "c16530e6b00db3613d452d9edb9bf7b78e9cf074",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "task_count": 150
+}
