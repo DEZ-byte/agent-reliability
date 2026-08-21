@@ -142,9 +142,16 @@ call rather than its shape.
   and a trainer that asserts the stack's silent traps shut
 - [ ] End-to-end pilot on a small train slice, so rented GPU hours are not
   spent debugging the pipeline
-- [ ] Teacher registry entry with a resolved revision, and its adoption
-  decision. `Qwen/Qwen3-32B` and `Qwen/Qwen3-14B` both resolve as Apache-2.0
-  and ungated
+- [ ] Teacher adoption decision, and only then a registry entry. Both
+  candidates resolve as Apache-2.0, ungated:
+  `Qwen/Qwen3-32B` at `9216db5781bf21249d130ec9da846c4624c16137` and
+  `Qwen/Qwen3-14B` at `40c069824f4251a91eefaf281ebe4c544efd3e18`.
+  They stay out of `configs/model_candidates.json` until one is adopted,
+  because `configs/model_smoke.json` pins the registry by SHA-256 as part of
+  the resolved D-048 release gate, and re-pinning a resolved gate for a model
+  nobody has adopted would weaken the gate for no gain. Until then the teacher
+  runs with an explicit `--revision`, which the generator requires rather than
+  guessing
 - [ ] Teacher generation over the 1,000-task train split on rented GPU
 - [ ] SFT run, checkpoint selection on dev, then test exactly once
 - [ ] Report SFT against its own baseline, with the no-arithmetic rate beside
