@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-21T06:12:26.367505Z",
+  "kind": "sft_run",
+  "train_config_sha256": "d752cd3f80b6fda48cddd819331d6fbd58a454254e98230eeb33251a50bbd91e",
+  "config_hash_prefix": "d752cd3f",
+  "dataset_sha256": "8f44c3bfa05b0ce6047a13dd689d99990c167c938e245dcf841e58a05c65c6f7",
+  "model": {
+    "id": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+  },
+  "checkpoint_name": "Qwen3-1.7B-sft-d752cd3f",
+  "executed": true,
+  "source_commit": "e0ed20b88ba0300de16807726f4d1560a0f216d7",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "dataset_stats": {
+    "rows_in": 684,
+    "rows_trained": 684,
+    "rows_dropped_over_max_length": 0,
+    "dropped_task_ids": [],
+    "trained_tokens_total": 22919,
+    "row_tokens_max": 441
+  },
+  "resolved": {
+    "learning_rate": 0.0002,
+    "num_train_epochs": 2,
+    "per_device_train_batch_size": 2,
+    "gradient_accumulation_steps": 8,
+    "packing": false,
+    "max_length": 1024,
+    "seed": 20260820,
+    "save_steps": 25,
+    "data_collator": "DataCollatorForLanguageModeling",
+    "padding_side": "left"
+  },
+  "first_batch": {
+    "batch_trained_tokens": 65,
+    "rows_covered": [
+      127,
+      455
+    ],
+    "every_trained_token_is_a_whole_assistant_span": true,
+    "prompt_roles_leaked_into_trained_region": [],
+    "padding_free": true,
+    "label_dtype": "torch.int64"
+  },
+  "train": {
+    "global_step": 86,
+    "training_loss": 0.14917763088678204
+  },
+  "adapter_dir": "C:\\Users\\Anirudh\\Documents\\My projects\\Aligning Small Language Models for Verifiable Tool Execution & Self-Correction\\checkpoints\\qwen3-1.7b-sft"
+}

@@ -20,6 +20,7 @@ the intermediate ones except that training stopped there.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -59,10 +60,16 @@ def _git_commit() -> str:
 
 
 def discover_checkpoints(adapter_dir: Path) -> list[Path]:
-    """Every saved adapter, intermediate and final, in training order.
+    """Every distinct saved adapter, intermediate and final, in training order.
 
     The final directory is a candidate like any other. Treating it as special
     would make "best on dev" mean "the last one unless something beat it".
+
+    Distinct by weight hash, though. `save_model` writes the final adapter to
+    the top level as well as to its last step directory, and those are the same
+    weights under two names. Scoring both wastes an evaluation and, worse,
+    reports five candidates where four exist, so a reader counting checkpoints
+    would misjudge how much the selection actually chose between.
     """
 
     found: list[tuple[int, Path]] = []
@@ -78,7 +85,18 @@ def discover_checkpoints(adapter_dir: Path) -> list[Path]:
         ordered.append(adapter_dir)
     if not ordered:
         raise SelectionError(f"no adapter found under {adapter_dir}")
-    return ordered
+
+    distinct: list[Path] = []
+    seen: set[str] = set()
+    for path in ordered:
+        digest = hashlib.sha256(
+            (path / "adapter_model.safetensors").read_bytes()
+        ).hexdigest()
+        if digest in seen:
+            continue
+        seen.add(digest)
+        distinct.append(path)
+    return distinct
 
 
 def score(
