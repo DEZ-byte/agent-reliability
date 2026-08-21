@@ -80,9 +80,7 @@ python -m unittest discover -s tests
 ```
 
 [`FINDINGS.md`](FINDINGS.md) is the short version of what came out of this,
-including the parts that went badly. The full reasoning behind every choice is
-in [`DECISIONS.md`](DECISIONS.md), which is an append-only log rather than a
-summary.
+including the parts that went badly.
 
 Licensed Apache-2.0. Models are Qwen3 (Apache-2.0) and the task data is GSM8K
 (MIT).

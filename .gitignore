@@ -33,6 +33,10 @@ notebooks/.ipynb_checkpoints/
 # here - the release gate in scripts/smoke_models.py reads it, so removing it
 # turns CI red.
 BLUEPRINT_v2.md
+# Removed from the repository on request. The licence gate reads
+# configs/release_decision.md instead, which carries the one entry it
+# verifies. Track this again when the full log should be public.
+DECISIONS.md
 PLAN.md
 HYPOTHESIS_PROTOCOL.md
 RUNG_PROTOCOL.md

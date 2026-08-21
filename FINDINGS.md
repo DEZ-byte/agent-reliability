@@ -1,12 +1,11 @@
 # What this project actually found
 
-Nine things worth knowing, in the order they were learned. Each links to the
-decision record behind it, which has the numbers, the reasoning and whatever
-went wrong on the way.
+Nine things worth knowing, in the order they were learned, including the ones
+that went badly.
 
-The full log is [`DECISIONS.md`](DECISIONS.md). It runs to 74 entries and is
-append-only, so it reads as a diary rather than a summary. This page is the
-summary.
+The `D-0xx` tags name entries in the project's decision log, which holds the
+full reasoning behind each. That log is append-only and runs to 74 entries, so
+it is kept outside this repository for now. This page is the readable version.
 
 ---
 
@@ -19,8 +18,8 @@ well-formed call that computed the wrong thing.
 That killed a planned mitigation: mixing in an external function-calling dataset
 to teach tool formatting. There was nothing to teach.
 
-[D-068](DECISIONS.md#d-068--first-phase-a-baseline-the-failure-is-wrong-arithmetic-not-malformed-calls) ·
-[D-070](DECISIONS.md#d-070--no-format-grounding-data-is-mixed-in-because-the-schema-failure-rate-is-zero)
+`D-068` ·
+`D-070`
 
 ### The retry rung had almost nothing to fix
 
@@ -32,7 +31,7 @@ episodes for one model and 10.3% for the other.
 After training, retry stopped making any difference at all. Its `pass^4` is
 identical to the single-attempt rung.
 
-[D-068](DECISIONS.md#d-068--first-phase-a-baseline-the-failure-is-wrong-arithmetic-not-malformed-calls)
+`D-068`
 
 ### Phase A can't teach self-correction, and that's structural
 
@@ -44,7 +43,7 @@ wrong would leak the grader into the rollout. Measured yield for genuine
 recovery trajectories: one task in a hundred. Self-correction moved to a later
 stage where tool errors are actually observable.
 
-[D-069](DECISIONS.md#d-069--phase-a-cannot-train-self-correction-on-the-failure-that-dominates-it)
+`D-069`
 
 ### A model can pass an execution-backed grader without computing anything
 
@@ -56,7 +55,7 @@ writing `391 + 0`.
 Measured at 3.0% before training and 1.0% after, under a filter that catches the
 decorated form.
 
-[D-062](DECISIONS.md#d-062--execution-backed-accuracy-does-not-stop-laundered-recall-and-that-is-now-measured)
+`D-062`
 
 ### The anti-cheating filter had to be measured before it was trusted
 
@@ -68,7 +67,7 @@ invented.
 It was rejecting genuine multi-step reasoning and catching nothing the other
 rules missed, so it's off. Measuring first is what caught it.
 
-[D-071](DECISIONS.md#d-071--the-laundering-filters-question-match-rule-is-disabled-because-gsm8k-writes-numbers-as-words)
+`D-071`
 
 ### Training raised capability and widened the reliability gap
 
@@ -80,7 +79,7 @@ than half as much. The band of tasks solved sometimes but not always went from
 
 Reported as `pass@4` this is +33 points. Reported strictly it's +15.
 
-[D-073](DECISIONS.md#d-073--sft-raised-capability-more-than-reliability-and-widened-the-gap-this-project-studies)
+`D-073`
 
 ### It reproduced, and it was cheaper
 
@@ -91,7 +90,7 @@ A second training run varying both initialisation and data order landed at
 Two runs give a range, not a variance estimate, and no interval on the effect
 size is claimed from that.
 
-[D-074](DECISIONS.md#d-074--the-sft-effect-reproduces-costs-fewer-tokens-and-closes-three-of-d-073s-open-items)
+`D-074`
 
 ### What improved was tool use, not arithmetic
 
@@ -100,8 +99,8 @@ after. It didn't get better at maths. It got better at writing the expression.
 
 Worth stating because "fine-tuning improved accuracy" invites the wrong reading.
 
-[D-074](DECISIONS.md#d-074--the-sft-effect-reproduces-costs-fewer-tokens-and-closes-three-of-d-073s-open-items) ·
-[D-064](DECISIONS.md#d-064--gsm8k-memorisation-is-at-chance-unaided-capability-is-high-which-moves-the-risk)
+`D-074` ·
+`D-064`
 
 ### Two bugs that only a green CI run could find
 
@@ -112,8 +111,8 @@ than the one that wrote it. The local test suite passed through both.
 Also here: the model bundle was chosen on licence rather than on measurement,
 and the record says so, including which technical check the chosen bundle fails.
 
-[D-057](DECISIONS.md#d-057--line-ending-translation-is-disabled-for-every-hashed-file) ·
-[D-046](DECISIONS.md#d-046--prefix_preserved_after_tool_observation-is-a-phase-a-diagnostic-and-stays-a-multi-turn-hard-gate)
+`D-057` ·
+`D-046`
 
 ---
 
@@ -125,5 +124,5 @@ executed.
 
 The teacher was Qwen3-4B rather than the larger model originally planned, so
 only the smaller model has a trained arm.
-[D-072](DECISIONS.md#d-072--the-phase-a-sft-teacher-is-qwen3-4b-teaching-qwen3-17b-not-a-32b-class-model)
+`D-072`
 records that deviation and what it costs the claim.

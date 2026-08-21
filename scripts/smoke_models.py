@@ -1104,10 +1104,28 @@ def _resolve_release_registry_path(gate: ReleaseSelectionGate) -> Path:
 
 
 def _decision_section(decision_record: str) -> str:
-    try:
-        text = (PROJECT_ROOT / "DECISIONS.md").read_text(encoding="utf-8")
-    except OSError as exc:
-        raise SmokeConfigError("cannot read DECISIONS.md for the release gate") from exc
+    """Read the decision the release gate cites, wherever it lives.
+
+    The full log is not always in the repository, so the one decision the gate
+    verifies is extracted to `configs/release_decision.md` and committed. The
+    log is preferred when present, because it is the original.
+    """
+
+    for candidate in (
+        PROJECT_ROOT / "DECISIONS.md",
+        PROJECT_ROOT / "configs" / "release_decision.md",
+    ):
+        try:
+            text = candidate.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if f"### {decision_record} " in text:
+            break
+    else:
+        raise SmokeConfigError(
+            f"cannot read a decision record for {decision_record}; expected "
+            "DECISIONS.md or configs/release_decision.md"
+        )
     match = re.search(
         rf"(?ms)^### {re.escape(decision_record)} —[^\r\n]*\r?\n"
         rf"(?P<body>.*?)(?=^### D-[0-9]{{3}} —|\Z)",
