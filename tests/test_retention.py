@@ -118,6 +118,44 @@ class LiteralExtractionTests(unittest.TestCase):
         )
 
 
+class ThresholdSourceTests(unittest.TestCase):
+    """A pinned threshold must never be replaced by a function default.
+
+    The pilot found exactly this: generation called `laundering_verdict`
+    without the keyword, so it applied the 0.5 default while the config pinned
+    0.0. The config said one thing, the run did another, and no artifact
+    recorded the difference. Six correct trajectories were discarded.
+
+    Defaults are kept on the function because they make it usable from a REPL
+    and from tests. This asserts that no production caller relies on them.
+    """
+
+    def test_no_production_caller_omits_the_question_match_ratio(self) -> None:
+        import ast
+
+        offenders: list[str] = []
+        for directory in ("scripts", "src"):
+            for path in sorted((PROJECT_ROOT / directory).rglob("*.py")):
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+                for node in ast.walk(tree):
+                    if not isinstance(node, ast.Call):
+                        continue
+                    name = getattr(node.func, "id", None) or getattr(
+                        node.func, "attr", None
+                    )
+                    if name != "laundering_verdict":
+                        continue
+                    passed = {kw.arg for kw in node.keywords}
+                    if "min_question_match_ratio" not in passed:
+                        offenders.append(f"{path.name}:{node.lineno}")
+        self.assertEqual(
+            offenders,
+            [],
+            "these callers would silently use the default threshold instead of "
+            "the value pinned in configs/train_config.yaml",
+        )
+
+
 class ReportingTests(unittest.TestCase):
     def test_rejection_counts_name_every_rule_that_fired(self) -> None:
         """Rejections are reported per rule so a filter change is visible."""
