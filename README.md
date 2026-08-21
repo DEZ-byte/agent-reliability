@@ -170,12 +170,35 @@ episode and the laundering filter cleared the expression. Checkpoint chosen on
 the dev split by a rule written down before any dev number existed. The test
 split was touched exactly once.
 
-| Metric (rung R0) | Base | SFT | Difference | 95% CI |
-| :-- | :-- | :-- | :-- | :-- |
-| `pass^1` | 0.303 | 0.525 | **+0.222** | [+0.155, +0.290] |
-| `pass^4` | 0.247 | 0.393 | **+0.147** | [+0.067, +0.227] |
-| `pass@4` | 0.353 | 0.680 | +0.327 | |
-| Answered without computing | 0.015 | 0.002 | | |
+| Metric (rung R0) | Base | SFT run 1 | SFT run 2 |
+| :-- | :-- | :-- | :-- |
+| `pass^1` | 0.303 | 0.525 | 0.515 |
+| `pass^4` | 0.247 | 0.393 | 0.413 |
+| `pass@4` | 0.353 | 0.680 | 0.627 |
+| Generated tokens per episode | 45.9 | — | **35.8** |
+
+Paired against the same baseline on the same tasks:
+
+| | Run 1 | Run 2 |
+| :-- | :-- | :-- |
+| `pass^1` gain | **+0.222** [+0.155, +0.290] | **+0.212** [+0.143, +0.280] |
+| `pass^4` gain | +0.147 [+0.067, +0.227] | +0.167 [+0.087, +0.247] |
+
+Two runs differing in both initialisation and data order land in the same
+place, so this is not one lucky run. **Two runs are a range, not a variance
+estimate**, and no interval on the effect size itself is claimed from n=2.
+
+**It is also cheaper.** The trained model spends **0.78x** the generated tokens
+of the untrained one - 35.8 per episode against 45.9 - while being 21 points
+more accurate. Capability moved into the weights is not paid for again at
+inference. That is one leg of the argument H1 exists to test, not the claim
+itself: H1 compares a trained small model against a *scaffolded larger* one,
+and the 8B comparator is registered and still unmeasured.
+
+**The improvement is tool use, not arithmetic.** Probed without any tool, the
+trained model solves 66.0% against the untrained 64.0% - barely moved. It did
+not get better at maths; it got better at writing the right calculator
+expression.
 
 **Capability rose about twice as much as reliability, and that is the result.**
 `pass@4` nearly doubled while `pass^4` rose less than half as much, so the band
@@ -200,12 +223,11 @@ nothing left for it to repair.
 
 **What this is not.** The teacher is `Qwen3-4B`, not the larger model the plan
 pre-registered, so only the smaller checkpoint was trained and nothing here
-speaks to the 4B. It is one training seed. Of four reported comparisons, both
-R0 rows clear a Bonferroni threshold and the `R1 pass^4` row does not. H1 stays
-open: it needs a GRPO arm, a primary-model arm, and an 8B scaffolded comparator
-that has been registered but never measured.
+speaks to the 4B. H1 stays open: it needs a GRPO arm, a primary-model arm, and
+an 8B scaffolded comparator that has been registered but never measured.
 
-Reasoning and full caveats in [`DECISIONS.md`](DECISIONS.md) D-072 and D-073.
+Reasoning and full caveats in [`DECISIONS.md`](DECISIONS.md) D-072, D-073 and
+D-074.
 
 ## Quick start
 

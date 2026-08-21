@@ -1571,3 +1571,85 @@ than used to filter what is shown.
 format failures, which were 3–8% of episodes. After training there are almost
 none left, and R1's `pass^4` is now **identical** to R0's at 0.3933. The
 scaffolding rung has nothing left to do, which is what that mechanism predicted.
+
+---
+
+### D-074 — The SFT effect reproduces, costs fewer tokens, and closes three of D-073's open items
+**Date:** 2026-08-21 · **Status:** accepted · **Extends:** D-073
+**Label:** `post_hoc_after_measurement` · **Evidence class:** labelled auxiliary decomposition (§1.1)
+
+D-073 left four things unmeasured and said so. Three are now measured.
+
+**1. The effect reproduces across independent training runs.** A second run with
+a different initialisation *and* a different row order, its checkpoint selected
+on dev by the same pinned rule, tested once:
+
+| metric | run 1 (seed 20260820) | run 3 (seed 20260823) |
+| --- | --- | --- |
+| pass^1 | +0.2217 [+0.1550, +0.2900] | +0.2117 [+0.1433, +0.2800] |
+| pass^4 | +0.1467 [+0.0667, +0.2267] | +0.1667 [+0.0867, +0.2467] |
+| pass^4, tasks that varied in both arms | +0.2154 | +0.2344 |
+
+Same direction, similar magnitude, heavily overlapping intervals. **Two runs
+give a range, not a variance estimate**, and no confidence interval on the
+effect size itself is claimed from n=2.
+
+The runs differ in a way worth recording. Run 3 has the higher `pass^4` (0.4133
+against 0.3933) and the lower `pass@4` (0.6267 against 0.6800): it solves fewer
+distinct tasks and repeats itself more reliably. The capability–reliability
+trade-off moves between two runs of identical training, which is a caution
+against reading either arm's position on it as a property of the method. The
+sometimes-solved band widened in both — to 0.213 and 0.287 against the
+baseline's 0.107 — so D-073's central finding rests on both runs, not one.
+
+**2. The trained arm is cheaper as well as more accurate.** Generated-token
+accounting did not exist when D-073 was written, so `TokenRatio_H1` was
+unmeasurable. Measured now, per episode at R0 on the test split:
+
+| arm | generated tokens / episode | pass^1 |
+| --- | --- | --- |
+| base | 45.9 | 0.3033 |
+| SFT run 3 | 35.8 | 0.5150 |
+
+**0.78× the tokens for +0.21 accuracy.** That is the shape of argument H1 exists
+to test — capability moved into the weights is not paid for again at inference —
+but it is one leg of it, not the claim. H1 compares a trained small model against
+a *scaffolded larger* one, and the 8B comparator is registered and still
+unmeasured, so `Gap_H1` remains uncomputable and H1 stays **NA**.
+
+**3. Recall was probed on trained weights, which D-064 never covered.** Over the
+same 150 test tasks: unaided solve rate 0.640 → 0.660, and answers produced with
+no room to think 0.013 → 0.033 (5 of 150, 95% CI [0.014, 0.076]).
+
+The first number is the useful one. **Unaided arithmetic barely moved**, so the
++0.21 is tool-expression correctness rather than general capability — the
+decomposition D-073's headline needed and could not supply.
+
+The second rose from at-chance to marginally above it. It is 5 tasks against 2,
+the interval is wide, and the leakage audit established that no test question
+appears anywhere in the training data, so it is not evidence of contamination.
+The likelier reading is a style change: training on bare tool calls makes the
+model terser, so under a 12-token budget it emits a number more often. Recorded
+rather than explained away, and to be re-measured on any future trained arm.
+
+**A methodological defect found while doing this.** The first attempt at a second
+seed changed nothing about the row order, because unsloth sets `data_seed` on
+`SFTConfig` to 3407 regardless of the seed passed. A sweep built that way
+measures initialisation noise and reports it as run-to-run variance. `data_seed`
+is now pinned in `configs/train_config.yaml` at the value that actually ran —
+discovered, not chosen — and a seed override varies it. That run is kept rather
+than discarded: it measures initialisation-only variance, training loss 0.14790
+against 0.14918 on identical data, and is a real if narrow number.
+
+Pinning it changed the config hash from `d752cd3f` to `e0379a46`, so run 3's
+checkpoint name carries a different `<confighash>` than runs 1 and 2. The change
+made an inherited default explicit and did not alter what run 1 did. Run 1's
+published name refers to the config as it stood when that run happened, which is
+what a config hash is for.
+
+**Still open.** The strict laundering rate is now reported beside the harness one
+(base 0.0300, SFT run 3 0.0100 at R0), so D-073's fourth item is closed too — but
+the harness metric itself remains the weaker of the two and every artifact frozen
+before this change carries only that one. A third training run would turn the
+range into a variance estimate. Nothing here speaks to the primary model, which
+has no trained arm.

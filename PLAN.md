@@ -160,17 +160,22 @@ call rather than its shape.
 - [x] SFT run on the 1.7B, checkpoint selection on dev, then test exactly once
 - [x] Report SFT against its own baseline, naming the teacher, with the
   no-arithmetic rate beside every accuracy figure (D-073)
-- [ ] Re-run the token-starved recall probe on checkpoint-75. D-064 covers
-  base weights only, so no post-training recall number exists and the word
-  "recall" cannot be used of the trained arm
-- [ ] A second SFT training seed. Until one exists, +0.222 is one run rather
-  than an effect size, and this is the only open item that could change how
-  the result is interpreted
-- [ ] Per-episode generated-token accounting in the rung evaluator. Without
-  it `TokenRatio_H1` is unmeasurable, so no cost side of H1 can be reported
-- [ ] Report the strict laundering rate beside the harness one. The evaluator
-  implements only the first of the project's three retention rules, so every
-  published `no_arithmetic_rate` understates laundering by roughly half
+- [x] Re-run the token-starved recall probe on checkpoint-75 (D-074). Unaided
+  accuracy barely moved, 0.640 to 0.660, so the gain is tool-expression
+  correctness rather than arithmetic. The recall signal rose from at-chance
+  to marginally above it on 5 tasks of 150; recorded, not over-read
+- [x] A second SFT training seed (D-074). +0.212 against +0.222 on pass^1,
+  varying initialisation and row order. The effect reproduces
+- [ ] A third run, to turn a range into a variance estimate. Two runs cannot
+  support an interval on the effect size
+- [x] Per-episode generated-token accounting in the rung evaluator (D-074).
+  The trained arm spends 0.78x the tokens of the untrained one, 35.8 against
+  45.9, while being 21 points more accurate
+- [ ] Measure the 8B `scaffolded_comparator`. It is registered and never run,
+  so `Gap_H1` is uncomputable and H1 cannot move off NA
+- [x] Report the strict laundering rate beside the harness one (D-074). Base
+  0.0300 against the harness 0.0150; SFT run 3 0.0100 against 0.0000. Every
+  artifact frozen before this change carries only the weaker metric
 
 Still open for the primary model: the pre-registered larger teacher.
 `Qwen/Qwen3-32B` at `9216db5781bf21249d130ec9da846c4624c16137` and
