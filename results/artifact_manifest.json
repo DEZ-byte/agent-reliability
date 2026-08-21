@@ -115,7 +115,7 @@
     "sft-comparison-qwen3-1.7b-c16530e.json": {
       "sha256": "53d62e6c86f817ab48423fa2337aa87b6c75fbc15ada793c8ea0ba1ae9561f2b",
       "bytes": 2067,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "2e4b4095dda631fc2fa095e8867aacd22c5d9297",
       "kind": "paired_arm_comparison"
     },
     "sft-dataset-54218c4.json": {
@@ -139,7 +139,7 @@
     "sft-test-qwen3-1.7b-c16530e.json": {
       "sha256": "ee9a4d4e7fee3901690f27ae504da313a981a79bc24ae4025af1baacc753ffd5",
       "bytes": 3347,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "2e4b4095dda631fc2fa095e8867aacd22c5d9297",
       "kind": "phase_a_baseline"
     }
   }
