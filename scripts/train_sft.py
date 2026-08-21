@@ -43,6 +43,7 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import calculator_tool_schema  # noqa: E402
+from training.masking import IGNORE_INDEX  # noqa: E402
 from training.config import (  # noqa: E402
     config_hash_prefix,
     config_sha256,
@@ -188,33 +189,76 @@ def _assert_stack_traps_are_shut(trainer: Any, config: dict[str, Any]) -> dict[s
     return resolved
 
 
-def _verify_first_batch(trainer: Any, encoded: list[dict[str, Any]]) -> dict[str, Any]:
-    """Pull a real batch and check the labels that reach the loss.
+def _verify_first_batch(
+    trainer: Any,
+    encoded: list[dict[str, Any]],
+    rows: list[dict[str, Any]],
+    tokenizer: Any,
+) -> dict[str, Any]:
+    """Pull a real batch and check the labels that actually reach the loss.
 
-    Asserting against the collator class alone proves nothing: the object that
-    runs is chosen by unsloth at dataset-preparation time. This reads what the
-    dataloader actually yields.
+    Asserting against the collator class proves nothing: the object that runs is
+    chosen by unsloth at dataset-preparation time, and unsloth also auto-enables
+    padding-free batching, which concatenates several rows into one sequence
+    with `position_ids` rather than padding them into a rectangle. The dataset
+    is shuffled too. So neither the batch's row count nor its order can be
+    predicted, and a check that assumes either reports a mismatch on a correct
+    run - which is worse than no check, because it teaches you to ignore it.
+
+    What is stable is the content. Every trained token must belong to some row's
+    trained span, whole and in order, and the decoded trained region must
+    contain no text from any prompt. That holds under shuffling, under
+    padding-free packing, and under any batch size.
     """
 
-    import torch
-
     batch = next(iter(trainer.get_train_dataloader()))
-    labels = batch["labels"]
-    trained = int((labels != -100).sum().item())
-    if trained <= 0:
+    labels = batch["labels"].reshape(-1)
+    trained = [int(value) for value in labels[labels != -100].tolist()]
+    if not trained:
         raise TrainingError(
             "the first batch has no trained tokens; every label is masked out"
         )
-    expected = sum(
-        sum(1 for label in row["labels"] if label != -100)
-        for row in encoded[: labels.shape[0]]
+
+    spans = [
+        [value for value in row["labels"] if value != IGNORE_INDEX]
+        for row in encoded
+    ]
+    position = 0
+    covered: list[int] = []
+    while position < len(trained):
+        for index, span in enumerate(spans):
+            if span and trained[position : position + len(span)] == span:
+                covered.append(index)
+                position += len(span)
+                break
+        else:
+            raise TrainingError(
+                "the first batch contains trained tokens that are not a whole "
+                f"row's assistant span, starting at offset {position}"
+            )
+
+    decoded = tokenizer.decode(trained)
+    leaked = sorted(
+        {
+            message["role"]
+            for row in rows
+            for message in row["messages"]
+            if message["role"] != "assistant" and message["content"] in decoded
+        }
     )
+    if leaked:
+        raise TrainingError(
+            "prompt text from these roles reached the trained region: "
+            + ", ".join(leaked)
+        )
+
     return {
-        "batch_rows": int(labels.shape[0]),
-        "batch_trained_tokens": trained,
-        "expected_trained_tokens_for_those_rows": expected,
-        "matches_expected": trained == expected,
-        "label_dtype": str(labels.dtype),
+        "batch_trained_tokens": len(trained),
+        "rows_covered": covered,
+        "every_trained_token_is_a_whole_assistant_span": True,
+        "prompt_roles_leaked_into_trained_region": leaked,
+        "padding_free": bool(getattr(trainer.args, "padding_free", False)),
+        "label_dtype": str(batch["labels"].dtype),
     }
 
 
@@ -336,7 +380,7 @@ def main() -> int:
     )
 
     result["resolved"] = _assert_stack_traps_are_shut(trainer, config)
-    result["first_batch"] = _verify_first_batch(trainer, encoded)
+    result["first_batch"] = _verify_first_batch(trainer, encoded, rows, tokenizer)
 
     train_output = trainer.train()
     result["train"] = {
