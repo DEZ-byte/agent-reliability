@@ -66,10 +66,10 @@ doing the work.
   adopted, Glaive rejected (D-058). The licence conflict is recorded as accepted
   rather than resolved, and the CC BY 4.0 attribution duties are in the
   `data/LICENSES.md` release checklist
-- [ ] Confirm at M1 whether any format-grounding data is needed at all. All four
-  checkpoints already emit strictly valid, correctly-selected tool calls on
-  every probe case, so the measured format error rate decides how much xLAM data
-  is actually mixed in
+- [x] Confirm at M1 whether any format-grounding data is needed at all. It is
+  not (D-070). Measured on the dev split, 800 first decisions per model, the
+  schema failure rate is 0.00% on both selected checkpoints, so
+  `format_grounding.fraction` is pinned to 0.0 and no xLAM rows are mixed in
 - [x] Repository license decision: Apache-2.0 (D-054). `LICENSE` is the
   canonical text; `NOTICE` records that it covers this repository only and that
   every upstream artifact keeps its own terms

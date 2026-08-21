@@ -115,7 +115,7 @@
     "sft-comparison-qwen3-1.7b-89a7fbb.json": {
       "sha256": "9320b3399798bdc1d2bb0ab3f86f54501c66cf27fae2766dead10aa451ca9f85",
       "bytes": 6845,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "1cea806c4aec9d788eb8b5bc7b0a3c5c36ef18cd",
       "kind": "paired_arm_comparison"
     },
     "sft-comparison-qwen3-1.7b-c16530e.json": {
