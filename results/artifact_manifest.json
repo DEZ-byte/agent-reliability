@@ -11,7 +11,7 @@
     "baseline-phase_a-dev-eafb8d4.json": {
       "sha256": "71c537d2f9d38261fbf4cb6e4481334aecc4274a4d35d5c37f0f18cc21ab6514",
       "bytes": 4433,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "caf68505f7c836a2012a63680ec9d9b2f7698617",
       "kind": "phase_a_baseline"
     },
     "contamination-qwen3-57b2bc2.json": {
