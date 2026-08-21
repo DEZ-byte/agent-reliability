@@ -26,3 +26,16 @@ data/sft/
 results/**/*.jsonl
 results/**/*.parquet
 notebooks/.ipynb_checkpoints/
+
+# Working documents. These stay on the author's machine on purpose: they are
+# planning and protocol material, not the result, and 35,000 words of it in
+# front of the README buried the findings. DECISIONS.md is deliberately NOT
+# here - the release gate in scripts/smoke_models.py reads it, so removing it
+# turns CI red.
+BLUEPRINT_v2.md
+PLAN.md
+HYPOTHESIS_PROTOCOL.md
+RUNG_PROTOCOL.md
+MODEL_SMOKE_PROTOCOL.md
+SELF_CORRECTION_SPEC.md
+RELATED_WORK.md
