@@ -160,6 +160,7 @@ def _assert_stack_traps_are_shut(trainer: Any, config: dict[str, Any]) -> dict[s
         "packing": getattr(args, "packing", None),
         "max_length": getattr(args, "max_length", None),
         "seed": args.seed,
+        "data_seed": getattr(args, "data_seed", None),
         "save_steps": args.save_steps,
         "data_collator": type(trainer.data_collator).__name__,
         "padding_side": getattr(trainer.processing_class, "padding_side", None),
@@ -302,6 +303,11 @@ def main() -> int:
     # already published under it.
     seed = args.seed if args.seed is not None else sft["seed"]
     seed_overridden = args.seed is not None and args.seed != sft["seed"]
+    # Unsloth pins data_seed to 3407 whatever seed is passed, so varying only
+    # `seed` changes LoRA initialisation and leaves the row order identical. A
+    # sweep that cannot vary the data order measures initialisation noise and
+    # calls it run-to-run variance.
+    data_seed = args.seed if seed_overridden else sft["data_seed"]
     revision = _revision_for(args.model)
     config_hash = config_hash_prefix(TRAIN_CONFIG_PATH)
 
@@ -323,6 +329,8 @@ def main() -> int:
             "pinned_in_config": sft["seed"],
             "used": seed,
             "overridden": seed_overridden,
+            "data_seed_pinned_in_config": sft["data_seed"],
+            "data_seed_used": data_seed,
         },
         "executed": bool(args.run_load),
         "source_commit": _git_commit(),
@@ -381,6 +389,7 @@ def main() -> int:
         gradient_accumulation_steps=sft["gradient_accumulation_steps"],
         max_length=sft["max_seq_length"],
         seed=seed,
+        data_seed=data_seed,
         save_steps=sft["save_steps"],
         save_strategy="steps",
         logging_steps=1,

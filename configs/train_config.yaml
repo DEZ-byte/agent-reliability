@@ -28,6 +28,7 @@
     "gradient_accumulation_steps": 8,
     "max_seq_length": 1024,
     "seed": 20260820,
+    "data_seed": 3407,
     "save_steps": 25,
     "load_in_4bit": true,
     "lora": {
@@ -51,7 +52,11 @@
       "some of them being ranked by a cheaper signal.",
       "max_seq_length 1024 against a measured 293-token training row leaves",
       "room for a longer question without truncating a trained span. Truncation",
-      "here is silent: the row still has labels and still trains."
+      "here is silent: the row still has labels and still trains.",
+      "data_seed 3407 was discovered, not chosen. Unsloth sets it on SFTConfig",
+      "regardless of the seed passed, so the first run's row order came from a",
+      "default nobody recorded. It is pinned here to the value that actually",
+      "ran, because a config that omits it does not determine the run."
     ]
   },
 
