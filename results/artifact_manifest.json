@@ -160,6 +160,12 @@
       "recorded_in_commit": "c8f9f48d3e0b8796013208183ad1267eddbdc8a8",
       "kind": "sft_run"
     },
+    "sft-run-qwen3-1.7b-seed20260824-1b938aa.json": {
+      "sha256": "77467c753e3d41606318d8229ab67241977f3d6c0fc4a2703fcb8af26ac30195",
+      "bytes": 1897,
+      "recorded_in_commit": null,
+      "kind": "sft_run"
+    },
     "sft-selection-qwen3-1.7b-72ff036.json": {
       "sha256": "0ac691dc8806c435eb5fb07a25e6f2a36e3a81a4f78d308d7cdcec831bee71d0",
       "bytes": 2846,
