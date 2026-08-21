@@ -145,7 +145,7 @@
     "sft-run-qwen3-1.7b-seed20260823-a7bb0e7.json": {
       "sha256": "bfef60c5035c195818e98ebaf4613ad49af3013148c7118793d348558f139696",
       "bytes": 1897,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "c8f9f48d3e0b8796013208183ad1267eddbdc8a8",
       "kind": "sft_run"
     },
     "sft-selection-qwen3-1.7b-72ff036.json": {
