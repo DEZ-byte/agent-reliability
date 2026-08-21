@@ -140,8 +140,17 @@ call rather than its shape.
   7.4, measured values from dev, none left null (D-069, D-070, D-071)
 - [x] Trajectory generation, dataset selection with a dev/test leakage guard,
   and a trainer that asserts the stack's silent traps shut
-- [ ] End-to-end pilot on a small train slice, so rented GPU hours are not
-  spent debugging the pipeline
+- [x] End-to-end pilot on a small train slice, so rented GPU hours are not
+  spent debugging the pipeline. 40 train tasks through generation, selection,
+  masking and training, producing a real adapter. It caught two defects before
+  any rented hour: generation was using a function default instead of the
+  pinned laundering threshold, and the first-batch check reported a mismatch on
+  labels that were correct
+- [x] Pilot evidence that the teacher is doing real work, not ceremony. The
+  pilot trained the 1.7B on its own retained outputs and the loss started at
+  0.045, because a model already assigns high probability to text it generated.
+  Self-distillation has almost nothing to teach here, which is the measured
+  version of the section 5.2 argument for a larger teacher
 - [ ] Teacher adoption decision, and only then a registry entry. Both
   candidates resolve as Apache-2.0, ungated:
   `Qwen/Qwen3-32B` at `9216db5781bf21249d130ec9da846c4624c16137` and
