@@ -1276,3 +1276,147 @@ controlled contrast: the probe was greedy, the baseline samples at 0.7, and the
 prompts differ. The gap for the 1.7B is far too large to be explained by
 decoding alone, but the clean version — same decoding, same tasks, tool against
 no tool — has not been run, so nothing is claimed from it yet.
+
+---
+
+### D-069 — Phase A cannot train self-correction on the failure that dominates it
+**Date:** 2026-08-20 · **Status:** accepted · **Supersedes:** nothing
+**Label:** `post_hoc_after_measurement`
+
+M2's SFT set retains single-decision trajectories only. The `r1_recovery` shape
+— a failed attempt, a structured observation, a successful retry — is dropped
+from Phase A and moves to Stage 2 (M3b).
+
+**The reason is structural, not a shortfall.** `run_episode` ends an episode as
+soon as a calculator call executes successfully:
+
+```python
+answered = any(is_answering_event(event) for event in trace.tool_events)
+if answered:
+    terminal_reason = "answered"
+    break
+```
+
+`is_answering_event` asks whether the call *ran*, never whether it was *right*.
+So a model that computes `2 + 3` for a problem whose answer is 6 gets a
+successful tool result, and the episode is over. R1's second decision fires only
+when the first produced no successful call at all.
+
+**That is correct behaviour and must not be changed.** The only way to give the
+model a second decision after a wrong-but-successful call is to tell it the
+answer is wrong, which is grader information. Section 8.2 requires cascade
+triggers to be runtime-observable and keeps the grader invisible to the agent. A
+Phase A environment that reveals wrongness at runtime would leak the grader into
+every rollout and invalidate the arm.
+
+**So the recoverable failures are exactly the observable ones**, and D-068
+measured how few they are. Confirmed independently on the dev split, 400 R1
+episodes per model:
+
+| model | 2nd decision fired | recovered | distinct tasks yielding a recovery |
+| --- | --- | --- | --- |
+| Qwen3-4B | 17 of 400 (4.2%) | 1 (0.2%) | 1 of 100 |
+| Qwen3-1.7B | 49 of 400 (12.2%) | 12 (3.0%) | 5 of 100 |
+
+Scaled to the 1,000-task train split that is roughly 10 and 50 usable recovery
+trajectories. The build plan this replaces assumed 15–25% of rows, or 150–250.
+The gap is two orders of magnitude on the primary model, and it is not a
+sampling artefact: it follows from the loop above.
+
+**What this costs, stated plainly.** Self-correction is in this project's title
+and Phase A cannot measure it. Phase A is single-turn with one non-mutative
+tool, so almost nothing observable goes wrong; the observable band is 0.25–4.25%
+of first decisions (D-070). Stage 2 is where tool errors, gate blocks and failed
+preconditions are both frequent and legitimately visible, so that is where the
+self-correction claims have to be made. Until Stage 2 exists this project has
+measured tool reliability and not self-correction, and no summary of it should
+say otherwise.
+
+**Consequences.** `configs/train_config.yaml` pins `generation.rung: "R0"`.
+D-046's demoted `prefix_preserved_after_tool_observation` gate stays untouched,
+because a single-turn trajectory never appends a tool observation, so nothing
+re-arms it and no multi-turn template swap is needed. The hybrid the build plan
+floated — student first attempts corrected by a teacher — is not smuggled in
+here; it is a candidate DPO-negative source for M3 and needs its own decision.
+
+---
+
+### D-070 — No format-grounding data is mixed in, because the schema failure rate is zero
+**Date:** 2026-08-20 · **Status:** accepted · **Supersedes:** nothing
+**Label:** `post_hoc_after_measurement`
+
+`configs/train_config.yaml` pins `format_grounding.fraction: 0.0`.
+`Salesforce/xlam-function-calling-60k` stays selected and licensed (D-058) but
+contributes no rows to Phase A SFT.
+
+Section 5.1 deferred this to a measured format error rate and allowed in
+advance that the answer might be zero. It is. Measured on the **dev** split,
+800 first decisions per model:
+
+| failure class | Qwen3-4B | Qwen3-1.7B |
+| --- | --- | --- |
+| call validated against the tool schema and dispatched | 96.75% | 90.25% |
+| **schema-invalid call** | **0.00%** | **0.00%** |
+| unparseable block | 0.25% | 0.25% |
+| no tool block emitted at all | 0.00% | 4.00% |
+| well-formed call the sandbox rejected (words in the expression) | 3.00% | 5.50% |
+
+xLAM teaches schema-conformant tool-call serialisation. Every emitted call
+already validates. Mixing it in would spend data budget, dilute the retained
+set, and take on the CC BY attribution duties in `data/LICENSES.md` to fix a
+failure rate of zero.
+
+**Measured on dev, not on test.** D-068's test-split numbers say the same thing,
+but a training decision derived from the split the checkpoint is later scored on
+is test-set selection under section 7.4, however innocuous the number looks.
+Dev is otherwise unused and this is what it is for.
+
+**What is not fixed by this.** The largest non-dispatch failure is not a format
+failure at all: 3.0% and 5.5% of first decisions are well-formed, schema-valid
+calls whose expression contains words — `(4 schools * (2 teams * 5 players))` —
+which the sandbox rejects as invalid syntax. That is a habit SFT on clean
+trajectories addresses directly, and no external dataset is needed for it.
+
+---
+
+### D-071 — The laundering filter's question-match rule is disabled, because GSM8K writes numbers as words
+**Date:** 2026-08-20 · **Status:** accepted · **Supersedes:** nothing
+**Label:** `post_hoc_after_measurement`
+
+`configs/train_config.yaml` pins `retention.min_question_match_ratio: 0.0`,
+which turns off the fourth rule in `training.retention.laundering_verdict`. The
+first three rules stay on.
+
+The rule was added because D-062's laundering check is defeated by one
+character: `expression_does_arithmetic("391 + 0")` is true and the expression
+computes nothing. Rules one to three close that — arithmetic required, at least
+two operands, and the gold answer may not appear as a literal unless the
+question contains it too. Rule four went further and required most of an
+expression's literals to appear in the question.
+
+**Measured on dev over 757 correct expressions**, rejections by threshold:
+
+| `min_question_match_ratio` | rejected | of which by rule four |
+| --- | --- | --- |
+| 0.00 (rule off) | 5 (0.7%) | 0 |
+| 0.25 | 21 (2.8%) | 16 |
+| 0.50 | 75 (9.9%) | 70 |
+| 1.00 | 382 (50.5%) | 377 |
+
+Every rejection at 0.25 was inspected. All were genuine work. Both distinct
+expressions came from the same task: *"Chatty prepared three dozen eggs for her
+four children."* The correct answers `36 / 4` and `(3 * 12) / 4` contain no
+literal that appears in the question, because the question spells its
+quantities as words. GSM8K does this constantly, so the rule cannot tell an
+invented number from a spelled-out one, and what it actually selects against is
+multi-step arithmetic that introduces intermediate constants.
+
+Rule four therefore rejects correct work and, on this data, caught nothing the
+first three rules had not already caught. It stays implemented and configurable
+so a later phase with digit-bearing prompts can switch it on, and it stays off
+here.
+
+**The measured laundering rate is low but not zero:** 5 of 757 correct
+expressions, 0.66%, caught by rules one to three. That is the rate in untrained
+checkpoints. It must be re-measured after training, when a reward for a passing
+tool call is exactly the pressure that raises it.

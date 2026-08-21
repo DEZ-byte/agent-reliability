@@ -4,16 +4,19 @@ BLUEPRINT_v2 section 7.4 fixes several training values before any measurement
 exists. Those are asserted here against the blueprint rather than against
 themselves, so that editing the config to match a run cannot pass silently.
 
-The remaining values are null on purpose. The risk with a null is that a script
-falls back to a default nobody recorded, producing a run whose artifact names a
-config that did not determine it. `PENDING` below is the full list of values
-still awaiting measurement; a new null that nobody decided to add fails here.
+The rest were null until a dev-split measurement set them, and are asserted
+against that measurement. The risk with a null is that a script falls back to a
+default nobody recorded, producing a run whose artifact names a config that did
+not determine it. `PENDING` is now empty, so a new null that nobody decided to
+add fails here, and the refusal mechanism is tested separately against a
+temporary config so it keeps being tested after every value was pinned.
 """
 
 from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -31,12 +34,10 @@ from training.config import (  # noqa: E402
 CONFIG_PATH = PROJECT_ROOT / "configs" / "train_config.yaml"
 EVAL_CONFIG_PATH = PROJECT_ROOT / "configs" / "eval.yaml"
 
-# Every value that is deliberately unset, with the measurement that will set it.
-PENDING = {
-    "retention.min_question_match_ratio",
-    "retention.max_rows",
-    "format_grounding.fraction",
-}
+# Every value still deliberately unset. All three that were pending have now
+# been measured on the dev split and pinned, so this is empty; a new null that
+# nobody decided to add fails the test below.
+PENDING: set[str] = set()
 
 
 class PreRegisteredValueTests(unittest.TestCase):
@@ -117,15 +118,55 @@ class GenerationConfigTests(unittest.TestCase):
         self.assertEqual(self.config["generation"]["rung"], "R0")
 
 
+class MeasuredValueTests(unittest.TestCase):
+    """Values that were null until a dev-split measurement set them."""
+
+    def setUp(self) -> None:
+        self.config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+    def test_no_format_grounding_data_is_mixed_in(self) -> None:
+        """D-070: the measured schema failure rate on dev is 0.00%.
+
+        Format grounding is what xlam is for, so mixing it in would spend data
+        budget and a CC BY attribution duty on a failure rate of zero.
+        """
+
+        self.assertEqual(self.config["format_grounding"]["fraction"], 0.0)
+
+    def test_the_question_match_rule_is_off(self) -> None:
+        """D-071: GSM8K writes quantities as words, so the rule misfires.
+
+        `three dozen eggs for her four children` contains no digits, so every
+        literal in the correct `36 / 4` looks invented.
+        """
+
+        self.assertEqual(self.config["retention"]["min_question_match_ratio"], 0.0)
+
+
 class PendingValueTests(unittest.TestCase):
-    def test_exactly_the_expected_values_are_still_unmeasured(self) -> None:
+    def test_no_value_is_left_unmeasured(self) -> None:
         config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
         self.assertEqual(set(pending_keys(config)), PENDING)
 
     def test_requiring_an_unmeasured_value_refuses_the_run(self) -> None:
-        with self.assertRaises(TrainConfigError) as caught:
-            load_train_config(CONFIG_PATH, require=["retention.max_rows"])
-        self.assertIn("retention.max_rows", str(caught.exception))
+        """The guard must still bite if a null is ever reintroduced.
+
+        Written against a temporary config rather than the committed one, so
+        the test keeps testing the mechanism after every value was pinned.
+        """
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "train_config.yaml"
+            path.write_text(
+                json.dumps({"retention": {"threshold": None}}), encoding="utf-8"
+            )
+            with self.assertRaises(TrainConfigError) as caught:
+                load_train_config(path, require=["retention.threshold"])
+            self.assertIn("retention.threshold", str(caught.exception))
+            self.assertEqual(
+                pending_keys(json.loads(path.read_text(encoding="utf-8"))),
+                ["retention.threshold"],
+            )
 
     def test_requiring_only_measured_values_loads(self) -> None:
         config = load_train_config(

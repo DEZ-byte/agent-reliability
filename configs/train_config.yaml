@@ -79,18 +79,22 @@
 
   "retention": {
     "per_task_cap": 1,
-    "min_question_match_ratio": null,
-    "max_rows": null,
+    "min_question_match_ratio": 0.0,
     "_comment": [
       "per_task_cap 1 keeps one passing trajectory per task so that easy tasks,",
       "which pass on every sample, cannot crowd out hard ones that pass once.",
-      "min_question_match_ratio is the laundering filter's fourth rule and stays",
-      "null until measured on the dev split. It trades two failures against each",
-      "other - admitting answer-first expressions against discarding correct",
-      "work - and picking it after seeing the retained count would be choosing",
-      "the dataset rather than the rule.",
-      "max_rows is null until teacher coverage is measured. Pinning a target",
-      "before knowing the coverage would pin a number the build cannot reach."
+      "min_question_match_ratio is 0.0, which turns the laundering filter's",
+      "fourth rule off. Measured on dev over 757 correct expressions (D-071):",
+      "the rule rejects genuine multi-step work because GSM8K writes many",
+      "quantities as words. `three dozen eggs for her four children` contains no",
+      "digits, so every literal in the correct `36 / 4` looks invented. At 0.25",
+      "it rejected 16 correct expressions and caught nothing the first three",
+      "rules had not already caught. Rules one to three stay on and rejected 5",
+      "of 757.",
+      "There is no row target. per_task_cap already bounds the set at one row",
+      "per train task, and the retained count is whatever teacher coverage",
+      "yields. Pinning a target before coverage is measured would pin a number",
+      "the build may be unable to reach."
     ]
   },
 
@@ -113,12 +117,17 @@
 
   "format_grounding": {
     "dataset": "Salesforce/xlam-function-calling-60k",
-    "fraction": null,
+    "fraction": 0.0,
     "_comment": [
-      "Section 5.1 defers this to a measured format error rate. The rate is",
-      "measured on dev, not on test, because a checkpoint trained on a decision",
-      "derived from test is no longer cleanly evaluated on test.",
-      "fraction stays null until that measurement is recorded in a decision."
+      "Section 5.1 defers this to a measured format error rate, and section 5.1",
+      "allows that the answer may be zero. It is (D-070).",
+      "Measured on the dev split, 800 first decisions per model: the schema",
+      "failure rate is 0.00% on both checkpoints. Every emitted call validated",
+      "against the tool schema. Format grounding is what xlam is for, so mixing",
+      "it in would spend data budget and CC BY attribution duty on a failure",
+      "rate of zero.",
+      "Measured on dev rather than test, because a checkpoint trained on a",
+      "decision derived from test is no longer cleanly evaluated on test."
     ]
   }
 }
