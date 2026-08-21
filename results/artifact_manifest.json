@@ -181,7 +181,7 @@
     "sft-selection-qwen3-1.7b-seed20260824-fbb9cd4.json": {
       "sha256": "6ed19ca3a79cbb7ddc2d1e11eb4ac1f1f9f22801a576e561848d787b26b68213",
       "bytes": 2939,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "72a653aafa2e5d5f2b8c95c00c8345cc0aa8db00",
       "kind": "checkpoint_selection"
     },
     "sft-test-qwen3-1.7b-c16530e.json": {
