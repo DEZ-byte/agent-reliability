@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-21T06:11:45.255910Z",
+  "kind": "sft_dataset",
+  "train_config_sha256": "d752cd3f80b6fda48cddd819331d6fbd58a454254e98230eeb33251a50bbd91e",
+  "split_manifest_sha256": "eac01714886fde0885693c0fa2ec667f283d8f314460c94e036fc6b6bec142b3",
+  "candidates_sha256": "23e51c87648b05e85f18916e85b83cfa3086d451c44f8acb54d66ceb9dcfcd16",
+  "dataset_sha256": "8f44c3bfa05b0ce6047a13dd689d99990c167c938e245dcf841e58a05c65c6f7",
+  "dataset_manifest_sha256": "7d500b7fb8ff25d6f074c8ff0b6d31fa77cc0d5476f3b2c32f4dc6070603fed3",
+  "retention": {
+    "per_task_cap": 1
+  },
+  "selection_stats": {
+    "candidates": 4000,
+    "usable": 2551,
+    "selected": 684,
+    "dropped_to_per_task_cap": 1867,
+    "distinct_tasks": 684,
+    "completion_shapes": {
+      "bare_tool_call": 684
+    }
+  },
+  "laundering_reasons": {
+    "retained": 2551,
+    "gold_answer_is_a_literal": 21
+  },
+  "masking_verification": {
+    "rows_masked": 684,
+    "trained_tokens_total": 22919,
+    "trained_tokens_max": 89,
+    "row_tokens_max": 441,
+    "tokenizer": {
+      "id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    }
+  },
+  "source_commit": "54218c40f53b3323b2ca18c57900c6def82f2ecd",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

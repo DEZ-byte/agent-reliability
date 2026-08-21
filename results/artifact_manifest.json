@@ -105,6 +105,18 @@
       "kind": "model_smoke",
       "config_sha256": "57901682f8bc4576292483229289f22f5894cafb852ed357a9068b38fe24e170",
       "declares_gate_demotion": true
+    },
+    "sft-candidates-a2dbe77.json": {
+      "sha256": "7972c19d490263fd0ee7f127080bd43d7ef4aae762b40194694f0fafb6308d49",
+      "bytes": 2348,
+      "recorded_in_commit": null,
+      "kind": "sft_trajectory_candidates"
+    },
+    "sft-dataset-54218c4.json": {
+      "sha256": "9b04e78e2ffd58ec7f8a983be94fda5752cbda6ed1c86c63579a182a9a9bdebd",
+      "bytes": 1315,
+      "recorded_in_commit": null,
+      "kind": "sft_dataset"
     }
   }
 }

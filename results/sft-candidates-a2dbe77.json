@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-21T03:17:17.262041Z",
+  "kind": "sft_trajectory_candidates",
+  "train_config_sha256": "d752cd3f80b6fda48cddd819331d6fbd58a454254e98230eeb33251a50bbd91e",
+  "split_manifest_sha256": "eac01714886fde0885693c0fa2ec667f283d8f314460c94e036fc6b6bec142b3",
+  "prompt_sha256": {
+    "system": "bd7895a093b3b21b482c21b9813ef539747527e778c585caf92296b3c4da0755",
+    "user": "b6f9739c2a651441320a36e444c6c6555e988db27bf7bce3cdf57bbd5a44e4f3"
+  },
+  "generation": {
+    "rung": "R0",
+    "runs_per_task": 4,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "max_new_tokens": 256,
+    "enable_thinking": false,
+    "seed_base": 20260821,
+    "_comment": [
+      "Teacher rollouts over the frozen train split. Values match eval.yaml but",
+      "this is a generation config, not an evaluation config, and carries its",
+      "own hash: a run that borrowed eval.yaml's hash would claim comparability",
+      "it does not have.",
+      "seed_base differs from eval.yaml's so a generation seed and an evaluation",
+      "seed can never silently coincide.",
+      "Rung R0 only. R1 would add a second decision, but the Phase A loop ends",
+      "an episode as soon as a calculator call succeeds, so the dominant failure",
+      "- a well-formed call that computes the wrong thing - never reaches a",
+      "second decision. See D-069."
+    ]
+  },
+  "retention_applied": {
+    "min_question_match_ratio": 0.0
+  },
+  "split": "train",
+  "model_planned": {
+    "id": "Qwen/Qwen3-4B",
+    "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "source": "registry"
+  },
+  "executed": true,
+  "source_commit": "a2dbe7775a17514ab36c2d47c48aaeac1c5e2079",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "task_count": 1000,
+  "result": {
+    "model": {
+      "id": "Qwen/Qwen3-4B",
+      "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+      "source": "registry"
+    },
+    "counts": {
+      "episodes": 4000,
+      "graded_correct": 2572,
+      "laundered": 21,
+      "usable": 2551,
+      "tasks_with_at_least_one_usable": 684
+    },
+    "laundering_reasons": {
+      "retained": 2551,
+      "gold_answer_is_a_literal": 21
+    },
+    "task_coverage": 0.684,
+    "usable_rate": 0.63775
+  },
+  "candidates_sha256": "23e51c87648b05e85f18916e85b83cfa3086d451c44f8acb54d66ceb9dcfcd16"
+}

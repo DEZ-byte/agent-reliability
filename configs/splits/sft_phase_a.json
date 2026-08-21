@@ -1,0 +1,3426 @@
+{
+  "schema_version": 1,
+  "purpose": "The frozen selection of Phase A SFT rows. Task ids and row hashes are permanent: a rebuild that would change one is a different dataset and needs its own decision.",
+  "rows": [
+    {
+      "task_id": "gsm8k:train:101",
+      "run_index": 0,
+      "messages_sha256": "2c4edcc38b28e031fb33dff1606f43df7f06529ee55792062a359493d7382fb5"
+    },
+    {
+      "task_id": "gsm8k:train:1014",
+      "run_index": 0,
+      "messages_sha256": "f418f34e73ad3a98aaf0ea9a60e24b50c2ad69a26f09a562472926e2e36335a0"
+    },
+    {
+      "task_id": "gsm8k:train:1045",
+      "run_index": 0,
+      "messages_sha256": "c31b6958be53ba804bdb9c291aede3ed2c1a783852449ea4bce62674cc9c9850"
+    },
+    {
+      "task_id": "gsm8k:train:105",
+      "run_index": 0,
+      "messages_sha256": "ac5ce1fdf57ced146981a11edcda7b3803965dee0f62f1cbb35410413d0370e9"
+    },
+    {
+      "task_id": "gsm8k:train:1064",
+      "run_index": 0,
+      "messages_sha256": "8341bd6ec72decebadd43deda95298596e31a6dcdf4fffc6448fc9d3c21d1d2a"
+    },
+    {
+      "task_id": "gsm8k:train:1065",
+      "run_index": 0,
+      "messages_sha256": "16508c69a2314bc5d9bc99299ece62e74be02c58847783958bdd22dfc569c5d5"
+    },
+    {
+      "task_id": "gsm8k:train:1066",
+      "run_index": 0,
+      "messages_sha256": "6ddd11f3150f76a80ebca46500eb6f61ad5983cc8aa128964533726c1d3ec427"
+    },
+    {
+      "task_id": "gsm8k:train:1083",
+      "run_index": 0,
+      "messages_sha256": "3302f70b5c94cd0c288ae333b05949ef6147307a71a9b077b7318f386b5b8200"
+    },
+    {
+      "task_id": "gsm8k:train:1084",
+      "run_index": 0,
+      "messages_sha256": "fd68d3c6dfdd07605bf361b2ad0e35dc070eb6424e070bdd16e44b830e40742f"
+    },
+    {
+      "task_id": "gsm8k:train:1095",
+      "run_index": 0,
+      "messages_sha256": "8f3e5da3498dac5bae667f762f5ff5a7015540efa5dc0fa22c07e8139453aecc"
+    },
+    {
+      "task_id": "gsm8k:train:1097",
+      "run_index": 0,
+      "messages_sha256": "f62f6cd30ec45214ddf1f0608323559088cf2cf7c865e99237fe8dfb515a2b58"
+    },
+    {
+      "task_id": "gsm8k:train:1104",
+      "run_index": 1,
+      "messages_sha256": "97bafadec7f7382bae5aa1b228d1d0d8c3405c6f8316fc6e2d641329ddaf090b"
+    },
+    {
+      "task_id": "gsm8k:train:1105",
+      "run_index": 0,
+      "messages_sha256": "75542335eaadda1774e92dcc9a198e55944043a5fb52edfc7031922167b5f418"
+    },
+    {
+      "task_id": "gsm8k:train:112",
+      "run_index": 0,
+      "messages_sha256": "ff3e86e6738a1201901d4f531c68c9bff1028273766b5f8f78c4a802e1851127"
+    },
+    {
+      "task_id": "gsm8k:train:1121",
+      "run_index": 1,
+      "messages_sha256": "28f8edfb47e9f3d2797c5a0f5a328be931b124756423e216a941f1df975fd246"
+    },
+    {
+      "task_id": "gsm8k:train:1122",
+      "run_index": 0,
+      "messages_sha256": "8274037b18fcdffaec2d53772d842aa6f83d42167aeebab1e897204a5e50153f"
+    },
+    {
+      "task_id": "gsm8k:train:1123",
+      "run_index": 0,
+      "messages_sha256": "42d12dc06d8968719cabbd1d8cd9960c42ac67ad1ceba1d607cef23e9eab164a"
+    },
+    {
+      "task_id": "gsm8k:train:1124",
+      "run_index": 0,
+      "messages_sha256": "6d5db0a5c747540aca605c254bcc1f4a6edfed8f368356ec57cf135b1c16e2e6"
+    },
+    {
+      "task_id": "gsm8k:train:1132",
+      "run_index": 0,
+      "messages_sha256": "5a763a143424bcae5074f10f061285d037cce6c0f2414560be61acb676ea17a9"
+    },
+    {
+      "task_id": "gsm8k:train:1139",
+      "run_index": 0,
+      "messages_sha256": "9a06fdea0ef312609469578d5adb1b4383070e540c834ba9f444f9307bbc278c"
+    },
+    {
+      "task_id": "gsm8k:train:1150",
+      "run_index": 0,
+      "messages_sha256": "3e472cc33add55aabce4b9f8e57d6c2d9954cd455a8f14e5bc0ba086e8c28b21"
+    },
+    {
+      "task_id": "gsm8k:train:1151",
+      "run_index": 2,
+      "messages_sha256": "d12b8e8f08dd4d7f171cdbe0db15ace1a96e083b09317be3cb9307d9b07a2bda"
+    },
+    {
+      "task_id": "gsm8k:train:1156",
+      "run_index": 0,
+      "messages_sha256": "885070211afc375816cab6bd5b34e4fa01712066bc3f2a9f2518ebff7a4b53b9"
+    },
+    {
+      "task_id": "gsm8k:train:1162",
+      "run_index": 0,
+      "messages_sha256": "5076b6734833088a5efdc600e6e8a45cbfae0228a3a1474be1949b759cab1585"
+    },
+    {
+      "task_id": "gsm8k:train:1169",
+      "run_index": 0,
+      "messages_sha256": "a8a44a73458dd5ca0cb53ee05e612e77446e4a93b836c69085ac4366fb9abd13"
+    },
+    {
+      "task_id": "gsm8k:train:1190",
+      "run_index": 0,
+      "messages_sha256": "e8ade7a6d7409f27bc2824aeed204d03e873b7e8f549cd56f17ab2ffeb7c8220"
+    },
+    {
+      "task_id": "gsm8k:train:1219",
+      "run_index": 0,
+      "messages_sha256": "e88c8b551007194d51eb146b121d7c5c846fc260b9f1417615dca018196f79ec"
+    },
+    {
+      "task_id": "gsm8k:train:1221",
+      "run_index": 0,
+      "messages_sha256": "ce7aacd6d0fe7a5bc57cec65c0dd3aef458cdd2e921ef52b052064e4bc69ba22"
+    },
+    {
+      "task_id": "gsm8k:train:1222",
+      "run_index": 0,
+      "messages_sha256": "38c0e42d1632b123ab322ca8fbffd578aef7208320d965321830af759c3c571b"
+    },
+    {
+      "task_id": "gsm8k:train:1235",
+      "run_index": 0,
+      "messages_sha256": "7cb59a43c4c2c7a932571987b053db8e35d1901587f8eb9209fd39ded9ca06b3"
+    },
+    {
+      "task_id": "gsm8k:train:1237",
+      "run_index": 0,
+      "messages_sha256": "97e2e993703e70269f1c22b6966144308c93731f4cf35cd4b901c83e52cd2486"
+    },
+    {
+      "task_id": "gsm8k:train:1245",
+      "run_index": 0,
+      "messages_sha256": "7c60e45972375f2b6aca885a89727f7d1664a0e5165df2515d2565be3fd16af2"
+    },
+    {
+      "task_id": "gsm8k:train:1247",
+      "run_index": 0,
+      "messages_sha256": "d519c78c630d9cb6853239603c22bea33b8768ea47898215fcc3b3a61c927a90"
+    },
+    {
+      "task_id": "gsm8k:train:1254",
+      "run_index": 0,
+      "messages_sha256": "11adf302f2ba28b456d3e92f99ad22f76ed2cec1dd5185651d94ede3ac99f99d"
+    },
+    {
+      "task_id": "gsm8k:train:1267",
+      "run_index": 0,
+      "messages_sha256": "f65be78b545fd862c75b36b0d8ee4abacb4b6fff206a22b19cf946e2cf94717e"
+    },
+    {
+      "task_id": "gsm8k:train:1274",
+      "run_index": 0,
+      "messages_sha256": "6ac8648c9c03fa9b1b4bf7d74fdb0c0e8dd3936306226c2273602e3ec2122b08"
+    },
+    {
+      "task_id": "gsm8k:train:1291",
+      "run_index": 0,
+      "messages_sha256": "5ba82da6c80038e6447ce4934719fe29b8d24ca2c41ee302a66c281f34a241ab"
+    },
+    {
+      "task_id": "gsm8k:train:1305",
+      "run_index": 0,
+      "messages_sha256": "648ce56b102ce9896067bbaf9ed4fb1e168016cf13e439d37d7318ea03abc138"
+    },
+    {
+      "task_id": "gsm8k:train:131",
+      "run_index": 0,
+      "messages_sha256": "2d1c14760ff55267babad666c84f4f0bddb4354aa604ac7fdef05aeab09201c3"
+    },
+    {
+      "task_id": "gsm8k:train:132",
+      "run_index": 0,
+      "messages_sha256": "b2b076b577c50933701c08054a359a3b7ba2741c846bfef13fbe0e4ce5c1138e"
+    },
+    {
+      "task_id": "gsm8k:train:1333",
+      "run_index": 0,
+      "messages_sha256": "6ee9436bb9fdca2b6c177ab9a5cc78c5a8f25b72acd42fdee78e98e03cf430e0"
+    },
+    {
+      "task_id": "gsm8k:train:1341",
+      "run_index": 0,
+      "messages_sha256": "2f635ab6192a674247427598b0568dd1147b67d32d6346b43936779b8092f6c6"
+    },
+    {
+      "task_id": "gsm8k:train:1355",
+      "run_index": 0,
+      "messages_sha256": "83936555f36ac7dd516b5459ccd1930998a3570cef8fad752ff978dd9009ed56"
+    },
+    {
+      "task_id": "gsm8k:train:1374",
+      "run_index": 0,
+      "messages_sha256": "17133d855012257367953bc0976ba22504458e0fd35272e64645cc93f8369aae"
+    },
+    {
+      "task_id": "gsm8k:train:1375",
+      "run_index": 0,
+      "messages_sha256": "c878628b5f1b6824512e97d9c6656a5992f90c3ba655e2cccf4d01e2163e2d5d"
+    },
+    {
+      "task_id": "gsm8k:train:1389",
+      "run_index": 0,
+      "messages_sha256": "d55cd4bf437a09e1b7fa4663c89736d74fee9c27137759f30eeb76653ca0f5ca"
+    },
+    {
+      "task_id": "gsm8k:train:1396",
+      "run_index": 2,
+      "messages_sha256": "4ed5f09f4cbae8ddb95ee7ec4b0f13e4aa23270d0c0dce1fa6b6ff33998a207c"
+    },
+    {
+      "task_id": "gsm8k:train:1398",
+      "run_index": 0,
+      "messages_sha256": "8271f71c4cd1f60acf6b400a3a91a293d90cb40892ca204a7ac2182f475ffb45"
+    },
+    {
+      "task_id": "gsm8k:train:140",
+      "run_index": 0,
+      "messages_sha256": "d1270ed157610afcd01a96e94e52b58547f1a34859518d816bf85c0b797035f9"
+    },
+    {
+      "task_id": "gsm8k:train:1402",
+      "run_index": 0,
+      "messages_sha256": "f2aa23c21ab0d6d0d2f47a0a5054278224df736a6288951afac17334fdb21e24"
+    },
+    {
+      "task_id": "gsm8k:train:1434",
+      "run_index": 0,
+      "messages_sha256": "2da3b2622210cc458328529e12f7d4519becc6e62d9293f3bd7a76c49582012f"
+    },
+    {
+      "task_id": "gsm8k:train:144",
+      "run_index": 0,
+      "messages_sha256": "7c4af2a069f01052c23b781b9646ad82bdcd4505405815265ea1242a4e4b75e7"
+    },
+    {
+      "task_id": "gsm8k:train:1441",
+      "run_index": 0,
+      "messages_sha256": "fba73bfefffd9dee9464f30f8577bb1995a60582c9f3a8a8e9f249714906da58"
+    },
+    {
+      "task_id": "gsm8k:train:1485",
+      "run_index": 0,
+      "messages_sha256": "1576c6536fd71ca3cca7220ecade7624912eca399a8ce9b0d0044c29121e8f33"
+    },
+    {
+      "task_id": "gsm8k:train:1487",
+      "run_index": 1,
+      "messages_sha256": "7a0865439856261572919d1d077be73bf29f32b4085bc65a478ed3b4ad16db29"
+    },
+    {
+      "task_id": "gsm8k:train:1498",
+      "run_index": 0,
+      "messages_sha256": "7c015f65b566b18b145193f581ea119b3787b5c60df6261c8b7ae7ba3cb612cb"
+    },
+    {
+      "task_id": "gsm8k:train:1516",
+      "run_index": 0,
+      "messages_sha256": "ddddbe57090dbf08e297b6f97bc042434673772744bc2acb1b0a6cf1df829d79"
+    },
+    {
+      "task_id": "gsm8k:train:1541",
+      "run_index": 0,
+      "messages_sha256": "739e89622018ad7e1a218d472d5cfecf915328e4bbcf1abb8d4958ef798efb5e"
+    },
+    {
+      "task_id": "gsm8k:train:1543",
+      "run_index": 2,
+      "messages_sha256": "5b0ab6329d4ac2122ffc3476646b25797a25ae31526ddd3e88af04a21b48b26d"
+    },
+    {
+      "task_id": "gsm8k:train:1556",
+      "run_index": 0,
+      "messages_sha256": "74852a9fd2b5c9387894c8ff4b9b8d6dcf61b080e27f0f21181517a6e49cd101"
+    },
+    {
+      "task_id": "gsm8k:train:158",
+      "run_index": 0,
+      "messages_sha256": "61460375c3144c81ea3fa1e86469c0c8f9813abf38105afac756bde7d529d535"
+    },
+    {
+      "task_id": "gsm8k:train:1589",
+      "run_index": 0,
+      "messages_sha256": "5f065cc13ebe07b4ccbb2bc686bb30f5ad93e70d05de46d9a8b019ecfddc4b43"
+    },
+    {
+      "task_id": "gsm8k:train:1591",
+      "run_index": 0,
+      "messages_sha256": "0cf291d4a0eac46f74e7ec6b2fa7187049444e07aafb133a199ac6a55eb5e842"
+    },
+    {
+      "task_id": "gsm8k:train:1604",
+      "run_index": 0,
+      "messages_sha256": "0f8a622026ecbc04cc2dee2b3aa6d33d393021101cfc0802902a289557cfd0df"
+    },
+    {
+      "task_id": "gsm8k:train:1613",
+      "run_index": 1,
+      "messages_sha256": "379214001fbaa019f4d6cc55641c86591303e7bcabd159c45e59efa8c488c62b"
+    },
+    {
+      "task_id": "gsm8k:train:1615",
+      "run_index": 0,
+      "messages_sha256": "1635190c76627be8cd2393daf034313ae2e7cfd1d5df4d9e4a3112422949e6fd"
+    },
+    {
+      "task_id": "gsm8k:train:1632",
+      "run_index": 0,
+      "messages_sha256": "7003bf4e9227f400b629ccfece190e3883d17a714a19536367233b49d184d16a"
+    },
+    {
+      "task_id": "gsm8k:train:1637",
+      "run_index": 0,
+      "messages_sha256": "ac5cd3a8dd2ee3775dcdfcda2dcdcde6d25fcd1b108dd281df884f2ea069d9d2"
+    },
+    {
+      "task_id": "gsm8k:train:1639",
+      "run_index": 0,
+      "messages_sha256": "edd7f9f94640f0e1f3bc7945bdad66b7ad4055e34894152c5cd729fb1e80815d"
+    },
+    {
+      "task_id": "gsm8k:train:1662",
+      "run_index": 0,
+      "messages_sha256": "223848e4b0c721d4691ccdde4b87323217b27e359baa54362051eec6dcfc5f73"
+    },
+    {
+      "task_id": "gsm8k:train:168",
+      "run_index": 0,
+      "messages_sha256": "a6aaa33acc6a560f1c16988ee3223a18d325d9e0847079b3bd4130da0e265705"
+    },
+    {
+      "task_id": "gsm8k:train:1683",
+      "run_index": 0,
+      "messages_sha256": "70f198756a1b62c2acadd4262b4d513704a703eb8c28c251f44e226b9b78b68a"
+    },
+    {
+      "task_id": "gsm8k:train:1684",
+      "run_index": 0,
+      "messages_sha256": "0468796e6e3b2d4928a19fa98154c8d84d2c18a9c4d2e4e7909cc2adce37195e"
+    },
+    {
+      "task_id": "gsm8k:train:1685",
+      "run_index": 0,
+      "messages_sha256": "be75f944dc04b9a4ccab033027b1f9707f5d9266e6dd9a1ac4c9e35cd172bab1"
+    },
+    {
+      "task_id": "gsm8k:train:1693",
+      "run_index": 2,
+      "messages_sha256": "3899135fd76652d0fe53cd1db408e11927fc17a8da2407bf0168909245a6bfa8"
+    },
+    {
+      "task_id": "gsm8k:train:1698",
+      "run_index": 0,
+      "messages_sha256": "988188dad1c4d7f169175ee74b8e23a63de1da7b0c5485e3fdcbada165ef8fbb"
+    },
+    {
+      "task_id": "gsm8k:train:1737",
+      "run_index": 0,
+      "messages_sha256": "8ba0befd4eb8da550ad94f6075e47aebd1db97a3d8640118fb8e08f566c41447"
+    },
+    {
+      "task_id": "gsm8k:train:1742",
+      "run_index": 0,
+      "messages_sha256": "653b0ece6558843a62bf9371b7c3b0cc27e13b5fa786b5a5cc903a54b03e2f81"
+    },
+    {
+      "task_id": "gsm8k:train:1751",
+      "run_index": 0,
+      "messages_sha256": "47c7a6332c2f32a2f6e597debb5019548b112dd57450d3a6fef40b7cdec9ef74"
+    },
+    {
+      "task_id": "gsm8k:train:1794",
+      "run_index": 0,
+      "messages_sha256": "deaf9d368f30cd32264e771ddefca3ec32dec6a308e1278fec6e61f33694cf13"
+    },
+    {
+      "task_id": "gsm8k:train:1807",
+      "run_index": 0,
+      "messages_sha256": "5e3f691f381379d6fcc6691faccd0c91f39558fb362374280356eb82d142574e"
+    },
+    {
+      "task_id": "gsm8k:train:1809",
+      "run_index": 0,
+      "messages_sha256": "39c17e66305120bac667734da110addf75fff77666b249bafb834d2048a5932b"
+    },
+    {
+      "task_id": "gsm8k:train:1813",
+      "run_index": 0,
+      "messages_sha256": "5250ed324cd70c402963dd9d8200ffab9ab603b0f974ae00159b128b2a597488"
+    },
+    {
+      "task_id": "gsm8k:train:1818",
+      "run_index": 0,
+      "messages_sha256": "dff94862ff222111da9b4e0ba39484c15ccdbf43821f2de059e7d8356280466d"
+    },
+    {
+      "task_id": "gsm8k:train:1822",
+      "run_index": 0,
+      "messages_sha256": "023b923b76bda4da67ce7c66d705cf66cb421df52297820b8a3710f8a61323b9"
+    },
+    {
+      "task_id": "gsm8k:train:1832",
+      "run_index": 0,
+      "messages_sha256": "fb5b079131071e576a827c7d292f9dadf4a3d1098a30ff658f4ddb22d25fd897"
+    },
+    {
+      "task_id": "gsm8k:train:184",
+      "run_index": 0,
+      "messages_sha256": "dce2732df50d5559d0aeb3aa773a31c8e7f94961a2daf9f7c844d5443a5cef25"
+    },
+    {
+      "task_id": "gsm8k:train:1842",
+      "run_index": 0,
+      "messages_sha256": "fb42de6a1c9d88c12e3d8b59a3f46249d191798bee8e070df147edd2f23431e1"
+    },
+    {
+      "task_id": "gsm8k:train:185",
+      "run_index": 0,
+      "messages_sha256": "36902356e1225a80c5673525af50c66ced80f694382c84fdf92b3c9a690a13ff"
+    },
+    {
+      "task_id": "gsm8k:train:1852",
+      "run_index": 0,
+      "messages_sha256": "8b8f83092f92c2f9cf5315cf3394826ad70086aef08683632b45598d77637744"
+    },
+    {
+      "task_id": "gsm8k:train:1855",
+      "run_index": 0,
+      "messages_sha256": "54016cf9ed8ef897e5ff222b57a9b38e918849fc6e6a2e153883bc28352da43f"
+    },
+    {
+      "task_id": "gsm8k:train:19",
+      "run_index": 0,
+      "messages_sha256": "76782c0c36bbf8824911f9e200be0d32e55ab4196e9b4f71a0e4f3a7f4c73201"
+    },
+    {
+      "task_id": "gsm8k:train:1900",
+      "run_index": 0,
+      "messages_sha256": "9130b452dac5a289c15f33cd99f06a8f517b1a62fcc36008b58c7d21122adc97"
+    },
+    {
+      "task_id": "gsm8k:train:1908",
+      "run_index": 0,
+      "messages_sha256": "c1a631f09eb5040111cd871cf3073837f27c3973542a0b49729a8d2b1da6086d"
+    },
+    {
+      "task_id": "gsm8k:train:1914",
+      "run_index": 0,
+      "messages_sha256": "388e11c7208d4ebfc00a721df119496f1e544bee827b30c0051e85af1c3d7dd1"
+    },
+    {
+      "task_id": "gsm8k:train:1919",
+      "run_index": 0,
+      "messages_sha256": "9d4e26f49e9ec759b5540784e8f5bbdce128e98d8d43fbb285398278e326130d"
+    },
+    {
+      "task_id": "gsm8k:train:1928",
+      "run_index": 0,
+      "messages_sha256": "e47d97c32b38c3ee437ad886f7314b7aee6156b6443e27128682f95757c93270"
+    },
+    {
+      "task_id": "gsm8k:train:1945",
+      "run_index": 0,
+      "messages_sha256": "6e0293a6520a9524ca929019eb9947bd6dea39ce6ff96d854a683e183912fff6"
+    },
+    {
+      "task_id": "gsm8k:train:1948",
+      "run_index": 0,
+      "messages_sha256": "120ffbca7db756dd5dd3ad338728f97d5eded10226102d9bc81b6aad7dd93179"
+    },
+    {
+      "task_id": "gsm8k:train:1957",
+      "run_index": 0,
+      "messages_sha256": "94efb9ac9201715687676fcb62ed509eae62d0c8017377276d39e54283a1f02b"
+    },
+    {
+      "task_id": "gsm8k:train:1978",
+      "run_index": 0,
+      "messages_sha256": "87f7c1aaaba850eb8ea8a6a749ddb00b5eb82ca1b6d8a44fad2669dd0b4bbf2f"
+    },
+    {
+      "task_id": "gsm8k:train:1985",
+      "run_index": 0,
+      "messages_sha256": "481401719661d26b1ea49a07b14287dc71f48584ecad832853dbbcf8c801fdc4"
+    },
+    {
+      "task_id": "gsm8k:train:1987",
+      "run_index": 0,
+      "messages_sha256": "a7ab5d3e805173aa13dd88c06266c637aae09d01ab91919bf35c4c09fd7df351"
+    },
+    {
+      "task_id": "gsm8k:train:199",
+      "run_index": 0,
+      "messages_sha256": "b57a56d1c33e327a40d54505347596a97dbf0ae16a767310dd07848da6de07bc"
+    },
+    {
+      "task_id": "gsm8k:train:2006",
+      "run_index": 2,
+      "messages_sha256": "fe1c50b4d400c8b2c5984a042f1da46c9049c339a1e38636a236590dd2c2d559"
+    },
+    {
+      "task_id": "gsm8k:train:204",
+      "run_index": 0,
+      "messages_sha256": "ebaca78b6756b4baf4c1b45d5285da47752510a73e938e6e324a2f8544108017"
+    },
+    {
+      "task_id": "gsm8k:train:2045",
+      "run_index": 0,
+      "messages_sha256": "415b89c9f277d387f115b1e524ca075ed42ac81496d98f3660ca17689d3b5382"
+    },
+    {
+      "task_id": "gsm8k:train:2066",
+      "run_index": 0,
+      "messages_sha256": "cf0c080f4921836bd2a8ef7096bf202cf65971f8d4a1527238e5d04bba1e373e"
+    },
+    {
+      "task_id": "gsm8k:train:2068",
+      "run_index": 0,
+      "messages_sha256": "d915bd55032a5474ad987c6ae2a0c21a48d02b64957b618ea9e7661a328e5b71"
+    },
+    {
+      "task_id": "gsm8k:train:2075",
+      "run_index": 0,
+      "messages_sha256": "28c8b9c7b747018de4402f2871bdab4fa6448daad08485ac5685172fd0149d9a"
+    },
+    {
+      "task_id": "gsm8k:train:2078",
+      "run_index": 0,
+      "messages_sha256": "6db68a4d114a4abe593659ea5c138463b755338243f2ad5d45122501fd06ffb0"
+    },
+    {
+      "task_id": "gsm8k:train:2090",
+      "run_index": 0,
+      "messages_sha256": "56a92f668c8036be843ece7a4af93215ae04afe3dd0dce1be35f8bfa3e68df99"
+    },
+    {
+      "task_id": "gsm8k:train:2093",
+      "run_index": 0,
+      "messages_sha256": "ffae0ac6997c6a2d48af42826836b16bd0d7523396e8e6ee3b8280d01f08ed3b"
+    },
+    {
+      "task_id": "gsm8k:train:2095",
+      "run_index": 0,
+      "messages_sha256": "08b6ee56d0027917f5e4e93f24fb7783c57b256a3fddf0463ba91d159e2e3b3f"
+    },
+    {
+      "task_id": "gsm8k:train:2098",
+      "run_index": 0,
+      "messages_sha256": "69cd137e05a576b586f5b7d4925fa339ece9a46514662da02ba23601e0473ef5"
+    },
+    {
+      "task_id": "gsm8k:train:2108",
+      "run_index": 0,
+      "messages_sha256": "e90ccbf0104997415f060aaf98d44d8db50ecbdf6eaa490c4f983d29bf3c1d57"
+    },
+    {
+      "task_id": "gsm8k:train:2133",
+      "run_index": 0,
+      "messages_sha256": "ebcc7e3398dffbed5c9191f3a5c63db787edcce9389ffa42a3864c667c34b209"
+    },
+    {
+      "task_id": "gsm8k:train:2136",
+      "run_index": 0,
+      "messages_sha256": "c0521d4b828a6a17cb39ec9e2ffdd6d568b83322fde4496c19c70dbb9280c15e"
+    },
+    {
+      "task_id": "gsm8k:train:2146",
+      "run_index": 0,
+      "messages_sha256": "4180a19abe4b8941847a92b31ebdf1fe744608acd9426f5a0ec6fb3e68b306f5"
+    },
+    {
+      "task_id": "gsm8k:train:2158",
+      "run_index": 0,
+      "messages_sha256": "2a7762db4a1c9f167238e9021752ea03073ec32867a1ed2673ed36b6925ff1f8"
+    },
+    {
+      "task_id": "gsm8k:train:2170",
+      "run_index": 0,
+      "messages_sha256": "2384ad3ce2da91bacc2c9a08d41bc97ebab895fadea370b9dfa2040cc8971187"
+    },
+    {
+      "task_id": "gsm8k:train:2182",
+      "run_index": 0,
+      "messages_sha256": "f0aeb7dd57e42c529c63ebb890153f28c0d596b9f85c8325ad77e1a9b4dcb436"
+    },
+    {
+      "task_id": "gsm8k:train:219",
+      "run_index": 0,
+      "messages_sha256": "42a58b1fa423f29df6dc76ffcdeff9399f8b7e0ba54e14311ff94a9889ba3395"
+    },
+    {
+      "task_id": "gsm8k:train:2199",
+      "run_index": 0,
+      "messages_sha256": "d2fdbc37c24bbfc0753d7803b6b1af783071f1f3eab67221dad7aefc4256454a"
+    },
+    {
+      "task_id": "gsm8k:train:2202",
+      "run_index": 0,
+      "messages_sha256": "f53f235b5a2bbdf03611a847073c214b94ddc4827d5bdd96c2da7c28e66cd030"
+    },
+    {
+      "task_id": "gsm8k:train:2214",
+      "run_index": 1,
+      "messages_sha256": "579aba934d26b6902c382f9c60573ceb976ed8c101c1f0202779a837003e9a3b"
+    },
+    {
+      "task_id": "gsm8k:train:2229",
+      "run_index": 1,
+      "messages_sha256": "46188326be22d8dd1ecd1c7d283a99c358dcf1c718adc29ec7163e2520bcfff9"
+    },
+    {
+      "task_id": "gsm8k:train:2239",
+      "run_index": 0,
+      "messages_sha256": "47d6910df663940359e252a8a20a406c1ab2fd31cd8752d5bd4c0bb2c1961624"
+    },
+    {
+      "task_id": "gsm8k:train:2259",
+      "run_index": 0,
+      "messages_sha256": "6d4bab64ce37b0154f1cb4cbe53f397c93eac5d1fa7ba575a2c67197817d6d2d"
+    },
+    {
+      "task_id": "gsm8k:train:2260",
+      "run_index": 0,
+      "messages_sha256": "818d493bb4c540ca2141771161870cca0593101a61a7bebba402a32231d47ef0"
+    },
+    {
+      "task_id": "gsm8k:train:2263",
+      "run_index": 0,
+      "messages_sha256": "dd987a99e03f78d1bc5893d93fd26be6471606b7f3e2e8839aec65406caf6ecf"
+    },
+    {
+      "task_id": "gsm8k:train:2264",
+      "run_index": 0,
+      "messages_sha256": "26fe3ae42936875aa314db2b1488b4a69199535e859bb61e65f15ef5a77344e9"
+    },
+    {
+      "task_id": "gsm8k:train:2265",
+      "run_index": 0,
+      "messages_sha256": "db1ca4fbd9b6d926fc48619bb3d6cc6d9bd790b81fb9ca5e4dbb64d3193fc594"
+    },
+    {
+      "task_id": "gsm8k:train:2271",
+      "run_index": 0,
+      "messages_sha256": "3ef457a7b7955fa800b4d91b68c8d6b9e7ac6881f7708581ace16d84b9b9e420"
+    },
+    {
+      "task_id": "gsm8k:train:2277",
+      "run_index": 0,
+      "messages_sha256": "57f402d29b95a2ee9279f053ba77522c4b2f15fa26a809a7f33515de993b0836"
+    },
+    {
+      "task_id": "gsm8k:train:2284",
+      "run_index": 0,
+      "messages_sha256": "dba80b04f73b31bcbc50fa38a313c59618a671f17920ae4576105e0a36f5f34b"
+    },
+    {
+      "task_id": "gsm8k:train:2295",
+      "run_index": 0,
+      "messages_sha256": "634838a637287ec3b4986e4afe233dbe33a8dd6e60d329b75a20d5586847a16f"
+    },
+    {
+      "task_id": "gsm8k:train:2312",
+      "run_index": 0,
+      "messages_sha256": "f6f8bea2d961061428b6ab6dd122a303409a86f6c874b7870a7ec578eaad9ef0"
+    },
+    {
+      "task_id": "gsm8k:train:2330",
+      "run_index": 0,
+      "messages_sha256": "aa629a702e2af3a1f3c6183d62225d5ba2bab6840228079669f16829043d8259"
+    },
+    {
+      "task_id": "gsm8k:train:2335",
+      "run_index": 0,
+      "messages_sha256": "4f13623d8d61e0864c9e5311386dafefe78719fa5638246251e43517fa29601b"
+    },
+    {
+      "task_id": "gsm8k:train:2358",
+      "run_index": 0,
+      "messages_sha256": "f168a642e9ad8ff0d866d8bc49881dccd577b2899cfd9b35da6f63b228eaaa35"
+    },
+    {
+      "task_id": "gsm8k:train:2400",
+      "run_index": 0,
+      "messages_sha256": "ffff700490bd461a840e03d0f8d8fab5e18c3eca2cc5b10fb3595f1652e001ec"
+    },
+    {
+      "task_id": "gsm8k:train:2402",
+      "run_index": 0,
+      "messages_sha256": "0a14ba12fef76b752a478a1d4065f927772341da19999536da94193adc283c36"
+    },
+    {
+      "task_id": "gsm8k:train:2415",
+      "run_index": 0,
+      "messages_sha256": "71c25c7e9a78059e572c8b3bc75a30a411873b118d5363a7321b3ae7b1cef864"
+    },
+    {
+      "task_id": "gsm8k:train:2425",
+      "run_index": 0,
+      "messages_sha256": "5025cfbc247499b98af6126b42afcd17d60952a13d984c593167c8b9f03351d4"
+    },
+    {
+      "task_id": "gsm8k:train:2429",
+      "run_index": 0,
+      "messages_sha256": "737cea4e6767d016cc0936d30021f63ea21dae72a128c2a4b39f0c570267407d"
+    },
+    {
+      "task_id": "gsm8k:train:2430",
+      "run_index": 0,
+      "messages_sha256": "4353d764055a40f32e36ce321ca47772f17aa1dc14b675d47b4799dfa5a7eb4b"
+    },
+    {
+      "task_id": "gsm8k:train:2451",
+      "run_index": 0,
+      "messages_sha256": "4c1816fe173e7b3beebc9099796b17ee25b33b23001ee21c2051f71dbc09b709"
+    },
+    {
+      "task_id": "gsm8k:train:2491",
+      "run_index": 2,
+      "messages_sha256": "3e87fd33fd296cf46b7ed972af037cf96a41995c8ddc54424a094ba8bda7cd6d"
+    },
+    {
+      "task_id": "gsm8k:train:2497",
+      "run_index": 0,
+      "messages_sha256": "6b8465ae8bad16f8bfccfa22199cf269429c1b295f477110b7b7509ab01b4e0e"
+    },
+    {
+      "task_id": "gsm8k:train:2507",
+      "run_index": 0,
+      "messages_sha256": "5315d327aeab648a6617a5587ba6b407752dcba58d16dfa347c44600dd49ac73"
+    },
+    {
+      "task_id": "gsm8k:train:252",
+      "run_index": 0,
+      "messages_sha256": "33cdc129ec383d5ea08fcd87bc22a2a9bfe9788b52d49e071ae8eb22f3b3709b"
+    },
+    {
+      "task_id": "gsm8k:train:2536",
+      "run_index": 0,
+      "messages_sha256": "61dbc48e7ae83c75aa4cdb76903d76d94c4c8b8786d5cd80259a81ab181fcf45"
+    },
+    {
+      "task_id": "gsm8k:train:2547",
+      "run_index": 0,
+      "messages_sha256": "357b5b275650136b6fc39c7fa2b6bbce4374051a66228dc33df054d9fc814def"
+    },
+    {
+      "task_id": "gsm8k:train:2550",
+      "run_index": 0,
+      "messages_sha256": "5873ccbaf74e4ca5452976f6a67a627a32be9f00a61e799230ace10ac0aa251e"
+    },
+    {
+      "task_id": "gsm8k:train:2552",
+      "run_index": 0,
+      "messages_sha256": "6770a5b59c9d142817ee9e05e5bd0f3f75b3a3d6c8991ad309e43602169b32bf"
+    },
+    {
+      "task_id": "gsm8k:train:2560",
+      "run_index": 0,
+      "messages_sha256": "10c5851464efeb524ca9b28d1ebd7666eeefa0c64053023f0b15a8a4f9a6e5c8"
+    },
+    {
+      "task_id": "gsm8k:train:2567",
+      "run_index": 0,
+      "messages_sha256": "6bcdb4a52b6341ede5ee01b041942162aa93e026e3fa809918ab7fa95bbd0742"
+    },
+    {
+      "task_id": "gsm8k:train:2571",
+      "run_index": 0,
+      "messages_sha256": "b7e965651ecb72c7aca87090b4effcb2554f14361580ecb9cd8f7caf8851d76f"
+    },
+    {
+      "task_id": "gsm8k:train:2573",
+      "run_index": 0,
+      "messages_sha256": "9f9f9975a4e75fbb90865512477b0a5ec57f4d479699d37fe94c6f86d91981d1"
+    },
+    {
+      "task_id": "gsm8k:train:2581",
+      "run_index": 0,
+      "messages_sha256": "6aef2bad9552d3d5548d54eb2e197f6ca9939adf59a488a6019753ae88925cba"
+    },
+    {
+      "task_id": "gsm8k:train:2587",
+      "run_index": 0,
+      "messages_sha256": "8e6502b7504b28f0b05711336ddb24bad39e7c0a9167e9929221ee1cff2a2520"
+    },
+    {
+      "task_id": "gsm8k:train:2592",
+      "run_index": 0,
+      "messages_sha256": "481abccc4d0aebc5d93ddf39e0618e3ead902b318639be71f709cd5cd1fe5464"
+    },
+    {
+      "task_id": "gsm8k:train:26",
+      "run_index": 0,
+      "messages_sha256": "e0e61f088336e8341ccf7d74ad3fc22dfdb408321d22204b89387c72778f6476"
+    },
+    {
+      "task_id": "gsm8k:train:2600",
+      "run_index": 0,
+      "messages_sha256": "052157056b10d5de4adbf4c61dbef2e009d8529173f84b75875fd6ac091bbb6e"
+    },
+    {
+      "task_id": "gsm8k:train:2628",
+      "run_index": 0,
+      "messages_sha256": "210e65b915c8fe77fdf55eb66dd8b6b99f2c63119e9094e08a657c335c605103"
+    },
+    {
+      "task_id": "gsm8k:train:2675",
+      "run_index": 0,
+      "messages_sha256": "35c8c63d4f1805b003bcc42d2f965c0e6ee83e685cbdac24b3b76f9fd0cfec25"
+    },
+    {
+      "task_id": "gsm8k:train:2689",
+      "run_index": 0,
+      "messages_sha256": "5982569d5a8c3b5abc56d16735d3ab3e5d8c09ef156cd1cc88c7b1aa563b1ca9"
+    },
+    {
+      "task_id": "gsm8k:train:2707",
+      "run_index": 0,
+      "messages_sha256": "835f80c9678a2d8bf2e20c6638e5532509f954964d4ebff8918bbc042063eef2"
+    },
+    {
+      "task_id": "gsm8k:train:2713",
+      "run_index": 0,
+      "messages_sha256": "f670f636ba3f9b6a19737e927e5dcab14353b5d7efa1eb6d60750ea7abbe4dec"
+    },
+    {
+      "task_id": "gsm8k:train:2715",
+      "run_index": 0,
+      "messages_sha256": "05272fa35c2a88d74216d792ee546053add9e9b023c1de3867a190f6e8e728f0"
+    },
+    {
+      "task_id": "gsm8k:train:2721",
+      "run_index": 0,
+      "messages_sha256": "019a357e6f181404a2a32ad2312039eeefe50d0c5b000e561a4efe5586de9b3f"
+    },
+    {
+      "task_id": "gsm8k:train:2729",
+      "run_index": 0,
+      "messages_sha256": "72a89ef94a223d8e060db998fce060ebdac3fe0a3aa637d4185ec0d93d65117c"
+    },
+    {
+      "task_id": "gsm8k:train:2731",
+      "run_index": 0,
+      "messages_sha256": "71b60fbb31b0ea600eef42407a949574208dae92aa46f71771ff7387a759a605"
+    },
+    {
+      "task_id": "gsm8k:train:2740",
+      "run_index": 0,
+      "messages_sha256": "c15561bf29e0fa359e17866d1a0dd8b41f2c0a91a43213a5ac88b551d4f60e37"
+    },
+    {
+      "task_id": "gsm8k:train:2768",
+      "run_index": 0,
+      "messages_sha256": "ee479fff06ec8a978d5261484bedead36ae89d43dce411863d8632a97fc8c28f"
+    },
+    {
+      "task_id": "gsm8k:train:2775",
+      "run_index": 0,
+      "messages_sha256": "049991d823950b26623428a91f0efa49dbfb012480d02ac3b9c422abcd766463"
+    },
+    {
+      "task_id": "gsm8k:train:2778",
+      "run_index": 0,
+      "messages_sha256": "b89be4174f7063f11562c9e478ce2429b6a1ad2861657571933ab88ee5f370a8"
+    },
+    {
+      "task_id": "gsm8k:train:2782",
+      "run_index": 0,
+      "messages_sha256": "a257d6cd5a1a0351811cc65418baba1e2f14b5f0f894064cccd507ec418bcda9"
+    },
+    {
+      "task_id": "gsm8k:train:2803",
+      "run_index": 0,
+      "messages_sha256": "4b69af41c98b7269adb8005d6ccc34de34ed871b306bef433800718e6bf3ed62"
+    },
+    {
+      "task_id": "gsm8k:train:2820",
+      "run_index": 0,
+      "messages_sha256": "8d66d66239abcb19739944f4345fb704550d217221c0909e604c9c2c0bdc0256"
+    },
+    {
+      "task_id": "gsm8k:train:284",
+      "run_index": 0,
+      "messages_sha256": "fcbbd6584eb4222d5f9849cb6ec6e8e6715d00f15c04d3aea0e18185caed961a"
+    },
+    {
+      "task_id": "gsm8k:train:2844",
+      "run_index": 0,
+      "messages_sha256": "e76c6b363d62cd8539ad3f16aba9c169f3269ed72f3c43b11f10689d91b2726d"
+    },
+    {
+      "task_id": "gsm8k:train:2847",
+      "run_index": 0,
+      "messages_sha256": "1ccfebd78c429bd0c8aa9190d37569467f6a6b424ce0d4b09cc087d1f1d0c3a1"
+    },
+    {
+      "task_id": "gsm8k:train:2872",
+      "run_index": 0,
+      "messages_sha256": "1771feb1ff94cf290c5d25fa5a264b8063becdfba6c641da3da1562e674b5b1c"
+    },
+    {
+      "task_id": "gsm8k:train:2878",
+      "run_index": 1,
+      "messages_sha256": "28d4bdcda16d6c95c45262003b39e036ad413bf7c124bfd152345a06e56d82ac"
+    },
+    {
+      "task_id": "gsm8k:train:2916",
+      "run_index": 0,
+      "messages_sha256": "266f7d3da7800c96c784f6d7900c5f2dda92951cc9cc4b58561ea7c84e17d9e3"
+    },
+    {
+      "task_id": "gsm8k:train:2941",
+      "run_index": 0,
+      "messages_sha256": "a00fd4f735ced69b700cde1f81fe775b0040f6282e129cd07b3ba8657d18ebc7"
+    },
+    {
+      "task_id": "gsm8k:train:2947",
+      "run_index": 0,
+      "messages_sha256": "3a82ae3b42eecee5df715446f1be74aaf6f6c2b4dc92366de15d280497060a20"
+    },
+    {
+      "task_id": "gsm8k:train:295",
+      "run_index": 0,
+      "messages_sha256": "7700bb97a982246e4b2a116ce961f1ee5f2423e65dee2cc040f00d1f54f2c0d4"
+    },
+    {
+      "task_id": "gsm8k:train:2951",
+      "run_index": 0,
+      "messages_sha256": "b973e35ee3bef709c390f059a112da0c4dd6fd53dda08df584751dee7528c0cb"
+    },
+    {
+      "task_id": "gsm8k:train:2967",
+      "run_index": 0,
+      "messages_sha256": "ae91d993f7889b921fa867254c934affbf57f1bef4ff1ea3cde0b61715e67056"
+    },
+    {
+      "task_id": "gsm8k:train:2973",
+      "run_index": 0,
+      "messages_sha256": "bad502894f7250d90fec9d1fe83c616b290d4df46dc613998837789d66e20562"
+    },
+    {
+      "task_id": "gsm8k:train:2978",
+      "run_index": 0,
+      "messages_sha256": "93c072ef19a93c34dd5cc293eb65b6edc77b5ba2b49078f9b22256ea499b88e3"
+    },
+    {
+      "task_id": "gsm8k:train:2979",
+      "run_index": 1,
+      "messages_sha256": "0d3992008a87f073e230f42f73eeb4e959254dbc13257550d407e033d6f9a1c8"
+    },
+    {
+      "task_id": "gsm8k:train:2981",
+      "run_index": 0,
+      "messages_sha256": "a1d61f7f879288a34453cfecf61be2b260667b5f5c2f6e95c904f931a7e73b51"
+    },
+    {
+      "task_id": "gsm8k:train:2991",
+      "run_index": 0,
+      "messages_sha256": "08185603c0dd96b299b56801cff5f8e8aeb313685b224c5b938dab5721a44749"
+    },
+    {
+      "task_id": "gsm8k:train:3003",
+      "run_index": 0,
+      "messages_sha256": "b4366b4a7ee88579232466f5bbade5d02817b507db549d97369860d44cea66b2"
+    },
+    {
+      "task_id": "gsm8k:train:3013",
+      "run_index": 0,
+      "messages_sha256": "86fae477edb6c76862485be049b43452643642be74294b581ed5ec16e76e4f64"
+    },
+    {
+      "task_id": "gsm8k:train:3022",
+      "run_index": 1,
+      "messages_sha256": "1a5b5a9d346bd00a995968db0bed3744c3c8284451564222a6e297d5c149e42f"
+    },
+    {
+      "task_id": "gsm8k:train:3026",
+      "run_index": 0,
+      "messages_sha256": "a20a429f457f030f426bb7be765aa2e90626f1c238e6d110cc9f04034799806b"
+    },
+    {
+      "task_id": "gsm8k:train:3033",
+      "run_index": 0,
+      "messages_sha256": "995c1d2294f587d637e24baa77b24130d69b12d7079d0bfb676a32453905d596"
+    },
+    {
+      "task_id": "gsm8k:train:3041",
+      "run_index": 0,
+      "messages_sha256": "c5549e2c0e94f7fea0d8265fdf4062db55b0e26bd0dbe12fb2beeb6d1ce85770"
+    },
+    {
+      "task_id": "gsm8k:train:3057",
+      "run_index": 0,
+      "messages_sha256": "b2a4c4b75a23af9fa8202b6b0b0298f884860c66c7e027ceb5ac44c1903a5aff"
+    },
+    {
+      "task_id": "gsm8k:train:308",
+      "run_index": 0,
+      "messages_sha256": "e8a2c5e55ed584065ffd78c04abc148f234649fbcc8a46fe394e56f1ccecebca"
+    },
+    {
+      "task_id": "gsm8k:train:3086",
+      "run_index": 0,
+      "messages_sha256": "de9b0c3e0499363aeefebc4736e210ca73528091769e0599c178127d7cf9b0c3"
+    },
+    {
+      "task_id": "gsm8k:train:3087",
+      "run_index": 0,
+      "messages_sha256": "5e90f776f7a7533ed2b36a590ecfb96dc47a4ed6c8ed576b61b85363b3ef407e"
+    },
+    {
+      "task_id": "gsm8k:train:3102",
+      "run_index": 0,
+      "messages_sha256": "01b5fc9b6390c678a3771654cb280520f1fdf193dbdbbfd2c24b0cd38c272d0c"
+    },
+    {
+      "task_id": "gsm8k:train:3104",
+      "run_index": 0,
+      "messages_sha256": "4b7e373fb96ae5d5896af3caa56595d3a86493ddc32642ba989a232031b4357d"
+    },
+    {
+      "task_id": "gsm8k:train:3130",
+      "run_index": 0,
+      "messages_sha256": "e01551fd3b391b1ebbcbcd6fc53ace06773897b7a973397497a4e2fb78d53a62"
+    },
+    {
+      "task_id": "gsm8k:train:3163",
+      "run_index": 0,
+      "messages_sha256": "27f5cba12bfa2e6d0256b17a3a52afef319c5f2ad8e1c01606fbdd9995fa11a0"
+    },
+    {
+      "task_id": "gsm8k:train:3173",
+      "run_index": 0,
+      "messages_sha256": "299e25c2b3b72e0f799d85f367785eaa056bd504feedf665305f1c333e8ca0df"
+    },
+    {
+      "task_id": "gsm8k:train:3175",
+      "run_index": 0,
+      "messages_sha256": "01e2984abe8ae810eb42c95d5ca667078efc7f435eb6b823b08f0be7172e9438"
+    },
+    {
+      "task_id": "gsm8k:train:3183",
+      "run_index": 0,
+      "messages_sha256": "9c9707b4124aad33de4527edd312c80a695b1fdac107e4f68b39ba0cc25d5cb1"
+    },
+    {
+      "task_id": "gsm8k:train:3185",
+      "run_index": 0,
+      "messages_sha256": "5f4ab0ba853a5fdda39242bda8d56b5cf6fded410e63044d183c5271ef90cae7"
+    },
+    {
+      "task_id": "gsm8k:train:3207",
+      "run_index": 0,
+      "messages_sha256": "daf61135b157cb9d7cb1d3aa6290052bbb1adff73166f2c3526af5a35e025b7b"
+    },
+    {
+      "task_id": "gsm8k:train:3208",
+      "run_index": 0,
+      "messages_sha256": "e50f72527a95430866a5d6da3eabbf92576457693d8eb246ad1529a0482da340"
+    },
+    {
+      "task_id": "gsm8k:train:3212",
+      "run_index": 0,
+      "messages_sha256": "edede1dd4566dc577da83460cf822fc77acb2d5295025707e284357cc70eab2c"
+    },
+    {
+      "task_id": "gsm8k:train:3219",
+      "run_index": 0,
+      "messages_sha256": "53882c4b4540461fb3dc369bd25d63fbca8e09a43ef80e9736e965cb53e2d8b4"
+    },
+    {
+      "task_id": "gsm8k:train:3223",
+      "run_index": 0,
+      "messages_sha256": "d498f11d0530fe8fddc28c04381397cfc54408fe149a7ec5ce75850336dfc0a0"
+    },
+    {
+      "task_id": "gsm8k:train:3226",
+      "run_index": 0,
+      "messages_sha256": "135f328f88930962c5be2a7ef16e1a3ce80e65ac65243731fb80bf04a0d3c504"
+    },
+    {
+      "task_id": "gsm8k:train:3232",
+      "run_index": 0,
+      "messages_sha256": "448f1d94ab9f9b7e483ad88f9f36631eac5553bad8910c0ed622b2b427ab3984"
+    },
+    {
+      "task_id": "gsm8k:train:3236",
+      "run_index": 0,
+      "messages_sha256": "c7d3448a353ea28e37f7638109d4bcf834ce08f08a705daf81f2afbb0b408349"
+    },
+    {
+      "task_id": "gsm8k:train:3238",
+      "run_index": 0,
+      "messages_sha256": "e82b253e8fb5f1477d915e7f35f720ef585fc8fff7dbc58ffed07f3420c26dcf"
+    },
+    {
+      "task_id": "gsm8k:train:3244",
+      "run_index": 0,
+      "messages_sha256": "b131dd7f13b75b6bd047a5a56a08f2b450842dc877be5c29b77047e38c0b386d"
+    },
+    {
+      "task_id": "gsm8k:train:3250",
+      "run_index": 0,
+      "messages_sha256": "740a4d9e3bde5a9c4139d001ae05be1c40dd5aef0110e9efa5b7c2bb20fe96a0"
+    },
+    {
+      "task_id": "gsm8k:train:329",
+      "run_index": 0,
+      "messages_sha256": "95efaf60e5d1862053d70677c20404aac2cabbfabcc95972da92c28c09e4992f"
+    },
+    {
+      "task_id": "gsm8k:train:3293",
+      "run_index": 0,
+      "messages_sha256": "ee39fb9607fe38cbeb8d60f3ad9649ffb95d45a9d6c180d846352d11fc766a2c"
+    },
+    {
+      "task_id": "gsm8k:train:3294",
+      "run_index": 0,
+      "messages_sha256": "e21f4fb168307238dee57f986ec53b47d4512df67e605eb7c92c26048686faf3"
+    },
+    {
+      "task_id": "gsm8k:train:3310",
+      "run_index": 1,
+      "messages_sha256": "269ec73ab71969dd06db3fe883f098622b8fe1e0ef90f829e8cbb112aa9f010a"
+    },
+    {
+      "task_id": "gsm8k:train:3311",
+      "run_index": 0,
+      "messages_sha256": "7585c1abb33c3ffe9747aa8950261d87af842e67223bfdf6437eef7901c9475a"
+    },
+    {
+      "task_id": "gsm8k:train:333",
+      "run_index": 1,
+      "messages_sha256": "8f3e23a293f963856ada7d15712120a2ee7291dbca1f80c5eeb08b686e377501"
+    },
+    {
+      "task_id": "gsm8k:train:3342",
+      "run_index": 0,
+      "messages_sha256": "222f92e207bfcba0a04aa73392234534d2ab797d905edbc35cc57c504717557c"
+    },
+    {
+      "task_id": "gsm8k:train:3382",
+      "run_index": 0,
+      "messages_sha256": "4c3f6b0be4d607aa6e84df716e095438fb3cb2ee51af9f713d4916b540d6dad0"
+    },
+    {
+      "task_id": "gsm8k:train:3393",
+      "run_index": 0,
+      "messages_sha256": "f849c9d49fd6a29de8b471c6d42a380d104a4d86d85c30f74468fcb74c250e6d"
+    },
+    {
+      "task_id": "gsm8k:train:3404",
+      "run_index": 0,
+      "messages_sha256": "0af237705b43b427d99e57e3946d2b9f17dc66236353117b72ef2263a5b52b1d"
+    },
+    {
+      "task_id": "gsm8k:train:3405",
+      "run_index": 0,
+      "messages_sha256": "1b321357043607fcf5b74ed2d81461f1029bd19059a215bae04b3a935278f423"
+    },
+    {
+      "task_id": "gsm8k:train:3427",
+      "run_index": 0,
+      "messages_sha256": "bd4148a6baa6641401234ca3b8e14dcfbe4e5161fc3fac779b0341898721ed56"
+    },
+    {
+      "task_id": "gsm8k:train:3440",
+      "run_index": 0,
+      "messages_sha256": "de55ad614b9893b69db58b8e53ff0c716cb3166abd4f7b44b887657c09858607"
+    },
+    {
+      "task_id": "gsm8k:train:346",
+      "run_index": 0,
+      "messages_sha256": "5b6700ff621320b49af2e01ef0a72c1085703a842c35f60806acdc8e327f7c4e"
+    },
+    {
+      "task_id": "gsm8k:train:3472",
+      "run_index": 0,
+      "messages_sha256": "09eeaee36845c2a9c402327a660e8bb978677a6d764fee0daf958266e99dc213"
+    },
+    {
+      "task_id": "gsm8k:train:3490",
+      "run_index": 0,
+      "messages_sha256": "3ad75e1c61379fb64fdfe97d253571447be0c9157d5eae7d275e3ca11f7cbbb3"
+    },
+    {
+      "task_id": "gsm8k:train:3517",
+      "run_index": 0,
+      "messages_sha256": "4f5d5814b6132aff93d7496cd58c3cb7497a7f4f2da93d37a782357e4951398e"
+    },
+    {
+      "task_id": "gsm8k:train:3525",
+      "run_index": 1,
+      "messages_sha256": "b0964d73a52c04868127c245ce63c5295c35a7634269d9b12ef99412f1dd769a"
+    },
+    {
+      "task_id": "gsm8k:train:3537",
+      "run_index": 0,
+      "messages_sha256": "c65bfeeb47426d6c3399e511ca679dbf3a4c7c02cf031e1e97cdfe32afa38283"
+    },
+    {
+      "task_id": "gsm8k:train:354",
+      "run_index": 0,
+      "messages_sha256": "74c1543d965cdf09047ea1b85116bbc9eb1dfc3a314aef6afc411f58f74fbcfd"
+    },
+    {
+      "task_id": "gsm8k:train:3545",
+      "run_index": 0,
+      "messages_sha256": "f2340d8fd06c4ababa4bdcbba52b80a4516e4bfadc24a37c9719b589bd0efaee"
+    },
+    {
+      "task_id": "gsm8k:train:3546",
+      "run_index": 0,
+      "messages_sha256": "baf2e52a4882ff2ed866346ed456090d398ef84a8e4455dfe2b645ca103d69ea"
+    },
+    {
+      "task_id": "gsm8k:train:3552",
+      "run_index": 0,
+      "messages_sha256": "d970ffae1f5b645daff2957c86bd4a07b50d3ed72e65da2e01caab56251cbaa8"
+    },
+    {
+      "task_id": "gsm8k:train:3554",
+      "run_index": 0,
+      "messages_sha256": "427713473740e1390d6e9ca032d9983b15219797459b679b614d1f5a4fa55a79"
+    },
+    {
+      "task_id": "gsm8k:train:3564",
+      "run_index": 0,
+      "messages_sha256": "4897dd4318ad3bd68374f37c42b198a01efb85d0b6f3fa395204aca245328842"
+    },
+    {
+      "task_id": "gsm8k:train:3569",
+      "run_index": 0,
+      "messages_sha256": "19d60f0e2a2092ec2cc82191f141a23d8f3e1a078e17cb7d0e4da77e0ef5adb7"
+    },
+    {
+      "task_id": "gsm8k:train:3575",
+      "run_index": 2,
+      "messages_sha256": "a156baff64c943b4b4c288d2fa433ed4e962ac3580368030ce38598d065a57d2"
+    },
+    {
+      "task_id": "gsm8k:train:3579",
+      "run_index": 0,
+      "messages_sha256": "8b88f8851be42b28257a8bbdffddedf2efd538b6c643e7c3fd07f5a036ec9565"
+    },
+    {
+      "task_id": "gsm8k:train:3585",
+      "run_index": 0,
+      "messages_sha256": "bfd56fd26f117a157555ae64dfe4a1f2d682805dde0ab6a2016803bc39500f53"
+    },
+    {
+      "task_id": "gsm8k:train:3592",
+      "run_index": 0,
+      "messages_sha256": "8e327105287c5c9185445937f0531ce752cb8da6c22e98a16b4b11cdf1423ba4"
+    },
+    {
+      "task_id": "gsm8k:train:3601",
+      "run_index": 1,
+      "messages_sha256": "be66eac1b704f2ac3215b1481a1f3d24e48b3a50d305f2271258980bbc7c79af"
+    },
+    {
+      "task_id": "gsm8k:train:3604",
+      "run_index": 0,
+      "messages_sha256": "3f09266bb59fafcbfd2d55326c62a523c417da3633e3c23d950cec11e3662533"
+    },
+    {
+      "task_id": "gsm8k:train:3609",
+      "run_index": 0,
+      "messages_sha256": "e04aa458534613810d82afe21f43e85bd902a68a485f8a029c4ac75a595b6118"
+    },
+    {
+      "task_id": "gsm8k:train:3623",
+      "run_index": 0,
+      "messages_sha256": "21611342efad2ddd976c8f77e7392deafe94c83c8159d72ff4306962a9cb7db7"
+    },
+    {
+      "task_id": "gsm8k:train:3630",
+      "run_index": 0,
+      "messages_sha256": "1e991d3a0c7a46141c882ad7857647726e21597b2b378d994b62ecacc3d4c73f"
+    },
+    {
+      "task_id": "gsm8k:train:3637",
+      "run_index": 0,
+      "messages_sha256": "be286b28e0bd1e145ba25169da958014a5cf65580b877754d375231d8f4487ee"
+    },
+    {
+      "task_id": "gsm8k:train:364",
+      "run_index": 0,
+      "messages_sha256": "8244cf64d5024be97631583f84989e1914bc9eea28d360ed2c01334939d3802c"
+    },
+    {
+      "task_id": "gsm8k:train:3656",
+      "run_index": 0,
+      "messages_sha256": "5263964d5cfc69f1d3b49f2ffb1459fe0bcbd6783bf8d5e9b90fa3844bff4db5"
+    },
+    {
+      "task_id": "gsm8k:train:3658",
+      "run_index": 0,
+      "messages_sha256": "2ece8dd861ee251ca17669bcaf1f33e65a1079175c34d4321f142e6b69ba5c58"
+    },
+    {
+      "task_id": "gsm8k:train:3668",
+      "run_index": 2,
+      "messages_sha256": "6166bcbf30404a088bcdfb512d9815dcdf38d076146de7d654990c5b4d5ea75a"
+    },
+    {
+      "task_id": "gsm8k:train:367",
+      "run_index": 0,
+      "messages_sha256": "3b8319c26ed15d39ba7f65c0e845a4650d785aaa4ffa98b55f84829326007db9"
+    },
+    {
+      "task_id": "gsm8k:train:3694",
+      "run_index": 1,
+      "messages_sha256": "e05fc380aa2369464cde5fc9db05076f271eacdc51e1e26a89d2cccc7b5bf4ce"
+    },
+    {
+      "task_id": "gsm8k:train:37",
+      "run_index": 0,
+      "messages_sha256": "a1a30f0165cd7438238aa858c8cc16077c5d7a73bb1bf3dc2d3e93997c245d22"
+    },
+    {
+      "task_id": "gsm8k:train:371",
+      "run_index": 0,
+      "messages_sha256": "9bdec2697d6eee3d1a49392c2518f017f16da1f384a0c1769988b688bb56e836"
+    },
+    {
+      "task_id": "gsm8k:train:3735",
+      "run_index": 0,
+      "messages_sha256": "58994bbed506e32e39dda033a7989d19623c56548f4bf5692ceb01c0034e22fc"
+    },
+    {
+      "task_id": "gsm8k:train:3736",
+      "run_index": 0,
+      "messages_sha256": "cb29811230704a2b64041ee191f4b00aeba93dc9fde25beb66fc4a6df441be1e"
+    },
+    {
+      "task_id": "gsm8k:train:3738",
+      "run_index": 0,
+      "messages_sha256": "638969cbf9fa6f43b4513402eaf787b249deda17584a79c2e3015c0831c5fd3c"
+    },
+    {
+      "task_id": "gsm8k:train:3750",
+      "run_index": 0,
+      "messages_sha256": "22e6305d8271826c3a0244082b4e52c3893b6f28866204f0218ad31d21167333"
+    },
+    {
+      "task_id": "gsm8k:train:3751",
+      "run_index": 0,
+      "messages_sha256": "00a0513e8a7a5b296f774db6ba366a09887d7781be8e1fc8b7105fd986e4210c"
+    },
+    {
+      "task_id": "gsm8k:train:3752",
+      "run_index": 0,
+      "messages_sha256": "2256e29f197da3d250fbe9eebfaaeb67855554acb0efb98e12ed6502660e7986"
+    },
+    {
+      "task_id": "gsm8k:train:3766",
+      "run_index": 0,
+      "messages_sha256": "a4cb5a3716b1f025f908a3bb7dd15768675574c0e3a66cd25b126d5384cb7db3"
+    },
+    {
+      "task_id": "gsm8k:train:3772",
+      "run_index": 0,
+      "messages_sha256": "add3e83d109226b8bc1cdfb02c749c5c2cad51caa00687387d7e5bdfcad063b4"
+    },
+    {
+      "task_id": "gsm8k:train:3775",
+      "run_index": 0,
+      "messages_sha256": "195da113f4477f3c53c5eddb825d3dee6efac50a8e34bafaeb81205becd96846"
+    },
+    {
+      "task_id": "gsm8k:train:378",
+      "run_index": 0,
+      "messages_sha256": "caf9e1c50b4dfc28a0b254ae78359089bbd330711755d59e0f91d9068dd182c4"
+    },
+    {
+      "task_id": "gsm8k:train:3795",
+      "run_index": 0,
+      "messages_sha256": "e8d8ef44a23c88ef782c4698ce6bbb6407f3e5e6be955b9694e249de1bcb46a6"
+    },
+    {
+      "task_id": "gsm8k:train:3797",
+      "run_index": 0,
+      "messages_sha256": "3e41c6e97079a2ba7501da89487c7e14a8fdcb1201cb287d33a4a9ac1441e7f4"
+    },
+    {
+      "task_id": "gsm8k:train:38",
+      "run_index": 1,
+      "messages_sha256": "06918825af39cb9224604b45cf45ba998dd13092d5f4cc46310791b3679c585a"
+    },
+    {
+      "task_id": "gsm8k:train:3800",
+      "run_index": 0,
+      "messages_sha256": "aad66b07f5e159c370588fbf7d72635f517640b059c20163337d984941861700"
+    },
+    {
+      "task_id": "gsm8k:train:3825",
+      "run_index": 0,
+      "messages_sha256": "b539ec129ac7fcd2f9d726dd6f0ce474d440bfb4d2395ea13c774540f8d38894"
+    },
+    {
+      "task_id": "gsm8k:train:3829",
+      "run_index": 0,
+      "messages_sha256": "a2652a54f705363a8fe210d63d0cb8afd7fb76d3edccde221bcfc95664200b79"
+    },
+    {
+      "task_id": "gsm8k:train:3836",
+      "run_index": 0,
+      "messages_sha256": "cc7650871b76ddc4c4ae0f3cc63580f843eefd4c9a4c21429a3788dbf28cbd1c"
+    },
+    {
+      "task_id": "gsm8k:train:3837",
+      "run_index": 0,
+      "messages_sha256": "2fee0cbd2face4ae50d36a9a2a56a9313d8617b1d466b30310cd06e221f4beca"
+    },
+    {
+      "task_id": "gsm8k:train:3847",
+      "run_index": 0,
+      "messages_sha256": "0599c2e7a5c252f44e38398440328760d4152fdb0edb63926e4ac39dc646235d"
+    },
+    {
+      "task_id": "gsm8k:train:3865",
+      "run_index": 2,
+      "messages_sha256": "1c7bf5ea07c6e3fd745f01bd470d1ed79e0a879abd5a3631f1eebe730c27b001"
+    },
+    {
+      "task_id": "gsm8k:train:3874",
+      "run_index": 0,
+      "messages_sha256": "1bd8593df41dd1a07dd87d0bc28dd73dd5aac7fcc1e7359175d810e354a138c5"
+    },
+    {
+      "task_id": "gsm8k:train:3898",
+      "run_index": 0,
+      "messages_sha256": "4e8fd7cf72e538c4c3f1d1a55b0340c4911e3982368a85efe7191dfd882f48a4"
+    },
+    {
+      "task_id": "gsm8k:train:3922",
+      "run_index": 0,
+      "messages_sha256": "1837d816dfe4f3cbe147627862fe8a3e01120ea330527211cac62af841ed869c"
+    },
+    {
+      "task_id": "gsm8k:train:393",
+      "run_index": 0,
+      "messages_sha256": "a1a11c33de4d281e76eb672eb7a0d1a3479948ca0f4ed49bb788ef6b50409820"
+    },
+    {
+      "task_id": "gsm8k:train:3932",
+      "run_index": 0,
+      "messages_sha256": "f253962eb7dc7f560fcbb4a4ba099f8204f6daf36e40022dfe1b89fdce8185da"
+    },
+    {
+      "task_id": "gsm8k:train:3934",
+      "run_index": 0,
+      "messages_sha256": "bbde3ff06b6486dcedf4c6f7610db9f5a469430857c88187520579ff2dcfdc3a"
+    },
+    {
+      "task_id": "gsm8k:train:3935",
+      "run_index": 0,
+      "messages_sha256": "d1ac79962afc25595e53a232be9440c14d7e34942c889f3cd7c4af740942626a"
+    },
+    {
+      "task_id": "gsm8k:train:3948",
+      "run_index": 0,
+      "messages_sha256": "b8b480f3215c5ef90564678d29ffa28738a38fc764878bfba83255f6da97867c"
+    },
+    {
+      "task_id": "gsm8k:train:3952",
+      "run_index": 0,
+      "messages_sha256": "6bb17f67f1f0cd8138837790d6d92533af8ae3f103564e7096213bd7eb9b5e45"
+    },
+    {
+      "task_id": "gsm8k:train:3953",
+      "run_index": 0,
+      "messages_sha256": "a097c47952802014fba73c4a6004c835c9051a712a158eb715c669451690c30d"
+    },
+    {
+      "task_id": "gsm8k:train:3958",
+      "run_index": 0,
+      "messages_sha256": "c7f655e9ebf60faaf2f93ceb09ec466c54b9c8041a6f7487f81903c782e059df"
+    },
+    {
+      "task_id": "gsm8k:train:3959",
+      "run_index": 0,
+      "messages_sha256": "1c70b5a45efb5f6d68bcb6756cfe3006bc764b485de6dfc6c36ff3eb69a2aeb5"
+    },
+    {
+      "task_id": "gsm8k:train:3972",
+      "run_index": 0,
+      "messages_sha256": "d7bf164d545b722dd366451629f92824438a110bf2ca4b27ea8fc5c6e36a6f9f"
+    },
+    {
+      "task_id": "gsm8k:train:3982",
+      "run_index": 0,
+      "messages_sha256": "9e2655365c57c86c09c088d4fd72aec22dc0254296e7c02be1eb6bdb065f6811"
+    },
+    {
+      "task_id": "gsm8k:train:3984",
+      "run_index": 0,
+      "messages_sha256": "14b602374f169f56e89854cde27af5d1292eb93c3eab9ffed2719a12fb6ea3aa"
+    },
+    {
+      "task_id": "gsm8k:train:3993",
+      "run_index": 0,
+      "messages_sha256": "e8b694a337e95aaa7c1c37a504039ce1d9fedaaf899f074335074cffea82aec4"
+    },
+    {
+      "task_id": "gsm8k:train:4017",
+      "run_index": 0,
+      "messages_sha256": "5d1a8e64260a6be08dd75357b8bfe3fb2ce53b95d965640e5151fa056664da8b"
+    },
+    {
+      "task_id": "gsm8k:train:4028",
+      "run_index": 0,
+      "messages_sha256": "d833ebc5bba24ea4a0143aa67db743dea994c4e8bd9bdd63dee959bdfc38dc36"
+    },
+    {
+      "task_id": "gsm8k:train:403",
+      "run_index": 0,
+      "messages_sha256": "e732f4a802afa3156b907a708b0b15ff4eada1a8ea1d5182da458daebeb843ec"
+    },
+    {
+      "task_id": "gsm8k:train:4035",
+      "run_index": 0,
+      "messages_sha256": "ed6066bf102f7f785bc184d108bc392e1e21a5f16685c9e48ca5fbe27681ee60"
+    },
+    {
+      "task_id": "gsm8k:train:4037",
+      "run_index": 0,
+      "messages_sha256": "01ebdffff5cb037b23cf8aa90fea3083ca2727573b2b8a85de6ef1223f701624"
+    },
+    {
+      "task_id": "gsm8k:train:4064",
+      "run_index": 0,
+      "messages_sha256": "e313f1a4896668baec28217a258726adc17db035fd52021ae335f20ac74abc08"
+    },
+    {
+      "task_id": "gsm8k:train:4077",
+      "run_index": 2,
+      "messages_sha256": "19a67fc45aa620a14c195535458bf9b9fb1ff6b566f40ef6a5e4cc236e047f10"
+    },
+    {
+      "task_id": "gsm8k:train:4092",
+      "run_index": 0,
+      "messages_sha256": "e40aaf8833f71935b3e865882a90eecad5fd4505e95140522510d995e4f667e1"
+    },
+    {
+      "task_id": "gsm8k:train:4100",
+      "run_index": 0,
+      "messages_sha256": "a5a72f5a70e59870f4adf2d03bda4f35ddce5b6e15e295a2155dfe1cfe0d6da2"
+    },
+    {
+      "task_id": "gsm8k:train:4109",
+      "run_index": 0,
+      "messages_sha256": "dcbfc2bbebb8a96784c9f53ccbb45242c8cea7806dd876ff890c5271463575cf"
+    },
+    {
+      "task_id": "gsm8k:train:4122",
+      "run_index": 0,
+      "messages_sha256": "ac43bda9658e40d6b899e920513ab4cfbb703377ec4388595f3491a784b06b7a"
+    },
+    {
+      "task_id": "gsm8k:train:4130",
+      "run_index": 1,
+      "messages_sha256": "7d7194de8894c6486952a964f8396497e79e11863ef57eadb1a2785fe97c4c61"
+    },
+    {
+      "task_id": "gsm8k:train:4138",
+      "run_index": 0,
+      "messages_sha256": "425b3b7b94169f57797cc92488405c9fda77489bb35551ea07bc2aa2c5e3c5ac"
+    },
+    {
+      "task_id": "gsm8k:train:4147",
+      "run_index": 0,
+      "messages_sha256": "4aa0426ef1d2d3089fe857d7634d29e51c200e9d0712ce19ded9dbc0c047ee22"
+    },
+    {
+      "task_id": "gsm8k:train:4148",
+      "run_index": 0,
+      "messages_sha256": "ae050757c4aae539291e93c7ddd4ce479c08c82d989f7ac7de2b010ff30cd697"
+    },
+    {
+      "task_id": "gsm8k:train:4151",
+      "run_index": 0,
+      "messages_sha256": "cd6ab12d8459b8a5d7e3c9589b3b75f34a81c382fefa4ed899c352d66c10f807"
+    },
+    {
+      "task_id": "gsm8k:train:4160",
+      "run_index": 0,
+      "messages_sha256": "d0c1aa82156938c741898296a7de6c0609be95778b3b6f786956184c51adce19"
+    },
+    {
+      "task_id": "gsm8k:train:417",
+      "run_index": 0,
+      "messages_sha256": "0b6e5d4c40ddeb5f9e52bed4e7e182531c9734a1ba92be4e61e88800c45af8d1"
+    },
+    {
+      "task_id": "gsm8k:train:4178",
+      "run_index": 0,
+      "messages_sha256": "79d16bb4e0dbab193b943ae9677b6f5a841316ec1ba4f88e2fdf4d814f440eaf"
+    },
+    {
+      "task_id": "gsm8k:train:4209",
+      "run_index": 0,
+      "messages_sha256": "626856abe35b160538d83f699524676d76371241c8ba1f087ed4a85aaded9bcd"
+    },
+    {
+      "task_id": "gsm8k:train:4211",
+      "run_index": 0,
+      "messages_sha256": "504aa278f7c2d789159aa17dfe2250e5fc7504871d0815f02f0af3031e133b07"
+    },
+    {
+      "task_id": "gsm8k:train:4222",
+      "run_index": 1,
+      "messages_sha256": "b0bc110456e9b6bc5f651ee9206f581dc5b6557c1a7f98f60bf614c8e81745ed"
+    },
+    {
+      "task_id": "gsm8k:train:4228",
+      "run_index": 0,
+      "messages_sha256": "af5e675d92a8d0ee45d1a7d28660794af6761ede6678dbee45b35169a6055838"
+    },
+    {
+      "task_id": "gsm8k:train:4237",
+      "run_index": 0,
+      "messages_sha256": "7d71b7603e07262e702620761dc930d6130ff3604a9980a594e05ac6181e147b"
+    },
+    {
+      "task_id": "gsm8k:train:4243",
+      "run_index": 0,
+      "messages_sha256": "4a06e9e46250cd14d69255312cf3b6ea7071a52ba73c6c88eb60cb193024d2d2"
+    },
+    {
+      "task_id": "gsm8k:train:4283",
+      "run_index": 0,
+      "messages_sha256": "4ad80e198efa07fa04bc98db37f1cb7836c5ec59a8ed691a3b44237d3210bf5f"
+    },
+    {
+      "task_id": "gsm8k:train:4293",
+      "run_index": 0,
+      "messages_sha256": "582e4f77d61db4110263d6cf397724a1b175b37372b96eb642f5f6861453ecbd"
+    },
+    {
+      "task_id": "gsm8k:train:4300",
+      "run_index": 0,
+      "messages_sha256": "bc86e8754f75fa9817b2936fb663a4daabc53cb0ed9b1b6cc111fc154e109c02"
+    },
+    {
+      "task_id": "gsm8k:train:432",
+      "run_index": 0,
+      "messages_sha256": "5c93a04a54e7a9fdbf3379aa76f097eaf55074f3790ebcf4fcb1dbcf54071eae"
+    },
+    {
+      "task_id": "gsm8k:train:4322",
+      "run_index": 0,
+      "messages_sha256": "a4e6033603aac792a74977ff3816afeba8709100f10c5e0414dcd8dace74fb0d"
+    },
+    {
+      "task_id": "gsm8k:train:4323",
+      "run_index": 0,
+      "messages_sha256": "9c1bc989882780ec10bea6621a9d97d8b7c14ecc0ba58b87c2f0b7ef23538c13"
+    },
+    {
+      "task_id": "gsm8k:train:4337",
+      "run_index": 0,
+      "messages_sha256": "ea72ffdc091b440674c023f36bc57e39fae67f0235f1a749ca200c991cf25bb5"
+    },
+    {
+      "task_id": "gsm8k:train:4340",
+      "run_index": 0,
+      "messages_sha256": "5cfa3ae819ee658e3e17fe82c4407a0d5c7f8d95f08c0bfe03f7dfc5ae24ce28"
+    },
+    {
+      "task_id": "gsm8k:train:4342",
+      "run_index": 0,
+      "messages_sha256": "61d08706fa9718258d832bce52d7d32bf52d020993f297eb95b019c2f04949b4"
+    },
+    {
+      "task_id": "gsm8k:train:4343",
+      "run_index": 0,
+      "messages_sha256": "9457dbaacf144260a466627419ee28fc98a6e3456d65fbcb2da1b9e1a28654d9"
+    },
+    {
+      "task_id": "gsm8k:train:4351",
+      "run_index": 0,
+      "messages_sha256": "dae0f13501484a34f0b6e3ce56ece061972322d10b2920505a57b3e7cb86fb84"
+    },
+    {
+      "task_id": "gsm8k:train:4356",
+      "run_index": 0,
+      "messages_sha256": "1cfa26fbe32f7ba11001b7052459745cff094decff8bcade4ede91d5927f762c"
+    },
+    {
+      "task_id": "gsm8k:train:436",
+      "run_index": 0,
+      "messages_sha256": "a55ac232687ca21424068cc3f9c85a9167f1265976bde15ac0d58e9e2eeddd04"
+    },
+    {
+      "task_id": "gsm8k:train:4366",
+      "run_index": 0,
+      "messages_sha256": "4fda2c6e6622fb21936b968c93cde99e1d28a6908c337d63d4f86e101166d370"
+    },
+    {
+      "task_id": "gsm8k:train:4422",
+      "run_index": 0,
+      "messages_sha256": "44ebb0583cb693af268f84e34b8c6d2736bdb21cbe5712f8a5c0f4fa1f381cd7"
+    },
+    {
+      "task_id": "gsm8k:train:4426",
+      "run_index": 0,
+      "messages_sha256": "4d924528f6483cafeace70bbff171d547455154607afc0ccc16b0c67a8fa7649"
+    },
+    {
+      "task_id": "gsm8k:train:4446",
+      "run_index": 0,
+      "messages_sha256": "4e5faa7c49b5cb36697e6e040ca9c861bde2d3558e8c4897ab8884279d494f5b"
+    },
+    {
+      "task_id": "gsm8k:train:4462",
+      "run_index": 0,
+      "messages_sha256": "98f165ecfc2d723a5625f7ce0b81e24b951a69587fb1350a041705935733d7dd"
+    },
+    {
+      "task_id": "gsm8k:train:4479",
+      "run_index": 0,
+      "messages_sha256": "8c0f0e7af6e6ccc0211cc45cc6178a3301ce90f72b5879f587ae6ead6f1e8c2c"
+    },
+    {
+      "task_id": "gsm8k:train:4481",
+      "run_index": 0,
+      "messages_sha256": "6c25a3300ec35122bb05f88e240e14130a73e23b70d4e9688d8cf8128df5771b"
+    },
+    {
+      "task_id": "gsm8k:train:4499",
+      "run_index": 0,
+      "messages_sha256": "aecedffde0e9a85d72784db294df93916eb8ee026a0ed89c01bfbb8bb0e2d657"
+    },
+    {
+      "task_id": "gsm8k:train:4525",
+      "run_index": 0,
+      "messages_sha256": "6d7b45b2e69ace740bee2582e0d6db8e651f90335d1de715b9f52196cf6eae0e"
+    },
+    {
+      "task_id": "gsm8k:train:4534",
+      "run_index": 0,
+      "messages_sha256": "8fd07ca94c93facd025f31afe1ef89f4364365f39714a8c80af10b0b6170a243"
+    },
+    {
+      "task_id": "gsm8k:train:4538",
+      "run_index": 0,
+      "messages_sha256": "5bbf38a5cc04b0ebe9dcc5d3ff5b364dd795ad99bbe832867f861a170a1deea0"
+    },
+    {
+      "task_id": "gsm8k:train:4544",
+      "run_index": 0,
+      "messages_sha256": "65a418944bc2e9e0abc86c9f04573e7665f618bd0d68ecffafa06b73ab979334"
+    },
+    {
+      "task_id": "gsm8k:train:4549",
+      "run_index": 0,
+      "messages_sha256": "3b610538cc89bc3a87715b5145272e20781f842887b1d372a8644aa240dde132"
+    },
+    {
+      "task_id": "gsm8k:train:4558",
+      "run_index": 0,
+      "messages_sha256": "008bdb0d55373211246092b9b0d602e8d80195bf50d2f507ea41fc55c6ed7a34"
+    },
+    {
+      "task_id": "gsm8k:train:4597",
+      "run_index": 0,
+      "messages_sha256": "ae31e7dc64ea03fbf71ab3c77581fcce2a88980ea980c447c4906c8a810ff211"
+    },
+    {
+      "task_id": "gsm8k:train:460",
+      "run_index": 0,
+      "messages_sha256": "995292f273d1b48674029bad827d669782d59132c753ee961d483f8208b5141f"
+    },
+    {
+      "task_id": "gsm8k:train:4611",
+      "run_index": 0,
+      "messages_sha256": "bbc50b0c3ff5676cfba19f7c8dadc996799985ab2a9176d45df791d32da94871"
+    },
+    {
+      "task_id": "gsm8k:train:4615",
+      "run_index": 0,
+      "messages_sha256": "767cda98db3db6dcde7f30625cb5a008eab0c141aead2c1439218d894f4978d3"
+    },
+    {
+      "task_id": "gsm8k:train:462",
+      "run_index": 0,
+      "messages_sha256": "38a9858d47367e5c183ecf7667f46b4df46a07d5efee4c581f1eade5c2507cd5"
+    },
+    {
+      "task_id": "gsm8k:train:4623",
+      "run_index": 0,
+      "messages_sha256": "e2ec058ed26351ddb5cc1f325abd9043faef25ca5a1ee37a49cd30dd374ac437"
+    },
+    {
+      "task_id": "gsm8k:train:4625",
+      "run_index": 0,
+      "messages_sha256": "2befcc312ee949fe8fac1813657e1d228f276c4cc3e86533e64f1ae99dab13cd"
+    },
+    {
+      "task_id": "gsm8k:train:4626",
+      "run_index": 0,
+      "messages_sha256": "691d722290b067d35510fdb4cb4d4c879f3782a9cfa2b256e50fd57e5759bf8d"
+    },
+    {
+      "task_id": "gsm8k:train:4635",
+      "run_index": 0,
+      "messages_sha256": "f5e90698ebe748af21d6ea19cda762fdf0a33710fe24beb7225205b4c9b47247"
+    },
+    {
+      "task_id": "gsm8k:train:4639",
+      "run_index": 0,
+      "messages_sha256": "26dcfd04e54eef98095937372d0619f7f468f9ea0a14c433d8ce416f69db4adb"
+    },
+    {
+      "task_id": "gsm8k:train:4642",
+      "run_index": 0,
+      "messages_sha256": "75c053f430f99d74103b592158665c238ad8018cc91c96bc818e19a07b82231b"
+    },
+    {
+      "task_id": "gsm8k:train:4648",
+      "run_index": 0,
+      "messages_sha256": "3849aec7eea38755c6da0b0aaf20a73ef486326622ceda4b5d250c1326a07efa"
+    },
+    {
+      "task_id": "gsm8k:train:4662",
+      "run_index": 0,
+      "messages_sha256": "9e34adec6996ffaf296b36025c741e26c013196b973498e23b331c8fa7f1ceda"
+    },
+    {
+      "task_id": "gsm8k:train:4670",
+      "run_index": 2,
+      "messages_sha256": "261e42aebb17431b1dc367495fd87693a7d09e95fef5dff0e7a16f38a1299ce7"
+    },
+    {
+      "task_id": "gsm8k:train:4689",
+      "run_index": 1,
+      "messages_sha256": "df8a1d7e1fb84f140b555c82033924983c499d9273f7d3a8467dd3ab92aa301a"
+    },
+    {
+      "task_id": "gsm8k:train:469",
+      "run_index": 0,
+      "messages_sha256": "ffae91ea1065fbc643c3e140ff4d89854ddc6e4708113dd143da745fc8b8e98c"
+    },
+    {
+      "task_id": "gsm8k:train:4709",
+      "run_index": 0,
+      "messages_sha256": "397c0f47957e920c2a059885117e77bb0c3bcba43348b39890b1d6f619f778f2"
+    },
+    {
+      "task_id": "gsm8k:train:4724",
+      "run_index": 0,
+      "messages_sha256": "748604a545f9a49aaca180bc3dc2a5760d0af8593d1400f481b52612a8cbeea0"
+    },
+    {
+      "task_id": "gsm8k:train:4729",
+      "run_index": 0,
+      "messages_sha256": "b88c8a6163ee8e3bdc9c8f81a6cb3fa243e652d54a67b2f6597e83709eef8212"
+    },
+    {
+      "task_id": "gsm8k:train:4732",
+      "run_index": 0,
+      "messages_sha256": "c39b07fb2ab5bb6acedcfe6ec4ab530de51662b9c79d09f04b4175b22535757b"
+    },
+    {
+      "task_id": "gsm8k:train:4743",
+      "run_index": 0,
+      "messages_sha256": "72d074b719f9a43f1eb52e717d67e3ff838f54e0804d0eeb4d32d08da5ab4d7f"
+    },
+    {
+      "task_id": "gsm8k:train:4746",
+      "run_index": 0,
+      "messages_sha256": "53bb130bfb5eb92efe447ace74e781412aa4ecae1d124755562809289e1de947"
+    },
+    {
+      "task_id": "gsm8k:train:4748",
+      "run_index": 0,
+      "messages_sha256": "c991f03056964029069bd1bf3e720fa766a3be9bb70c8ba811ecd7f5643e95d3"
+    },
+    {
+      "task_id": "gsm8k:train:4753",
+      "run_index": 0,
+      "messages_sha256": "17c144d787b873290ba22da12ded6134a28414b91fc86374ed3c64aa56a9e5fe"
+    },
+    {
+      "task_id": "gsm8k:train:4772",
+      "run_index": 0,
+      "messages_sha256": "a4623d31b21c4c2b90c4ecbfb2cdd05fe1b7277bb648c4a6f4ccbb54b1027e65"
+    },
+    {
+      "task_id": "gsm8k:train:4787",
+      "run_index": 1,
+      "messages_sha256": "0541748a6cf048a6968a65f3134e42e043331f3f16b7b733a97d68c4d752a696"
+    },
+    {
+      "task_id": "gsm8k:train:4811",
+      "run_index": 0,
+      "messages_sha256": "ebbfefca24f1dcb34d8660d7b48334b30ca4309602efacbbc9c6239692eda5d0"
+    },
+    {
+      "task_id": "gsm8k:train:4831",
+      "run_index": 0,
+      "messages_sha256": "e78c750d48ec4b8bc9284075edbd27259f099177454cdeecf2d24fdf9d05bc2c"
+    },
+    {
+      "task_id": "gsm8k:train:4849",
+      "run_index": 0,
+      "messages_sha256": "ccfc1ab8fa2da584f1a3e4bb2e02cfc2f42d1cd5638cebf936719d60c4394199"
+    },
+    {
+      "task_id": "gsm8k:train:4870",
+      "run_index": 0,
+      "messages_sha256": "382b609830130e2d3535a70e03f67dafbbe96b95880b88b70c5b5984d4c13de8"
+    },
+    {
+      "task_id": "gsm8k:train:4875",
+      "run_index": 0,
+      "messages_sha256": "dfc922225cfee57b283ad558dfca30cb257c72de12504f296d1b77f296c6964b"
+    },
+    {
+      "task_id": "gsm8k:train:4888",
+      "run_index": 0,
+      "messages_sha256": "d44a7f120e1d5d7ddaf518f1ee543f6ac4e656b1d8021632a88b22a54c947117"
+    },
+    {
+      "task_id": "gsm8k:train:489",
+      "run_index": 0,
+      "messages_sha256": "a1a823299124fce693807b62899882778fd0fc23b36e9888bae9559153477cce"
+    },
+    {
+      "task_id": "gsm8k:train:4895",
+      "run_index": 0,
+      "messages_sha256": "942beb9a76935417158124c4602fb345b3457ff16ab612a0143e3fc48fc2c36a"
+    },
+    {
+      "task_id": "gsm8k:train:49",
+      "run_index": 0,
+      "messages_sha256": "0de9f30097db3095f4e08222664fe8b110521859ded9f19e7041afa0eef36edf"
+    },
+    {
+      "task_id": "gsm8k:train:4921",
+      "run_index": 0,
+      "messages_sha256": "344b79a1ef627ded3e1fc0de7c4886db83146848afd31e349a8a9bb69781a2bc"
+    },
+    {
+      "task_id": "gsm8k:train:4944",
+      "run_index": 0,
+      "messages_sha256": "308364decb238a3aff790f0b08db0120bbced36a472d187de63216f25dd2f25d"
+    },
+    {
+      "task_id": "gsm8k:train:495",
+      "run_index": 0,
+      "messages_sha256": "0a08f45c68926465db1140af26a5dbccc6871b692109a7a23208f86ce7e4af5b"
+    },
+    {
+      "task_id": "gsm8k:train:4951",
+      "run_index": 0,
+      "messages_sha256": "80bf3e0ff24662c372e176cc8814caa9f89cc3a7021d69fc253fddd1a5d71cf2"
+    },
+    {
+      "task_id": "gsm8k:train:4959",
+      "run_index": 0,
+      "messages_sha256": "391ce832b419e7113ca2061ed55a6195cc6f6d509b1d6b9de7754bd5689740e5"
+    },
+    {
+      "task_id": "gsm8k:train:5009",
+      "run_index": 0,
+      "messages_sha256": "b8742565a2d51f6033630f1671037bb7958e946d15efd288e7d65e54408758ac"
+    },
+    {
+      "task_id": "gsm8k:train:5021",
+      "run_index": 0,
+      "messages_sha256": "38bb8064704ff87f3537f81ca7a9202e1a5c2571fb4316e34bcd516fdbdf9cd8"
+    },
+    {
+      "task_id": "gsm8k:train:5031",
+      "run_index": 0,
+      "messages_sha256": "eb1652a01103742ec827d2e6857d561c2ff47885fe455a9249855f0dd0a78d07"
+    },
+    {
+      "task_id": "gsm8k:train:5034",
+      "run_index": 0,
+      "messages_sha256": "38dff8d84eaa49e48d7132c6d9c3cef5c972a70bbd144560ccc9d6726ff59795"
+    },
+    {
+      "task_id": "gsm8k:train:5068",
+      "run_index": 1,
+      "messages_sha256": "c62ffcf74e97d044f2a6741642613c48af600208dd8d9c323378555421838d4b"
+    },
+    {
+      "task_id": "gsm8k:train:5085",
+      "run_index": 0,
+      "messages_sha256": "62f44e6af59754fb49a3f0ae67548de2e1eb7991b5fe754c40ade20a544f6ce6"
+    },
+    {
+      "task_id": "gsm8k:train:5086",
+      "run_index": 0,
+      "messages_sha256": "e167b5d1f55c42c7de8d38244560da8c90cc40ffe2ef29b68643bf02b457aee8"
+    },
+    {
+      "task_id": "gsm8k:train:5101",
+      "run_index": 0,
+      "messages_sha256": "45c02e2c087590e6c866b2be4fa6cdff42c53d479f0d69c1a68832c15d2d4640"
+    },
+    {
+      "task_id": "gsm8k:train:511",
+      "run_index": 0,
+      "messages_sha256": "6b6188a40e96706c439bd85eae5a06a66d3f33cc9fe464c027f5cbb6359f3e8b"
+    },
+    {
+      "task_id": "gsm8k:train:5122",
+      "run_index": 0,
+      "messages_sha256": "d0c7cdc626708207be8e8593217a6b633861f0c20ffbf415c39532ac274f5df7"
+    },
+    {
+      "task_id": "gsm8k:train:5128",
+      "run_index": 0,
+      "messages_sha256": "d9561ce169d9b189bb92c1f59461880dcc802e3e5dc7196781c2e0c5d13298a9"
+    },
+    {
+      "task_id": "gsm8k:train:5132",
+      "run_index": 0,
+      "messages_sha256": "eddd9626fd84ff5118bcca2d36c9ead0d0e175e5ee74011b8f12315ad44fe8e9"
+    },
+    {
+      "task_id": "gsm8k:train:5136",
+      "run_index": 0,
+      "messages_sha256": "65ad0bf311ad2c52941fc6ec966fd40d8e4584061ad3f02c92bdfcdffa413e2a"
+    },
+    {
+      "task_id": "gsm8k:train:5156",
+      "run_index": 0,
+      "messages_sha256": "5fecb2c180e2994059ec47ee41ba3e7631f82ad72f94f7b56957ab55034ffba3"
+    },
+    {
+      "task_id": "gsm8k:train:5157",
+      "run_index": 0,
+      "messages_sha256": "46d655fe7951b272ba3f1541da106afc137630cf318d27b12ba225e8649bc511"
+    },
+    {
+      "task_id": "gsm8k:train:5166",
+      "run_index": 0,
+      "messages_sha256": "5cf2fb480e6783d78650e97bfb7148d2eb9d706c1cd610d3530050a462da87fa"
+    },
+    {
+      "task_id": "gsm8k:train:5173",
+      "run_index": 0,
+      "messages_sha256": "9663fdd9be44bd7343c9d7274563e757edd340970ab579442fba3ce8f635647d"
+    },
+    {
+      "task_id": "gsm8k:train:5179",
+      "run_index": 0,
+      "messages_sha256": "e6a41fb2662e9a3313836187c63d127b3576c5a75d3de91d384c0c483cb104b2"
+    },
+    {
+      "task_id": "gsm8k:train:519",
+      "run_index": 0,
+      "messages_sha256": "49dc96e8bdc6816f27279d346aab063af92ed41567d81022e72a1dfc58ac43da"
+    },
+    {
+      "task_id": "gsm8k:train:5215",
+      "run_index": 0,
+      "messages_sha256": "fffe568ee1b82d2722a2e3fa9e1009c31bb55edbcd13a59cb36238376fabc026"
+    },
+    {
+      "task_id": "gsm8k:train:5221",
+      "run_index": 0,
+      "messages_sha256": "76477872ffeb09ae56391131371c68f6ad3ac1b63169816b478392ffbe9f7037"
+    },
+    {
+      "task_id": "gsm8k:train:5225",
+      "run_index": 0,
+      "messages_sha256": "3e20beeb4353ae2e84713a8719d6229d5ad2cff94c427802cb1e099980e0eea1"
+    },
+    {
+      "task_id": "gsm8k:train:5265",
+      "run_index": 0,
+      "messages_sha256": "949ba2ab000318accece2e3713f1d1a73e020c07a40cc454d1725433ea663073"
+    },
+    {
+      "task_id": "gsm8k:train:5270",
+      "run_index": 0,
+      "messages_sha256": "e7e816b8253eab94d2a3577a575b37f749029c0006052aa3aade513776ac48d3"
+    },
+    {
+      "task_id": "gsm8k:train:5275",
+      "run_index": 0,
+      "messages_sha256": "a025a067f4131b921420d0f846ef718b2c2f0f328ff669d4e6e8f4596183ea2a"
+    },
+    {
+      "task_id": "gsm8k:train:5288",
+      "run_index": 0,
+      "messages_sha256": "5a2d3559699a4cc1837e6acd20806aeeb37623bc5b09cdc1147b3359c02fad07"
+    },
+    {
+      "task_id": "gsm8k:train:5294",
+      "run_index": 0,
+      "messages_sha256": "ec9d400b40f502b458fed89f852ea857b461b24e095d4c4a8a3dc5ab9e1514ab"
+    },
+    {
+      "task_id": "gsm8k:train:530",
+      "run_index": 0,
+      "messages_sha256": "c3ef25a35d8f208411e56e76df415ed0cf9a11396698b67c9339534782cb8cbf"
+    },
+    {
+      "task_id": "gsm8k:train:5307",
+      "run_index": 1,
+      "messages_sha256": "b89a4d289dd105e6efc9f470c085164f3ed9824fdb3cf7109981d1e9a355577a"
+    },
+    {
+      "task_id": "gsm8k:train:531",
+      "run_index": 0,
+      "messages_sha256": "7e1718b3de1bce6c9009925b009ae591a2035d938fefc3a934948b3cba4b26eb"
+    },
+    {
+      "task_id": "gsm8k:train:5315",
+      "run_index": 0,
+      "messages_sha256": "f416f96b77b0a3d7f332ca8a1e53e41b6c3283757d9210fe5adf47a7d3e7bfdd"
+    },
+    {
+      "task_id": "gsm8k:train:5322",
+      "run_index": 0,
+      "messages_sha256": "20f0a028f4c79fbe1d1afd69d42c3cb7a0436e8ea5be7dddb263a75ef1f371bc"
+    },
+    {
+      "task_id": "gsm8k:train:5336",
+      "run_index": 0,
+      "messages_sha256": "40f75bdbb4f26df9fa2dec6e225afc7d219b0199ecfb7c8e88c3f9fce0896c64"
+    },
+    {
+      "task_id": "gsm8k:train:5343",
+      "run_index": 0,
+      "messages_sha256": "9610996ecc7e0baeda26b589d96a2a816726ee7728374a5e3e9e505461f21a88"
+    },
+    {
+      "task_id": "gsm8k:train:535",
+      "run_index": 0,
+      "messages_sha256": "a5a199469a181d3511f47d3f89abdc724fc136dc21a0b5e6c2c28247ee21bbbd"
+    },
+    {
+      "task_id": "gsm8k:train:5366",
+      "run_index": 0,
+      "messages_sha256": "bbf88f3aa1229e8cb0c08af7a800c87d3d38487e61095fb420460034c1ef1dfe"
+    },
+    {
+      "task_id": "gsm8k:train:5390",
+      "run_index": 0,
+      "messages_sha256": "08c778c1507bfd7764761800b4a9742b53271f0d587cae0289b1b5058abaec27"
+    },
+    {
+      "task_id": "gsm8k:train:5392",
+      "run_index": 0,
+      "messages_sha256": "37c5517af600387280bba1d10025daa6327d98e95f3b399a95624ed4ac48e7af"
+    },
+    {
+      "task_id": "gsm8k:train:5402",
+      "run_index": 0,
+      "messages_sha256": "1aa803468a3c43ce554ce24c7c5d13ecf0586a1e50aca536d901d6d15ee3fafc"
+    },
+    {
+      "task_id": "gsm8k:train:5405",
+      "run_index": 0,
+      "messages_sha256": "79afd5903209d4c31447ddbe5dc2068446b953acc8c8b7660e5a097694ea24ad"
+    },
+    {
+      "task_id": "gsm8k:train:5408",
+      "run_index": 0,
+      "messages_sha256": "fef6bd35f1550326a16a576458ebef1e068a0431942ebcf8707af3dcfbb13f5a"
+    },
+    {
+      "task_id": "gsm8k:train:5427",
+      "run_index": 0,
+      "messages_sha256": "e50ace8537dbee299fd8a7f25ce15ee7201e8f482a9a4e48837ae3936d8d227b"
+    },
+    {
+      "task_id": "gsm8k:train:5428",
+      "run_index": 0,
+      "messages_sha256": "c2bdcf4d8a58add58f65d83f74e15cdbb859454b712f1d6fdd7875cb9b5574f9"
+    },
+    {
+      "task_id": "gsm8k:train:5436",
+      "run_index": 0,
+      "messages_sha256": "954edd1f995f119a4b7ff3bbb60c7d9230860cdb236315c7f0bdd9ddefe416e5"
+    },
+    {
+      "task_id": "gsm8k:train:5439",
+      "run_index": 0,
+      "messages_sha256": "ff889d00e2879172be5319fa309cf06acaa4e59e10a993e5f3cfae09ca9bdb16"
+    },
+    {
+      "task_id": "gsm8k:train:5444",
+      "run_index": 1,
+      "messages_sha256": "8a78c6d9b221ea00934ac4b4a87652181f15daf0e3e1ef9f0203525d4c746977"
+    },
+    {
+      "task_id": "gsm8k:train:5461",
+      "run_index": 0,
+      "messages_sha256": "7486ac661ab147b7ed7b9a073fdaf01d5839f5eb15d70bfa55e45c1aa569a274"
+    },
+    {
+      "task_id": "gsm8k:train:5469",
+      "run_index": 0,
+      "messages_sha256": "487ce2b12248635f8d08b8644f03e777def6f4611e70e4c7ef9ad9d603801207"
+    },
+    {
+      "task_id": "gsm8k:train:5483",
+      "run_index": 0,
+      "messages_sha256": "658b86aff590fd2cc4a9edaa703a086fc03a725820452e294100f691a5c1851c"
+    },
+    {
+      "task_id": "gsm8k:train:5485",
+      "run_index": 0,
+      "messages_sha256": "c032d26fc0803dbbc759046f42ff5b4f8614dbf0c9d14b3765beaf06e422e71f"
+    },
+    {
+      "task_id": "gsm8k:train:55",
+      "run_index": 0,
+      "messages_sha256": "f76db1d90f843ac579fb5a8ad27d58e12e81388ad7160c8de284bb3a9893e5bc"
+    },
+    {
+      "task_id": "gsm8k:train:5511",
+      "run_index": 0,
+      "messages_sha256": "a4b9c6ad41182a49e115d51a7159687f12d72dae1a52021d295ada566890dfef"
+    },
+    {
+      "task_id": "gsm8k:train:5518",
+      "run_index": 1,
+      "messages_sha256": "de93bd461466fa25d1cd1950cf1cd76ad149dcab88c0d0d377a225ec5fab6eda"
+    },
+    {
+      "task_id": "gsm8k:train:5522",
+      "run_index": 0,
+      "messages_sha256": "75630ee561e1eb63d7bca1ac95d3cb1a932de806dca6b02b97aa12d5c96cb9cb"
+    },
+    {
+      "task_id": "gsm8k:train:5530",
+      "run_index": 0,
+      "messages_sha256": "cc0f86df19a76ec5bf0c6e65ab24ab640644eed287f497f34a6063b6b3d91307"
+    },
+    {
+      "task_id": "gsm8k:train:5539",
+      "run_index": 0,
+      "messages_sha256": "4271f0da436ae0e381916aa6c38f3f1838ee83e7a85d28677479ea22cfd15979"
+    },
+    {
+      "task_id": "gsm8k:train:5551",
+      "run_index": 0,
+      "messages_sha256": "976f84bfd2a9fc4eac652679ffce248afa1bd8fd9fec927ae2045769d9afd3e0"
+    },
+    {
+      "task_id": "gsm8k:train:5555",
+      "run_index": 0,
+      "messages_sha256": "90b7cd066d377524eab23200d980e4f802801eee5388906224eaafd5404f065c"
+    },
+    {
+      "task_id": "gsm8k:train:5566",
+      "run_index": 1,
+      "messages_sha256": "827ae90c4450d5a680854d7bb15559fba7be09226a91cee5e7ce9cc0aca3d29d"
+    },
+    {
+      "task_id": "gsm8k:train:5581",
+      "run_index": 0,
+      "messages_sha256": "12af82d5436bc77f3576407923303a72c06b09b3d60b3a7e7d02f42ea346ba1a"
+    },
+    {
+      "task_id": "gsm8k:train:5607",
+      "run_index": 0,
+      "messages_sha256": "aa9ce349beb723230bf0b29a8a56a9b099f4bdcf5b1d3b9b545a38f44ffdbe91"
+    },
+    {
+      "task_id": "gsm8k:train:5611",
+      "run_index": 0,
+      "messages_sha256": "a1746d06ecbeee7d7728f60a903267421da9bb4dab69318b75be2cf082264868"
+    },
+    {
+      "task_id": "gsm8k:train:5615",
+      "run_index": 0,
+      "messages_sha256": "251a6761f5760c69aa9a86f7bb4bc6a5a921549094aaee61b0bcaaa720ab4ffe"
+    },
+    {
+      "task_id": "gsm8k:train:5633",
+      "run_index": 0,
+      "messages_sha256": "a1f97505da29c1ecf2243126aac85b2611c3b5de88aba060a1ff01197d16eee5"
+    },
+    {
+      "task_id": "gsm8k:train:564",
+      "run_index": 0,
+      "messages_sha256": "dc60a317b8f5febde0e12fab678f82a4b542a5b9d2c7e5db55c3bcc6213101b7"
+    },
+    {
+      "task_id": "gsm8k:train:5644",
+      "run_index": 0,
+      "messages_sha256": "2b010dad6a9f2ca2b661d5521ba6f8fb94eced12981beedae6745f9a8d2a99d6"
+    },
+    {
+      "task_id": "gsm8k:train:5654",
+      "run_index": 0,
+      "messages_sha256": "1c6450db198e168f5e43d0195eabfdc1f37cfcf551b0a1d12b9acba0fc3dacc7"
+    },
+    {
+      "task_id": "gsm8k:train:5671",
+      "run_index": 0,
+      "messages_sha256": "3814dd761d9dc95095b9d980f629bf0e7abff600e8270a5366e01f00b95656cc"
+    },
+    {
+      "task_id": "gsm8k:train:5677",
+      "run_index": 0,
+      "messages_sha256": "7108675d6c04687481365f11d368863ab64bd088cf4e920354283f7bb12e3ca4"
+    },
+    {
+      "task_id": "gsm8k:train:5686",
+      "run_index": 0,
+      "messages_sha256": "8b71baba19b6ce61992a5d634270b83755c78a0367395691e5cfb641436261ec"
+    },
+    {
+      "task_id": "gsm8k:train:5701",
+      "run_index": 0,
+      "messages_sha256": "fa229ad17c8cc465f218ff8ef402ae439e86a30bdc173ee439d9fe8bf7f30e5e"
+    },
+    {
+      "task_id": "gsm8k:train:5704",
+      "run_index": 0,
+      "messages_sha256": "c7df6389a2f339b5aa474d45d2e9e107b0e3a76e45ee27261bbda49d63d96a62"
+    },
+    {
+      "task_id": "gsm8k:train:5718",
+      "run_index": 0,
+      "messages_sha256": "959a411dc269c3ec09cf3764acbcd080014f0448532ec72ed1923332988ba8a4"
+    },
+    {
+      "task_id": "gsm8k:train:573",
+      "run_index": 0,
+      "messages_sha256": "7deb4320d900fba133021b15963d7e33c476aa01814389bb8ef8d4b3ff22d9f6"
+    },
+    {
+      "task_id": "gsm8k:train:5736",
+      "run_index": 0,
+      "messages_sha256": "a13303352437e53b8e928c49dc69dcd1ace1b4a7bf2a0c4f1432a70d6c87b9cc"
+    },
+    {
+      "task_id": "gsm8k:train:5757",
+      "run_index": 0,
+      "messages_sha256": "ee65fa62db6def5fba137d66d3e26b84dc0ecb3e4c44958ba314c5c59bee575e"
+    },
+    {
+      "task_id": "gsm8k:train:578",
+      "run_index": 0,
+      "messages_sha256": "3d5e4bea5dd688b7f7564b244289193d82a2cf8654af563ffad18d0c2b0ee078"
+    },
+    {
+      "task_id": "gsm8k:train:5786",
+      "run_index": 0,
+      "messages_sha256": "7836dd7bdca3a4a6e97976fd9a25363cfee6933df4053f10c879c34fe2ad00ce"
+    },
+    {
+      "task_id": "gsm8k:train:5792",
+      "run_index": 0,
+      "messages_sha256": "4b95b55744fd80fa087b64b6149aa9bd531d03735d494a02c714316e930115dc"
+    },
+    {
+      "task_id": "gsm8k:train:5795",
+      "run_index": 0,
+      "messages_sha256": "7cd1a6643f91d1e47e6de30a2388735446a29e8d3a9932e5b03f616835fa7423"
+    },
+    {
+      "task_id": "gsm8k:train:5812",
+      "run_index": 0,
+      "messages_sha256": "3d875f5a529045ac7f902e6756410796205c87b14e24982afa98d82b68afa5df"
+    },
+    {
+      "task_id": "gsm8k:train:5815",
+      "run_index": 0,
+      "messages_sha256": "3002f4e62db49601067dcf37f183c4aa100ce7813f4d0b592cd687d628d687cb"
+    },
+    {
+      "task_id": "gsm8k:train:5822",
+      "run_index": 0,
+      "messages_sha256": "33c525191c8581b3f4e0542597cedf7cdda580ec7511d881529b51a2f5e688b6"
+    },
+    {
+      "task_id": "gsm8k:train:5836",
+      "run_index": 0,
+      "messages_sha256": "454f0ee308653f67b60d3ead62828c67c997b3acf485f7f60d7ca63fd7270623"
+    },
+    {
+      "task_id": "gsm8k:train:5847",
+      "run_index": 0,
+      "messages_sha256": "66fe48b93ee9b03e5cb7f4c91a1e3dcdf8adddc448def206d5c3b8caa9385c66"
+    },
+    {
+      "task_id": "gsm8k:train:5859",
+      "run_index": 0,
+      "messages_sha256": "ca13c103404ed24b282fa2db0d9dba6573a6437afaac4ee5df66b39c5ce07dba"
+    },
+    {
+      "task_id": "gsm8k:train:5861",
+      "run_index": 0,
+      "messages_sha256": "356b7a62f4c2c554a0d1bf049efd40e534d8a678aa377356a1bfd6412ad67b57"
+    },
+    {
+      "task_id": "gsm8k:train:5864",
+      "run_index": 0,
+      "messages_sha256": "418b45acea7dff86e2ad322c28a765af9c9ab11a4683a22fcc7b6833c3178973"
+    },
+    {
+      "task_id": "gsm8k:train:5869",
+      "run_index": 0,
+      "messages_sha256": "947ceaffab7730a29c88e16b3226658d75e3a9e41d759e8182350ef1932f5864"
+    },
+    {
+      "task_id": "gsm8k:train:5883",
+      "run_index": 0,
+      "messages_sha256": "c3355c19424f9842d8f90dbca7a0bb7152a2c2906d0d7d6db0949f3f141e848a"
+    },
+    {
+      "task_id": "gsm8k:train:589",
+      "run_index": 0,
+      "messages_sha256": "07cab725f82f3b8ce4557990dd687eab05f0fc171ac61e20b08cf99667eb4376"
+    },
+    {
+      "task_id": "gsm8k:train:5915",
+      "run_index": 0,
+      "messages_sha256": "bf2609d9f44396d580835e12d82d9448688a5784ef2138c18d7fc4a9b52c7e5f"
+    },
+    {
+      "task_id": "gsm8k:train:5917",
+      "run_index": 0,
+      "messages_sha256": "509ea9d84b028031446de1d9bd9977c15ee6fbd6fb41392bf7e2f41f9f54dd46"
+    },
+    {
+      "task_id": "gsm8k:train:592",
+      "run_index": 0,
+      "messages_sha256": "d3b0bd011cf09b59e8d031c4db74f0e49da64e244daca0ae3181061a86bbdd50"
+    },
+    {
+      "task_id": "gsm8k:train:5926",
+      "run_index": 1,
+      "messages_sha256": "7ebe35613187689ad4b896c9c462c450190bb8b3b923500df07fe15067ecf0f2"
+    },
+    {
+      "task_id": "gsm8k:train:5930",
+      "run_index": 0,
+      "messages_sha256": "f033e5c2d9a8ca11936ee7d1ed2416cf344dbc9482f8dfb17703bebce34a1221"
+    },
+    {
+      "task_id": "gsm8k:train:5943",
+      "run_index": 0,
+      "messages_sha256": "a9c20b62da88b7a0e39c6f1e4770e2b84b8c739447497bfe806a43290160db6b"
+    },
+    {
+      "task_id": "gsm8k:train:5947",
+      "run_index": 0,
+      "messages_sha256": "2e1d684582672824c62375956785e76188b1334c38866e662b6e74a0223e9df2"
+    },
+    {
+      "task_id": "gsm8k:train:5962",
+      "run_index": 0,
+      "messages_sha256": "4cdf210b415554d7e21c716ed1ed3a3f2ace80426c3001fa2176a83b9f27cbef"
+    },
+    {
+      "task_id": "gsm8k:train:5965",
+      "run_index": 0,
+      "messages_sha256": "e574ad867adad6a903d616335d3b603085a631bc8314f53544e472385b7673b6"
+    },
+    {
+      "task_id": "gsm8k:train:5970",
+      "run_index": 0,
+      "messages_sha256": "3e23011ea21aff8dd63361ba34634136b032b1473c57a56da0d470a135e749d6"
+    },
+    {
+      "task_id": "gsm8k:train:5972",
+      "run_index": 0,
+      "messages_sha256": "ff014ddcdf7d23bc19adcf96e3734074b2f1a06b831ef0a9cac9833e9380e34c"
+    },
+    {
+      "task_id": "gsm8k:train:5986",
+      "run_index": 0,
+      "messages_sha256": "ce74353b81b927a95401694679edd3ef21f8052c2025dcd6c65d9b3cecfb1681"
+    },
+    {
+      "task_id": "gsm8k:train:600",
+      "run_index": 0,
+      "messages_sha256": "90106dc8b0d6f6f9e47c3005db82575743ff7b205ca62cf60c2690a6a6bab612"
+    },
+    {
+      "task_id": "gsm8k:train:6006",
+      "run_index": 0,
+      "messages_sha256": "d714bfeee5dd9267544b7f0ba5163f14fdcb72c67961a46d4537f7d88f06ccc8"
+    },
+    {
+      "task_id": "gsm8k:train:6012",
+      "run_index": 0,
+      "messages_sha256": "1877767e00e800c2d3f19e3aea8fff7ca6ce146dea72f736ffdc85f5e7624d6c"
+    },
+    {
+      "task_id": "gsm8k:train:6020",
+      "run_index": 0,
+      "messages_sha256": "d45ee3858ff0b58dd2fa4cb4c7f7eee1eb837c08840a8f5276b0890d8e22176e"
+    },
+    {
+      "task_id": "gsm8k:train:6026",
+      "run_index": 0,
+      "messages_sha256": "8f7eeac7d359b96ec72c84c26c148d6ce60e74180f1036494409a1ee5db70251"
+    },
+    {
+      "task_id": "gsm8k:train:6030",
+      "run_index": 0,
+      "messages_sha256": "5b675a49905125eec76bd537b5ef2f62e159de5cacbc5850bf8cb4f440928dd1"
+    },
+    {
+      "task_id": "gsm8k:train:6031",
+      "run_index": 0,
+      "messages_sha256": "359e0e51d8fdd63d6daf7baa94db66a21dec7b40bca5bd5eb3d3e0898bbab389"
+    },
+    {
+      "task_id": "gsm8k:train:6033",
+      "run_index": 0,
+      "messages_sha256": "aead234d7bcf5b0208d981ab78a1df3edda57ae0ef7a578d54919c20892bd585"
+    },
+    {
+      "task_id": "gsm8k:train:6034",
+      "run_index": 0,
+      "messages_sha256": "f7bedd1c220dba408e1514232c08e18d3a51ca05e43994a50e4029e7d85828d2"
+    },
+    {
+      "task_id": "gsm8k:train:6063",
+      "run_index": 0,
+      "messages_sha256": "1b2cb95ca99635d1107228501b9bd0135908aff4e3853f6e26c9d05e135c44d0"
+    },
+    {
+      "task_id": "gsm8k:train:6065",
+      "run_index": 0,
+      "messages_sha256": "77e0e18ea8a802adca59df90170d0d643cc6610118ebb2a1965f2ee37218698f"
+    },
+    {
+      "task_id": "gsm8k:train:6076",
+      "run_index": 0,
+      "messages_sha256": "bbefb7577fab373f85013b2ff2a6861e97bf877383d2a8268f61228b8036241e"
+    },
+    {
+      "task_id": "gsm8k:train:6099",
+      "run_index": 1,
+      "messages_sha256": "cd2901781a61479e9161fa16bc2977e5ca82f0d039ff2272efc3881032ea2dd9"
+    },
+    {
+      "task_id": "gsm8k:train:6145",
+      "run_index": 0,
+      "messages_sha256": "cbe973ac64b898ed0bc62357bcb4700fc36fcd12d6d419e61ec99fd3cddb672b"
+    },
+    {
+      "task_id": "gsm8k:train:6153",
+      "run_index": 1,
+      "messages_sha256": "c3c2d48b02abffe74f8872cf1b2581c771354c94e68fc47ef78f476c5dc2f1db"
+    },
+    {
+      "task_id": "gsm8k:train:6171",
+      "run_index": 0,
+      "messages_sha256": "0df9074754841e0c341a93906ea523378ed8e20a8c4815121aae56910817ac06"
+    },
+    {
+      "task_id": "gsm8k:train:6184",
+      "run_index": 0,
+      "messages_sha256": "536953960461a7a67ebb5843c1f5b4fbd9b4702981ea61cc0fb735e3eb624bf9"
+    },
+    {
+      "task_id": "gsm8k:train:6187",
+      "run_index": 0,
+      "messages_sha256": "7ce84fdd45dde5f911144c98a8ad1d937cdceb1d749aceab0d4d4a16de5f2394"
+    },
+    {
+      "task_id": "gsm8k:train:6199",
+      "run_index": 0,
+      "messages_sha256": "9195919301b28e1a9069b0f862db5c95fb2cfd2b8971ebcdf646abf71d1a8212"
+    },
+    {
+      "task_id": "gsm8k:train:6223",
+      "run_index": 0,
+      "messages_sha256": "baf3e1c2216d78cbfd3644f7446f8341ab2ea8dd80258145c24cee2e130a38c1"
+    },
+    {
+      "task_id": "gsm8k:train:6227",
+      "run_index": 0,
+      "messages_sha256": "53a6b7293a9fabdd0c3a39f93d6be1c6fe1ea5905709d8a73115e70cbfe28636"
+    },
+    {
+      "task_id": "gsm8k:train:6253",
+      "run_index": 0,
+      "messages_sha256": "15299cd77b5d4e1f63b0b332158b03aad9dd2898909f9d614866dfab69b77cf4"
+    },
+    {
+      "task_id": "gsm8k:train:6260",
+      "run_index": 0,
+      "messages_sha256": "e4d803f3467e6342cac5394214044019872ca43e3cbe8f9a499112ea7fbdd579"
+    },
+    {
+      "task_id": "gsm8k:train:6273",
+      "run_index": 0,
+      "messages_sha256": "15d922a6eb71e02cecceaf4984b18e804cfbb3b4676243b8bf2c81aebdfe656a"
+    },
+    {
+      "task_id": "gsm8k:train:6280",
+      "run_index": 0,
+      "messages_sha256": "7d3f35b0cfd51227ec5dbbbd06fa60cbecc2489c841d70851f98c09679c7c3fb"
+    },
+    {
+      "task_id": "gsm8k:train:6293",
+      "run_index": 0,
+      "messages_sha256": "c8d10b3f5d459ed68d3c5c7a7e6cf0b1b92b8e9164ec9af1875de4975ef118c8"
+    },
+    {
+      "task_id": "gsm8k:train:6302",
+      "run_index": 0,
+      "messages_sha256": "d267630a06552afbf95ae5f1df9869fcad85a4614b5d26c5f0b2a524289b2d97"
+    },
+    {
+      "task_id": "gsm8k:train:6320",
+      "run_index": 0,
+      "messages_sha256": "493d54d484c6996da96e768a75415f0a257d44b1772a04dd1865ee9e2d2fa43f"
+    },
+    {
+      "task_id": "gsm8k:train:6323",
+      "run_index": 0,
+      "messages_sha256": "5ba1fd59184abf5dd15b5e0cffc4e0f60563619cc04538bc3bd9ef0a5b889c17"
+    },
+    {
+      "task_id": "gsm8k:train:6328",
+      "run_index": 0,
+      "messages_sha256": "6060ff3604136e4f6c7b0b366793e9ff92046e606a4df98f90d06d50302d1ce1"
+    },
+    {
+      "task_id": "gsm8k:train:633",
+      "run_index": 0,
+      "messages_sha256": "8a23845618e615c164f6899ad11e99997ea7baf568d05515d3610d5db33c3c37"
+    },
+    {
+      "task_id": "gsm8k:train:6335",
+      "run_index": 0,
+      "messages_sha256": "6702f83533d4e84ea84a3fc09f807e0e79cbba2a6c5ba20151c94055c1fd9272"
+    },
+    {
+      "task_id": "gsm8k:train:6336",
+      "run_index": 0,
+      "messages_sha256": "da2d926bcedc961817485268808949c7d5ea3b8bab2821e708482d40c256e15f"
+    },
+    {
+      "task_id": "gsm8k:train:6344",
+      "run_index": 0,
+      "messages_sha256": "c3b125320fe40f3339bd8c12c68ad0345acd2d8b818b96d34f814c3a9f3bdf31"
+    },
+    {
+      "task_id": "gsm8k:train:6345",
+      "run_index": 0,
+      "messages_sha256": "4ff539c5489dbc422ac03f5fab1e2f8da76c975d4dd8060c75c94eb42c52e196"
+    },
+    {
+      "task_id": "gsm8k:train:635",
+      "run_index": 0,
+      "messages_sha256": "95ca35d5481e0df38afbe84339d86e068361410b8cc9412d24d3107fa58d44ab"
+    },
+    {
+      "task_id": "gsm8k:train:6350",
+      "run_index": 0,
+      "messages_sha256": "cf0ea0f4dd5602cec806de68358de4624b2e5ef0d5ee7a4587d5962c4156b0eb"
+    },
+    {
+      "task_id": "gsm8k:train:6386",
+      "run_index": 0,
+      "messages_sha256": "622d547c34f64099a3d2dd6024c2214768fa6cce80cd93efea40355466ef1134"
+    },
+    {
+      "task_id": "gsm8k:train:6395",
+      "run_index": 0,
+      "messages_sha256": "465941251ca9a8e405c75f480f178dac64ea75097e70f0a4e0c25f285143d362"
+    },
+    {
+      "task_id": "gsm8k:train:640",
+      "run_index": 0,
+      "messages_sha256": "19590adcdeddacf284dc94ff138e37f3b12c9963d48e3f2cf013a72470823566"
+    },
+    {
+      "task_id": "gsm8k:train:641",
+      "run_index": 0,
+      "messages_sha256": "77ccd78959c2da12fd3e7fa08fc9bfe7d5f09e97fbaa03ba87e3e0dfecfa1bd7"
+    },
+    {
+      "task_id": "gsm8k:train:6412",
+      "run_index": 0,
+      "messages_sha256": "3dcbfad8de7768c82d0005e27f7fe3532d6fc92aa7a5ea24e2f6c948962b1cfe"
+    },
+    {
+      "task_id": "gsm8k:train:6417",
+      "run_index": 0,
+      "messages_sha256": "0b9ce1e811070a455cf68fb429668bc38b6c4dea955a8a194b3bd9aff8d8b84c"
+    },
+    {
+      "task_id": "gsm8k:train:6435",
+      "run_index": 0,
+      "messages_sha256": "387ea2d5c3977eaf7d02714fc8d180cdbeabea5490a97a4d489c8e645cc898a2"
+    },
+    {
+      "task_id": "gsm8k:train:6446",
+      "run_index": 0,
+      "messages_sha256": "0f5a0340ee496d5ef1bd09bae153af5ee0354d34056b93c7df08cc966cd27ca6"
+    },
+    {
+      "task_id": "gsm8k:train:6458",
+      "run_index": 0,
+      "messages_sha256": "111b31c80d3ba3e101fa43bf11dad9958a6dcd67dfa2930e9ce47586e3b76b7e"
+    },
+    {
+      "task_id": "gsm8k:train:6459",
+      "run_index": 0,
+      "messages_sha256": "6c2a189273ee191a7c8484890259e5e9fad2159314a8cc8a140e5a0128cdb41b"
+    },
+    {
+      "task_id": "gsm8k:train:6461",
+      "run_index": 0,
+      "messages_sha256": "42ca3d29194ed053485d6bfded047dc50af842208c940884751ef6e1b09fdab0"
+    },
+    {
+      "task_id": "gsm8k:train:6471",
+      "run_index": 0,
+      "messages_sha256": "3966f941493614b98c5162a2048f9616e21bac0fb6a966b74a1acf3066eaec94"
+    },
+    {
+      "task_id": "gsm8k:train:6472",
+      "run_index": 0,
+      "messages_sha256": "2c8cbf05626eba845ec8951f60cdb9570716d2855609e62df520652ac875d9d8"
+    },
+    {
+      "task_id": "gsm8k:train:6479",
+      "run_index": 0,
+      "messages_sha256": "75d64aa18388e46d3d94ab4952f5e9b4d6c9af20711253186229b073cfdecf55"
+    },
+    {
+      "task_id": "gsm8k:train:6497",
+      "run_index": 0,
+      "messages_sha256": "17aca49d0354054dda913699b8543e94def494993c0795df5709c3c224d5d719"
+    },
+    {
+      "task_id": "gsm8k:train:6504",
+      "run_index": 0,
+      "messages_sha256": "74c4e36125a97805d5bafc6b9a5890e64a74c0b9f09418237a4acd6bd0596c59"
+    },
+    {
+      "task_id": "gsm8k:train:6508",
+      "run_index": 1,
+      "messages_sha256": "1a8dbdd8b47c6119616178c5f215ea2dca3764e1dabc7b2d3e3301ec745f87d7"
+    },
+    {
+      "task_id": "gsm8k:train:6513",
+      "run_index": 0,
+      "messages_sha256": "01e6a896a83e5e0ef3957f9d2677ba581231f7f6a955276cbebaced4d7b9e909"
+    },
+    {
+      "task_id": "gsm8k:train:6527",
+      "run_index": 0,
+      "messages_sha256": "1cc9d9115ac477d33a8f7bbfa08ea01c8dc0be05eb012a726d21fdf74c8dea80"
+    },
+    {
+      "task_id": "gsm8k:train:6535",
+      "run_index": 0,
+      "messages_sha256": "a0477835b5c007cfd3afbfb19192ccf6125d8490aa31f54a5d037114a762410e"
+    },
+    {
+      "task_id": "gsm8k:train:6537",
+      "run_index": 0,
+      "messages_sha256": "131793f6eddfff66103a980f8f9f2e29a08e4e227080c34e608b3a9e0971d4ac"
+    },
+    {
+      "task_id": "gsm8k:train:6561",
+      "run_index": 0,
+      "messages_sha256": "4ecd8a2a51962fd6004c73bab2d7e93d4f6e29b7c8fd41cde1392ac21f160da9"
+    },
+    {
+      "task_id": "gsm8k:train:6562",
+      "run_index": 0,
+      "messages_sha256": "7ac4bf79fe557d6925deafa8fb88e688bd464eb3da8185ad786dfe4bc5e46995"
+    },
+    {
+      "task_id": "gsm8k:train:6567",
+      "run_index": 0,
+      "messages_sha256": "a1649a7622c06767e8fd844cecef2c31cd61b08e47fe063dae78dd7d342b5e38"
+    },
+    {
+      "task_id": "gsm8k:train:6570",
+      "run_index": 0,
+      "messages_sha256": "55a78d6528e00d50d5fd02d682959815a40ea7b26b84ea3ef46bf66ef7dc1666"
+    },
+    {
+      "task_id": "gsm8k:train:6592",
+      "run_index": 0,
+      "messages_sha256": "54c284ef7c5e7eeea29b7289267d310638af4d7344c32c79cac98a435c9b9fe0"
+    },
+    {
+      "task_id": "gsm8k:train:6596",
+      "run_index": 0,
+      "messages_sha256": "bf4f508ff5d135dbed116b4dc2c994546c57cb3569ecb727cba75740bb11bb0a"
+    },
+    {
+      "task_id": "gsm8k:train:6599",
+      "run_index": 0,
+      "messages_sha256": "a831bd784dc53b4e9d870967977db45e7ac1730cdb416479d0739c9db27f0fb9"
+    },
+    {
+      "task_id": "gsm8k:train:6605",
+      "run_index": 0,
+      "messages_sha256": "6ebfb2b74fedcb755b1258deb6b5ff530226f02f589d533d29e6fefd34129567"
+    },
+    {
+      "task_id": "gsm8k:train:665",
+      "run_index": 0,
+      "messages_sha256": "e388adedc6b1b0e3073aedc34000d61f3c823ead7bf5b480c8e3f90ef831a0e5"
+    },
+    {
+      "task_id": "gsm8k:train:6668",
+      "run_index": 0,
+      "messages_sha256": "b52cfc056a285af25b8d79784e9ca1806854ff4568fe4a30e40dbb47fbbeb9fa"
+    },
+    {
+      "task_id": "gsm8k:train:6682",
+      "run_index": 0,
+      "messages_sha256": "3d742f9ff31d434edda44dc6666aa9be78cb212117b828549c3c5665e45ae672"
+    },
+    {
+      "task_id": "gsm8k:train:6684",
+      "run_index": 0,
+      "messages_sha256": "1674b9942309021f6b375c51d05493f652261264582858e8b23839d4fe38d694"
+    },
+    {
+      "task_id": "gsm8k:train:6688",
+      "run_index": 0,
+      "messages_sha256": "5faaf904859d0babfd94d07919bddd27e57dbd904443ff7a50c62bd93a4baa32"
+    },
+    {
+      "task_id": "gsm8k:train:6701",
+      "run_index": 0,
+      "messages_sha256": "28a7d81e41f5084c4dc97cfb90b184d58bd5d665a8c83a505c5265dd2b0af23e"
+    },
+    {
+      "task_id": "gsm8k:train:6702",
+      "run_index": 0,
+      "messages_sha256": "fbd57cbfc92b2f2b0b73a5432f88ef3fb542756144626d05d881269fa287871f"
+    },
+    {
+      "task_id": "gsm8k:train:6703",
+      "run_index": 0,
+      "messages_sha256": "4778d6ee97117e8bd7641eea8bd551aef598aaae1f1bb29cf05a07084e0bf23e"
+    },
+    {
+      "task_id": "gsm8k:train:6709",
+      "run_index": 0,
+      "messages_sha256": "7c58dcecb2cd7cd2e180ed1a4ec1c34da91631d44a555814bacdf5341f16ce8f"
+    },
+    {
+      "task_id": "gsm8k:train:6716",
+      "run_index": 0,
+      "messages_sha256": "47ee0683b773e7dcf3318dffc0264cb19c1bae0767f748a58f871ea3181771eb"
+    },
+    {
+      "task_id": "gsm8k:train:6728",
+      "run_index": 0,
+      "messages_sha256": "8ea9f5bb6cbb961ebcc5c573b51793971204d510c75338ca6244461ea72224d4"
+    },
+    {
+      "task_id": "gsm8k:train:673",
+      "run_index": 0,
+      "messages_sha256": "3584cab5535942e592ffb30efd0112258045881f67bfae1e30f065fddea25609"
+    },
+    {
+      "task_id": "gsm8k:train:6730",
+      "run_index": 0,
+      "messages_sha256": "955101f818f77b12bf8c0189bb86bb4ec176d279963f7d83d61f9cac003ca1c6"
+    },
+    {
+      "task_id": "gsm8k:train:6734",
+      "run_index": 0,
+      "messages_sha256": "3ab9b24ae09ecd9782f45e48ffc1b6b509742d8f7559635759eae8350fa06ebe"
+    },
+    {
+      "task_id": "gsm8k:train:6735",
+      "run_index": 0,
+      "messages_sha256": "e40121e4f5004552c05a7a282affd4e0d54dc1d265c327caaf12bf02b755fe6c"
+    },
+    {
+      "task_id": "gsm8k:train:6739",
+      "run_index": 0,
+      "messages_sha256": "488e1150c4e89b79129baf2b840b1c7cbfb32258c1d5a1bd1ee3032008f6f171"
+    },
+    {
+      "task_id": "gsm8k:train:6741",
+      "run_index": 0,
+      "messages_sha256": "5474e1b1939f21eb607e083ee75fe476e0b2503cb49ac2133aa0c6f42562c59e"
+    },
+    {
+      "task_id": "gsm8k:train:6742",
+      "run_index": 0,
+      "messages_sha256": "776ade9575aad1298c1b54a88a82dc750287f4ace945935b4b34e98e461d28c2"
+    },
+    {
+      "task_id": "gsm8k:train:6771",
+      "run_index": 0,
+      "messages_sha256": "1a47c7189fdabb0b8c8438a91cbff1f45f641d31d86f1bd9d94328c833a47e4a"
+    },
+    {
+      "task_id": "gsm8k:train:6792",
+      "run_index": 0,
+      "messages_sha256": "706997a0a0b8607ab268732c6265b13d25aa1d1ee0aefc6a5e970b8f5eb30300"
+    },
+    {
+      "task_id": "gsm8k:train:6800",
+      "run_index": 0,
+      "messages_sha256": "a4c7f636636e5d4f764704f9a6b7ada2d003917833ab913ed1087cd82d470a87"
+    },
+    {
+      "task_id": "gsm8k:train:6814",
+      "run_index": 2,
+      "messages_sha256": "a71e8a5bec722e410088c81ff0bc3ef61a8ff9e4003d933a32dea5e894a9fb5d"
+    },
+    {
+      "task_id": "gsm8k:train:6821",
+      "run_index": 1,
+      "messages_sha256": "9b69a36a58fa368f4591263a72120149b50c23d9bd7356af7ce4b277268bb910"
+    },
+    {
+      "task_id": "gsm8k:train:6824",
+      "run_index": 0,
+      "messages_sha256": "c7dc1cb55cfde399d0a8048f5a678d1912586bf4c1e015ad81fdd924b1da662b"
+    },
+    {
+      "task_id": "gsm8k:train:683",
+      "run_index": 0,
+      "messages_sha256": "69be77071ee343fc3bc5ca459ed177cf05a16c67bb2bf7c32566e4b4fe3bf0a9"
+    },
+    {
+      "task_id": "gsm8k:train:6847",
+      "run_index": 0,
+      "messages_sha256": "cf60ca48496824d6cf38eda0c648f8694fb87053633f53d98ad7dac423cbba7c"
+    },
+    {
+      "task_id": "gsm8k:train:6862",
+      "run_index": 0,
+      "messages_sha256": "6ce4c932b63e3ada6e9b25b67640a07e3625fef42089daa9df0a40c501138a02"
+    },
+    {
+      "task_id": "gsm8k:train:6864",
+      "run_index": 0,
+      "messages_sha256": "fcfe6e0fc0850299620139d8e22101d031fd29f0ad43b8c4f1ab85565502ccf4"
+    },
+    {
+      "task_id": "gsm8k:train:6868",
+      "run_index": 0,
+      "messages_sha256": "8692fe5ca1db147efc0af0042458f2836b3fd564294f692a4e79e9fcb75bb9c3"
+    },
+    {
+      "task_id": "gsm8k:train:6869",
+      "run_index": 0,
+      "messages_sha256": "17dd1ac257a1a4bf0f2a3d1d3c8eb457e4017b5936c35b4c11822dd614447c89"
+    },
+    {
+      "task_id": "gsm8k:train:687",
+      "run_index": 0,
+      "messages_sha256": "6c8fd9f43efe85c1f6c94b9e85bd0715207cf97d8904d658cbfc802ff43cc01d"
+    },
+    {
+      "task_id": "gsm8k:train:6871",
+      "run_index": 0,
+      "messages_sha256": "4a4a32d2daa4e81e6bafadba421d51a72704779ea84b42d6b12356fdaccfba97"
+    },
+    {
+      "task_id": "gsm8k:train:6885",
+      "run_index": 0,
+      "messages_sha256": "09e1d4e789638d0a0bae42fad7684d852375e2a693225028b897e2062a93a525"
+    },
+    {
+      "task_id": "gsm8k:train:6898",
+      "run_index": 0,
+      "messages_sha256": "17a01fcc51946e36d78210b74693b65c9ec0ccc3e6e15d87082c0fa1c4b01395"
+    },
+    {
+      "task_id": "gsm8k:train:6947",
+      "run_index": 0,
+      "messages_sha256": "661fd1434b4fd0cac7f85272d2d2ed08c8dc726633d5c4fa48469baf53de9552"
+    },
+    {
+      "task_id": "gsm8k:train:6953",
+      "run_index": 0,
+      "messages_sha256": "aae1bf965293985d5666947e1dbf69011e98752ca87dd96e8466a725d2ea0cf0"
+    },
+    {
+      "task_id": "gsm8k:train:6961",
+      "run_index": 0,
+      "messages_sha256": "a1c476c799d4b065044823ffae359777a998f21631bf107b5a56e9d06a2912b9"
+    },
+    {
+      "task_id": "gsm8k:train:6980",
+      "run_index": 0,
+      "messages_sha256": "60cea7d8c70c70bfe4844d114bd1e8c418ba1afdb07ffae0ca6af6a239834cd0"
+    },
+    {
+      "task_id": "gsm8k:train:6990",
+      "run_index": 0,
+      "messages_sha256": "b7a450e0199697ab362425479128467f184b08cb18711107f7290e9ba003bf15"
+    },
+    {
+      "task_id": "gsm8k:train:7",
+      "run_index": 0,
+      "messages_sha256": "e2704d563af15d7f1a1fb6309b85f7c083639d990904ef994a805e7fe039ab6b"
+    },
+    {
+      "task_id": "gsm8k:train:7001",
+      "run_index": 0,
+      "messages_sha256": "29af0227c449ab4ddf718c4fe1dafb96615b8b94ae6d15567fbc643eff307830"
+    },
+    {
+      "task_id": "gsm8k:train:7003",
+      "run_index": 0,
+      "messages_sha256": "4044ff495d9f9f7906e5908eb3716c54f4ed634e038ccaacccfce1f5e88e7ce0"
+    },
+    {
+      "task_id": "gsm8k:train:7022",
+      "run_index": 0,
+      "messages_sha256": "0a0a5bd6ef7d0c345a40dff3db09570265b6f81b52e2b8843dd5d2e00df7f899"
+    },
+    {
+      "task_id": "gsm8k:train:7024",
+      "run_index": 0,
+      "messages_sha256": "0a0aed3e1c4735773c06ea09529343542eee5d16604ba1f1c59a1d94dcae506c"
+    },
+    {
+      "task_id": "gsm8k:train:7026",
+      "run_index": 0,
+      "messages_sha256": "c363896ba55d4dbc8825665e29e12a5c20c9ab6d5d8ec0f6c2a4e8dea81c5976"
+    },
+    {
+      "task_id": "gsm8k:train:7027",
+      "run_index": 0,
+      "messages_sha256": "5fddb2a6ab4a3fd28d08b61de93478a14f4fa73e7a22619dfa6878d1f6e70773"
+    },
+    {
+      "task_id": "gsm8k:train:7047",
+      "run_index": 0,
+      "messages_sha256": "63a44a8d811ceed72f3900b313388a90cd0e387ea6aab787b3d5d0ce7eb1c28f"
+    },
+    {
+      "task_id": "gsm8k:train:7054",
+      "run_index": 0,
+      "messages_sha256": "c832e862bb4b604d5f004b252cad245ed53d6fae4cf2c9caed7e1b6d76272e56"
+    },
+    {
+      "task_id": "gsm8k:train:7061",
+      "run_index": 0,
+      "messages_sha256": "573db81a1bd5aff248a3db1b789c4929f415517ad258950f59aa829977a05844"
+    },
+    {
+      "task_id": "gsm8k:train:7064",
+      "run_index": 0,
+      "messages_sha256": "3c5ebd0038c0c40247b80bc1bc89872667d4f7fd1f8bbe0d56a44f30ef4e8728"
+    },
+    {
+      "task_id": "gsm8k:train:7066",
+      "run_index": 0,
+      "messages_sha256": "e174653d5bdd89977963c5c4108b49b8ac133ec624f504da52cdf1aad564bf13"
+    },
+    {
+      "task_id": "gsm8k:train:7083",
+      "run_index": 0,
+      "messages_sha256": "808eaf7a86549fb6b3009f81bddc78cdb01a0f6e3863177c9dd92e8a1712957f"
+    },
+    {
+      "task_id": "gsm8k:train:7087",
+      "run_index": 0,
+      "messages_sha256": "3c92f59bc8493a93d64e92171b4ca7c6e57afe8a6c327cc8c061ac730534f4fd"
+    },
+    {
+      "task_id": "gsm8k:train:7107",
+      "run_index": 0,
+      "messages_sha256": "50670f4b6a679bfe33c7e312ef145f5c3ef7deaf8c42edad80b716f22819c6bb"
+    },
+    {
+      "task_id": "gsm8k:train:7114",
+      "run_index": 0,
+      "messages_sha256": "dc74568bf53c8c5a513edca96d2c4602e8410a27d25d2b1d28811a57435a1788"
+    },
+    {
+      "task_id": "gsm8k:train:7120",
+      "run_index": 0,
+      "messages_sha256": "e28eb4af2e86f363b9dee8e5ce01b1de7b2d2bf3bb7da8177d4fb74a3250ad72"
+    },
+    {
+      "task_id": "gsm8k:train:7127",
+      "run_index": 0,
+      "messages_sha256": "6945fd1d16478ec5077ef9d47b07ae6385f38d0117b989ab801144e5beccbe3f"
+    },
+    {
+      "task_id": "gsm8k:train:713",
+      "run_index": 0,
+      "messages_sha256": "4f50f7bc825a057b28657aa76b033ead3984fe260705a2b45da3b22eda4526a5"
+    },
+    {
+      "task_id": "gsm8k:train:7132",
+      "run_index": 0,
+      "messages_sha256": "22f59cd33fbf15908482e0b545bcbf8f56ab05f17598dcc56932bacba9f2908e"
+    },
+    {
+      "task_id": "gsm8k:train:7148",
+      "run_index": 0,
+      "messages_sha256": "fd503f6e9a56bc3df056c1a46a2f7debc37e5318adf1d56adc709f99106982cf"
+    },
+    {
+      "task_id": "gsm8k:train:7153",
+      "run_index": 0,
+      "messages_sha256": "b8cd7fef10aae3748635c90224104d00310d68b29360d05b17e1e05d5dc50341"
+    },
+    {
+      "task_id": "gsm8k:train:7154",
+      "run_index": 0,
+      "messages_sha256": "81ae8599b4ea3e36e4e21741321a27836e4633093fc2d2785c45e824d883c3bf"
+    },
+    {
+      "task_id": "gsm8k:train:7158",
+      "run_index": 0,
+      "messages_sha256": "1d0bc70cf1e159c9baaef51d3ef9cd8d840583e64b836d4f4cef542d468df413"
+    },
+    {
+      "task_id": "gsm8k:train:7173",
+      "run_index": 0,
+      "messages_sha256": "d35cd1415a0c3681fd8db8834d7acfa8126a10cb5a0d90eef729f819c01a1957"
+    },
+    {
+      "task_id": "gsm8k:train:7174",
+      "run_index": 0,
+      "messages_sha256": "9a8b0722b203930b8581927b0b6e3655034759fa94cb992d054020db68e62daa"
+    },
+    {
+      "task_id": "gsm8k:train:7223",
+      "run_index": 0,
+      "messages_sha256": "f1310f26cdf09a1970b515e8b0baa6952ce9fd8dcd0a7517df8dd233767ac60a"
+    },
+    {
+      "task_id": "gsm8k:train:7225",
+      "run_index": 0,
+      "messages_sha256": "e7c137836433c489f5baafaa87ff6428cc72740cdfe2207a72c202ddfc8cdd21"
+    },
+    {
+      "task_id": "gsm8k:train:7256",
+      "run_index": 0,
+      "messages_sha256": "d4f8c71e5fda725f3dd75e4a1da46baf7e73465498e1a477791304a9cda86ce9"
+    },
+    {
+      "task_id": "gsm8k:train:7263",
+      "run_index": 0,
+      "messages_sha256": "f5885b595776bf84951213866b39e7f1cbabf3a253ec95fad618e1d98808370d"
+    },
+    {
+      "task_id": "gsm8k:train:727",
+      "run_index": 0,
+      "messages_sha256": "a873ad0b3b6b568843686d205d55f546a996367aa6668f886a38e8ce7fd18f57"
+    },
+    {
+      "task_id": "gsm8k:train:7278",
+      "run_index": 0,
+      "messages_sha256": "e531c93dffb52f324ac645b9635dbc670944c36bb76649515c9597db2bac1230"
+    },
+    {
+      "task_id": "gsm8k:train:7279",
+      "run_index": 0,
+      "messages_sha256": "87db0bc5aebcd5438451a4f2cb7376d3cd241f8e9221afa62d06bc07439f1957"
+    },
+    {
+      "task_id": "gsm8k:train:7281",
+      "run_index": 0,
+      "messages_sha256": "2003b73ae604d9dc6aa70a357b9f8fdcc69f76779afa1f943505c09e28794a20"
+    },
+    {
+      "task_id": "gsm8k:train:731",
+      "run_index": 0,
+      "messages_sha256": "175bf4b8d3fe1d92cc757f42596eb1727241c67f2a4f302252eb6bf894a195a9"
+    },
+    {
+      "task_id": "gsm8k:train:7310",
+      "run_index": 0,
+      "messages_sha256": "2cc630e2a5df9664e59f11b90bd90eebb9a2cc4f153c3321f2c37654fc584e34"
+    },
+    {
+      "task_id": "gsm8k:train:7324",
+      "run_index": 3,
+      "messages_sha256": "f9a5a04f7f94498f93734326e5d08d86fc59667f2d3bceca07c23e57c9282a34"
+    },
+    {
+      "task_id": "gsm8k:train:7328",
+      "run_index": 0,
+      "messages_sha256": "57bcdb9fd24e1f0c26094c705b32b6e2994837789c3e9f1d795642c02f0aeb6a"
+    },
+    {
+      "task_id": "gsm8k:train:7338",
+      "run_index": 0,
+      "messages_sha256": "ab52c27da6ba7c482293d46fec28bda91dbb05c06e9f9b3cdad7aca31ce2ba83"
+    },
+    {
+      "task_id": "gsm8k:train:7347",
+      "run_index": 0,
+      "messages_sha256": "1d4112223ad6b7a125c50e451a00b5c4598260fb4c1a5dbb0e340520b66eb962"
+    },
+    {
+      "task_id": "gsm8k:train:7349",
+      "run_index": 0,
+      "messages_sha256": "7931b9b554babbc2c4b91ea12001a2af9c4eece176cb4f7ace0703ba75d25af6"
+    },
+    {
+      "task_id": "gsm8k:train:7352",
+      "run_index": 0,
+      "messages_sha256": "e87b6eb2424cf8e04010859f650a325fdc7e10bda788bdc5660f200940221cfa"
+    },
+    {
+      "task_id": "gsm8k:train:7366",
+      "run_index": 0,
+      "messages_sha256": "2ee8ebdd9f115a87b5e858351ced775fd0623f3535c9664220aa459b5049c4cf"
+    },
+    {
+      "task_id": "gsm8k:train:7368",
+      "run_index": 1,
+      "messages_sha256": "1aa287baefddb2a02bc8193c0af7f29b85507d38193393070ab059f87a364ab6"
+    },
+    {
+      "task_id": "gsm8k:train:7372",
+      "run_index": 0,
+      "messages_sha256": "118c5035faecc196ede31813c909d523a02925f1af43d8100bc3064f8caf131c"
+    },
+    {
+      "task_id": "gsm8k:train:7428",
+      "run_index": 0,
+      "messages_sha256": "abe56ced44f4f71eda9aa67230769604697f24cd3305bf26cdfcbfac6466fe35"
+    },
+    {
+      "task_id": "gsm8k:train:7430",
+      "run_index": 0,
+      "messages_sha256": "bdd5795f2373973bb5164917de3adc08a350a4de998825ca2b13bd3efcd1dfb4"
+    },
+    {
+      "task_id": "gsm8k:train:7454",
+      "run_index": 0,
+      "messages_sha256": "cf9938a3a16fc179653d1f99259ae4c309e0a4ff887220b49312131d12b2ef6c"
+    },
+    {
+      "task_id": "gsm8k:train:7462",
+      "run_index": 0,
+      "messages_sha256": "717d93c4c83dc69962f8542bd0d2a533a8f8f953b86165268db3d81d1f2cc740"
+    },
+    {
+      "task_id": "gsm8k:train:747",
+      "run_index": 0,
+      "messages_sha256": "4c5377cd53f7defc16216cae01f1982b31686dff1b4f4dac4d83856ef121744f"
+    },
+    {
+      "task_id": "gsm8k:train:761",
+      "run_index": 0,
+      "messages_sha256": "a30c4df2ad668cca0f321d35a85a04460c931063af92dd053e33cf91f0897289"
+    },
+    {
+      "task_id": "gsm8k:train:77",
+      "run_index": 0,
+      "messages_sha256": "8d196864f7cf8a9e09e2e696ecc148da869ec844f3254df4a77758f4feefcc5f"
+    },
+    {
+      "task_id": "gsm8k:train:781",
+      "run_index": 0,
+      "messages_sha256": "cf47aee65b255d938d9f8e8ade98e33c345ef046e83d76cf056a56b96317a5f3"
+    },
+    {
+      "task_id": "gsm8k:train:789",
+      "run_index": 0,
+      "messages_sha256": "3c99e5597334667975d769a3b28ec3b06660a2d3dade69b9e75c85fe74a1741c"
+    },
+    {
+      "task_id": "gsm8k:train:81",
+      "run_index": 0,
+      "messages_sha256": "32c4449268044c03b0e8779f45284944734f9685d58db7c03c2a2b13d451e1ae"
+    },
+    {
+      "task_id": "gsm8k:train:817",
+      "run_index": 0,
+      "messages_sha256": "0b19217cd2b350862e185c9ba3531a90486f79c7c48c92cc078bad5eafe5368d"
+    },
+    {
+      "task_id": "gsm8k:train:827",
+      "run_index": 0,
+      "messages_sha256": "05a583733a9aad6a759cdf59b2ffbbcf45a5043b6da9f9620fa3b6494c845350"
+    },
+    {
+      "task_id": "gsm8k:train:83",
+      "run_index": 0,
+      "messages_sha256": "f20004111af0b155fc95743c09149ad0dce42f45ee90ae8e38a821d1e122cd8f"
+    },
+    {
+      "task_id": "gsm8k:train:84",
+      "run_index": 0,
+      "messages_sha256": "fb62a06f75afdfe11cf020a3c7e1b041d97562650b442c9b5ce48a06225da2cc"
+    },
+    {
+      "task_id": "gsm8k:train:842",
+      "run_index": 0,
+      "messages_sha256": "bca1f8ddf3a4aa548163c71a0f122f65061c54f575431bfb236d2615ee4a7bec"
+    },
+    {
+      "task_id": "gsm8k:train:847",
+      "run_index": 0,
+      "messages_sha256": "b907ce9823c6b3b8f5e4c92218fae859af36d6e29c20c4b822c10b0018b21c89"
+    },
+    {
+      "task_id": "gsm8k:train:863",
+      "run_index": 0,
+      "messages_sha256": "e345028c12a617d250a06c490087e22220ad21cf9d89e717ed64c7c49ed1406b"
+    },
+    {
+      "task_id": "gsm8k:train:873",
+      "run_index": 0,
+      "messages_sha256": "c79de87f52599614f7e2b0455bd0f8d0814c0f9d99b3d7b75a191d99fa8e31b1"
+    },
+    {
+      "task_id": "gsm8k:train:880",
+      "run_index": 3,
+      "messages_sha256": "1bbadb822885cfa2173a9ad39fd9d2dfb8c854c7f69b0743a32d5ea15fbd4517"
+    },
+    {
+      "task_id": "gsm8k:train:89",
+      "run_index": 1,
+      "messages_sha256": "31df00e6925cefb3ae32df486b0830988ee94192ab42c45dc630328692bba2ce"
+    },
+    {
+      "task_id": "gsm8k:train:891",
+      "run_index": 0,
+      "messages_sha256": "efcf082ec74c3f5412f5ac75940a336935064e5a13d1f0e5d79a8a7045e89c3f"
+    },
+    {
+      "task_id": "gsm8k:train:918",
+      "run_index": 0,
+      "messages_sha256": "49f0ff11e4e9aeb87d601200edc0e71e092076f12d1733389aa308691b2cf3a8"
+    },
+    {
+      "task_id": "gsm8k:train:923",
+      "run_index": 0,
+      "messages_sha256": "168045617dcf06166f7390bac72ddabadb6d1f734aa0e3908d4c7bee010d4951"
+    },
+    {
+      "task_id": "gsm8k:train:936",
+      "run_index": 0,
+      "messages_sha256": "79227722db1d218f1d272a565a9b6fde26b1dc05c99053aa5219becb533c03ef"
+    },
+    {
+      "task_id": "gsm8k:train:943",
+      "run_index": 0,
+      "messages_sha256": "da04542ab502e6c54ef6072d4ee1e2a627f6521432a9b183d56c027f39b58c02"
+    },
+    {
+      "task_id": "gsm8k:train:945",
+      "run_index": 0,
+      "messages_sha256": "a157a973e938b201de3ddd374db5046589cb214d951122321921478fe9c15108"
+    },
+    {
+      "task_id": "gsm8k:train:954",
+      "run_index": 0,
+      "messages_sha256": "7cc21f47e50b681a851a2e60f2e417f3b112e4602849da4e7ae825886036381c"
+    },
+    {
+      "task_id": "gsm8k:train:955",
+      "run_index": 0,
+      "messages_sha256": "c91beff78280091136805f9cfb2c3423a0424c94f1c8093adf8c4cdba0260006"
+    },
+    {
+      "task_id": "gsm8k:train:978",
+      "run_index": 0,
+      "messages_sha256": "9df5d16ced02696cc0109d028fe81bacb7080326cb3ec00e1b986dbb567d5a3e"
+    },
+    {
+      "task_id": "gsm8k:train:982",
+      "run_index": 0,
+      "messages_sha256": "64a42f55b5d621796e7784038e77bd7fe273f85e3b5c6daa16a9d96b6e625062"
+    },
+    {
+      "task_id": "gsm8k:train:986",
+      "run_index": 0,
+      "messages_sha256": "b6096a58db12f19efca99385366d9da099aec465d02dc9acc91eb1ccac46009b"
+    },
+    {
+      "task_id": "gsm8k:train:989",
+      "run_index": 0,
+      "messages_sha256": "924287e33a27452c76811b77621c20355bb2e3c2a809d8a61149adfb452ea136"
+    },
+    {
+      "task_id": "gsm8k:train:999",
+      "run_index": 0,
+      "messages_sha256": "dedb4fb234d6cb33f30ad8a383570f963fd6245b5462f971b4f7c75e32941959"
+    }
+  ]
+}
