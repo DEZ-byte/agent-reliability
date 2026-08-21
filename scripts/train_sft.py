@@ -270,6 +270,15 @@ def main() -> int:
     parser.add_argument("--summary", required=True)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--max-steps", type=int, default=None, help="smoke runs only")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help=(
+            "override the pinned training seed for a seed sweep; the run is "
+            "marked as overridden and named with the seed"
+        ),
+    )
     parser.add_argument("--run-load", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     args = parser.parse_args()
@@ -287,6 +296,12 @@ def main() -> int:
         ],
     )
     sft = config["sft"]
+    # A seed sweep is a deliberate departure from the single pinned seed, so
+    # it is recorded as one. Editing configs/train_config.yaml instead would
+    # change the config hash and orphan the checkpoint name of every run
+    # already published under it.
+    seed = args.seed if args.seed is not None else sft["seed"]
+    seed_overridden = args.seed is not None and args.seed != sft["seed"]
     revision = _revision_for(args.model)
     config_hash = config_hash_prefix(TRAIN_CONFIG_PATH)
 
@@ -300,7 +315,15 @@ def main() -> int:
         "config_hash_prefix": config_hash,
         "dataset_sha256": _sha256_file(Path(args.dataset)),
         "model": {"id": args.model, "revision": revision},
-        "checkpoint_name": f"{args.model.split('/')[-1]}-sft-{config_hash}",
+        "checkpoint_name": (
+            f"{args.model.split('/')[-1]}-sft-{config_hash}"
+            + (f"-seed{seed}" if seed_overridden else "")
+        ),
+        "seed": {
+            "pinned_in_config": sft["seed"],
+            "used": seed,
+            "overridden": seed_overridden,
+        },
         "executed": bool(args.run_load),
         "source_commit": _git_commit(),
         "platform": {"python": platform.python_version(), "system": platform.system()},
@@ -340,7 +363,7 @@ def main() -> int:
         lora_dropout=sft["lora"]["dropout"],
         target_modules=sft["lora"]["target_modules"],
         use_gradient_checkpointing="unsloth",
-        random_state=sft["seed"],
+        random_state=seed,
     )
 
     encoded, encode_stats = encode_rows(
@@ -357,7 +380,7 @@ def main() -> int:
         per_device_train_batch_size=sft["per_device_train_batch_size"],
         gradient_accumulation_steps=sft["gradient_accumulation_steps"],
         max_length=sft["max_seq_length"],
-        seed=sft["seed"],
+        seed=seed,
         save_steps=sft["save_steps"],
         save_strategy="steps",
         logging_steps=1,
