@@ -97,8 +97,8 @@
     "learning_rate": 0.000001,
     "per_device_train_batch_size": 8,
     "gradient_accumulation_steps": 2,
-    "max_steps": 120,
-    "save_steps": 30,
+    "max_steps": 400,
+    "save_steps": 100,
     "seed": 20260825,
     "_comment": [
       "Section 7.1: GRPO initialises from the SFT checkpoint, never from base.",
@@ -129,7 +129,16 @@
       "",
       "learning_rate 1e-6 is two orders below the SFT rate. Policy-gradient",
       "updates act on a model that already works; the failure mode is collapse,",
-      "not slow convergence."
+      "not slow convergence.",
+      "",
+      "max_steps 400 at 2 prompts per optimizer step is 800 prompt visits over a",
+      "1000-task split, so under one epoch. It was raised from 120 after a smoke",
+      "run measured what section 7.3 predicts: the SFT policy already solves many",
+      "prompts on every one of the 8 candidates, giving a zero-variance group and",
+      "exactly no gradient. Half to all groups were dead in the smoke, so roughly",
+      "half the steps teach nothing and the budget has to absorb that.",
+      "A null result at this budget is a statement about the budget, not about",
+      "the method, and must be reported that way."
     ]
   },
 
