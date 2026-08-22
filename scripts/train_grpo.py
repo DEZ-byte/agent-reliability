@@ -199,6 +199,15 @@ def main() -> int:
     parser.add_argument("--summary", required=True)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--max-steps", type=int, default=None, help="smoke runs only")
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=None,
+        help=(
+            "override the pinned rate for a deliberate sweep; the run is "
+            "marked as overridden and named with the rate"
+        ),
+    )
     parser.add_argument("--run-load", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     args = parser.parse_args()
@@ -216,6 +225,15 @@ def main() -> int:
             "section 7.1 initialises GRPO from the SFT checkpoint; "
             "GRPO-from-base is a separate labelled ablation"
         )
+    # A rate sweep is a departure from the single pinned value, recorded as
+    # one. Editing the config instead would change its hash and orphan the
+    # name the first GRPO run was published under.
+    learning_rate = (
+        args.learning_rate if args.learning_rate is not None else grpo["learning_rate"]
+    )
+    rate_overridden = (
+        args.learning_rate is not None and args.learning_rate != grpo["learning_rate"]
+    )
     revision = _revision_for(args.model)
     config_hash = config_hash_prefix(TRAIN_CONFIG_PATH)
 
@@ -229,7 +247,15 @@ def main() -> int:
         "config_hash_prefix": config_hash,
         "model": {"id": args.model, "revision": revision},
         "init_from_adapter": str(args.adapter),
-        "checkpoint_name": f"{args.model.split('/')[-1]}-grpo-{config_hash}",
+        "checkpoint_name": (
+            f"{args.model.split('/')[-1]}-grpo-{config_hash}"
+            + (f"-lr{learning_rate:g}" if rate_overridden else "")
+        ),
+        "learning_rate": {
+            "pinned_in_config": grpo["learning_rate"],
+            "used": learning_rate,
+            "overridden": rate_overridden,
+        },
         "prompt_sha256": {
             "system": _sha256_text(SYSTEM_PROMPT),
             "user": _sha256_text(USER_PROMPT),
@@ -291,7 +317,7 @@ def main() -> int:
         top_p=grpo["top_p"],
         max_prompt_length=grpo["max_prompt_length"],
         max_completion_length=grpo["max_completion_length"],
-        learning_rate=grpo["learning_rate"],
+        learning_rate=learning_rate,
         per_device_train_batch_size=grpo["per_device_train_batch_size"],
         gradient_accumulation_steps=grpo["gradient_accumulation_steps"],
         max_steps=args.max_steps or grpo["max_steps"],
