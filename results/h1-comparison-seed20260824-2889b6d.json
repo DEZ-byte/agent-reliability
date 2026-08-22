@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-22T19:44:56.360570Z",
+  "kind": "paired_arm_comparison",
+  "method": "Task-level bootstrap interval on the paired difference, which HYPOTHESIS_PROTOCOL section 6.2 makes primary, with the paired sign-flip permutation p-value and the exact paired sign test as secondary. Tasks are the sampling unit. Permutation p-values are add-one corrected so they cannot be reported as zero.",
+  "baseline_label": "Llama-3.1-8B scaffolded (R1)",
+  "treatment_label": "Qwen3-1.7B SFT-seed20260824",
+  "baseline_candidate": null,
+  "treatment_candidate": "Qwen/Qwen3-1.7B",
+  "seed": 20260820,
+  "multiplicity": {
+    "comparisons_reported": 2,
+    "bonferroni_alpha": 0.025,
+    "note": "No multiplicity policy was pre-registered. The Bonferroni threshold is reported so a reader can apply it; it is not used to filter what is shown."
+  },
+  "sampling_degeneracy": {
+    "R1": {
+      "baseline": {
+        "tasks": 150,
+        "tasks_with_identical_completions": 31,
+        "degenerate_rate": 0.20666666666666667,
+        "mean_distinct_completions": 2.6933333333333334
+      },
+      "treatment": {
+        "tasks": 150,
+        "tasks_with_identical_completions": 14,
+        "degenerate_rate": 0.09333333333333334,
+        "mean_distinct_completions": 2.9133333333333336
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "rung": "R1",
+      "k": 1,
+      "tasks_compared": 150,
+      "baseline_pass_power_k": 0.415,
+      "treatment_pass_power_k": 0.5533333333333333,
+      "difference": 0.13833333333333336,
+      "difference_ci95": [
+        0.06333333333333334,
+        0.215
+      ],
+      "difference_ci95_width": 0.15166666666666667,
+      "baseline_pass_at_k": 0.415,
+      "treatment_pass_at_k": 0.5533333333333333,
+      "baseline_sometimes_band": 0.0,
+      "treatment_sometimes_band": 0.0,
+      "tasks_improved": 52,
+      "tasks_regressed": 26,
+      "tasks_changed": 78,
+      "p_permutation_two_sided": 0.0006999300069993001,
+      "p_sign_test_exact": 0.004334880883507413,
+      "permutation_resamples": 10000,
+      "bootstrap_replicates": 10000
+    },
+    {
+      "rung": "R1",
+      "k": 4,
+      "tasks_compared": 150,
+      "baseline_pass_power_k": 0.29333333333333333,
+      "treatment_pass_power_k": 0.46,
+      "difference": 0.16666666666666669,
+      "difference_ci95": [
+        0.08,
+        0.25333333333333335
+      ],
+      "difference_ci95_width": 0.17333333333333334,
+      "baseline_pass_at_k": 0.56,
+      "treatment_pass_at_k": 0.6733333333333333,
+      "baseline_sometimes_band": 0.2666666666666667,
+      "treatment_sometimes_band": 0.21333333333333332,
+      "tasks_improved": 37,
+      "tasks_regressed": 12,
+      "tasks_changed": 49,
+      "p_permutation_two_sided": 0.000999900009999,
+      "p_sign_test_exact": 0.0004697573180081349,
+      "permutation_resamples": 10000,
+      "bootstrap_replicates": 10000
+    }
+  ],
+  "restricted_comparisons": [
+    {
+      "rung": "R1",
+      "k": 4,
+      "tasks_compared": 110,
+      "baseline_pass_power_k": 0.19090909090909092,
+      "treatment_pass_power_k": 0.36363636363636365,
+      "difference": 0.17272727272727273,
+      "difference_ci95": [
+        0.07272727272727272,
+        0.2727272727272727
+      ],
+      "difference_ci95_width": 0.19999999999999998,
+      "baseline_pass_at_k": 0.5363636363636364,
+      "treatment_pass_at_k": 0.6181818181818182,
+      "baseline_sometimes_band": 0.34545454545454546,
+      "treatment_sometimes_band": 0.2545454545454545,
+      "tasks_improved": 26,
+      "tasks_regressed": 7,
+      "tasks_changed": 33,
+      "p_permutation_two_sided": 0.0014998500149985001,
+      "p_sign_test_exact": 0.0013187271542847157,
+      "permutation_resamples": 10000,
+      "bootstrap_replicates": 10000,
+      "restricted_to": "tasks where both arms varied"
+    }
+  ],
+  "source_commit": "2889b6d32271b9e4230c648f4d85bd98ff381103",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

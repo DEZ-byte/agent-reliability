@@ -9,6 +9,35 @@ it is kept outside this repository for now. This page is the readable version.
 
 ---
 
+### A trained 1.7B beat a scaffolded 8B, and cost a third as much
+
+The comparison the project was built to make. An untrained Llama-3.1-8B with
+retry scaffolding scored `pass^1` 0.415 and `pass^4` 0.293. The fine-tuned
+Qwen3-1.7B scored 0.517 to 0.553 and 0.393 to 0.460 across three runs. Every
+paired interval excludes zero.
+
+Cost went the same way once measured properly. The 8B emits fewer tokens per
+task, but weighting by parameters it costs 236 billion-parameter-tokens against
+72, and needs roughly 6 GB to serve against 1.5 GB. Compared on raw token counts
+the conclusion would have reversed.
+
+`D-076`
+
+### The 8B's first score was 0.000, and it was my bug
+
+Llama writes tool calls as bare JSON with `parameters`. Qwen wraps them in
+`<tool_call>` tags with `arguments`. The grader understood one of them, so a
+perfectly correct Llama call scored zero and the headline would have read as a
+total capability failure.
+
+The fix is per-model and off by default, which matters more than it sounds.
+Applied globally it would have accepted three recorded completions where an
+untrained Qwen wrote bare JSON. By Qwen's own template that is a real format
+failure, and accepting it would have improved the baseline and shrunk every
+gain measured against it.
+
+`D-076` · `D-060`
+
 ### Tool formatting was never the problem
 
 Both models emitted schema-valid tool calls essentially every time. The schema

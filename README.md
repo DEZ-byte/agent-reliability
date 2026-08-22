@@ -6,7 +6,31 @@ A model that solves a task once isn't reliable. This project measures `pass^k`,
 the fraction of tasks where all k independent attempts succeed, because that is
 what "it works" has to mean when something downstream depends on it.
 
-## Result
+## The headline
+
+A fine-tuned 1.7B beats an 8B with retry scaffolding, on the same 150 held-out
+tasks, and costs about a third as much to run.
+
+| | Llama-3.1-8B, scaffolded | Qwen3-1.7B, fine-tuned |
+| :-- | --: | --: |
+| Solves it once (`pass^1`) | 0.415 | **0.517–0.553** |
+| Solves it 4 times out of 4 (`pass^4`) | 0.293 | **0.393–0.460** |
+| Generation cost per task | 236 | **72** |
+| Memory to serve, 4-bit | ~6 GB | **~1.5 GB** |
+
+Paired per training run, the trained model leads by 0.102 to 0.138 on `pass^1`
+and 0.100 to 0.167 on `pass^4`. Every interval excludes zero.
+
+Cost is parameter-weighted, in billion-parameter-tokens. The 8B actually emits
+*fewer* tokens per task (29.4 against 35.6), but a token from an 8.03B model is
+not a token from a 2.03B one. Compared on raw token counts the conclusion
+reverses, which is why it is measured this way.
+
+Retry buys the 8B almost nothing either: `pass^1` moves 0.412 to 0.415 and
+`pass@4` does not move at all. A retry told only that nothing parsed cannot fix
+a well-formed call that computed the wrong thing.
+
+## How the small model got there
 
 Qwen3-1.7B, fine-tuned on 684 verified tool-use trajectories written by
 Qwen3-4B. Evaluated on 150 held-out tasks, touched once per run. Three
