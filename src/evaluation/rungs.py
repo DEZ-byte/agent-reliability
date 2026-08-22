@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Callable, Final, Literal, Protocol
 
+from agent.dialects import normalise_tool_dialect
 from agent.gates import GateEngine, GateMode
 from agent.parser import parse_tool_calls
 from env.models import EnvironmentOutcome, EpisodeTrace, OutcomeSource, ToolEvent
@@ -152,6 +153,7 @@ def run_episode(
     rung: Rung,
     run_index: int = 0,
     environment_turn_cap: int = REFERENCE_ENVIRONMENT_TURN_CAP,
+    normalise_dialect: bool = False,
 ) -> EpisodeResult:
     """Run one Phase A episode under R0 or R1.
 
@@ -188,8 +190,15 @@ def run_episode(
         counters.policy_model_decision_count += 1
         completions.append(completion)
 
+        # Off unless the caller says this model's template asks for a
+        # different dialect. For a model trained on `<tool_call>` tags, bare
+        # JSON is a real format failure by its own convention and keeps
+        # counting as one; three such completions exist in the recorded logs.
+        parsed = parse_tool_calls(
+            normalise_tool_dialect(completion) if normalise_dialect else completion
+        )
         trace = registry.execute(
-            parse_tool_calls(completion),
+            parsed,
             state,
             gate_engine=gate_engine,
             gate_mode=GateMode.ENFORCE,

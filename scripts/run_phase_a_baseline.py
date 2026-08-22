@@ -38,6 +38,7 @@ from env.phase_a import (  # noqa: E402
     build_phase_a_registry,
     calculator_tool_schema,
 )
+from agent.dialects import template_uses_canonical_tags  # noqa: E402
 from env.splits import load_split  # noqa: E402
 from agent.gates import GateEngine  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
@@ -300,6 +301,12 @@ def _measure(
         model = PeftModel.from_pretrained(model, str(adapter))
     FastLanguageModel.for_inference(model)
 
+    # Which tool-call dialect this checkpoint was trained to emit, read from
+    # its own chat template. A model is judged against its own convention;
+    # scoring Llama's bare JSON as malformed would measure Qwen's convention.
+    canonical_tags = template_uses_canonical_tags(tokenizer.chat_template)
+    normalise_dialect = not canonical_tags
+
     n_runs = config["runs"]["tier_1_n"]
     seed_base = config["runs"]["seed_base"]
     cap = config["episode"]["environment_turn_cap"]
@@ -338,6 +345,7 @@ def _measure(
                     rung=rung,
                     run_index=run_index,
                     environment_turn_cap=cap,
+                    normalise_dialect=normalise_dialect,
                 )
                 outcomes.append(1 if result.correct else 0)
                 total_episodes += 1
@@ -400,7 +408,11 @@ def _measure(
 
     del model
     torch.cuda.empty_cache()
-    return {"candidate": candidate, "rungs": per_rung}
+    return {
+        "candidate": candidate,
+        "tool_dialect": "canonical_tags" if canonical_tags else "bare_json",
+        "rungs": per_rung,
+    }
 
 
 def main() -> int:
