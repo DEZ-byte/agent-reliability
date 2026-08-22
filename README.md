@@ -18,6 +18,11 @@ tasks, and costs about a third as much to run.
 | Generation cost per task | 236 | **72** |
 | Memory to serve, 4-bit | ~6 GB | **~1.5 GB** |
 
+Reinforcement learning on top of the fine-tuned model added nothing: `pass^1`
+0.5517 to 0.5533, a difference of 0.0017 with a 95% interval of ±0.013, and
+`pass^4` identical to four decimal places. Details and the three measured
+reasons are below.
+
 Paired per training run, the trained model leads by 0.102 to 0.138 on `pass^1`
 and 0.100 to 0.167 on `pass^4`. Every interval excludes zero.
 
@@ -55,6 +60,40 @@ It also got cheaper. The trained model spends about a fifth fewer tokens per
 task while answering 21 points more of them correctly, which is roughly what
 you would expect once the capability lives in the weights instead of being
 bought back at inference time.
+
+## Reinforcement learning added nothing here
+
+400 steps of GRPO on an execution-backed reward, starting from the fine-tuned
+model, moved `pass^1` by 0.0017 and `pass^4` by nothing at all. The interval is
+±0.013, so this rules out anything larger than about a point rather than merely
+failing to find an effect.
+
+Three measurements say why, and they are more interesting than the null.
+
+Nearly a quarter of the training steps carried no gradient. GRPO learns by
+comparing eight attempts at the same problem; when all eight score alike the
+comparison is empty. Starting from a policy that already works means it usually
+agrees with itself.
+
+Only one of the four reward terms varied. Within-group spread was 0.339 for
+accuracy against 0.006 for format, 0.002 for efficiency and exactly 0.000 for
+the gate. Three quarters of the reward was inert, so this optimised accuracy
+alone whatever the config says.
+
+And fine-tuning had already taken the reachable failures. It drove
+never-called-the-tool from 36 episodes to 0 and malformed calls from 7 to 1.
+What remains is a well-formed call that computes the wrong thing, which is a
+reasoning limit rather than something a preference among eight samples reaches.
+
+This is a null at this budget, on this task, from this starting point. It is not
+evidence that reinforcement learning cannot help tool-calling models.
+
+**It also did not learn to cheat.** The reward pays exactly the same for a call
+that restates a remembered answer as for real work, which was a deliberate
+choice and is pinned by a test. Reinforcement learning is the sharpest possible
+version of that pressure and had 400 steps to find the shortcut. The rate went
+*down*: 1.00% against the fine-tuned model's 1.17% and the untrained model's
+3.00%.
 
 ## The gap got wider, not narrower
 

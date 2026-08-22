@@ -38,6 +38,36 @@ gain measured against it.
 
 `D-076` · `D-060`
 
+### Reinforcement learning on top of fine-tuning added nothing
+
+400 GRPO steps on an execution-backed reward moved `pass^1` by 0.0017 and
+`pass^4` by zero. The interval is ±0.013, so this excludes an effect larger than
+about a point rather than just failing to find one.
+
+Three measurements explain it. Nearly a quarter of steps had no gradient at all,
+because all eight attempts scored alike and a group-relative advantage is zero
+there. Only accuracy varied among the four reward terms; the gate term's spread
+was exactly 0.000, since Phase A has one harmless tool and no gate can ever
+fire. And fine-tuning had already removed the failures a preference signal can
+reach, leaving the ones it cannot.
+
+It is a null at this budget from this starting point, not a verdict on the
+method.
+
+`D-077`
+
+### It did not learn to cheat, though the reward let it
+
+A call that restates a remembered answer scores exactly what genuine work
+scores. That was deliberate: measure the behaviour, do not penalise it.
+
+Reinforcement learning optimises whatever scores highest, so this was the
+cheapest available shortcut and it had 400 steps to find it. The rate went down
+instead, to 1.00% from the fine-tuned model's 1.17% and the untrained model's
+3.00%.
+
+`D-077` · `D-062`
+
 ### Tool formatting was never the problem
 
 Both models emitted schema-valid tool calls essentially every time. The schema
