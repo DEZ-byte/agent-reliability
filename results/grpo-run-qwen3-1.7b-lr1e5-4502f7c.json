@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-22T23:54:56.642138Z",
+  "kind": "grpo_run",
+  "train_config_sha256": "c00e5b6f8dcbd7a4272a115db15722e4df2274528aab7454f1026d84b4f4d3d3",
+  "config_hash_prefix": "c00e5b6f",
+  "model": {
+    "id": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+  },
+  "init_from_adapter": "checkpoints/qwen3-1.7b-sft-seed20260824/checkpoint-86",
+  "checkpoint_name": "Qwen3-1.7B-grpo-c00e5b6f-lr1e-05",
+  "learning_rate": {
+    "pinned_in_config": 1e-06,
+    "used": 1e-05,
+    "overridden": true
+  },
+  "prompt_sha256": {
+    "system": "bd7895a093b3b21b482c21b9813ef539747527e778c585caf92296b3c4da0755",
+    "user": "b6f9739c2a651441320a36e444c6c6555e988db27bf7bce3cdf57bbd5a44e4f3"
+  },
+  "executed": true,
+  "source_commit": "4502f7ca1bd4f9fe73d0ca2ae3329aa8e58f754a",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "dataset": {
+    "rows": 1000,
+    "longest_prompt_tokens": 452
+  },
+  "resolved": {
+    "num_generations": 8,
+    "beta": 0.0,
+    "epsilon": 0.2,
+    "loss_type": "grpo",
+    "importance_sampling_level": "token",
+    "scale_rewards": "group",
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "max_prompt_length": 512,
+    "max_completion_length": 256,
+    "learning_rate": 1e-05,
+    "per_device_train_batch_size": 8,
+    "gradient_accumulation_steps": 2,
+    "seed": 20260825
+  },
+  "train": {
+    "global_step": 400,
+    "training_loss": -5.702022463083267e-09
+  },
+  "group_health": {
+    "groups": 400,
+    "zero_variance_fraction": 0.2675,
+    "mean_total_reward_std": 0.3278779466401025,
+    "mean_component_std": {
+      "accuracy": 0.3214459300300448,
+      "format": 0.007748663937019054,
+      "gate": 0.0,
+      "efficiency": 0.0027673799775068046
+    },
+    "mean_correct_fraction": 0.6525,
+    "mean_laundered_fraction": 0.02078125,
+    "mean_no_tool_call_fraction": 0.00328125
+  },
+  "adapter_dir": "C:\\Users\\Anirudh\\Documents\\My projects\\Aligning Small Language Models for Verifiable Tool Execution & Self-Correction\\checkpoints\\qwen3-1.7b-grpo-lr1e5"
+}
