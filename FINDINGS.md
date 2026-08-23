@@ -1,203 +1,221 @@
-# What this project actually found
+# Findings
 
-Nine things worth knowing, in the order they were learned, including the ones
-that went badly.
+What this project actually learned, including the parts that went badly.
 
-The `D-0xx` tags name entries in the project's decision log, which holds the
-full reasoning behind each. That log is append-only and runs to 74 entries, so
-it is kept outside this repository for now. This page is the readable version.
+The `D-0xx` tags name entries in the project's decision log, which holds the full
+reasoning behind each. That log is append-only and runs to 74 entries, so it is
+kept outside this repository for now. This page is the readable version.
+
+| | Finding | Verdict |
+| :-- | :-- | :-- |
+| **A** | [A trained 1.7B beat a scaffolded 8B](#a-a-trained-17b-beat-a-scaffolded-8b) | Confirmed |
+| **B** | [Training raised capability faster than reliability](#b-training-raised-capability-faster-than-reliability) | Confirmed, and awkward |
+| **C** | [What improved was tool use, not arithmetic](#c-what-improved-was-tool-use-not-arithmetic) | Confirmed |
+| **D** | [It reproduced three times, and got cheaper](#d-it-reproduced-three-times-and-got-cheaper) | Confirmed |
+| **E** | [Reinforcement learning added nothing after SFT](#e-reinforcement-learning-added-nothing-after-sft) | Null, twice |
+| **F** | [Tool formatting was never the problem](#f-tool-formatting-was-never-the-problem) | Killed a planned mitigation |
+| **G** | [The retry rung had almost nothing to fix](#g-the-retry-rung-had-almost-nothing-to-fix) | Killed a planned arm |
+| **H** | [This environment cannot teach self-correction](#h-this-environment-cannot-teach-self-correction) | Structural, deferred |
+| **I** | [Execution-backed grading can be passed without computing](#i-execution-backed-grading-can-be-passed-without-computing) | Measured, not penalised |
+| **J** | [Three bugs that would have changed a conclusion](#j-three-bugs-that-would-have-changed-a-conclusion) | Caught |
 
 ---
 
-### A trained 1.7B beat a scaffolded 8B, and cost a third as much
+# Results
 
-The comparison the project was built to make. An untrained Llama-3.1-8B with
-retry scaffolding scored `pass^1` 0.415 and `pass^4` 0.293. The fine-tuned
-Qwen3-1.7B scored 0.517 to 0.553 and 0.393 to 0.460 across three runs. Every
-paired interval excludes zero.
+## A. A trained 1.7B beat a scaffolded 8B
 
-Cost went the same way once measured properly. The 8B emits fewer tokens per
-task, but weighting by parameters it costs 236 billion-parameter-tokens against
-72, and needs roughly 6 GB to serve against 1.5 GB. Compared on raw token counts
-the conclusion would have reversed.
+The comparison the project was built to make.
+
+| | Llama-3.1-8B, scaffolded | Qwen3-1.7B, fine-tuned |
+| :-- | --: | --: |
+| `pass^1` | 0.415 | 0.515 – 0.552 |
+| `pass^4` | 0.293 | 0.393 – 0.460 |
+| Cost per task, parameter-weighted | 236 | 72 |
+| Memory to serve at 4-bit | ~6 GB | ~1.5 GB |
+
+Three training runs, three paired comparisons, every interval excluding zero on
+both metrics.
+
+Cost went the same way once measured properly. The 8B emits *fewer* raw tokens
+per task. Weighting by parameters reverses that, which is the honest comparison
+when the question is what it costs to serve.
 
 `D-076`
 
-### The 8B's first score was 0.000, and it was my bug
+## B. Training raised capability faster than reliability
 
-Llama writes tool calls as bare JSON with `parameters`. Qwen wraps them in
-`<tool_call>` tags with `arguments`. The grader understood one of them, so a
-perfectly correct Llama call scored zero and the headline would have read as a
-total capability failure.
+The headline, and the second half matters more than the first.
 
-The fix is per-model and off by default, which matters more than it sounds.
-Applied globally it would have accepted three recorded completions where an
-untrained Qwen wrote bare JSON. By Qwen's own template that is a real format
-failure, and accepting it would have improved the baseline and shrunk every
-gain measured against it.
+| Metric | Untrained | Fine-tuned |
+| :-- | --: | --: |
+| Solves it at least once in 4 | 0.353 | 0.627 – 0.680 |
+| Solves it 4 times out of 4 | 0.247 | 0.393 – 0.460 |
+| Solved *sometimes* but not always | 0.107 | 0.213 – 0.287 |
 
-`D-076` · `D-060`
+Training was supposed to close the reliability gap. It widened it. Reported
+loosely this is about +33 points; reported strictly it is +15.
 
-### Reinforcement learning on top of fine-tuning added nothing
-
-400 GRPO steps on an execution-backed reward moved `pass^1` by 0.0017 and
-`pass^4` by zero. The interval is ±0.013, so this excludes an effect larger than
-about a point rather than just failing to find one.
-
-Three measurements explain it. Nearly a quarter of steps had no gradient at all,
-because all eight attempts scored alike and a group-relative advantage is zero
-there. Only accuracy varied among the four reward terms; the gate term's spread
-was exactly 0.000, since Phase A has one harmless tool and no gate can ever
-fire. And fine-tuning had already removed the failures a preference signal can
-reach, leaving the ones it cannot.
-
-The obvious objection was that the run barely moved the model, and it was
-correct: the weights shifted 0.41%. So it was rerun at ten times the learning
-rate, which moved them 3.82%, and the dev peak came out identical to four
-decimal places. Test moved +0.010 on `pass^1` with an interval spanning zero.
-Two nulls across a tenfold rate range is much harder to dismiss than one.
-
-One direction worth chasing, which is not yet a result: the higher rate raised
-`pass^4` and lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to
-0.167. That is what a policy-gradient method concentrating probability mass
-looks like, and it is the trade this project cares about. A paired test gives
-p=0.24, so it is a hint.
-
-`D-077` · `D-078`
-
-### It did not learn to cheat, though the reward let it
-
-A call that restates a remembered answer scores exactly what genuine work
-scores. That was deliberate: measure the behaviour, do not penalise it.
-
-Reinforcement learning optimises whatever scores highest, so this was the
-cheapest available shortcut and it had 400 steps to find it. The rate went down
-instead, to 1.00% from the fine-tuned model's 1.17% and the untrained model's
-3.00%.
-
-`D-077` · `D-062`
-
-### Tool formatting was never the problem
-
-Both models emitted schema-valid tool calls essentially every time. The schema
-failure rate measured 0.00%. Roughly 85–91% of failures were a perfectly
-well-formed call that computed the wrong thing.
-
-That killed a planned mitigation: mixing in an external function-calling dataset
-to teach tool formatting. There was nothing to teach.
-
-`D-068` ·
-`D-070`
-
-### The retry rung had almost nothing to fix
-
-Giving the model a second attempt after a failure only helps when the failure is
-visible at runtime. Here it usually wasn't: a wrong answer still executes fine,
-so the loop ends and nobody objects. The second attempt fired on 3.7% of
-episodes for one model and 10.3% for the other.
-
-After training, retry stopped making any difference at all. Its `pass^4` is
-identical to the single-attempt rung.
-
-`D-068`
-
-### Phase A can't teach self-correction, and that's structural
-
-The environment ends an episode as soon as a tool call succeeds, whether or not
-the answer is right. So the dominant failure never gets a second look.
-
-It can't be fixed by changing the loop either. Telling the model its answer is
-wrong would leak the grader into the rollout. Measured yield for genuine
-recovery trajectories: one task in a hundred. Self-correction moved to a later
-stage where tool errors are actually observable.
-
-`D-069`
-
-### A model can pass an execution-backed grader without computing anything
-
-Grading from executed results is supposed to stop a model reciting a memorised
-answer. It doesn't. `calculator("391")` scores correct having computed nothing,
-and the obvious fix (require the expression to do arithmetic) is defeated by
-writing `391 + 0`.
-
-Measured at 3.0% before training and 1.0% after, under a filter that catches the
-decorated form.
-
-`D-062`
-
-### The anti-cheating filter had to be measured before it was trusted
-
-One rule required the arithmetic to use numbers that appear in the question.
-It rejected correct work, because GSM8K writes quantities as words. "Three dozen
-eggs for her four children" contains no digits, so the correct `36 / 4` looks
-invented.
-
-It was rejecting genuine multi-step reasoning and catching nothing the other
-rules missed, so it's off. Measuring first is what caught it.
-
-`D-071`
-
-### Training raised capability and widened the reliability gap
-
-This is the headline, and the second half matters more than the first.
-
-`pass@4` nearly doubled. `pass^4`, where every attempt has to succeed, rose less
-than half as much. The band of tasks solved sometimes but not always went from
-0.107 to 0.287.
-
-Reported as `pass@4` this is +33 points. Reported strictly it's +15.
+The gap between those two numbers is the entire reason the project measures
+`pass^k`.
 
 `D-073`
 
-### It reproduced three times, and it was cheaper
+## C. What improved was tool use, not arithmetic
 
-Three training runs, each varying initialisation and data order, landed at
-+0.222, +0.212 and +0.248 on `pass^1`. The trained model also spends 0.78× the
-tokens of the untrained one.
+Probed with the calculator removed entirely, the model scored 64.0% before
+training and 66.0% after. It did not get better at maths. It got better at
+writing the expression.
 
-The more useful number is what the spread says about the experiment. Between
-runs the standard deviation is 0.019; within a single run the confidence
-interval is about 0.069 either side. The training is steadier than 150 test
-tasks can measure, so the way to sharpen this result is a bigger test split,
-not more seeds.
+Worth stating plainly, because "fine-tuning improved accuracy" invites exactly
+the wrong reading.
 
-Dev told a slightly different story: peaks of 0.4725, 0.4700 and 0.4975. A
-project that ran once and happened to draw the third seed would have reported a
-better number, with nothing in that single run to say so.
+`D-074` · `D-064`
+
+## D. It reproduced three times, and got cheaper
+
+| Run | `pass^1` gain over base | Dev peak |
+| :-- | --: | --: |
+| 1 | +0.222 | 0.4725 |
+| 2 | +0.212 | 0.4700 |
+| 3 | +0.248 | 0.4975 |
+
+The trained model also spends about 0.78× the tokens of the untrained one.
+
+The more useful number is what the spread says about the experiment. Between runs
+the standard deviation is 0.019; within a single run the confidence interval is
+about 0.069 either side. Training is steadier than 150 test tasks can measure, so
+the way to sharpen this result is a bigger test split, not more seeds.
+
+Dev told a slightly different story from test. A project that ran once and
+happened to draw the third seed would have reported a better number, with nothing
+in that single run to say so.
 
 `D-074` · `D-075`
 
-### What improved was tool use, not arithmetic
+---
 
-Probed with no calculator, the model scored 64.0% before training and 66.0%
-after. It didn't get better at maths. It got better at writing the expression.
+# Things that did not work
 
-Worth stating because "fine-tuning improved accuracy" invites the wrong reading.
+## E. Reinforcement learning added nothing after SFT
 
-`D-074` ·
-`D-064`
+| Learning rate | `pass^1` change | 95% interval | Weights moved |
+| :-- | --: | :--: | --: |
+| 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% |
+| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% |
 
-### Two bugs that only a green CI run could find
+The interval on the first run excludes an effect larger than about a point,
+rather than merely failing to find one.
 
-A lone surrogate character compiled into a docstring, and line-ending
-translation quietly breaking every recorded content hash on any machine other
-than the one that wrote it. The local test suite passed through both.
+The obvious objection was that the run barely moved the model, and that objection
+was correct. Rerunning at ten times the rate moved the weights nearly ten times as
+far and produced an identical dev peak. Two nulls across a tenfold rate range are
+much harder to dismiss than one.
 
-Also here: the model bundle was chosen on licence rather than on measurement,
-and the record says so, including which technical check the chosen bundle fails.
+**Why:**
 
-`D-057` ·
-`D-046`
+| Cause | Measurement |
+| :-- | :-- |
+| Nearly a quarter of steps carried no gradient | All 8 attempts scored alike, and a group-relative advantage is zero there |
+| Only one reward term varied | Accuracy spread 0.339, format 0.006, efficiency 0.002, gate exactly 0.000 |
+| Nothing left to reach | SFT had already removed every failure a preference signal can fix |
+
+The gate term reads 0.000 for a structural reason: this environment has one
+harmless tool, so no gate can ever fire.
+
+One direction worth chasing, not yet a result: the higher rate raised `pass^4` and
+lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to 0.167. That is
+what a policy-gradient method concentrating probability mass looks like, and it is
+the trade this project cares about. A paired test gives p = 0.24, so it is a hint.
+
+`D-077` · `D-078`
+
+## F. Tool formatting was never the problem
+
+Both models emitted schema-valid tool calls essentially every time; the schema
+failure rate measured 0.00%. Roughly 85–91% of all failures were a perfectly
+well-formed call that computed the wrong thing.
+
+That killed a planned mitigation — mixing in an external function-calling dataset
+to teach tool formatting. There was nothing left to teach.
+
+`D-068` · `D-070`
+
+## G. The retry rung had almost nothing to fix
+
+A second attempt only helps when the failure is visible at runtime. Here it
+usually was not: a wrong answer still executes cleanly, the loop ends, and nobody
+objects.
+
+The retry fired on 3.7% of episodes for one model and 10.3% for the other. After
+training it stopped making any difference at all — its `pass^4` is identical to
+the single-attempt rung.
+
+`D-068`
+
+## H. This environment cannot teach self-correction
+
+The episode ends as soon as a tool call succeeds, whether or not the answer is
+right. So the dominant failure never gets a second look.
+
+It cannot be patched by changing the loop either. Telling the model its answer is
+wrong would leak the grader into the rollout. Measured yield for genuine recovery
+trajectories: about one task in a hundred.
+
+Self-correction moved to a later stage where tool errors are actually observable.
+
+`D-069`
 
 ---
 
-### What isn't settled
+# Honesty checks
 
-The headline comparison, small model trained versus larger model scaffolded, has
-not been run. The 8B comparator is registered in the config and has never been
-executed.
+## I. Execution-backed grading can be passed without computing
 
-The teacher was Qwen3-4B rather than the larger model originally planned, so
-only the smaller model has a trained arm.
-`D-072`
-records that deviation and what it costs the claim.
+Grading from executed results is supposed to stop a model reciting a memorised
+answer. It does not. A call like `calculator("391")` scores correct having
+computed nothing, and the obvious fix — requiring the expression to do arithmetic
+— is defeated by writing `391 + 0`.
+
+The reward pays exactly the same for this as for genuine work. That was
+deliberate: measure the behaviour rather than penalise it, so the rate stays
+visible instead of being pushed somewhere harder to see.
+
+| Model | Rate |
+| :-- | --: |
+| Untrained | 3.0% |
+| Fine-tuned | 1.2% |
+| After reinforcement learning | 1.0% |
+
+RL optimises whatever scores highest, so this was the cheapest available shortcut
+and it had 400 steps to find it. The rate went down instead.
+
+`D-062` · `D-077`
+
+## J. Three bugs that would have changed a conclusion
+
+| Bug | What it would have done |
+| :-- | :-- |
+| **The 8B scored 0.000.** Llama writes tool calls as bare JSON with `parameters`; Qwen wraps them in `<tool_call>` tags with `arguments`. The grader understood one dialect. | The headline would have read as a total capability failure by the 8B. |
+| **The anti-cheating filter rejected correct work.** One rule required the arithmetic to use numbers appearing in the question, but GSM8K writes quantities as words. "Three dozen eggs for her four children" contains no digits, so a correct `36 / 4` looked invented. | It was discarding genuine multi-step reasoning and catching nothing the other rules missed. It is off. |
+| **Two bugs only a green CI run could find.** A lone surrogate character compiled into a docstring, and line-ending translation quietly breaking every recorded content hash on any machine but the one that wrote it. | The local suite passed through both. |
+
+The dialect fix is per-model and off by default, which matters more than it
+sounds. Applied globally it would have accepted three recorded completions where
+an untrained Qwen wrote bare JSON. By Qwen's own template that is a real format
+failure, and accepting it would have flattered the baseline and shrunk every gain
+measured against it.
+
+`D-076` · `D-060` · `D-071` · `D-057` · `D-046`
+
+---
+
+# What is not settled
+
+| Open question | Status |
+| :-- | :-- |
+| Does the same hold for a same-family 8B? | Not run. The comparator is a Llama, so size and pretraining are tangled. |
+| Does the 4B benefit from training too? | Not run. It was used as the teacher, so only the 1.7B has a trained arm. `D-072` |
+| Did training damage anything off-task? | Not measured. Nine tasks regressed and two now score zero, but there is no before/after outside this task. |
+| Would GRPO work with dead groups filtered out? | Not tried. The null above is a statement about this budget and this setup, not about the method. |
+| Can a gate-bearing environment be built? | Deferred to a later stage. Until then a quarter of the reward surface is inert. |
