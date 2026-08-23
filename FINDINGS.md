@@ -51,10 +51,19 @@ was exactly 0.000, since Phase A has one harmless tool and no gate can ever
 fire. And fine-tuning had already removed the failures a preference signal can
 reach, leaving the ones it cannot.
 
-It is a null at this budget from this starting point, not a verdict on the
-method.
+The obvious objection was that the run barely moved the model, and it was
+correct: the weights shifted 0.41%. So it was rerun at ten times the learning
+rate, which moved them 3.82%, and the dev peak came out identical to four
+decimal places. Test moved +0.010 on `pass^1` with an interval spanning zero.
+Two nulls across a tenfold rate range is much harder to dismiss than one.
 
-`D-077`
+One direction worth chasing, which is not yet a result: the higher rate raised
+`pass^4` and lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to
+0.167. That is what a policy-gradient method concentrating probability mass
+looks like, and it is the trade this project cares about. A paired test gives
+p=0.24, so it is a hint.
+
+`D-077` · `D-078`
 
 ### It did not learn to cheat, though the reward let it
 

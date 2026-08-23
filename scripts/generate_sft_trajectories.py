@@ -25,6 +25,20 @@ checked against the frozen manifest.
 Each row stores the fully materialised message list and its hash. Re-deriving
 that list later from tool events loses the exact observation strings, and a
 training row that cannot be rebuilt byte-for-byte cannot be verified at all.
+
+`--batch-size N` (default 1) generates N episodes per forward pass. It exists
+because generation is memory-bandwidth bound: the 4B teacher measured 2 h 54
+over the train split at batch 1 on the 4060, so a 14B on a 24 GB card would
+take roughly three times that at batch 1 and, by the same bandwidth argument,
+roughly an hour at batch 16. Those are estimates, not measurements. The
+batched path is R0-only. It renders the first-decision prompt
+ahead of `run_episode`, generates, then hands each completion back through a
+policy that refuses a second call and refuses a prompt different from the one
+it rendered. Grading, laundering verdicts and the stored rows go through the
+same code as batch 1. What changes is seeding: the sequential path seeds every
+generation with `seed_base + run_index`, the batched path seeds every batch
+with `seed_base + batch_index`, so the two regimes do not reproduce each
+other's samples. The summary and every row record which regime produced them.
 """
 
 from __future__ import annotations
@@ -160,15 +174,116 @@ def _load_model(model: dict[str, str], seed: int):
     return loaded, tokenizer, torch
 
 
+def _first_decision_messages(task: PhaseATask) -> list[dict[str, str]]:
+    """The messages `run_episode` hands the policy on its first decision."""
+
+    return [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": USER_PROMPT.format(question=task.question)},
+    ]
+
+
+def _render(tokenizer, messages, tools, enable_thinking: bool) -> str:
+    try:
+        return tokenizer.apply_chat_template(
+            messages,
+            tools=tools,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=enable_thinking,
+        )
+    except TypeError:
+        return tokenizer.apply_chat_template(
+            messages, tools=tools, tokenize=False, add_generation_prompt=True
+        )
+
+
+def _generate_batch(
+    *,
+    loaded,
+    tokenizer,
+    torch,
+    prompts: list[str],
+    temperature: float,
+    top_p: float,
+    max_new_tokens: int,
+    seed: int,
+) -> list[str]:
+    """One sampled completion per prompt, in one forward pass, left-padded."""
+
+    pad = tokenizer.pad_token_id
+    if pad is None:
+        pad = tokenizer.eos_token_id
+    tokenizer.padding_side = "left"
+    inputs = tokenizer(prompts, return_tensors="pt", padding=True).to("cuda:0")
+    prompt_length = inputs["input_ids"].shape[1]
+    torch.manual_seed(seed)
+    with torch.inference_mode():
+        generated = loaded.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            do_sample=True,
+            temperature=temperature,
+            top_p=top_p,
+            pad_token_id=pad,
+        )
+    return [
+        tokenizer.decode(row[prompt_length:], skip_special_tokens=True)
+        for row in generated
+    ]
+
+
+def precomputed_policy(expected_messages: list[dict[str, str]], completion: str):
+    """A policy that returns one prepared completion, exactly once.
+
+    It refuses a second decision, because the batch was generated for one
+    decision per episode, and it refuses a prompt that is not the one it was
+    generated for, so a change to `run_episode`'s prompt cannot silently pair
+    completions with the wrong context.
+    """
+
+    calls = {"count": 0}
+
+    def policy(messages: list[dict[str, str]]) -> str:
+        calls["count"] += 1
+        if calls["count"] > 1:
+            raise GenerationError(
+                "batched generation prepared one decision per episode; the "
+                "episode asked for a second (is the rung R0?)"
+            )
+        if messages != expected_messages:
+            raise GenerationError(
+                "episode prompt differs from the prompt the batch was rendered "
+                "for; refusing to pair a completion with the wrong context"
+            )
+        return completion
+
+    return policy
+
+
+def batches(items: list, size: int) -> list[list]:
+    """Consecutive chunks of `size`, the last one shorter; order preserved."""
+
+    if size < 1:
+        raise GenerationError(f"batch size must be >= 1, got {size}")
+    return [items[start : start + size] for start in range(0, len(items), size)]
+
+
 def generate(
     *,
     model: dict[str, str],
     tasks: list[PhaseATask],
     config: dict[str, Any],
     rows_out,
+    batch_size: int = 1,
 ) -> dict[str, Any]:
     generation = config["generation"]
     seed_base = generation["seed_base"]
+    if batch_size > 1 and generation["rung"] != "R0":
+        raise GenerationError(
+            "--batch-size > 1 prepares one decision per episode, which only "
+            f"matches rung R0; the config says {generation['rung']!r}"
+        )
     loaded, tokenizer, torch = _load_model(model, seed_base)
 
     registry = build_phase_a_registry()
@@ -190,20 +305,52 @@ def generate(
     }
     laundering_reasons: dict[str, int] = {}
 
-    for task in tasks:
-        usable_here = 0
-        for run_index in range(runs):
-            policy = build_policy(
-                model=loaded,
+    # Every (task, run) pair in the sequential order, so batching changes how
+    # completions are produced but never which episodes exist or their order.
+    pairs = [(task, run_index) for task in tasks for run_index in range(runs)]
+    mode = "batched" if batch_size > 1 else "sequential"
+
+    def prepared_policies():
+        if batch_size <= 1:
+            for task, run_index in pairs:
+                yield task, run_index, None, build_policy(
+                    model=loaded,
+                    tokenizer=tokenizer,
+                    torch=torch,
+                    tools=tools,
+                    temperature=generation["temperature"],
+                    top_p=generation["top_p"],
+                    max_new_tokens=generation["max_new_tokens"],
+                    seed=seed_base + run_index,
+                    enable_thinking=generation["enable_thinking"],
+                )
+            return
+        for batch_index, batch in enumerate(batches(pairs, batch_size)):
+            expected = [_first_decision_messages(task) for task, _ in batch]
+            prompts = [
+                _render(tokenizer, messages, tools, generation["enable_thinking"])
+                for messages in expected
+            ]
+            completions = _generate_batch(
+                loaded=loaded,
                 tokenizer=tokenizer,
                 torch=torch,
-                tools=tools,
+                prompts=prompts,
                 temperature=generation["temperature"],
                 top_p=generation["top_p"],
                 max_new_tokens=generation["max_new_tokens"],
-                seed=seed_base + run_index,
-                enable_thinking=generation["enable_thinking"],
+                seed=seed_base + batch_index,
             )
+            for (task, run_index), messages, completion in zip(
+                batch, expected, completions
+            ):
+                yield task, run_index, batch_index, precomputed_policy(
+                    messages, completion
+                )
+
+    usable_by_task: dict[str, int] = {}
+    for task, run_index, batch_index, policy in prepared_policies():
+        if True:  # one indentation level kept so the episode body is unchanged
             episode = run_episode(
                 task=task,
                 registry=registry,
@@ -238,7 +385,7 @@ def generate(
             usable = bool(episode.correct and verdict is not None and not verdict.laundered)
             if usable:
                 counts["usable"] += 1
-                usable_here += 1
+                usable_by_task[task.task_id] = usable_by_task.get(task.task_id, 0) + 1
 
             rows_out.write(
                 json.dumps(
@@ -254,6 +401,8 @@ def generate(
                         "laundered": None if verdict is None else verdict.laundered,
                         "laundering_reason": None if verdict is None else verdict.reason,
                         "usable": usable,
+                        "generation_mode": mode,
+                        "batch_index": batch_index,
                         "messages": messages,
                         "messages_sha256": _sha256_text(payload),
                     },
@@ -261,8 +410,7 @@ def generate(
                 )
                 + "\n"
             )
-        if usable_here:
-            counts["tasks_with_at_least_one_usable"] += 1
+    counts["tasks_with_at_least_one_usable"] = len(usable_by_task)
 
     del loaded
     torch.cuda.empty_cache()
@@ -270,6 +418,15 @@ def generate(
     total = counts["episodes"] or 1
     return {
         "model": model,
+        "generation_mode": {
+            "mode": mode,
+            "batch_size": batch_size,
+            "seed_rule": (
+                "seed_base + run_index per generation"
+                if mode == "sequential"
+                else "seed_base + batch_index per batch; rows carry batch_index"
+            ),
+        },
         "counts": counts,
         "laundering_reasons": laundering_reasons,
         "task_coverage": counts["tasks_with_at_least_one_usable"] / len(tasks)
@@ -287,10 +444,18 @@ def main() -> int:
     parser.add_argument("--summary", required=True, help="summary artifact path")
     parser.add_argument("--split", default="train", choices=("train", "dev", "test"))
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=1,
+        help="episodes per forward pass; >1 is R0-only and changes the seed rule",
+    )
     parser.add_argument("--run-load", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     args = parser.parse_args()
 
+    if args.batch_size < 1:
+        parser.error("--batch-size must be >= 1")
     if args.split != "train":
         # Not forbidden, because a coverage probe on dev is legitimate, but it
         # must be a deliberate keystroke rather than a default.
@@ -351,7 +516,11 @@ def main() -> int:
     candidates_path.parent.mkdir(parents=True, exist_ok=True)
     with candidates_path.open("w", encoding="utf-8") as rows_out:
         result["result"] = generate(
-            model=model, tasks=tasks, config=config, rows_out=rows_out
+            model=model,
+            tasks=tasks,
+            config=config,
+            rows_out=rows_out,
+            batch_size=args.batch_size,
         )
     result["candidates_sha256"] = _sha256_file(candidates_path)
 

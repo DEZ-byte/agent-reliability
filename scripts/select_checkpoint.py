@@ -15,6 +15,14 @@ earliest checkpoint rather than toward whichever the operator prefers.
 
 The final checkpoint is included as a candidate. Nothing distinguishes it from
 the intermediate ones except that training stopped there.
+
+`--resume` reuses a checkpoint's dev score when its `select-<tag>.json` is
+already in the scratch directory and carries the metric. Scoring four
+checkpoints takes about an hour on a 4060-class card and a Colab session can
+die in the middle; without this, a disconnect at checkpoint three throws away
+three. Nothing else changes: the rule, the candidates and the tie-break are
+the same, and a reused score is marked `"reused": true` in the summary so a
+reader can see which evaluations ran in this invocation.
 """
 
 from __future__ import annotations
@@ -99,6 +107,43 @@ def discover_checkpoints(adapter_dir: Path) -> list[Path]:
     return distinct
 
 
+def _reusable_score(
+    result_path: Path, *, rung: str, metric: str, checkpoint: Path | None = None
+) -> dict[str, Any] | None:
+    """The recorded dev score for a checkpoint, or None if it is not usable.
+
+    Only an executed artifact with the metric under the selection rung counts.
+    A partial file from a killed run, or a plan-only artifact, is not a score.
+    When the artifact names the adapter weights it scored, those weights must
+    be the ones on disk now: a checkpoint directory retrained in place after a
+    code change has the same name and different weights.
+    """
+
+    if not result_path.is_file():
+        return None
+    try:
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        if not payload.get("executed"):
+            return None
+        entry = payload["results"][0]
+        if "error" in entry:
+            return None
+        recorded = (payload.get("adapter") or {}).get("weights_sha256")
+        if checkpoint is not None and recorded is not None:
+            weights = checkpoint / "adapter_model.safetensors"
+            if not weights.is_file():
+                return None
+            if hashlib.sha256(weights.read_bytes()).hexdigest() != recorded:
+                return None
+        rung_block = entry["rungs"][rung]
+        return {
+            "score": rung_block["metrics"][metric],
+            "no_arithmetic_rate": rung_block["no_arithmetic_rate"],
+        }
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None
+
+
 def score(
     *,
     checkpoint: Path,
@@ -108,12 +153,26 @@ def score(
     metric: str,
     output_dir: Path,
     limit: int | None,
+    resume: bool = False,
 ) -> dict[str, Any]:
     """Run one checkpoint through the ordinary evaluation runner."""
 
     tag = checkpoint.name.replace(".", "-")
     result_path = output_dir / f"select-{tag}.json"
     episodes_path = output_dir / f"select-{tag}.jsonl"
+    if resume:
+        reused = _reusable_score(
+            result_path, rung=rung, metric=metric, checkpoint=checkpoint
+        )
+        if reused is not None:
+            return {
+                "checkpoint": checkpoint.name,
+                "path": str(checkpoint),
+                "score": reused["score"],
+                "no_arithmetic_rate": reused["no_arithmetic_rate"],
+                "artifact": str(result_path),
+                "reused": True,
+            }
     command = [
         sys.executable,
         str(RUNNER),
@@ -162,6 +221,11 @@ def main() -> int:
     parser.add_argument("--summary", required=True)
     parser.add_argument("--scratch", required=True, type=Path)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="reuse a checkpoint's recorded dev score if its artifact exists",
+    )
     args = parser.parse_args()
 
     config = load_train_config(
@@ -196,6 +260,7 @@ def main() -> int:
             metric=rule["metric"],
             output_dir=args.scratch,
             limit=args.limit,
+            resume=args.resume,
         )
         for checkpoint in checkpoints
     ]

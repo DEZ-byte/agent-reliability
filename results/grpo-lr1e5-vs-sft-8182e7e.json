@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-23T03:19:18.209466Z",
+  "kind": "paired_arm_comparison",
+  "method": "Task-level bootstrap interval on the paired difference, which HYPOTHESIS_PROTOCOL section 6.2 makes primary, with the paired sign-flip permutation p-value and the exact paired sign test as secondary. Tasks are the sampling unit. Permutation p-values are add-one corrected so they cannot be reported as zero.",
+  "baseline_label": "SFT run3",
+  "treatment_label": "GRPO lr1e-5",
+  "baseline_candidate": "Qwen/Qwen3-1.7B",
+  "treatment_candidate": "Qwen/Qwen3-1.7B",
+  "seed": 20260820,
+  "multiplicity": {
+    "comparisons_reported": 2,
+    "bonferroni_alpha": 0.025,
+    "note": "No multiplicity policy was pre-registered. The Bonferroni threshold is reported so a reader can apply it; it is not used to filter what is shown."
+  },
+  "sampling_degeneracy": {
+    "R0": {
+      "baseline": {
+        "tasks": 150,
+        "tasks_with_identical_completions": 14,
+        "degenerate_rate": 0.09333333333333334,
+        "mean_distinct_completions": 2.9133333333333336
+      },
+      "treatment": {
+        "tasks": 150,
+        "tasks_with_identical_completions": 25,
+        "degenerate_rate": 0.16666666666666666,
+        "mean_distinct_completions": 2.56
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "rung": "R0",
+      "k": 1,
+      "tasks_compared": 150,
+      "baseline_pass_power_k": 0.5516666666666666,
+      "treatment_pass_power_k": 0.5616666666666666,
+      "difference": 0.010000000000000009,
+      "difference_ci95": [
+        -0.02,
+        0.04
+      ],
+      "difference_ci95_width": 0.06,
+      "baseline_pass_at_k": 0.5516666666666666,
+      "treatment_pass_at_k": 0.5616666666666666,
+      "baseline_sometimes_band": 0.0,
+      "treatment_sometimes_band": 0.0,
+      "tasks_improved": 17,
+      "tasks_regressed": 16,
+      "tasks_changed": 33,
+      "p_permutation_two_sided": 0.597040295970403,
+      "p_sign_test_exact": 1.0,
+      "permutation_resamples": 10000,
+      "bootstrap_replicates": 10000
+    },
+    {
+      "rung": "R0",
+      "k": 4,
+      "tasks_compared": 150,
+      "baseline_pass_power_k": 0.46,
+      "treatment_pass_power_k": 0.48,
+      "difference": 0.019999999999999962,
+      "difference_ci95": [
+        -0.03333333333333333,
+        0.07333333333333333
+      ],
+      "difference_ci95_width": 0.10666666666666666,
+      "baseline_pass_at_k": 0.6733333333333333,
+      "treatment_pass_at_k": 0.6466666666666666,
+      "baseline_sometimes_band": 0.21333333333333332,
+      "treatment_sometimes_band": 0.16666666666666663,
+      "tasks_improved": 9,
+      "tasks_regressed": 6,
+      "tasks_changed": 15,
+      "p_permutation_two_sided": 0.6037396260373963,
+      "p_sign_test_exact": 0.60723876953125,
+      "permutation_resamples": 10000,
+      "bootstrap_replicates": 10000
+    }
+  ],
+  "restricted_comparisons": [
+    {
+      "rung": "R0",
+      "k": 4,
+      "tasks_compared": 122,
+      "baseline_pass_power_k": 0.4016393442622951,
+      "treatment_pass_power_k": 0.4098360655737705,
+      "difference": 0.008196721311475419,
+      "difference_ci95": [
+        -0.04918032786885246,
+        0.06557377049180328
+      ],
+      "difference_ci95_width": 0.11475409836065574,
+      "baseline_pass_at_k": 0.639344262295082,
+      "treatment_pass_at_k": 0.6147540983606558,
+      "baseline_sometimes_band": 0.23770491803278693,
+      "treatment_sometimes_band": 0.20491803278688525,
+      "tasks_improved": 7,
+      "tasks_regressed": 6,
+      "tasks_changed": 13,
+      "p_permutation_two_sided": 1.0,
+      "p_sign_test_exact": 1.0,
+      "permutation_resamples": 10000,
+      "bootstrap_replicates": 10000,
+      "restricted_to": "tasks where both arms varied"
+    }
+  ],
+  "source_commit": "8182e7e571118664aa926f937d2e3701378b07ef",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

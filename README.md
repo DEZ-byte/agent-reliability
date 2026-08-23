@@ -85,6 +85,17 @@ never-called-the-tool from 36 episodes to 0 and malformed calls from 7 to 1.
 What remains is a well-formed call that computes the wrong thing, which is a
 reasoning limit rather than something a preference among eight samples reaches.
 
+The obvious objection was that the run barely moved the model, and measuring it
+confirmed that: the weights shifted 0.41%. Rerunning at ten times the learning
+rate moved them 3.82% and produced an identical dev peak, with test `pass^1`
+moving +0.010 on an interval spanning zero. Two nulls across a tenfold rate
+range is a good deal harder to dismiss than one.
+
+The higher rate did leave one direction worth chasing. It raised `pass^4` and
+lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to 0.167, which
+is what a policy-gradient method concentrating probability mass looks like. A
+paired test gives p=0.24, so it is a hint rather than a result.
+
 This is a null at this budget, on this task, from this starting point. It is not
 evidence that reinforcement learning cannot help tool-calling models.
 
