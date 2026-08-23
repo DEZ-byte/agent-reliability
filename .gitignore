@@ -43,3 +43,6 @@ RUNG_PROTOCOL.md
 MODEL_SMOKE_PROTOCOL.md
 SELF_CORRECTION_SPEC.md
 RELATED_WORK.md
+
+# Colab experiment notebooks stay local.
+notebooks/*.ipynb
