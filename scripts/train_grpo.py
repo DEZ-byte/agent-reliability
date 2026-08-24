@@ -47,6 +47,7 @@ from training.config import (  # noqa: E402
     load_train_config,
 )
 from training.grpo_reward import make_reward_function  # noqa: E402
+from training.prompt_variance import live_task_ids  # noqa: E402
 
 TRAIN_CONFIG_PATH: Final = PROJECT_ROOT / "configs" / "train_config.yaml"
 SPLIT_MANIFEST_PATH: Final = PROJECT_ROOT / "configs" / "splits" / "phase_a_gsm8k.json"
@@ -60,6 +61,19 @@ class GRPOError(RuntimeError):
 
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _adapter_weights_sha256(adapter: Path) -> str | None:
+    """The weights this run starts from, for checking a probe describes them."""
+
+    weights = adapter / "adapter_model.safetensors"
+    if not weights.is_file():
+        return None
+    return hashlib.sha256(weights.read_bytes()).hexdigest()
 
 
 def _git_commit() -> str:
@@ -82,7 +96,9 @@ def _revision_for(model_id: str) -> str:
     raise GRPOError(f"{model_id} is not pinned in configs/model_candidates.json")
 
 
-def build_prompt_dataset(tokenizer: Any, limit: int | None):
+def build_prompt_dataset(
+    tokenizer: Any, limit: int | None, keep: set[str] | None = None
+):
     """One row per train task, rendered exactly as the evaluator renders it.
 
     The prompt is pre-rendered rather than left conversational so that the
@@ -90,12 +106,23 @@ def build_prompt_dataset(tokenizer: Any, limit: int | None):
     continues at evaluation. `gold_answer` and `question` ride along as columns;
     TRL passes every extra column through to the reward function, expanded to
     one entry per generation.
+
+    `keep`, when given, restricts the rows to prompts a variance probe found
+    capable of producing a gradient. The limit is applied first, so a probe and
+    a limited run select from the same task order rather than compounding.
     """
 
     from datasets import Dataset
 
     tools = [calculator_tool_schema()]
     tasks = load_split(SPLIT_MANIFEST_PATH, "train", limit=limit)
+    if keep is not None:
+        tasks = [task for task in tasks if task.task_id in keep]
+        if not tasks:
+            raise GRPOError(
+                "the prompt filter removed every task; the probe and this run "
+                "are not describing the same split"
+            )
     rows = []
     for task in tasks:
         messages = [
@@ -208,6 +235,15 @@ def main() -> int:
             "marked as overridden and named with the rate"
         ),
     )
+    parser.add_argument(
+        "--prompt-filter",
+        type=Path,
+        default=None,
+        help=(
+            "a probe artifact from scripts/probe_prompt_variance.py; trains "
+            "only on prompts it found capable of producing a gradient"
+        ),
+    )
     parser.add_argument("--run-load", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     args = parser.parse_args()
@@ -234,6 +270,39 @@ def main() -> int:
     rate_overridden = (
         args.learning_rate is not None and args.learning_rate != grpo["learning_rate"]
     )
+    # Dynamic sampling is an arm, not a setting. It rides on a CLI flag and a
+    # named checkpoint for the same reason the rate sweep does: editing the
+    # config would change its hash and orphan the names the unfiltered GRPO
+    # runs were published under, which is exactly the comparison this arm
+    # exists to make.
+    keep: set[str] | None = None
+    prompt_filter: dict[str, Any] = {"applied": False}
+    if args.prompt_filter is not None:
+        probe = json.loads(Path(args.prompt_filter).read_text(encoding="utf-8"))
+        keep = live_task_ids(probe)
+        probed_weights = probe.get("adapter_weights_sha256")
+        our_weights = _adapter_weights_sha256(Path(args.adapter))
+        prompt_filter = {
+            "applied": True,
+            "artifact": str(args.prompt_filter),
+            "artifact_sha256": _sha256_file(Path(args.prompt_filter)),
+            "probe_adapter": probe.get("adapter"),
+            "probe_adapter_weights_sha256": probed_weights,
+            "live_prompts": len(keep),
+            "probe_summary": probe.get("summary"),
+        }
+        # A probe taken against different weights describes a different
+        # policy's difficulty, and filtering on it selects prompts for a model
+        # that is not the one about to train. Compared by weight hash rather
+        # than by path: the probe may have run on a rented GPU, and a
+        # checkpoint directory retrained in place keeps its name.
+        if probed_weights and our_weights and probed_weights != our_weights:
+            raise GRPOError(
+                "the prompt filter was probed against different adapter "
+                f"weights ({probed_weights[:12]}) than this run starts from "
+                f"({our_weights[:12]}); it selects on the wrong difficulty"
+            )
+
     revision = _revision_for(args.model)
     config_hash = config_hash_prefix(TRAIN_CONFIG_PATH)
 
@@ -250,7 +319,9 @@ def main() -> int:
         "checkpoint_name": (
             f"{args.model.split('/')[-1]}-grpo-{config_hash}"
             + (f"-lr{learning_rate:g}" if rate_overridden else "")
+            + ("-dynsample" if prompt_filter["applied"] else "")
         ),
+        "prompt_filter": prompt_filter,
         "learning_rate": {
             "pinned_in_config": grpo["learning_rate"],
             "used": learning_rate,
@@ -289,7 +360,7 @@ def main() -> int:
         trust_remote_code=False,
     )
 
-    dataset, tasks = build_prompt_dataset(tokenizer, args.limit)
+    dataset, tasks = build_prompt_dataset(tokenizer, args.limit, keep)
     longest = max(len(tokenizer(row["prompt"])["input_ids"]) for row in dataset)
     if longest > grpo["max_prompt_length"]:
         raise GRPOError(
@@ -297,7 +368,13 @@ def main() -> int:
             f"{grpo['max_prompt_length']}; truncation removes the system prompt "
             "from the left and would train against a different task"
         )
-    result["dataset"] = {"rows": len(dataset), "longest_prompt_tokens": longest}
+    unfiltered = len(load_split(SPLIT_MANIFEST_PATH, "train", limit=args.limit))
+    result["dataset"] = {
+        "rows": len(dataset),
+        "rows_before_filter": unfiltered,
+        "rows_dropped": unfiltered - len(dataset),
+        "longest_prompt_tokens": longest,
+    }
 
     health: list[dict[str, Any]] = []
     reward = make_reward_function(
