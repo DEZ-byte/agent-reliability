@@ -39,6 +39,26 @@ class RecordingTokenizer:
         return {"input_ids": [0]}
 
 
+class SerialisingTokenizer:
+    """Renders a deterministic string from every argument it is given.
+
+    A stub that returns a constant would make any two call sites look
+    identical, which is exactly the blindness this file exists to remove. This
+    one folds the arguments into the output, so a difference at the call site
+    or a change applied afterwards both show up as a different string.
+    """
+
+    def apply_chat_template(self, messages, **kwargs):
+        import json
+
+        return json.dumps(
+            {"messages": messages, "kwargs": kwargs}, sort_keys=True, ensure_ascii=False
+        )
+
+    def __call__(self, text, **kwargs):
+        return {"input_ids": [0]}
+
+
 class RenderParityTests(unittest.TestCase):
     def _probe_call(self) -> dict:
         tokenizer = RecordingTokenizer()
@@ -51,18 +71,54 @@ class RenderParityTests(unittest.TestCase):
         train_grpo.build_prompt_dataset(tokenizer, 1)
         return tokenizer.calls[0]
 
-    def test_both_pass_the_same_template_flags(self) -> None:
-        probe_call = self._probe_call()
-        trainer_call = self._trainer_call()
-        for flag in ("tokenize", "add_generation_prompt", "enable_thinking"):
-            self.assertEqual(
-                probe_call[flag],
-                trainer_call[flag],
-                f"{flag} differs between the probe and the trainer",
-            )
+    def test_both_pass_exactly_the_same_template_arguments(self) -> None:
+        """Every argument, not a named few.
 
-    def test_both_pass_the_same_tool_schema(self) -> None:
-        self.assertEqual(self._probe_call()["tools"], self._trainer_call()["tools"])
+        An earlier version of this test compared three flags by name and
+        passed while the probe was quietly passing a fourth the trainer did
+        not. Checking the whole dictionary is the only version that cannot be
+        outrun by adding an argument.
+        """
+
+        probe_call = dict(self._probe_call())
+        trainer_call = dict(self._trainer_call())
+        # The question text is the one thing that legitimately differs.
+        probe_call.pop("messages")
+        trainer_call.pop("messages")
+        self.assertEqual(
+            probe_call,
+            trainer_call,
+            "the probe and the trainer render with different arguments; the "
+            "filter would select on a prompt the policy never sees",
+        )
+
+    def test_both_produce_the_same_rendered_string_for_one_question(self) -> None:
+        """The promise the docstring makes is byte equality, so test that.
+
+        Comparing arguments catches a divergence at the call site. It does not
+        catch one downstream, such as a `.strip()` applied to the trainer's
+        prompt after rendering. This drives both paths with a tokenizer whose
+        output is a deterministic function of its inputs and compares the
+        strings that actually come out.
+        """
+
+        question = "Ken had 2 boxes. How many?"
+
+        probe_tokenizer = SerialisingTokenizer()
+        probe_rendered = probe.render(
+            probe_tokenizer, question, [probe.calculator_tool_schema()]
+        )
+
+        trainer_tokenizer = SerialisingTokenizer()
+        dataset, tasks = train_grpo.build_prompt_dataset(trainer_tokenizer, 1)
+        trainer_rendered = dataset[0]["prompt"]
+
+        # Re-render the probe side against the trainer's actual question so the
+        # only remaining difference would be one of treatment, not of input.
+        probe_rendered = probe.render(
+            SerialisingTokenizer(), tasks[0].question, [probe.calculator_tool_schema()]
+        )
+        self.assertEqual(probe_rendered, trainer_rendered)
 
     def test_both_build_the_same_message_roles_and_system_prompt(self) -> None:
         probe_messages = self._probe_call()["messages"]
@@ -254,6 +310,85 @@ class AdapterIdentityTests(unittest.TestCase):
 
         self.assertIsNone(probe.adapter_weights_sha256(Path("does/not/exist")))
         self.assertIsNone(train_grpo._adapter_weights_sha256(Path("does/not/exist")))
+
+
+class ResumeProvenanceTests(unittest.TestCase):
+    """A resumed probe must not mix verdicts from two different policies.
+
+    Difficulty is a property of a policy, not of a task. If a probe dies
+    halfway and is resumed against a different checkpoint, the reused rows
+    describe the old one while the summary is stamped with the new one's hash.
+    The trainer's guard then compares the new hash against itself and passes,
+    so a keep-set measured on the wrong model sails through every check.
+
+    Nothing about that is hypothetical: the same trap is guarded on the sibling
+    resume path in `select_checkpoint.py`, and this path shipped without it.
+    """
+
+    def _write(self, path: Path, rows: list[dict]) -> None:
+        import json
+
+        with path.open("w", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row) + "\n")
+
+    def _row(self, task_id: str, sha: str | None) -> dict:
+        row = {
+            "task_id": task_id,
+            "group_size": 8,
+            "correct": 3,
+            "solve_rate": 0.375,
+            "total_std": 0.5,
+            "liveness": "live",
+        }
+        if sha is not None:
+            row["adapter_weights_sha256"] = sha
+        return row
+
+    def test_rows_from_the_same_weights_are_reused(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "probe.jsonl"
+            self._write(path, [self._row("a", "abc"), self._row("b", "abc")])
+            reused = probe.already_probed(path, weights_sha256="abc")
+            self.assertEqual(set(reused), {"a", "b"})
+
+    def test_rows_from_different_weights_are_discarded(self) -> None:
+        """The whole point: a probe of another checkpoint teaches nothing here."""
+
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "probe.jsonl"
+            self._write(path, [self._row("a", "old"), self._row("b", "new")])
+            reused = probe.already_probed(path, weights_sha256="new")
+            self.assertEqual(set(reused), {"b"})
+
+    def test_rows_with_no_recorded_provenance_are_discarded(self) -> None:
+        """Written before the field existed; there is no way to attribute them."""
+
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "probe.jsonl"
+            self._write(path, [self._row("a", None)])
+            self.assertEqual(probe.already_probed(path, weights_sha256="abc"), {})
+
+    def test_a_truncated_final_line_is_dropped_not_repaired(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "probe.jsonl"
+            self._write(path, [self._row("a", "abc")])
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write('{"task_id": "b", "live')
+            self.assertEqual(set(probe.already_probed(path, weights_sha256="abc")), {"a"})
+
+    def test_a_missing_file_resumes_from_nothing(self) -> None:
+        self.assertEqual(
+            probe.already_probed(Path("does/not/exist.jsonl"), weights_sha256="abc"), {}
+        )
 
 
 if __name__ == "__main__":

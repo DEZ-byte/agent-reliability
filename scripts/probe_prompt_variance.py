@@ -2,8 +2,10 @@
 
 The first GRPO run here spent roughly a quarter of its steps on groups where
 all eight candidates scored alike. A group-relative advantage is zero in that
-state, so those steps updated nothing. Raising the learning rate tenfold made
-no difference, which is what amplifying a zero gradient looks like.
+state, so those steps updated nothing and a quarter of the budget went on
+arithmetic that cancels. That waste is worth removing. It is not on its own an
+explanation of the null result: the other three quarters did carry spread and
+still reached the same dev peak at both learning rates.
 
 This script measures the problem instead of inferring it. It replays the GRPO
 rollout exactly - same policy, same prompt rendering, same temperature, same
@@ -15,10 +17,13 @@ Nothing here is tuned. The criterion is DAPO's and it has no free parameter:
 keep a prompt when at least one candidate is right and at least one is wrong.
 
 What this is not: DAPO's dynamic sampling, which resamples inside the training
-loop so a prompt that becomes solvable mid-run rejoins the batch. This is
-GRESO's cheaper approximation, justified by their measurement that over 90% of
-dead prompts stay dead. The difference is real and any result built on this
-should name it. See `src/training/prompt_variance.py` for why the loop is not
+loop so a prompt that becomes solvable mid-run rejoins the batch. This is a
+one-off approximation in the spirit of GRESO, and their own measurement bounds
+what it costs: roughly 20% of previously dead prompts become live again, so
+probing once discards about one prompt in five that would have carried gradient
+later. Their better-known ">90%" figure runs the other way, saying today's dead
+prompts were usually dead before, and does not license this design. The
+difference is real and any result built on this should name it. See `src/training/prompt_variance.py` for why the loop is not
 being touched: unsloth rewrites `GRPOTrainer` on import, and over-generating
 candidates does not fit an 8 GB card.
 
@@ -111,12 +116,25 @@ def _revision_for(model_id: str) -> str:
     raise ProbeError(f"{model_id} is not pinned in configs/model_candidates.json")
 
 
-def already_probed(path: Path) -> dict[str, dict[str, Any]]:
-    """Rows from an earlier invocation, keyed by task id.
+def already_probed(path: Path, *, weights_sha256: str | None) -> dict[str, dict[str, Any]]:
+    """Rows from an earlier invocation that describe *these* weights.
 
     A truncated final line is dropped rather than repaired: a killed process
     can leave half a JSON object, and re-probing one prompt is cheaper than
     reasoning about what half a record meant.
+
+    Provenance is checked per row, and that check is the point of this
+    function. Difficulty is a property of a policy, not of a task, so rows
+    measured against one checkpoint say nothing about another. Without this a
+    session killed halfway and resumed against a different adapter would mix
+    two policies into one keep-set and stamp the whole thing with the second
+    adapter's hash, which is precisely the check `train_grpo.py` performs and
+    would therefore pass. `select_checkpoint.py` guards its own resume path
+    the same way and for the same reason.
+
+    Rows with no recorded provenance are dropped rather than trusted. They
+    come from a probe written before this field existed, and there is no way
+    to tell what they measured.
     """
 
     if not path.is_file():
@@ -129,8 +147,11 @@ def already_probed(path: Path) -> dict[str, dict[str, Any]]:
             row = json.loads(line)
         except ValueError:
             continue
-        if "task_id" in row and "liveness" in row:
-            rows[row["task_id"]] = row
+        if "task_id" not in row or "liveness" not in row:
+            continue
+        if row.get("adapter_weights_sha256") != weights_sha256:
+            continue
+        rows[row["task_id"]] = row
     return rows
 
 
@@ -152,7 +173,6 @@ def render(tokenizer, question: str, tools) -> str:
         tokenize=False,
         add_generation_prompt=True,
         enable_thinking=False,
-        tools_in_user_message=True,
     )
 
 
@@ -256,9 +276,11 @@ def main() -> int:
             "free_parameters": 0,
             "applied": "before training, not inside the loop",
             "approximation": (
-                "GRESO arXiv 2506.02177 measured that over 90% of "
-                "zero-variance prompts stay zero-variance, which is what "
-                "makes a one-off probe a usable stand-in for resampling"
+                "One-off, in the spirit of GRESO arXiv 2506.02177, which "
+                "measures that roughly 20% of previously zero-variance "
+                "prompts become effective again. Probing once therefore "
+                "discards about one prompt in five that would have carried "
+                "gradient later in the run."
             ),
         },
         "rollout": {
@@ -308,7 +330,12 @@ def main() -> int:
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    existing = already_probed(output_path) if args.resume else {}
+    weights_sha256 = result["adapter_weights_sha256"]
+    existing = (
+        already_probed(output_path, weights_sha256=weights_sha256)
+        if args.resume
+        else {}
+    )
     if not args.resume and output_path.exists():
         output_path.unlink()
     pending = [task for task in tasks if task.task_id not in existing]
@@ -353,9 +380,13 @@ def main() -> int:
                 ]
                 verdict = classify_group(scores, task_id=task.task_id)
                 verdicts.append(verdict)
-                handle.write(
-                    json.dumps(verdict.as_row(), ensure_ascii=False) + "\n"
-                )
+                row = verdict.as_row()
+                # Provenance travels with the row, not only with the summary,
+                # so a resumed probe can tell which policy each verdict
+                # describes instead of inheriting whichever adapter is loaded
+                # now.
+                row["adapter_weights_sha256"] = weights_sha256
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
             handle.flush()
             done = len(verdicts)
             print(f"[probe] {done}/{len(tasks)} prompts", flush=True)

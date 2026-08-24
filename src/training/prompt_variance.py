@@ -7,6 +7,12 @@ exactly nothing however large its reward. The first GRPO run here measured
 roughly a quarter of its steps in that state, which is a quarter of the budget
 spent on arithmetic that cancels.
 
+Worth being careful about what that does and does not explain. It is a real
+waste and removing it buys back budget. It is not on its own the reason the run
+came out null: the other three quarters did carry spread, and they reached the
+same dev peak at 1e-6 and at 1e-5. Whether filtering moves the score is the
+question this arm exists to answer, not a prediction it starts from.
+
 Two published fixes exist and they differ in where they act.
 
 DAPO (arXiv 2503.14476) resamples inside the training loop: it over-generates
@@ -15,18 +21,24 @@ and refills the batch until it is full of groups with spread. In DAPO's own
 ablation this is the single largest contribution, worth 8 of the 20 points
 their full recipe adds over naive GRPO.
 
-GRESO (arXiv 2506.02177) makes the cheaper observation that deadness persists:
-over 90% of prompts that produce no variance keep producing none. That means
-the set can be measured once, before training, instead of rediscovered every
-step.
+GRESO (arXiv 2506.02177) makes the cheaper observation that deadness largely
+persists, so the set can be measured once instead of rediscovered every step.
+Their figure for how much it persists is easy to quote in the wrong direction,
+and this project quoted it wrongly at first. GRESO reports that over 90% of the
+prompts dead in the current epoch were also dead in an earlier one, which says
+where today's dead prompts came from. The direction this design needs is the
+opposite conditional, and they measure it separately: roughly 20% of previously
+dead prompts become live again. Probing once therefore discards about one
+prompt in five that would have carried gradient later.
 
 This project takes the GRESO route, and the reason is a constraint rather than
 a preference. `unsloth` rewrites `GRPOTrainer` on import, so overriding its
 generation loop is fragile across versions, and over-generating candidates does
 not fit an 8 GB card. Measuring once and filtering the dataset gets most of the
-effect with none of that risk. It is a weaker intervention than DAPO's, because
-a prompt that becomes solvable mid-run stays excluded, and results should say
-so rather than claim DAPO.
+effect with none of that risk. It is weaker than DAPO's, and weaker than
+GRESO's own method, which keeps sampling dead prompts occasionally for exactly
+the revival reason above. Results built on this should say so rather than claim
+DAPO.
 
 The criterion has no tunable threshold. A group teaches something when at least
 one candidate is correct and at least one is not. There is nothing to choose,
