@@ -22,13 +22,17 @@ All arms, 150 held-out tasks, 4 attempts per task.
 | **Qwen3-1.7B, fine-tuned** | **1.7B** | **0.515 – 0.552** | **0.393 – 0.460** | **72** | **~1.5 GB** |
 | Qwen3-1.7B, fine-tuned + GRPO | 1.7B | 0.553 – 0.562 | 0.460 – 0.480 | 72 | ~1.5 GB |
 
-† Billion-parameter-tokens: generated tokens weighted by model size. The 8B
-actually emits *fewer* tokens per task, but a token from an 8B model is not a
-token from a 1.7B one. On raw token counts the cost conclusion reverses, which
-is why it is measured this way.
+† Billion-parameter-tokens: generated tokens per task, weighted by the model's
+actual parameter count. Qwen3-1.7B has 2.03B parameters and Llama-3.1-8B has
+8.03B, so the sums are 35.4 × 2.03 ≈ 72 and 29.4 × 8.03 ≈ 236. The 8B emits
+*fewer* tokens per task, but a token from an 8B model is not a token from a
+1.7B one, and on raw token counts the conclusion reverses. Token counts come
+from the `generated_tokens_per_episode` field in each test artifact. The GRPO
+arms are slightly dearer than the fine-tuned one, at 73 and 74.
 
-Ranges span three independent training runs. The 8B row uses its retry rung,
-since retry is what defines that arm.
+The fine-tuned range spans three independent training runs. The GRPO range spans
+two learning rates, one run each, both starting from the same SFT checkpoint.
+The 8B row uses its retry rung, since retry is what defines that arm.
 
 ---
 
@@ -67,9 +71,11 @@ computed the wrong thing — and that is nearly every failure it has.
 
 ## 2. What fine-tuning actually fixed
 
-Failures out of 600 episodes, single-attempt rung, counted from the episode logs.
+Failures out of 600 episodes, single-attempt rung, counted from the episode
+logs. The fine-tuned column is run 3; the other two runs total 285 and 291
+failures, so the shape holds but the exact counts move.
 
-| Failure mode | Untrained 1.7B | Fine-tuned 1.7B | Scaffolded 8B |
+| Failure mode | Untrained 1.7B | Fine-tuned 1.7B (run 3) | Scaffolded 8B |
 | :-- | --: | --: | --: |
 | Emitted no tool call at all | 43 | 1 | 0 |
 | Emitted a call the tool rejected | 19 | 5 | 23 |
@@ -119,8 +125,11 @@ implemented here.
 One direction is worth chasing but is not yet a result. The higher rate raised
 `pass^4` and lowered `pass@4`, narrowing the band of sometimes-solved tasks. That
 is what a policy-gradient method concentrating probability mass looks like, and it
-is the trade this project cares about. The paired test gives p = 0.24, so it is a
-hint.
+is the trade this project cares about. A paired permutation test on the per-task
+band width gives p = 0.24, so it is a hint. Note that this is a different test
+from the `pass^k` comparisons recorded in
+[`results/grpo-lr1e5-vs-sft-8182e7e.json`](results/grpo-lr1e5-vs-sft-8182e7e.json),
+which report p = 0.60; the band comparison is not yet in that artifact.
 
 ---
 
@@ -164,8 +173,11 @@ project set out to measure.
 | Comparisons are paired | Task-level bootstrap intervals, paired permutation tests, exact sign test |
 
 ```bash
-python -m unittest discover -s tests
+pip install -e . && python -m unittest discover -s tests
 ```
+
+The editable install is not optional: most test modules import `agent` and `env`
+directly, so discovery fails without it.
 
 ---
 

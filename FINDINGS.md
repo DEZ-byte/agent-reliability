@@ -3,8 +3,10 @@
 What this project actually learned, including the parts that went badly.
 
 The `D-0xx` tags name entries in the project's decision log, which holds the full
-reasoning behind each. That log is append-only and runs to 74 entries, so it is
-kept outside this repository for now. This page is the readable version.
+reasoning behind each. That log is append-only and runs to 78 entries, so it is
+kept outside this repository for now. This page is the readable version. The
+four decisions the licence gate depends on are public in
+[`configs/release_decision.md`](configs/release_decision.md).
 
 | | Finding | Verdict |
 | :-- | :-- | :-- |

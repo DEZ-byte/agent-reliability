@@ -152,6 +152,7 @@ def render(tokenizer, question: str, tools) -> str:
         tokenize=False,
         add_generation_prompt=True,
         enable_thinking=False,
+        tools_in_user_message=True,
     )
 
 

@@ -14,6 +14,12 @@
       "recorded_in_commit": "caf68505f7c836a2012a63680ec9d9b2f7698617",
       "kind": "phase_a_baseline"
     },
+    "comparator-8b-2889b6d.json": {
+      "sha256": "7d9d3a56430535865885b973d18daac5fc3ff668d3abe9f08b7980a122f6b478",
+      "bytes": 3866,
+      "recorded_in_commit": "124980611485469d9b18a1009d940db966a40778",
+      "kind": "phase_a_baseline"
+    },
     "contamination-qwen3-57b2bc2.json": {
       "sha256": "c76a4173877a0dbce5f84a861894138d63b3dae6765df35a5896bc7c04272cb3",
       "bytes": 325186,
@@ -25,6 +31,72 @@
       "bytes": 155677,
       "recorded_in_commit": "4de6c16368c05585ecbed63099e2f041adda8815",
       "kind": "phase_a_no_tool_diagnostic"
+    },
+    "grpo-lr1e5-vs-sft-8182e7e.json": {
+      "sha256": "e5a35d4e27c763bcaa1ce860a5d776ebffc97cfb5ba264139b8f37c7512efb11",
+      "bytes": 3879,
+      "recorded_in_commit": "5da0c4cc5e25a412893374f00709b78fd53bea16",
+      "kind": "paired_arm_comparison"
+    },
+    "grpo-run-qwen3-1.7b-d5b5c6d.json": {
+      "sha256": "a840ee6719f829bd981eda6efccb1b9a54652267ff00ffbd3af736de7cd02f2e",
+      "bytes": 1969,
+      "recorded_in_commit": "a570130138d38c63ac5447b760492cb0614ad141",
+      "kind": "grpo_run"
+    },
+    "grpo-run-qwen3-1.7b-lr1e5-4502f7c.json": {
+      "sha256": "7c7159410dec4973553148e2d4ad7e616fb8a80bc1857606e8706c76caba86ea",
+      "bytes": 2087,
+      "recorded_in_commit": "d07f302b22690a69660112ef79ce82c4fef0ae4b",
+      "kind": "grpo_run"
+    },
+    "grpo-selection-lr1e5-d07f302.json": {
+      "sha256": "3c018861fcaac0732317687cd0f3d003c6e0c2dfa5e47cc2a345e354f861a111",
+      "bytes": 2949,
+      "recorded_in_commit": "8182e7e571118664aa926f937d2e3701378b07ef",
+      "kind": "checkpoint_selection"
+    },
+    "grpo-selection-qwen3-1.7b-a570130.json": {
+      "sha256": "c354fce4a16186e6d97e760a0bb83900e02cb6f67d5b757b5ce765ef4daec7d5",
+      "bytes": 2897,
+      "recorded_in_commit": "e7b8d74a5d639d052b65704a4cea602ec226d648",
+      "kind": "checkpoint_selection"
+    },
+    "grpo-test-lr1e5-8182e7e.json": {
+      "sha256": "fa8b814e21605a3080ad3d079b5d82e5075c5f122f3ed467fe7d500ff684a1f0",
+      "bytes": 4091,
+      "recorded_in_commit": "5da0c4cc5e25a412893374f00709b78fd53bea16",
+      "kind": "phase_a_sft_arm"
+    },
+    "grpo-test-qwen3-1.7b-e7b8d74.json": {
+      "sha256": "b16ff01010e8110ec017f6a16e4f9dad769f0f68e92ab43cb856826dccc900a4",
+      "bytes": 4034,
+      "recorded_in_commit": "e9828a38e93b877132c7411ec44600c4edef0076",
+      "kind": "phase_a_sft_arm"
+    },
+    "grpo-vs-sft-e7b8d74.json": {
+      "sha256": "b6c566217deb37a88b2a2a13ddb7ed95f8089d58e41d9f753f7ca360b4111a32",
+      "bytes": 3838,
+      "recorded_in_commit": "e9828a38e93b877132c7411ec44600c4edef0076",
+      "kind": "paired_arm_comparison"
+    },
+    "h1-comparison-2889b6d.json": {
+      "sha256": "a81050e393ce146a65beaac255432980afd7a33fd774efcb7c6b54b637e0b14b",
+      "bytes": 3901,
+      "recorded_in_commit": "124980611485469d9b18a1009d940db966a40778",
+      "kind": "paired_arm_comparison"
+    },
+    "h1-comparison-seed20260823-2889b6d.json": {
+      "sha256": "cf070969e84c5450068889d691e7ffca735f7e7ae50deaf0ba7ab2e5b1142d78",
+      "bytes": 3965,
+      "recorded_in_commit": "124980611485469d9b18a1009d940db966a40778",
+      "kind": "paired_arm_comparison"
+    },
+    "h1-comparison-seed20260824-2889b6d.json": {
+      "sha256": "eb292e4e35618c33a37b2da98d3b9a4668a14add2ace2a68a5838f3b3ab4a270",
+      "bytes": 3965,
+      "recorded_in_commit": "124980611485469d9b18a1009d940db966a40778",
+      "kind": "paired_arm_comparison"
     },
     "masking-verification-4c8acbc.json": {
       "sha256": "98a6c1a1b4bf0254fe6ef8aeb944aacc128d4849a33e5c721fd34f95fbcdad0d",

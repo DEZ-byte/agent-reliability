@@ -34,6 +34,15 @@ ARTIFACT_GLOBS: Final = (
     "baseline-*.json",
     "masking-*.json",
     "sft-*.json",
+    # These four families were produced after the list was first written and
+    # went unprotected for a while, which is worth naming because they are the
+    # evidence behind the two headline claims: that the trained 1.7B beats the
+    # scaffolded 8B, and that GRPO added nothing on top. A freeze that covers
+    # the safe results and misses the load-bearing ones is not a freeze.
+    "grpo-*.json",
+    "comparator-*.json",
+    "h1-comparison-*.json",
+    "phase_b-*.json",
 )
 
 SCHEMA_VERSION: Final = 1
