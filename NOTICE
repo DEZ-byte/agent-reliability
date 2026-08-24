@@ -15,13 +15,14 @@ project loads, produces from, or evaluates against. Model weights, adapters
 trained from them, generated trajectories, and third-party datasets each keep
 their own upstream terms. Those terms are recorded per artifact, with verified
 revisions, in data/LICENSES.md, and the release-scope constraint that governs
-which of them may be used is recorded in DECISIONS.md.
+which of them may be used is recorded in configs/release_decision.md.
 
 In particular:
 
   - Qwen model weights are licensed by Alibaba Cloud. The selected bundle
     (Qwen3) is Apache-2.0; Qwen/Qwen2.5-3B-Instruct is NOT, and is under the
-    non-commercial Qwen Research License. See DECISIONS.md D-048.
+    non-commercial Qwen Research License. See configs/release_decision.md,
+    entry D-048.
   - Llama model weights are licensed by Meta under the Llama Community License,
     which imposes attribution and derivative-naming obligations.
   - Function-calling datasets carry their own terms and attribution
