@@ -14,6 +14,7 @@ four decisions the licence gate depends on are public in
 | **B** | [Training raised capability faster than reliability](#b-training-raised-capability-faster-than-reliability) | Confirmed, and awkward |
 | **C** | [What improved was tool use, not arithmetic](#c-what-improved-was-tool-use-not-arithmetic) | Confirmed |
 | **D** | [It reproduced three times, and got cheaper](#d-it-reproduced-three-times-and-got-cheaper) | Confirmed |
+| **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | New, and the sharpest result here |
 | **E** | [Reinforcement learning added nothing after SFT](#e-reinforcement-learning-added-nothing-after-sft) | Null, twice |
 | **F** | [Tool formatting was never the problem](#f-tool-formatting-was-never-the-problem) | Killed a planned mitigation |
 | **G** | [The retry rung had almost nothing to fix](#g-the-retry-rung-had-almost-nothing-to-fix) | Killed a planned arm |
@@ -94,6 +95,46 @@ happened to draw the third seed would have reported a better number, with nothin
 in that single run to say so.
 
 `D-074` · `D-075`
+
+## D2. The capability transferred; the judgement did not
+
+Everything above was measured on the task the model was trained for. To tell a
+general improvement from a narrow one, the checkpoints were run on a second
+environment: an order-support agent, three unseen tools, no arithmetic. Half the
+requests should be completed, half refused.
+
+| | Untrained | After SFT | After GRPO |
+| :-- | --: | --: | --: |
+| `pass^1` | 0.493 | 0.528 | 0.542 |
+| Completes a legitimate request | 0.000 | 0.947 | 0.957 |
+| Correctly refuses an unverified one | 1.000 | 0.098 | 0.115 |
+| Writes without the right to | 0.000 | 0.920 | 0.918 |
+| Mean reward | +0.286 | -0.394 | -0.387 |
+
+The headline moves by three points. Underneath, the two halves swap places.
+
+Fine-tuning on GSM8K and a calculator taught the model to operate three tools it
+had never seen, in a domain with no maths in it, from a standing start of zero.
+That is real transfer and it is the best news in this project.
+
+It also taught it to act unconditionally. On requests it should refuse it writes
+anyway nine times in ten, having called the verification tool, received
+`authenticated: false`, and proceeded regardless. It never calls the lookup tool
+at all. The untrained model scores about half by never acting; the trained one
+scores about half by always acting.
+
+Mean reward is the summary that matters: negative after training, positive
+before. In an environment with something to protect, the fine-tuned model is
+worse than the one that does nothing.
+
+None of this is mysterious. Every training example was one call and done, and
+not one had "do not call the tool" as the correct answer, so an unconditional
+policy fits the data perfectly. It is finding H arriving in a different form: an
+environment that ends the episode on the first successful call cannot teach a
+model to read a result and decide what to do about it.
+
+Measured on the 150-task transfer split, four attempts per task, in audit mode
+so an unauthorised write lands and can be counted. No decision entry yet.
 
 ---
 

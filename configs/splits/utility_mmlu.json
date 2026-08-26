@@ -1,0 +1,2419 @@
+{
+  "schema_version": 1,
+  "dataset": {
+    "id": "cais/mmlu",
+    "config": "all",
+    "split": "test",
+    "revision": "c30699e8356da336a370243923dbaf21066bb9fe",
+    "license": "mit",
+    "upstream_rows": 14042
+  },
+  "policy": {
+    "seed": 20260826,
+    "questions": 400,
+    "stratified_by": "subject",
+    "note": "Held out from everything this project trains on. No arm has seen these questions, and none of them involve a tool."
+  },
+  "questions": [
+    {
+      "task_id": "mmlu:test:60",
+      "subject": "abstract_algebra",
+      "source_index": 60,
+      "content_sha256": "978c4894bc24911696127494a90dae3b359696f7682084a4358a0749e50239d1"
+    },
+    {
+      "task_id": "mmlu:test:68",
+      "subject": "abstract_algebra",
+      "source_index": 68,
+      "content_sha256": "32d7d13264108378ed3903c0183a090974a8b0cd4da3acda6ce6633e6b98c9df"
+    },
+    {
+      "task_id": "mmlu:test:77",
+      "subject": "abstract_algebra",
+      "source_index": 77,
+      "content_sha256": "a20f3d17e6818d3ca72ea69884e4a864f0fb35285025e9840695439aa9e3ec0b"
+    },
+    {
+      "task_id": "mmlu:test:111",
+      "subject": "anatomy",
+      "source_index": 111,
+      "content_sha256": "a0590f028ca27e213fdf2205818936bc0ba9ef855ef6263bfea79c9e9394dbe9"
+    },
+    {
+      "task_id": "mmlu:test:118",
+      "subject": "anatomy",
+      "source_index": 118,
+      "content_sha256": "dc659301ce85600735d1691a1c55ce36693af590f4d61499c6cbaa1ae4c119ef"
+    },
+    {
+      "task_id": "mmlu:test:139",
+      "subject": "anatomy",
+      "source_index": 139,
+      "content_sha256": "b073bdde7ef90253de2e2179bf596f7371b781823abec8a787c7436e2a6bbd5b"
+    },
+    {
+      "task_id": "mmlu:test:179",
+      "subject": "anatomy",
+      "source_index": 179,
+      "content_sha256": "ffcdfbaacf10983cb6214eec554c03f9f9cdf41371e22c618034e1929e96e021"
+    },
+    {
+      "task_id": "mmlu:test:264",
+      "subject": "astronomy",
+      "source_index": 264,
+      "content_sha256": "35444f712410aa212d0595ba489e60efa91fcdb7186f6adf3b9b5ecffb0b6015"
+    },
+    {
+      "task_id": "mmlu:test:267",
+      "subject": "astronomy",
+      "source_index": 267,
+      "content_sha256": "87283dda548e0dcd91eaebbae8171aba0f4c3be4fcf5cb99b3e3e6f3d609bab9"
+    },
+    {
+      "task_id": "mmlu:test:287",
+      "subject": "astronomy",
+      "source_index": 287,
+      "content_sha256": "be943f111f32dd30c87daf25a5ebb4a19ba6ba5462d13a35a1fbbf9200976534"
+    },
+    {
+      "task_id": "mmlu:test:365",
+      "subject": "astronomy",
+      "source_index": 365,
+      "content_sha256": "e5988a693737270168967379ea5bcad583d5010f689782d3f4f83241e8eaa0fd"
+    },
+    {
+      "task_id": "mmlu:test:396",
+      "subject": "business_ethics",
+      "source_index": 396,
+      "content_sha256": "b1024a37858f4a5b0ef5d190f65067e56c44c80550717de0a942815d7f0574cd"
+    },
+    {
+      "task_id": "mmlu:test:409",
+      "subject": "business_ethics",
+      "source_index": 409,
+      "content_sha256": "86559cc23ee2d24a3c3c120f37474ce1ca7d888c1e3b1bf10e773851fdb7eba1"
+    },
+    {
+      "task_id": "mmlu:test:437",
+      "subject": "business_ethics",
+      "source_index": 437,
+      "content_sha256": "d16e2a05448826b2b6e6bf799f238554a9886519df72a74df5f2b6bcff18b661"
+    },
+    {
+      "task_id": "mmlu:test:503",
+      "subject": "clinical_knowledge",
+      "source_index": 503,
+      "content_sha256": "5d722d324b12d139cb74ec2722abf00c42f56cc2f2db681d4f639f52a23fb713"
+    },
+    {
+      "task_id": "mmlu:test:510",
+      "subject": "clinical_knowledge",
+      "source_index": 510,
+      "content_sha256": "511bd8057d96116c10c4b2584852c94aee2db083d4be2148af384a828fef8152"
+    },
+    {
+      "task_id": "mmlu:test:534",
+      "subject": "clinical_knowledge",
+      "source_index": 534,
+      "content_sha256": "0759b0f162a4bea67592525e91a2384e8d7ab7d300411bf3b90f45ce28ee2417"
+    },
+    {
+      "task_id": "mmlu:test:542",
+      "subject": "clinical_knowledge",
+      "source_index": 542,
+      "content_sha256": "6862ce46e1bb9715d4cb7b8cfe72654effc80993ed7c70ffe532ccf7590bc65b"
+    },
+    {
+      "task_id": "mmlu:test:547",
+      "subject": "clinical_knowledge",
+      "source_index": 547,
+      "content_sha256": "1c5847922044b8fe4bfae781bdf41a40c1caa6b0d726db924b9f6691300122e2"
+    },
+    {
+      "task_id": "mmlu:test:560",
+      "subject": "clinical_knowledge",
+      "source_index": 560,
+      "content_sha256": "935db4062eadcc23af7cd1e3e9c358788cd4a4911c40052652f72b44dde8bc70"
+    },
+    {
+      "task_id": "mmlu:test:596",
+      "subject": "clinical_knowledge",
+      "source_index": 596,
+      "content_sha256": "438c870a7f523bf67dbf4cb1dc30af9ee50998c9ee3036881ef42ece0318dc52"
+    },
+    {
+      "task_id": "mmlu:test:691",
+      "subject": "clinical_knowledge",
+      "source_index": 691,
+      "content_sha256": "c208d182f0e9bd996bfd5abdd09617d1a2df227db8c8f6d664e44bbb5b915e99"
+    },
+    {
+      "task_id": "mmlu:test:782",
+      "subject": "college_biology",
+      "source_index": 782,
+      "content_sha256": "1d58715ca67a12e4540d6991bedb72e6d6d048a1b87fce24e1f2278098005376"
+    },
+    {
+      "task_id": "mmlu:test:811",
+      "subject": "college_biology",
+      "source_index": 811,
+      "content_sha256": "1011fd53d9219be393788582808f8e2b58819c69c77e782705d351c9c536a444"
+    },
+    {
+      "task_id": "mmlu:test:876",
+      "subject": "college_biology",
+      "source_index": 876,
+      "content_sha256": "9d547f160abbecfc709ec2a8bba82f048a74c298b84745d33c6e31da14f084a3"
+    },
+    {
+      "task_id": "mmlu:test:889",
+      "subject": "college_biology",
+      "source_index": 889,
+      "content_sha256": "6228e613a48d638021486ffc828fe01c6afa2c9bb2c53dc87b878354de9d6123"
+    },
+    {
+      "task_id": "mmlu:test:954",
+      "subject": "college_chemistry",
+      "source_index": 954,
+      "content_sha256": "4be977fbedfb76d4036ac3e428c6e6df132766b6eff212dd79cf4dd7150fde61"
+    },
+    {
+      "task_id": "mmlu:test:959",
+      "subject": "college_chemistry",
+      "source_index": 959,
+      "content_sha256": "af318989147b8da72d26a6ecf51ed36d9bf0b3872a43ff682d05870bd044f320"
+    },
+    {
+      "task_id": "mmlu:test:994",
+      "subject": "college_chemistry",
+      "source_index": 994,
+      "content_sha256": "3a6f5e6952b44f4dfd01f78875410f6a549f025b43dbc1472eac908a92d686c5"
+    },
+    {
+      "task_id": "mmlu:test:1011",
+      "subject": "college_computer_science",
+      "source_index": 1011,
+      "content_sha256": "f9dc96604b86a168b35112ef40cd336dd9cf304644ccfa4ec02d778c620fc53f"
+    },
+    {
+      "task_id": "mmlu:test:1074",
+      "subject": "college_computer_science",
+      "source_index": 1074,
+      "content_sha256": "b9aaa127c77ee0d570a71373841a57af83d81f4fd32c54cf3caa440d36701e8d"
+    },
+    {
+      "task_id": "mmlu:test:1083",
+      "subject": "college_computer_science",
+      "source_index": 1083,
+      "content_sha256": "765ff638c4bcf45dd298e32e0b0a3a3eba750ea8bdaad1cd3410943683cd3fd9"
+    },
+    {
+      "task_id": "mmlu:test:1130",
+      "subject": "college_mathematics",
+      "source_index": 1130,
+      "content_sha256": "112ef5a30898a422cdb66f332fc2739b55dc052e48ae6f4821f8dd9d789d8da1"
+    },
+    {
+      "task_id": "mmlu:test:1165",
+      "subject": "college_mathematics",
+      "source_index": 1165,
+      "content_sha256": "69c7fe50e6b776232c0d4d41cdf4031f152e09cd7accda1a472b77f0790e6485"
+    },
+    {
+      "task_id": "mmlu:test:1194",
+      "subject": "college_mathematics",
+      "source_index": 1194,
+      "content_sha256": "faaf9ea65888901db171aa13400edf349ae43fde137a286a348d9d9facccdcaa"
+    },
+    {
+      "task_id": "mmlu:test:1210",
+      "subject": "college_medicine",
+      "source_index": 1210,
+      "content_sha256": "00085950eaa3528c550c43a3956820ca1394dc8ff7c7e5b9d5fd9a3cffdda929"
+    },
+    {
+      "task_id": "mmlu:test:1257",
+      "subject": "college_medicine",
+      "source_index": 1257,
+      "content_sha256": "3443ddeb93b5a0a11ab108b7889cc88ca8299371f5a290a5df3fc6cbffb3bbdc"
+    },
+    {
+      "task_id": "mmlu:test:1331",
+      "subject": "college_medicine",
+      "source_index": 1331,
+      "content_sha256": "6e8c70eb323831f18def47b87148c80fe844393e2fc004aa73029ed8d22edf05"
+    },
+    {
+      "task_id": "mmlu:test:1344",
+      "subject": "college_medicine",
+      "source_index": 1344,
+      "content_sha256": "cf5506a46f33153ea62f669ddd0d833ab43c32f18d2e83488c9bab421f2923e3"
+    },
+    {
+      "task_id": "mmlu:test:1358",
+      "subject": "college_medicine",
+      "source_index": 1358,
+      "content_sha256": "8fe026e3aef9fd0b07e1ce11fde1513d2080bc29f8099481f1af61c5e8569d6c"
+    },
+    {
+      "task_id": "mmlu:test:1382",
+      "subject": "college_physics",
+      "source_index": 1382,
+      "content_sha256": "a6b61385b2e0c469e24ab4c000d7e3109bc0e90501822900b9e65fffe6375189"
+    },
+    {
+      "task_id": "mmlu:test:1401",
+      "subject": "college_physics",
+      "source_index": 1401,
+      "content_sha256": "736e420677763e99f888168e96dac8092d89712fae37ae70c1bd644b96fe56c8"
+    },
+    {
+      "task_id": "mmlu:test:1452",
+      "subject": "college_physics",
+      "source_index": 1452,
+      "content_sha256": "b8488779b0f2146885c4dcdb5b9a2c9f9e6fa1c415a05f07ddea78a7edef8264"
+    },
+    {
+      "task_id": "mmlu:test:1507",
+      "subject": "computer_security",
+      "source_index": 1507,
+      "content_sha256": "23244405d0c54b139ea07dba0da14715aef8ff667908ff3ccd36206265614541"
+    },
+    {
+      "task_id": "mmlu:test:1539",
+      "subject": "computer_security",
+      "source_index": 1539,
+      "content_sha256": "f56a4f634a7d17cf03bdc27e20b678a15fa9a081c8bbb057ad37bb8d69f7b824"
+    },
+    {
+      "task_id": "mmlu:test:1567",
+      "subject": "computer_security",
+      "source_index": 1567,
+      "content_sha256": "ec5014feb9fe383f6de81c25d4ef976e13d75e43f6ea3d67f02d85243197426d"
+    },
+    {
+      "task_id": "mmlu:test:1600",
+      "subject": "conceptual_physics",
+      "source_index": 1600,
+      "content_sha256": "7cb3cc0acc2cffe297beb6f8b1aa6204813de3f870f6e62edc0ee22a81b644de"
+    },
+    {
+      "task_id": "mmlu:test:1608",
+      "subject": "conceptual_physics",
+      "source_index": 1608,
+      "content_sha256": "d2b0ae7dba6cb30837f31e09a888e918ed27c87fcd1f362e3fc23a01a9640db1"
+    },
+    {
+      "task_id": "mmlu:test:1645",
+      "subject": "conceptual_physics",
+      "source_index": 1645,
+      "content_sha256": "af4c356fccd2b8181bbcfdae92bc6c5dccd6a7fb641db4ee4d65bc8501e1849f"
+    },
+    {
+      "task_id": "mmlu:test:1660",
+      "subject": "conceptual_physics",
+      "source_index": 1660,
+      "content_sha256": "3e85bacf8c3a8d55fd962372791da28be79210ab1dc1d225dba3522fa8a1a8f9"
+    },
+    {
+      "task_id": "mmlu:test:1705",
+      "subject": "conceptual_physics",
+      "source_index": 1705,
+      "content_sha256": "b9d71d4780e8690a9997fa66f8bbc4fc8ee81fe87fbfe2cfc7d7712b3b2dce08"
+    },
+    {
+      "task_id": "mmlu:test:1708",
+      "subject": "conceptual_physics",
+      "source_index": 1708,
+      "content_sha256": "3b4dcec10012abf3b28ef56b0170a98175bef35ee6ba0a91b9e5936395131e1c"
+    },
+    {
+      "task_id": "mmlu:test:1763",
+      "subject": "conceptual_physics",
+      "source_index": 1763,
+      "content_sha256": "e464a2ae3da6fa8ad408c92f5733e9b9552448eb4da701ea15ec1176812ac402"
+    },
+    {
+      "task_id": "mmlu:test:1853",
+      "subject": "econometrics",
+      "source_index": 1853,
+      "content_sha256": "b5611dda878dfce56da0653bd13c9724cde873957360ad84859b68c3947f38da"
+    },
+    {
+      "task_id": "mmlu:test:1865",
+      "subject": "econometrics",
+      "source_index": 1865,
+      "content_sha256": "93272fd8fc45152cd72abe115a100ad19b47bc666e42e7f6d77dc44a905073cd"
+    },
+    {
+      "task_id": "mmlu:test:1869",
+      "subject": "econometrics",
+      "source_index": 1869,
+      "content_sha256": "8b7188e49d3547268e1e897bad7df25698b2bccbc2cbcc1d4e87133f6e5e343b"
+    },
+    {
+      "task_id": "mmlu:test:1963",
+      "subject": "electrical_engineering",
+      "source_index": 1963,
+      "content_sha256": "550c3074a5be3a1b015f09d54c7ffa1f722efe4f22bf6a3ac719d860ee59fd92"
+    },
+    {
+      "task_id": "mmlu:test:1964",
+      "subject": "electrical_engineering",
+      "source_index": 1964,
+      "content_sha256": "3b70710010d305c4696108c1793d51c044609687743abe8e2fea4c3212e3bb14"
+    },
+    {
+      "task_id": "mmlu:test:1986",
+      "subject": "electrical_engineering",
+      "source_index": 1986,
+      "content_sha256": "f43d7d457458dd14bdb999ecea13781deebea307ca8dda30e83f580fc75556db"
+    },
+    {
+      "task_id": "mmlu:test:2029",
+      "subject": "electrical_engineering",
+      "source_index": 2029,
+      "content_sha256": "540d74f4b7ccf7f49d40464ec09bf395c3d8f199f742102060f03dfc80549ad6"
+    },
+    {
+      "task_id": "mmlu:test:2121",
+      "subject": "elementary_mathematics",
+      "source_index": 2121,
+      "content_sha256": "712bc872f42ebe24893ab65dd9d05aec8f87b4efc35d47a360fe9500382852fd"
+    },
+    {
+      "task_id": "mmlu:test:2150",
+      "subject": "elementary_mathematics",
+      "source_index": 2150,
+      "content_sha256": "391cfc89125d564b56ac259d80dea4ee9550591309264d8253e8dd4f67248420"
+    },
+    {
+      "task_id": "mmlu:test:2189",
+      "subject": "elementary_mathematics",
+      "source_index": 2189,
+      "content_sha256": "233943628abb5d1568135a1aece976a0e4b69fdbc00f674aaa4b780684f3cf89"
+    },
+    {
+      "task_id": "mmlu:test:2246",
+      "subject": "elementary_mathematics",
+      "source_index": 2246,
+      "content_sha256": "986b621ecd50ff13c5f6c6dc80d6b4d7f90c49285d926cf993f29ef11ee803fd"
+    },
+    {
+      "task_id": "mmlu:test:2265",
+      "subject": "elementary_mathematics",
+      "source_index": 2265,
+      "content_sha256": "147c0ee6b00d68f917e86092674fd87525640c137f205ca45e84148184d47b29"
+    },
+    {
+      "task_id": "mmlu:test:2275",
+      "subject": "elementary_mathematics",
+      "source_index": 2275,
+      "content_sha256": "06ec2875e232d9cce8fbc1df9f41874cb6643f89f488fb33ee42e0062621f609"
+    },
+    {
+      "task_id": "mmlu:test:2296",
+      "subject": "elementary_mathematics",
+      "source_index": 2296,
+      "content_sha256": "925fa44d7c389054e3a37d925c4daf137ff8e9a6f08eb46af6a66fb90d2386b8"
+    },
+    {
+      "task_id": "mmlu:test:2299",
+      "subject": "elementary_mathematics",
+      "source_index": 2299,
+      "content_sha256": "2cdbcffa596b54f0726023aebfc88818e7cb545bc8d3d81dc4e52345105960e7"
+    },
+    {
+      "task_id": "mmlu:test:2312",
+      "subject": "elementary_mathematics",
+      "source_index": 2312,
+      "content_sha256": "4ed866874f3bf82872595a4f027d459033098bb9bce06c49dbc5e5639ea8a19c"
+    },
+    {
+      "task_id": "mmlu:test:2423",
+      "subject": "elementary_mathematics",
+      "source_index": 2423,
+      "content_sha256": "37fb0565e8fa5efa4f215aca26d50724d04da581fa39ca2bda92fbe25a4353c2"
+    },
+    {
+      "task_id": "mmlu:test:2435",
+      "subject": "elementary_mathematics",
+      "source_index": 2435,
+      "content_sha256": "25403602a8234f1f8d56698845b0c006eccf24c33142236a08166d1a0cab428b"
+    },
+    {
+      "task_id": "mmlu:test:2516",
+      "subject": "formal_logic",
+      "source_index": 2516,
+      "content_sha256": "5913b86bdf95916d83fd496d0cd1a526b99d725eda46fcbda656167d1bc16de1"
+    },
+    {
+      "task_id": "mmlu:test:2524",
+      "subject": "formal_logic",
+      "source_index": 2524,
+      "content_sha256": "6c41e9b775042303d607230f6b70c96b3c4aa3213f5aa018e52c8b344cd7a569"
+    },
+    {
+      "task_id": "mmlu:test:2543",
+      "subject": "formal_logic",
+      "source_index": 2543,
+      "content_sha256": "4452d0e17d016fd6b753a508912f2d3916007093a2edc2b44eeefb5a7a6a2de2"
+    },
+    {
+      "task_id": "mmlu:test:2564",
+      "subject": "formal_logic",
+      "source_index": 2564,
+      "content_sha256": "8df49c45c88b65e504335a54069aebfc1319acf837cfecc4a260e4fe3b4088eb"
+    },
+    {
+      "task_id": "mmlu:test:2579",
+      "subject": "global_facts",
+      "source_index": 2579,
+      "content_sha256": "e97d5d4773f4618e4cc08410b327207324eb4f8242e8d4ebad8aaf3fcadc1575"
+    },
+    {
+      "task_id": "mmlu:test:2585",
+      "subject": "global_facts",
+      "source_index": 2585,
+      "content_sha256": "21b97ee0bb8c070a4d27b690b53e45b50285d8f40c3795d061c8b2ef997ca673"
+    },
+    {
+      "task_id": "mmlu:test:2651",
+      "subject": "global_facts",
+      "source_index": 2651,
+      "content_sha256": "eef415c852c6b81c18ba0cd3bb6d895358fb192d4f18af9814ef7b419dca48bc"
+    },
+    {
+      "task_id": "mmlu:test:2680",
+      "subject": "high_school_biology",
+      "source_index": 2680,
+      "content_sha256": "26969f80f61ae0c5af263fd36f91d0071edae78bb5c324000a5cffbcb194fc30"
+    },
+    {
+      "task_id": "mmlu:test:2787",
+      "subject": "high_school_biology",
+      "source_index": 2787,
+      "content_sha256": "93c0b8ae956606c7628fedc4143eaac19930b68f021796195924af88ce574096"
+    },
+    {
+      "task_id": "mmlu:test:2854",
+      "subject": "high_school_biology",
+      "source_index": 2854,
+      "content_sha256": "eba22ad25fbb4621938bea759e85658d9977742250b78d5c1aa5610d816a7b9f"
+    },
+    {
+      "task_id": "mmlu:test:2879",
+      "subject": "high_school_biology",
+      "source_index": 2879,
+      "content_sha256": "1320898f7e62d7a4fea922223c15e19c96446109598ba40188a99b8db5116ac6"
+    },
+    {
+      "task_id": "mmlu:test:2885",
+      "subject": "high_school_biology",
+      "source_index": 2885,
+      "content_sha256": "9cf2c1aa06b5c08d986f7e38ce4901145109fc64df787d43a866a1f4859e0814"
+    },
+    {
+      "task_id": "mmlu:test:2909",
+      "subject": "high_school_biology",
+      "source_index": 2909,
+      "content_sha256": "1925af4f1f19aa4773e0f500a4015043597c9f5cf3542915a81f7b4233861a53"
+    },
+    {
+      "task_id": "mmlu:test:2915",
+      "subject": "high_school_biology",
+      "source_index": 2915,
+      "content_sha256": "c84ce72e1195a0473b174dccf5f3dac2d19ce7d82c60c8b29e18460f00b2b099"
+    },
+    {
+      "task_id": "mmlu:test:2928",
+      "subject": "high_school_biology",
+      "source_index": 2928,
+      "content_sha256": "4527c52538fcacb4e510f9dc5676dca663a8279e655dd3b10e89559fc8f8198b"
+    },
+    {
+      "task_id": "mmlu:test:2936",
+      "subject": "high_school_biology",
+      "source_index": 2936,
+      "content_sha256": "67af42112b95ebee6c0ad1619c0a3a8dce9af7612e181545b6f6e1a4cbfa8893"
+    },
+    {
+      "task_id": "mmlu:test:2980",
+      "subject": "high_school_chemistry",
+      "source_index": 2980,
+      "content_sha256": "4ccfa5e77d281fe18b599b3974d80302944248cc56f3ffc3d9d95f2c8cc9f683"
+    },
+    {
+      "task_id": "mmlu:test:3022",
+      "subject": "high_school_chemistry",
+      "source_index": 3022,
+      "content_sha256": "bf0a2c076359c45ec0b15f6e7ece05e6a197d2ba34525409a5342c839984f1c3"
+    },
+    {
+      "task_id": "mmlu:test:3055",
+      "subject": "high_school_chemistry",
+      "source_index": 3055,
+      "content_sha256": "ecf28e88e89b7c08bf74da97f145ae25faa29c09f78f4991522a4e2fd6a29a9d"
+    },
+    {
+      "task_id": "mmlu:test:3121",
+      "subject": "high_school_chemistry",
+      "source_index": 3121,
+      "content_sha256": "3f822bd13b121cd8d18d1ab0d866ccccd2af53a9552d5153ea23b13dbe0b7853"
+    },
+    {
+      "task_id": "mmlu:test:3135",
+      "subject": "high_school_chemistry",
+      "source_index": 3135,
+      "content_sha256": "7bb6c3fe8af2089debb82201bde3d66567e50438969bdee91dd9f2e6206c50e8"
+    },
+    {
+      "task_id": "mmlu:test:3177",
+      "subject": "high_school_chemistry",
+      "source_index": 3177,
+      "content_sha256": "469787b8a00e537567b47be8558bb9cbd0ab20cf91ea99996483aa6236b64b8c"
+    },
+    {
+      "task_id": "mmlu:test:3210",
+      "subject": "high_school_computer_science",
+      "source_index": 3210,
+      "content_sha256": "78fa3370675c1e51dd939a75700368fa1b72dc67f52eca4acc231150422580a7"
+    },
+    {
+      "task_id": "mmlu:test:3240",
+      "subject": "high_school_computer_science",
+      "source_index": 3240,
+      "content_sha256": "0efdc797b559b8f97b412226eb5ce4ef05aa5ee449968a8193d1c83c343c4e9b"
+    },
+    {
+      "task_id": "mmlu:test:3273",
+      "subject": "high_school_computer_science",
+      "source_index": 3273,
+      "content_sha256": "e70ae5ca9e2a79efb77c9755f59eb8bc612fc8af26013a58f3145b651fadf09d"
+    },
+    {
+      "task_id": "mmlu:test:3324",
+      "subject": "high_school_european_history",
+      "source_index": 3324,
+      "content_sha256": "0829c6a828e5845a2559f42fe3a34d90c9caaa6bc1542eba2271c3ce73141ed6"
+    },
+    {
+      "task_id": "mmlu:test:3358",
+      "subject": "high_school_european_history",
+      "source_index": 3358,
+      "content_sha256": "53dc21ca7873dbb86c34fd6678d65c2cd889b62bb3a1adfedf8153eb74e93ba6"
+    },
+    {
+      "task_id": "mmlu:test:3403",
+      "subject": "high_school_european_history",
+      "source_index": 3403,
+      "content_sha256": "fbf39669681fc175dc7a2eae5a53a25f0f5ddd7d518a51b47af2ec314f7abce4"
+    },
+    {
+      "task_id": "mmlu:test:3428",
+      "subject": "high_school_european_history",
+      "source_index": 3428,
+      "content_sha256": "1b3f33139506ba5fe43396104ce135ef46a4c34eb242ec9ef4bf810c1e08d10c"
+    },
+    {
+      "task_id": "mmlu:test:3452",
+      "subject": "high_school_geography",
+      "source_index": 3452,
+      "content_sha256": "5568862864b9c4a738a5f37e92eec5a2d4e6884ac2948101e21ea17463398c49"
+    },
+    {
+      "task_id": "mmlu:test:3511",
+      "subject": "high_school_geography",
+      "source_index": 3511,
+      "content_sha256": "39cebda6f3d31b59060ccd816c42314adb3f1614bf7acfc8e774365b18d3e3a8"
+    },
+    {
+      "task_id": "mmlu:test:3552",
+      "subject": "high_school_geography",
+      "source_index": 3552,
+      "content_sha256": "ed6e6c8863a42c47c600af83f7f4c26af716b52c1f9a5fa663cfd70b5dedca38"
+    },
+    {
+      "task_id": "mmlu:test:3601",
+      "subject": "high_school_geography",
+      "source_index": 3601,
+      "content_sha256": "871d94b186d133d92eae4eaf58c6f3001c79992ffeff1bedcc1050f094252bf5"
+    },
+    {
+      "task_id": "mmlu:test:3608",
+      "subject": "high_school_geography",
+      "source_index": 3608,
+      "content_sha256": "3d0a106a43ab631ec7d076b0848d137a70fac67f3fe368e2daa3785b54cef17d"
+    },
+    {
+      "task_id": "mmlu:test:3624",
+      "subject": "high_school_geography",
+      "source_index": 3624,
+      "content_sha256": "81b614f611ed1fc33c588034260783925fb125079d007af91857b8ab83ae00ea"
+    },
+    {
+      "task_id": "mmlu:test:3673",
+      "subject": "high_school_government_and_politics",
+      "source_index": 3673,
+      "content_sha256": "f152b278d12c50f7df3dd600fbe09c655963c4bf56f9368ea9e67300631cebc9"
+    },
+    {
+      "task_id": "mmlu:test:3676",
+      "subject": "high_school_government_and_politics",
+      "source_index": 3676,
+      "content_sha256": "cea4013881e6e3f5b87da315c6d8c4937bf9c0c96b54f5b92b7a47edbeef1d2b"
+    },
+    {
+      "task_id": "mmlu:test:3689",
+      "subject": "high_school_government_and_politics",
+      "source_index": 3689,
+      "content_sha256": "ae0bd712d189f9b2a685f11462652ad90834aa837f2097e54eb6fc57eb99b0db"
+    },
+    {
+      "task_id": "mmlu:test:3712",
+      "subject": "high_school_government_and_politics",
+      "source_index": 3712,
+      "content_sha256": "4924a5d9501d814c4ad0ee75b33b8753a93d2bc7d7cb21ce94e9b042302feb23"
+    },
+    {
+      "task_id": "mmlu:test:3776",
+      "subject": "high_school_government_and_politics",
+      "source_index": 3776,
+      "content_sha256": "55cd2db3582e4bb54320364e640a1dcb4d2045b65e0c281f04779ffd17c78987"
+    },
+    {
+      "task_id": "mmlu:test:3867",
+      "subject": "high_school_macroeconomics",
+      "source_index": 3867,
+      "content_sha256": "7bd4b00cc269bff33862b7d1c5d0cec1c46f1383b7c075b3f702c2881cf63ad4"
+    },
+    {
+      "task_id": "mmlu:test:3869",
+      "subject": "high_school_macroeconomics",
+      "source_index": 3869,
+      "content_sha256": "7e7a4b5b0d1931b9b3fcf8963d7a9b84c8c4e49e318fd11f05647675cbc62039"
+    },
+    {
+      "task_id": "mmlu:test:3918",
+      "subject": "high_school_macroeconomics",
+      "source_index": 3918,
+      "content_sha256": "e312c9b96f4e0433780717fa4ab41160841b51d5c8d25af4786facf724e0f075"
+    },
+    {
+      "task_id": "mmlu:test:3957",
+      "subject": "high_school_macroeconomics",
+      "source_index": 3957,
+      "content_sha256": "6267a91b96f95c92f4f8cefca5f93d98b2500fad5910327deaca089695209beb"
+    },
+    {
+      "task_id": "mmlu:test:3994",
+      "subject": "high_school_macroeconomics",
+      "source_index": 3994,
+      "content_sha256": "f7c8e32630609291a6843963b998467726e4e9bdb6cd63c4b4e71aa6333aff32"
+    },
+    {
+      "task_id": "mmlu:test:4068",
+      "subject": "high_school_macroeconomics",
+      "source_index": 4068,
+      "content_sha256": "f5e677abe685923d08bec8ed9d3cd74ba2bcbdedcea65f6e49eccab56d0cd6ad"
+    },
+    {
+      "task_id": "mmlu:test:4075",
+      "subject": "high_school_macroeconomics",
+      "source_index": 4075,
+      "content_sha256": "3b3a516bc7437cb4b5d297571a9f767cc3023df93d01774630d94afa2fd9fef8"
+    },
+    {
+      "task_id": "mmlu:test:4125",
+      "subject": "high_school_macroeconomics",
+      "source_index": 4125,
+      "content_sha256": "a631e1b4dd14410005edb012e48d752b224cd268ba5be1a33e0ff8b3e1f5c78a"
+    },
+    {
+      "task_id": "mmlu:test:4152",
+      "subject": "high_school_macroeconomics",
+      "source_index": 4152,
+      "content_sha256": "1c919ba782f2b318b3ee5007334879f8ecb215a1c81cedb929460f37cc8ccf90"
+    },
+    {
+      "task_id": "mmlu:test:4162",
+      "subject": "high_school_macroeconomics",
+      "source_index": 4162,
+      "content_sha256": "da8d98daa0154d81112d3f4db83d72d0bc98df225faaaf65c7616a474500069c"
+    },
+    {
+      "task_id": "mmlu:test:4174",
+      "subject": "high_school_macroeconomics",
+      "source_index": 4174,
+      "content_sha256": "e32a99576d998fc3d9a9605b52be6098b5f878d14be79e85f92dee1ab6f5328a"
+    },
+    {
+      "task_id": "mmlu:test:4242",
+      "subject": "high_school_mathematics",
+      "source_index": 4242,
+      "content_sha256": "21de4d0aaf84878017bc9161f36719e691e864cf882277d0537dd51b81758318"
+    },
+    {
+      "task_id": "mmlu:test:4289",
+      "subject": "high_school_mathematics",
+      "source_index": 4289,
+      "content_sha256": "24eb3d622ba88de7528f7dafe7a094c3fc4c48cff5589444967e4820f0f2326c"
+    },
+    {
+      "task_id": "mmlu:test:4299",
+      "subject": "high_school_mathematics",
+      "source_index": 4299,
+      "content_sha256": "1d8d305ea1bee1bf45df91a57d87a357f4a9eb20d93f8a01a1b44cd6d6109355"
+    },
+    {
+      "task_id": "mmlu:test:4374",
+      "subject": "high_school_mathematics",
+      "source_index": 4374,
+      "content_sha256": "5b8e5e6dce40c1275bbb989bb6fc63b66a0510851aa8089e9c97436d8ac542bb"
+    },
+    {
+      "task_id": "mmlu:test:4405",
+      "subject": "high_school_mathematics",
+      "source_index": 4405,
+      "content_sha256": "ecbbea560ffe80e813357d5ed8def1f3697a666182bd31d148295e8602841650"
+    },
+    {
+      "task_id": "mmlu:test:4416",
+      "subject": "high_school_mathematics",
+      "source_index": 4416,
+      "content_sha256": "8a3e44de797dde3445c67318bac7d6b385a4a7c64b41590a05daf89476b5c9f3"
+    },
+    {
+      "task_id": "mmlu:test:4452",
+      "subject": "high_school_mathematics",
+      "source_index": 4452,
+      "content_sha256": "8d3b7ab8fd03688c963e8428bfe0a0c55cc20c50528852ffca7778171c67d028"
+    },
+    {
+      "task_id": "mmlu:test:4491",
+      "subject": "high_school_mathematics",
+      "source_index": 4491,
+      "content_sha256": "2e9d09b53974d2e542dbca66cb7a95893fcb6657bb4066d4880b1370556c77c4"
+    },
+    {
+      "task_id": "mmlu:test:4502",
+      "subject": "high_school_microeconomics",
+      "source_index": 4502,
+      "content_sha256": "772c45fbf2db63c19db43b2a969236426fbb0e021e28a5c60cb72f1a0fbabeda"
+    },
+    {
+      "task_id": "mmlu:test:4523",
+      "subject": "high_school_microeconomics",
+      "source_index": 4523,
+      "content_sha256": "132c9edcbaf6dc7dcc2b0d1ad7f2074f1e05e4de7f4c8f1595e6396792dc1e4c"
+    },
+    {
+      "task_id": "mmlu:test:4564",
+      "subject": "high_school_microeconomics",
+      "source_index": 4564,
+      "content_sha256": "51a7d42b27285e19bd584ca71aac005ecfd250473610dc1d414db60e023212cb"
+    },
+    {
+      "task_id": "mmlu:test:4672",
+      "subject": "high_school_microeconomics",
+      "source_index": 4672,
+      "content_sha256": "9087c0964363aaa8583ed3f50d669ddabddc4e2e479a779468c494542b74eedf"
+    },
+    {
+      "task_id": "mmlu:test:4682",
+      "subject": "high_school_microeconomics",
+      "source_index": 4682,
+      "content_sha256": "d0a7994e7e8b4689869fb7e0b17afa3919cf7bb2716856e879d5090bf4f9356d"
+    },
+    {
+      "task_id": "mmlu:test:4696",
+      "subject": "high_school_microeconomics",
+      "source_index": 4696,
+      "content_sha256": "ea1335feacbe95f21c58b0661aaec12f87c0671a3edad2c64aaf649c37853810"
+    },
+    {
+      "task_id": "mmlu:test:4728",
+      "subject": "high_school_microeconomics",
+      "source_index": 4728,
+      "content_sha256": "48ce4a68beb567985f229c12b6295a356bb818b2a74b462eb58a76cd3198fc5a"
+    },
+    {
+      "task_id": "mmlu:test:4826",
+      "subject": "high_school_physics",
+      "source_index": 4826,
+      "content_sha256": "f9991baa0975afb438e1554fcab2919ce3b0d1c28ae65d3be82050d2dc28cc48"
+    },
+    {
+      "task_id": "mmlu:test:4836",
+      "subject": "high_school_physics",
+      "source_index": 4836,
+      "content_sha256": "bf8101df84004cfff79f3d1c4948b5408cb18e0fc227c5642079e5fae318b3e9"
+    },
+    {
+      "task_id": "mmlu:test:4840",
+      "subject": "high_school_physics",
+      "source_index": 4840,
+      "content_sha256": "2de6faf0de30a71e89e9db7d593f095248c9edc1150a80490fd2c3bcbbd76c0d"
+    },
+    {
+      "task_id": "mmlu:test:4869",
+      "subject": "high_school_physics",
+      "source_index": 4869,
+      "content_sha256": "344a45b9308204adcf94972e553cdad24efc63da3db66b16824cd11c2ec15579"
+    },
+    {
+      "task_id": "mmlu:test:4887",
+      "subject": "high_school_psychology",
+      "source_index": 4887,
+      "content_sha256": "7240d5557b7d259306c96abb96324b476052a91c6a37c27d6c2f7c652a70048f"
+    },
+    {
+      "task_id": "mmlu:test:4963",
+      "subject": "high_school_psychology",
+      "source_index": 4963,
+      "content_sha256": "13f7a10005a070662bf4e056238cb16bff043223011deb77077d3e24f2bef647"
+    },
+    {
+      "task_id": "mmlu:test:4986",
+      "subject": "high_school_psychology",
+      "source_index": 4986,
+      "content_sha256": "92ac63594713ef697bec644a874d7c8a645086c81400af41eb43db281752bc48"
+    },
+    {
+      "task_id": "mmlu:test:4990",
+      "subject": "high_school_psychology",
+      "source_index": 4990,
+      "content_sha256": "2e1bf47bebb813f467f43be041233a6d15fabd888ee0e4bc65cac964e2e79d89"
+    },
+    {
+      "task_id": "mmlu:test:5061",
+      "subject": "high_school_psychology",
+      "source_index": 5061,
+      "content_sha256": "dceb5034d97fd1c9bbe33a5814631b157653b59e88d28b5bfb8028d7a882c45a"
+    },
+    {
+      "task_id": "mmlu:test:5077",
+      "subject": "high_school_psychology",
+      "source_index": 5077,
+      "content_sha256": "c7951d8b135e07e6affbc7daaa80d7e3daf377d97887580789d8e6ea093cd04c"
+    },
+    {
+      "task_id": "mmlu:test:5086",
+      "subject": "high_school_psychology",
+      "source_index": 5086,
+      "content_sha256": "c63d827479120dc58110dd967416e28ea0e155179fd0fcbdfb6a80e0e689d14e"
+    },
+    {
+      "task_id": "mmlu:test:5131",
+      "subject": "high_school_psychology",
+      "source_index": 5131,
+      "content_sha256": "4c0f956fba861784c83c04df39fa5c7dc68549cc0e84025bca945627241f96f4"
+    },
+    {
+      "task_id": "mmlu:test:5138",
+      "subject": "high_school_psychology",
+      "source_index": 5138,
+      "content_sha256": "0093de15dac79b62ca492e88e24a4cdad5a9f47b369d95824bc8acecc9973936"
+    },
+    {
+      "task_id": "mmlu:test:5170",
+      "subject": "high_school_psychology",
+      "source_index": 5170,
+      "content_sha256": "8fcaf0cdbd6663bf93837b9cd6c3c00b325530484e4379ac30b7c9c9c2ab4e16"
+    },
+    {
+      "task_id": "mmlu:test:5178",
+      "subject": "high_school_psychology",
+      "source_index": 5178,
+      "content_sha256": "89de80864619203a56c6bbbf9e1f14ef1a5dda02380ec607b7e693d27bb3233b"
+    },
+    {
+      "task_id": "mmlu:test:5205",
+      "subject": "high_school_psychology",
+      "source_index": 5205,
+      "content_sha256": "8b19ed5de7769ab3782dcb0bb70c818707cf8cd4b88f2164ee337f79a5f33ea2"
+    },
+    {
+      "task_id": "mmlu:test:5235",
+      "subject": "high_school_psychology",
+      "source_index": 5235,
+      "content_sha256": "5f48c2cc2ad082c6f676083092e6ee74ed07a9e6c89843265d37e0f965015b8a"
+    },
+    {
+      "task_id": "mmlu:test:5337",
+      "subject": "high_school_psychology",
+      "source_index": 5337,
+      "content_sha256": "556586d7bb995dbebdf6532e2fbea379fa0da79365f045a88a11139ed93e1e0d"
+    },
+    {
+      "task_id": "mmlu:test:5345",
+      "subject": "high_school_psychology",
+      "source_index": 5345,
+      "content_sha256": "f8347abd0be180fb499741ccd5bd20abde011fc5c2e08556ef419eb8f1567199"
+    },
+    {
+      "task_id": "mmlu:test:5437",
+      "subject": "high_school_statistics",
+      "source_index": 5437,
+      "content_sha256": "d143f271c6a6282d8938179c95c3d3c013348aed7dbca383b88c528e37833b84"
+    },
+    {
+      "task_id": "mmlu:test:5467",
+      "subject": "high_school_statistics",
+      "source_index": 5467,
+      "content_sha256": "e0d52ec14a69ee4baa941da2cee3daa486fab0b9881f93c071864c5fd606b1ec"
+    },
+    {
+      "task_id": "mmlu:test:5479",
+      "subject": "high_school_statistics",
+      "source_index": 5479,
+      "content_sha256": "c741ab28f490442284991169400005ec20fb1e7ee7f0fd1ca590ca9542c3062c"
+    },
+    {
+      "task_id": "mmlu:test:5524",
+      "subject": "high_school_statistics",
+      "source_index": 5524,
+      "content_sha256": "a4205b7ab8f3c7535aa0b04e17c139c3131e846bc9cb2b9eb310e8710ca397e3"
+    },
+    {
+      "task_id": "mmlu:test:5543",
+      "subject": "high_school_statistics",
+      "source_index": 5543,
+      "content_sha256": "4e875138c88c810297a9cbf8ee1572f0ccfb1ef3d0619d27c90bcfa95a8e49ad"
+    },
+    {
+      "task_id": "mmlu:test:5563",
+      "subject": "high_school_statistics",
+      "source_index": 5563,
+      "content_sha256": "03cfeabe15acb95d5c9b1acd4a6f17f491dd4adcccaf6e110146fd89d750dd95"
+    },
+    {
+      "task_id": "mmlu:test:5651",
+      "subject": "high_school_us_history",
+      "source_index": 5651,
+      "content_sha256": "793d041ffeace5b86232b14d758fb1cda32347169e85206dae5e6d4e90e2cd48"
+    },
+    {
+      "task_id": "mmlu:test:5705",
+      "subject": "high_school_us_history",
+      "source_index": 5705,
+      "content_sha256": "8b659eff58574b3fea72f5a7c55ada9ec013a5c1dac41b88d7e6b2680c298dad"
+    },
+    {
+      "task_id": "mmlu:test:5709",
+      "subject": "high_school_us_history",
+      "source_index": 5709,
+      "content_sha256": "1aaf037de59dd4d7157f93ba0fcfca03a484de997405215e4332d35ad4cc0d2d"
+    },
+    {
+      "task_id": "mmlu:test:5756",
+      "subject": "high_school_us_history",
+      "source_index": 5756,
+      "content_sha256": "346db295d3f82169ea40f5285a7f2f2eb18d9376da3f8dd47b0e10072e9da9f8"
+    },
+    {
+      "task_id": "mmlu:test:5823",
+      "subject": "high_school_us_history",
+      "source_index": 5823,
+      "content_sha256": "e9170ceb1cc471a57de8a8997499c12924f36b1e99f6dc2c3f5a2821344a3243"
+    },
+    {
+      "task_id": "mmlu:test:5829",
+      "subject": "high_school_us_history",
+      "source_index": 5829,
+      "content_sha256": "7baab0a52da8899e2fc4c77e20e964371e3f65caf6062e67a48a678d17ed8490"
+    },
+    {
+      "task_id": "mmlu:test:5889",
+      "subject": "high_school_world_history",
+      "source_index": 5889,
+      "content_sha256": "08f92164f83ce5aa0f1a907c2b0aca7cb927ab227163e6783037d0714d669ac3"
+    },
+    {
+      "task_id": "mmlu:test:5903",
+      "subject": "high_school_world_history",
+      "source_index": 5903,
+      "content_sha256": "2a6a92b8d1f8c3297dd786fa6740c2f005a8d4fdf77d502e768ed08065c3401e"
+    },
+    {
+      "task_id": "mmlu:test:5915",
+      "subject": "high_school_world_history",
+      "source_index": 5915,
+      "content_sha256": "b798d35e052ff3946f2e35ef5980c75574340c7e05c48e398bb73cca7a6ead53"
+    },
+    {
+      "task_id": "mmlu:test:5920",
+      "subject": "high_school_world_history",
+      "source_index": 5920,
+      "content_sha256": "384782b13dd4bf64dd6da2a54993cedba537d5014ec992f67198e213b74bbfbf"
+    },
+    {
+      "task_id": "mmlu:test:5964",
+      "subject": "high_school_world_history",
+      "source_index": 5964,
+      "content_sha256": "03935cc5de92d399f5cf893745c7170df5680c7af85628fe6158f13bfbea3eb3"
+    },
+    {
+      "task_id": "mmlu:test:5979",
+      "subject": "high_school_world_history",
+      "source_index": 5979,
+      "content_sha256": "87af5796ad466b92da88caf3c433975954d9a53d80fb45205ed98742870bbe73"
+    },
+    {
+      "task_id": "mmlu:test:6080",
+      "subject": "high_school_world_history",
+      "source_index": 6080,
+      "content_sha256": "b14bbdb514b5847e86c14a2a27d4ca18746dc7d5b10cbc2add0ae5728ccc971e"
+    },
+    {
+      "task_id": "mmlu:test:6143",
+      "subject": "human_aging",
+      "source_index": 6143,
+      "content_sha256": "a8021e93383187439c1caccba1d8f5151cdd4524f2b0da0119e8288f6830a7ca"
+    },
+    {
+      "task_id": "mmlu:test:6172",
+      "subject": "human_aging",
+      "source_index": 6172,
+      "content_sha256": "c50546e65226ea6a27b447467ab6d84eab3f3510a57a3bf561218d7d0ce9f37c"
+    },
+    {
+      "task_id": "mmlu:test:6220",
+      "subject": "human_aging",
+      "source_index": 6220,
+      "content_sha256": "5bef233ff03e4d104a62fecbb48525d311806f27111120e487a48f3895beb487"
+    },
+    {
+      "task_id": "mmlu:test:6243",
+      "subject": "human_aging",
+      "source_index": 6243,
+      "content_sha256": "0d3ae0da78088ad1bcf871ac61fb4be4603111503ea705ddf3bfef8ea0b89417"
+    },
+    {
+      "task_id": "mmlu:test:6275",
+      "subject": "human_aging",
+      "source_index": 6275,
+      "content_sha256": "da81cdd679cb9bdd6d201ac6f5bac97f07b972b04b059f8408dce389e1b6ee83"
+    },
+    {
+      "task_id": "mmlu:test:6320",
+      "subject": "human_sexuality",
+      "source_index": 6320,
+      "content_sha256": "9a623e32e004375501f8b091dcff6dbafea723ca304f43e3eeb05f468ffcddf4"
+    },
+    {
+      "task_id": "mmlu:test:6322",
+      "subject": "human_sexuality",
+      "source_index": 6322,
+      "content_sha256": "efb59d8f265d3ffa3b68a569e7f16eba852016220b7615d83aa4fd48a4caea88"
+    },
+    {
+      "task_id": "mmlu:test:6334",
+      "subject": "human_sexuality",
+      "source_index": 6334,
+      "content_sha256": "88a7bfed7f0d9f765cdbbab7ee4153d411098c1ac0bd961865b83cc3f0bec549"
+    },
+    {
+      "task_id": "mmlu:test:6360",
+      "subject": "human_sexuality",
+      "source_index": 6360,
+      "content_sha256": "2ca4365e5893ed5a7f0bc9caa79db74b59769b3e43e438216f983e854ad07c1b"
+    },
+    {
+      "task_id": "mmlu:test:6457",
+      "subject": "international_law",
+      "source_index": 6457,
+      "content_sha256": "777f52ea8529f396c2f9341341680bb0040302c65dbd2571471e3f684ea4f226"
+    },
+    {
+      "task_id": "mmlu:test:6476",
+      "subject": "international_law",
+      "source_index": 6476,
+      "content_sha256": "8ca0084020a1589424a7f101f98cb6a99d910f3bfef5e072a023191c8973ad37"
+    },
+    {
+      "task_id": "mmlu:test:6561",
+      "subject": "international_law",
+      "source_index": 6561,
+      "content_sha256": "a4927807c79d33aac0d84554f69cee08a87858503e2f64b12edb8f5332127005"
+    },
+    {
+      "task_id": "mmlu:test:6566",
+      "subject": "jurisprudence",
+      "source_index": 6566,
+      "content_sha256": "12d84281374af0a2fc3d81d8825e9e6f618b2eedcbe6216be4f056b68ceaae48"
+    },
+    {
+      "task_id": "mmlu:test:6578",
+      "subject": "jurisprudence",
+      "source_index": 6578,
+      "content_sha256": "50c29e966702faee79e4343029060bb153de55891e223ed315566e908e0a071c"
+    },
+    {
+      "task_id": "mmlu:test:6582",
+      "subject": "jurisprudence",
+      "source_index": 6582,
+      "content_sha256": "7839a277a0e4de06af1c516f2622e93d3d769483f5e6c4919aba5e1a2dd9fdb3"
+    },
+    {
+      "task_id": "mmlu:test:6702",
+      "subject": "logical_fallacies",
+      "source_index": 6702,
+      "content_sha256": "702c04c6e6447ff2e48f20ec7f85eedf5954dff730f96d6b666e9fedc99e41fa"
+    },
+    {
+      "task_id": "mmlu:test:6753",
+      "subject": "logical_fallacies",
+      "source_index": 6753,
+      "content_sha256": "8ac6ccac34096020395da84f07dfe932414ca5eb0ad0f7eb8b5524065f1c852f"
+    },
+    {
+      "task_id": "mmlu:test:6796",
+      "subject": "logical_fallacies",
+      "source_index": 6796,
+      "content_sha256": "d7257e9831bc3095dbea2070934e44c5b5247bf69cc7798187eed0e1e5b8b63c"
+    },
+    {
+      "task_id": "mmlu:test:6797",
+      "subject": "logical_fallacies",
+      "source_index": 6797,
+      "content_sha256": "6c480cfd39a90630e3b312f22c13af5bc1ec65655fbe8c2164ac652a9e1cc0b9"
+    },
+    {
+      "task_id": "mmlu:test:6827",
+      "subject": "logical_fallacies",
+      "source_index": 6827,
+      "content_sha256": "8c082d256d4f8747b5ef32f693c0f7c27db1b455ad3c8ebddeff01e28ffc5700"
+    },
+    {
+      "task_id": "mmlu:test:6859",
+      "subject": "machine_learning",
+      "source_index": 6859,
+      "content_sha256": "19983c44551501cc7bf481abeacfd7b7291edc4908479b6581871dc5910929a4"
+    },
+    {
+      "task_id": "mmlu:test:6882",
+      "subject": "machine_learning",
+      "source_index": 6882,
+      "content_sha256": "fa0d97e0873d42bec2368f2087fc3b792e73a98dd349491129b3b3af328ecdeb"
+    },
+    {
+      "task_id": "mmlu:test:6942",
+      "subject": "machine_learning",
+      "source_index": 6942,
+      "content_sha256": "ff74465e07cc163d1ed93bbd112ce6a64de4d01c7b7232b92817661299d37fdb"
+    },
+    {
+      "task_id": "mmlu:test:6956",
+      "subject": "management",
+      "source_index": 6956,
+      "content_sha256": "d1e9f0c5aa09213e58f0d2b484f2d360831646afc848a2dd3e34ec79d9223bb3"
+    },
+    {
+      "task_id": "mmlu:test:6981",
+      "subject": "management",
+      "source_index": 6981,
+      "content_sha256": "39848eb01111f5bfd0c163980cb6ab1a6e86ed9f8124401847ba832ba8cd56dd"
+    },
+    {
+      "task_id": "mmlu:test:6986",
+      "subject": "management",
+      "source_index": 6986,
+      "content_sha256": "a664410f76e005c3b1962a5c8eb661d9920103e5196e3975b7a947f4dbd67858"
+    },
+    {
+      "task_id": "mmlu:test:7063",
+      "subject": "marketing",
+      "source_index": 7063,
+      "content_sha256": "9a8e79dc6df8e517c716c17938b019113b9578b331c0e13937a9f4ad2e5ed248"
+    },
+    {
+      "task_id": "mmlu:test:7086",
+      "subject": "marketing",
+      "source_index": 7086,
+      "content_sha256": "eca4362b08d25e83146de9c3412c94143b41ec8a461ed13eb49c37bac961ce8c"
+    },
+    {
+      "task_id": "mmlu:test:7087",
+      "subject": "marketing",
+      "source_index": 7087,
+      "content_sha256": "3d19ac59618f180d4fe27506e69c31397b346f7b2cbfac34c988ef69cde0498d"
+    },
+    {
+      "task_id": "mmlu:test:7112",
+      "subject": "marketing",
+      "source_index": 7112,
+      "content_sha256": "fdff704feed6c82079318e258897e60571c768f141932fc6a9f8391e64cb4a06"
+    },
+    {
+      "task_id": "mmlu:test:7236",
+      "subject": "marketing",
+      "source_index": 7236,
+      "content_sha256": "9b6e0973b704dd573bcc34dd93d81ddf3fcc2692ef08a5440eb513553cef77b3"
+    },
+    {
+      "task_id": "mmlu:test:7249",
+      "subject": "marketing",
+      "source_index": 7249,
+      "content_sha256": "5b982da2b766915e7136e28c6847e9e8f66c50cd29dcb82da7c2a84c49114b17"
+    },
+    {
+      "task_id": "mmlu:test:7282",
+      "subject": "marketing",
+      "source_index": 7282,
+      "content_sha256": "da3c09563c9894fc97ed36fe695c38d9313260ec89f2c23c346f29cc42fe3553"
+    },
+    {
+      "task_id": "mmlu:test:7297",
+      "subject": "medical_genetics",
+      "source_index": 7297,
+      "content_sha256": "0a47d690c0dd5bf057282fa2d4f4f28e36ed0b58df74494f23ae6524dc51638b"
+    },
+    {
+      "task_id": "mmlu:test:7304",
+      "subject": "medical_genetics",
+      "source_index": 7304,
+      "content_sha256": "d9606acbf61b08cdc591d5c927c5b56d86a54bcb110908b5567cd2fdaf38a13e"
+    },
+    {
+      "task_id": "mmlu:test:7339",
+      "subject": "medical_genetics",
+      "source_index": 7339,
+      "content_sha256": "4bff5d4b6bf8b67daeb600394007e650ab4ec430612cc81d862e4a7c1b1ab3c8"
+    },
+    {
+      "task_id": "mmlu:test:7406",
+      "subject": "miscellaneous",
+      "source_index": 7406,
+      "content_sha256": "a98af49ff3a6235023a7ea1becd0abca94d5bdd32a4262a85b594e0ba9d7813f"
+    },
+    {
+      "task_id": "mmlu:test:7448",
+      "subject": "miscellaneous",
+      "source_index": 7448,
+      "content_sha256": "cb39e1d2a38333c7136a70a208f9374b3cc6c5e2023e89dc140ce968073dc085"
+    },
+    {
+      "task_id": "mmlu:test:7462",
+      "subject": "miscellaneous",
+      "source_index": 7462,
+      "content_sha256": "f41adcdc0f4f8fee20311fd1327b1432f67fa68947b950cdf0d5780637620f09"
+    },
+    {
+      "task_id": "mmlu:test:7472",
+      "subject": "miscellaneous",
+      "source_index": 7472,
+      "content_sha256": "8a0854cbad5a8f76016c019c819017f792acf74b702baf4565fc6d23b2c04960"
+    },
+    {
+      "task_id": "mmlu:test:7494",
+      "subject": "miscellaneous",
+      "source_index": 7494,
+      "content_sha256": "5d978bad31d60856a69f37062d69c42b23acd92c1bf693035f9422eb7895c4ad"
+    },
+    {
+      "task_id": "mmlu:test:7544",
+      "subject": "miscellaneous",
+      "source_index": 7544,
+      "content_sha256": "c44260d25029f13f8c4f0c87f83338bd8fc0ee58a3f15d66f59e25c15384614b"
+    },
+    {
+      "task_id": "mmlu:test:7548",
+      "subject": "miscellaneous",
+      "source_index": 7548,
+      "content_sha256": "f72f335348cad5a8144b52e74e94fa1259c18ceb0fcea09d9df45506c4ce4410"
+    },
+    {
+      "task_id": "mmlu:test:7592",
+      "subject": "miscellaneous",
+      "source_index": 7592,
+      "content_sha256": "38e8175c9826322f4d9aeb44bf6922f8ab499cca52b37d218d2e0a37f11bccc9"
+    },
+    {
+      "task_id": "mmlu:test:7616",
+      "subject": "miscellaneous",
+      "source_index": 7616,
+      "content_sha256": "468b4d9bd22559ba56ef56fca16800adf950c10c9f71cefc8a6883d39d147854"
+    },
+    {
+      "task_id": "mmlu:test:7617",
+      "subject": "miscellaneous",
+      "source_index": 7617,
+      "content_sha256": "2ec384cd9f324f0e454b15bfe2ab03ff779d0806d656b6f940f93c358f49856f"
+    },
+    {
+      "task_id": "mmlu:test:7717",
+      "subject": "miscellaneous",
+      "source_index": 7717,
+      "content_sha256": "1ed1bf4878011f17499e5900a93e56a11127ea4e49a3a6177f66fb39280105ee"
+    },
+    {
+      "task_id": "mmlu:test:7733",
+      "subject": "miscellaneous",
+      "source_index": 7733,
+      "content_sha256": "379524827e5c7ca8cff4af447500397d59260746a67d92c88679609c1fcf4be2"
+    },
+    {
+      "task_id": "mmlu:test:7767",
+      "subject": "miscellaneous",
+      "source_index": 7767,
+      "content_sha256": "f3b78807bc17f9f3214407461dc53240caddbd8e486baa1e4d2b1925f0bd8d8a"
+    },
+    {
+      "task_id": "mmlu:test:7769",
+      "subject": "miscellaneous",
+      "source_index": 7769,
+      "content_sha256": "54bad1185efdaa2578d8465d1194e41cc8b18c5bc3c92a1f5ee018485de20aec"
+    },
+    {
+      "task_id": "mmlu:test:7773",
+      "subject": "miscellaneous",
+      "source_index": 7773,
+      "content_sha256": "b8f0a428c6b3cbc6acf3161282e2ca16e0e2a896d5da4c88d92f34c9e6a6d4e2"
+    },
+    {
+      "task_id": "mmlu:test:7815",
+      "subject": "miscellaneous",
+      "source_index": 7815,
+      "content_sha256": "bdb04740c9c43fc1f346dc46bee9662abd5c2b5553126c5004f87359ec9f4cd8"
+    },
+    {
+      "task_id": "mmlu:test:7822",
+      "subject": "miscellaneous",
+      "source_index": 7822,
+      "content_sha256": "691a9fadda776f86db1767a340938844747b4379c9cd5e255a8d15676e84afb6"
+    },
+    {
+      "task_id": "mmlu:test:7858",
+      "subject": "miscellaneous",
+      "source_index": 7858,
+      "content_sha256": "c201ae325189065912b1ddad64d2cf3396079628a1cfd2f179ef93356404bcf7"
+    },
+    {
+      "task_id": "mmlu:test:7920",
+      "subject": "miscellaneous",
+      "source_index": 7920,
+      "content_sha256": "523682a86b243f3c60dde60bd9faaf93ab564d44384dbe6ef6b6537161130320"
+    },
+    {
+      "task_id": "mmlu:test:7991",
+      "subject": "miscellaneous",
+      "source_index": 7991,
+      "content_sha256": "bacb8f3f98a4dfb93bc6e3a167e21fb5326e5dec52cf6a98fba1d4d7f48afebb"
+    },
+    {
+      "task_id": "mmlu:test:8000",
+      "subject": "miscellaneous",
+      "source_index": 8000,
+      "content_sha256": "64aa2ef7938b05df30f5e600b82396ad558a9d7f3c8d7c18f8922abdb7ba1d2d"
+    },
+    {
+      "task_id": "mmlu:test:8072",
+      "subject": "miscellaneous",
+      "source_index": 8072,
+      "content_sha256": "30036742f0cf9450e59544b9e6aab91fcb73ed60bdcd32cd5fd382a1a084c2c7"
+    },
+    {
+      "task_id": "mmlu:test:8180",
+      "subject": "moral_disputes",
+      "source_index": 8180,
+      "content_sha256": "95ca53665ed868bcf69a94ca00aea72511cf9ebd153521c627c508cb838eec0d"
+    },
+    {
+      "task_id": "mmlu:test:8183",
+      "subject": "moral_disputes",
+      "source_index": 8183,
+      "content_sha256": "c058b08fd5a1004d59dbebb16c56428099ae3e829bd70f1580dd04ff84836aaa"
+    },
+    {
+      "task_id": "mmlu:test:8199",
+      "subject": "moral_disputes",
+      "source_index": 8199,
+      "content_sha256": "80f4402f12bea70860ef7cc109af839f5dd2c6370a73a6d7e8029b52be0dec0e"
+    },
+    {
+      "task_id": "mmlu:test:8200",
+      "subject": "moral_disputes",
+      "source_index": 8200,
+      "content_sha256": "ad9e58ad782a407293aba5f59ed3a3c7fc357dee316a8d198f993d5ede6aec86"
+    },
+    {
+      "task_id": "mmlu:test:8223",
+      "subject": "moral_disputes",
+      "source_index": 8223,
+      "content_sha256": "788379bd442d65ec638c14e39020d2f2c2dc6df8e70fac76905a3235c1fdbcb4"
+    },
+    {
+      "task_id": "mmlu:test:8269",
+      "subject": "moral_disputes",
+      "source_index": 8269,
+      "content_sha256": "b9661f455a39acbf6cb534f26220fa262cf5f3eb46a4abcba5bdf51a3946da1e"
+    },
+    {
+      "task_id": "mmlu:test:8384",
+      "subject": "moral_disputes",
+      "source_index": 8384,
+      "content_sha256": "3a0c95ce775ef59920d835eb8cc67f0bd6a6b93b55711fcc809c816250d9311c"
+    },
+    {
+      "task_id": "mmlu:test:8398",
+      "subject": "moral_disputes",
+      "source_index": 8398,
+      "content_sha256": "e675bebbbf5db5c39b26c0dc3d5053f08a10c20759e10ed43888e7efdd8f4649"
+    },
+    {
+      "task_id": "mmlu:test:8420",
+      "subject": "moral_disputes",
+      "source_index": 8420,
+      "content_sha256": "b4366aa78b064abe9688a4722cde5dac5ef252ef8eaf8827578ce68660f815ef"
+    },
+    {
+      "task_id": "mmlu:test:8465",
+      "subject": "moral_disputes",
+      "source_index": 8465,
+      "content_sha256": "4a47574f4f48af88a0c3462c26e652e7c8479e21dd3a306aa9b3271b671788eb"
+    },
+    {
+      "task_id": "mmlu:test:8568",
+      "subject": "moral_scenarios",
+      "source_index": 8568,
+      "content_sha256": "30099fbf1de9238d38336c6a0881a549cba682baf34a753bcf966aa24e683317"
+    },
+    {
+      "task_id": "mmlu:test:8590",
+      "subject": "moral_scenarios",
+      "source_index": 8590,
+      "content_sha256": "b542a66313dbd8bac183753c9de710867076ea0ca8e002233f7492038cfbdb8f"
+    },
+    {
+      "task_id": "mmlu:test:8600",
+      "subject": "moral_scenarios",
+      "source_index": 8600,
+      "content_sha256": "0644a0c41da2d9f7ce3be99aaf96d65e2cd6907740cbde0e44f44bbb1d99f42d"
+    },
+    {
+      "task_id": "mmlu:test:8653",
+      "subject": "moral_scenarios",
+      "source_index": 8653,
+      "content_sha256": "70d5126af7315683a7b0da961dc8ed57fa152c4562841e0eae1712078d308298"
+    },
+    {
+      "task_id": "mmlu:test:8669",
+      "subject": "moral_scenarios",
+      "source_index": 8669,
+      "content_sha256": "bd9e78b1516a57f2ad0eb7c1bf5c4761962961d4f8ef365dff137a30700161aa"
+    },
+    {
+      "task_id": "mmlu:test:8672",
+      "subject": "moral_scenarios",
+      "source_index": 8672,
+      "content_sha256": "2f12d20cddb8cde4355536522f5b7316c118180cbde301c279d335c4077c2a15"
+    },
+    {
+      "task_id": "mmlu:test:8694",
+      "subject": "moral_scenarios",
+      "source_index": 8694,
+      "content_sha256": "27e13d999306136c03504b80e09dc3e14fff843a88a7a2df457413b7f1ee33e1"
+    },
+    {
+      "task_id": "mmlu:test:8703",
+      "subject": "moral_scenarios",
+      "source_index": 8703,
+      "content_sha256": "c1dd53bbb4bac1d4513c143f624cba1858b74a155b1ed540a304abfbc4431d76"
+    },
+    {
+      "task_id": "mmlu:test:8717",
+      "subject": "moral_scenarios",
+      "source_index": 8717,
+      "content_sha256": "425aa178c7fd2d4030b9c1c997c315dd5506b2795570867388e1502e8d0ebbfb"
+    },
+    {
+      "task_id": "mmlu:test:8770",
+      "subject": "moral_scenarios",
+      "source_index": 8770,
+      "content_sha256": "839e44134b6f030fe549d42b77277e8b75b40e368a4cbc839ec73eadb8d9fd58"
+    },
+    {
+      "task_id": "mmlu:test:8810",
+      "subject": "moral_scenarios",
+      "source_index": 8810,
+      "content_sha256": "f793b3fa90d51432042941070b9df97f9556da3eee7a6868261b0cfafb8ec0b2"
+    },
+    {
+      "task_id": "mmlu:test:9062",
+      "subject": "moral_scenarios",
+      "source_index": 9062,
+      "content_sha256": "92b06cd74d61c6cd8c56d235cf36b5128242d52be6161afafd72c66dba5355ca"
+    },
+    {
+      "task_id": "mmlu:test:9086",
+      "subject": "moral_scenarios",
+      "source_index": 9086,
+      "content_sha256": "9f9ad77b636b1197817b3e223942ea09000725500c20a1e5ac516b3cf131c346"
+    },
+    {
+      "task_id": "mmlu:test:9105",
+      "subject": "moral_scenarios",
+      "source_index": 9105,
+      "content_sha256": "fb7b2dd72a2c97fdc3985fb82679a88610ea1cd203bc2f3655e9fa16f2d8848e"
+    },
+    {
+      "task_id": "mmlu:test:9112",
+      "subject": "moral_scenarios",
+      "source_index": 9112,
+      "content_sha256": "3551efd9a14d4fd859eec29cf969451ebb3b6b2452d27b6d720957f115a3acdb"
+    },
+    {
+      "task_id": "mmlu:test:9140",
+      "subject": "moral_scenarios",
+      "source_index": 9140,
+      "content_sha256": "de4d3e9cf6e7434faac75db055541c7ac0935c4bf1519c8d8babf35d2682d0da"
+    },
+    {
+      "task_id": "mmlu:test:9207",
+      "subject": "moral_scenarios",
+      "source_index": 9207,
+      "content_sha256": "913d3ec83a7f7899db6d02f7174a472ceed3e7637282839cb4c1c0fb897dcd4d"
+    },
+    {
+      "task_id": "mmlu:test:9234",
+      "subject": "moral_scenarios",
+      "source_index": 9234,
+      "content_sha256": "5eb472771c0c564b09fd3a686b7ed48619822408da82481be757678c78fb5f26"
+    },
+    {
+      "task_id": "mmlu:test:9250",
+      "subject": "moral_scenarios",
+      "source_index": 9250,
+      "content_sha256": "fd2ea97a3abcb5db4df946aa5f645945f421c42942e37055242eace8c0f4fb98"
+    },
+    {
+      "task_id": "mmlu:test:9255",
+      "subject": "moral_scenarios",
+      "source_index": 9255,
+      "content_sha256": "512a488a55a69aea86a79340faa828c2413a9ce583c05fb319e9cf40f1a1dc12"
+    },
+    {
+      "task_id": "mmlu:test:9305",
+      "subject": "moral_scenarios",
+      "source_index": 9305,
+      "content_sha256": "64f0c0f4788ef9c666cf46981d230f63fd309c212f7789d6f8dacf21a2433dd3"
+    },
+    {
+      "task_id": "mmlu:test:9340",
+      "subject": "moral_scenarios",
+      "source_index": 9340,
+      "content_sha256": "21ed995db6484f6f0862732aef7b15516c18ccb44fe908769df1b322d5e5731f"
+    },
+    {
+      "task_id": "mmlu:test:9344",
+      "subject": "moral_scenarios",
+      "source_index": 9344,
+      "content_sha256": "ce9dbd872bf40302ab375c4583eb8b8c2da4a132434073c8db877ad9caa35455"
+    },
+    {
+      "task_id": "mmlu:test:9370",
+      "subject": "moral_scenarios",
+      "source_index": 9370,
+      "content_sha256": "17be8dc2112704885d672bebbcf86e0d22380777166dfd3b565fd03cebca768f"
+    },
+    {
+      "task_id": "mmlu:test:9403",
+      "subject": "moral_scenarios",
+      "source_index": 9403,
+      "content_sha256": "156aa3d1d4120b63f7d30aca02bfab9891868dea972ff0aadd731f29448c81ff"
+    },
+    {
+      "task_id": "mmlu:test:9430",
+      "subject": "nutrition",
+      "source_index": 9430,
+      "content_sha256": "5a593f45855472c132f67afe0ee8476134d4f6c2bb312fe0fdcd3639ed00b8eb"
+    },
+    {
+      "task_id": "mmlu:test:9447",
+      "subject": "nutrition",
+      "source_index": 9447,
+      "content_sha256": "4f7e3c0c9a73278ed3c3b5fa268b46ca29a37355e1a30375679598ecc7aa5030"
+    },
+    {
+      "task_id": "mmlu:test:9458",
+      "subject": "nutrition",
+      "source_index": 9458,
+      "content_sha256": "00b3ce39bb0170258a5ea0bf423a70b12c91bc2b34b630b513d9fb93aa7e34d2"
+    },
+    {
+      "task_id": "mmlu:test:9492",
+      "subject": "nutrition",
+      "source_index": 9492,
+      "content_sha256": "355d938f71ededf14d73df1af7703785b50cfb5a90d9122330288abfac33de22"
+    },
+    {
+      "task_id": "mmlu:test:9493",
+      "subject": "nutrition",
+      "source_index": 9493,
+      "content_sha256": "8d3f646822560c0eba3cfac1a4f38e552f170fc714950bc2836a53ece321d627"
+    },
+    {
+      "task_id": "mmlu:test:9509",
+      "subject": "nutrition",
+      "source_index": 9509,
+      "content_sha256": "69e18b26ab5336e1e068dd2d921a6d4f01ac74a968fd01c852230b67aa5281b7"
+    },
+    {
+      "task_id": "mmlu:test:9613",
+      "subject": "nutrition",
+      "source_index": 9613,
+      "content_sha256": "6e33aca2c6053112ed28e8240f2502d4ee5ca90ed5008ec03f52d8eba27f8fcc"
+    },
+    {
+      "task_id": "mmlu:test:9653",
+      "subject": "nutrition",
+      "source_index": 9653,
+      "content_sha256": "e451070fa3a70fef7a46b51fcd978e7d44fa2d19c17738b27e68273af4804437"
+    },
+    {
+      "task_id": "mmlu:test:9674",
+      "subject": "nutrition",
+      "source_index": 9674,
+      "content_sha256": "163347c75c664d6e3c89e97947b7e4201842221debd8a4bf211ee7dd0f7897fa"
+    },
+    {
+      "task_id": "mmlu:test:9719",
+      "subject": "philosophy",
+      "source_index": 9719,
+      "content_sha256": "c805fd8bdb9a78ccce9d14f5168e2bf62890c943f94afe619f4343b0c1f1e864"
+    },
+    {
+      "task_id": "mmlu:test:9735",
+      "subject": "philosophy",
+      "source_index": 9735,
+      "content_sha256": "4b2e14c7aba57ff02cb952eb010fb29698c91722331720a3466a485bd7c50aa4"
+    },
+    {
+      "task_id": "mmlu:test:9769",
+      "subject": "philosophy",
+      "source_index": 9769,
+      "content_sha256": "ab9004e7a065ddc3e2345fbd5fd91c1c15bf5560f081ed5f236be547901b8012"
+    },
+    {
+      "task_id": "mmlu:test:9779",
+      "subject": "philosophy",
+      "source_index": 9779,
+      "content_sha256": "2c149f998318004468f4bd85907a82992a4d0a04a4b319c9408ebd27256480f1"
+    },
+    {
+      "task_id": "mmlu:test:9867",
+      "subject": "philosophy",
+      "source_index": 9867,
+      "content_sha256": "7bf4ddaca3cb6765764774d3ba23ed1b5b938ab85ba296794fc9e6877868edb5"
+    },
+    {
+      "task_id": "mmlu:test:9886",
+      "subject": "philosophy",
+      "source_index": 9886,
+      "content_sha256": "e911d39cb141eb6647f638c215f0f802dc20d7082b35a6e1d7d6a83a66bce2e2"
+    },
+    {
+      "task_id": "mmlu:test:9975",
+      "subject": "philosophy",
+      "source_index": 9975,
+      "content_sha256": "eaa0549a387e5adceaa1be81e03769004934808cf329e4953716fda4fa62a319"
+    },
+    {
+      "task_id": "mmlu:test:9977",
+      "subject": "philosophy",
+      "source_index": 9977,
+      "content_sha256": "2d033f6ac89b5517efacc9498a6aa920e4477490042925497f848a3a3e8b785c"
+    },
+    {
+      "task_id": "mmlu:test:9996",
+      "subject": "philosophy",
+      "source_index": 9996,
+      "content_sha256": "88c91911840b8462e004b07c8ac3ab9520e408597c819c605645328284dc8ddf"
+    },
+    {
+      "task_id": "mmlu:test:10045",
+      "subject": "prehistory",
+      "source_index": 10045,
+      "content_sha256": "68c22d3149a2c378687170431cb7589ec6a5d496df938ad0f274c79dd2548ce0"
+    },
+    {
+      "task_id": "mmlu:test:10056",
+      "subject": "prehistory",
+      "source_index": 10056,
+      "content_sha256": "986376e241b90b0a17163313424d6ec8820c67bfdbbb16651c2c0cb5a2e423b7"
+    },
+    {
+      "task_id": "mmlu:test:10069",
+      "subject": "prehistory",
+      "source_index": 10069,
+      "content_sha256": "903e98b36ea5932ab7bbbb2ef00a55e553185ec7117038bb26f907582de9d789"
+    },
+    {
+      "task_id": "mmlu:test:10082",
+      "subject": "prehistory",
+      "source_index": 10082,
+      "content_sha256": "0a63ee925036e3b50e2eb63eaa7269f39c6c1414ac2e3d0ecebbe9003791d88f"
+    },
+    {
+      "task_id": "mmlu:test:10088",
+      "subject": "prehistory",
+      "source_index": 10088,
+      "content_sha256": "b70d7ca1586f40019e2a929d0bff106cc2e37a3d64f42639c7b460d4186666b6"
+    },
+    {
+      "task_id": "mmlu:test:10244",
+      "subject": "prehistory",
+      "source_index": 10244,
+      "content_sha256": "256a170aab5767d91f4fe3dc3b30e4c7d2f1e5757ac4411d3d2756e02979efb5"
+    },
+    {
+      "task_id": "mmlu:test:10275",
+      "subject": "prehistory",
+      "source_index": 10275,
+      "content_sha256": "3dd3a392e07807be54a1f2ac3d9c5850f6a7ecca8da4eba3e9e40ed0de61a4ba"
+    },
+    {
+      "task_id": "mmlu:test:10286",
+      "subject": "prehistory",
+      "source_index": 10286,
+      "content_sha256": "4f568e823cf08ff3a8587a7e0ab0ab281a94f5281a919bfeb3c87650b2d8ea09"
+    },
+    {
+      "task_id": "mmlu:test:10325",
+      "subject": "prehistory",
+      "source_index": 10325,
+      "content_sha256": "9a4f2065a43a7d6c278001ad93d50b855d43c5613193a27c20bd28fd718e267b"
+    },
+    {
+      "task_id": "mmlu:test:10414",
+      "subject": "professional_accounting",
+      "source_index": 10414,
+      "content_sha256": "227bbf92919eb6abb2b575eee9ec5a5726329fed511fd809bf48df864a637422"
+    },
+    {
+      "task_id": "mmlu:test:10419",
+      "subject": "professional_accounting",
+      "source_index": 10419,
+      "content_sha256": "1f7af357cba2d6b40eaaca8ca4726ab0c568c41c6f3ca0d302d0c5a2d38e8ac3"
+    },
+    {
+      "task_id": "mmlu:test:10487",
+      "subject": "professional_accounting",
+      "source_index": 10487,
+      "content_sha256": "f49317e48f9ee289b64a7c8cd0cf9e7175a3a38f053445da48878cc68fb988bb"
+    },
+    {
+      "task_id": "mmlu:test:10494",
+      "subject": "professional_accounting",
+      "source_index": 10494,
+      "content_sha256": "4a9e244e3d73e4d7769dad5037971489909327f3ffa49fb2ea852b967a285e79"
+    },
+    {
+      "task_id": "mmlu:test:10502",
+      "subject": "professional_accounting",
+      "source_index": 10502,
+      "content_sha256": "9343b728e0d4e30eb97c4d765eb7dfadc5c187aae7f9824c7f8e3967643fb1a2"
+    },
+    {
+      "task_id": "mmlu:test:10507",
+      "subject": "professional_accounting",
+      "source_index": 10507,
+      "content_sha256": "bc2273956d3de87db0d3302be404ae6d3add3af6764a8ee176a5b760010a9e7a"
+    },
+    {
+      "task_id": "mmlu:test:10511",
+      "subject": "professional_accounting",
+      "source_index": 10511,
+      "content_sha256": "d2b6838135346ea488db03d01848e92cb97147f3aee39d738dab9029a49102fc"
+    },
+    {
+      "task_id": "mmlu:test:10587",
+      "subject": "professional_accounting",
+      "source_index": 10587,
+      "content_sha256": "96dce9cbd9dd5e98937d21b09816c144612dbea6438da2df55d8e7e900377d83"
+    },
+    {
+      "task_id": "mmlu:test:10743",
+      "subject": "professional_law",
+      "source_index": 10743,
+      "content_sha256": "2296ba73b7e9b2913a80fb852f856b689fdc06683ee0b3bf6a6de279c4d973aa"
+    },
+    {
+      "task_id": "mmlu:test:10770",
+      "subject": "professional_law",
+      "source_index": 10770,
+      "content_sha256": "c7b6769155afc2c70d35747df31242937156b636cf6e239955fa5f0a8b170384"
+    },
+    {
+      "task_id": "mmlu:test:10780",
+      "subject": "professional_law",
+      "source_index": 10780,
+      "content_sha256": "3f06574e317b50c19d723c00158343074d3f4d10147deeb2f17ab86005d6de76"
+    },
+    {
+      "task_id": "mmlu:test:10885",
+      "subject": "professional_law",
+      "source_index": 10885,
+      "content_sha256": "132091870f8f190559fca014ae14502e851ba77c4639ff924ef649861926a81a"
+    },
+    {
+      "task_id": "mmlu:test:10902",
+      "subject": "professional_law",
+      "source_index": 10902,
+      "content_sha256": "028e4ef3aea509af98e3a6f91100797232502ef187a063fcd91bb3862ee23d1a"
+    },
+    {
+      "task_id": "mmlu:test:10924",
+      "subject": "professional_law",
+      "source_index": 10924,
+      "content_sha256": "8183f649053b79b3eddc306847de441c1c5347386b75a51d4e691e563150ef54"
+    },
+    {
+      "task_id": "mmlu:test:10936",
+      "subject": "professional_law",
+      "source_index": 10936,
+      "content_sha256": "67251364b59d60bad2eca2e8d8361d38cee96e3d7324f8ba4ff928a73662cfe5"
+    },
+    {
+      "task_id": "mmlu:test:10976",
+      "subject": "professional_law",
+      "source_index": 10976,
+      "content_sha256": "f2af1851368844e03082c9e7695d8f3f13f08200a5888c881d5f9b9168fb6619"
+    },
+    {
+      "task_id": "mmlu:test:11020",
+      "subject": "professional_law",
+      "source_index": 11020,
+      "content_sha256": "bed2c505b700b67c09f9c6763628727912995e9c7734fe5bf10ef4635efbce13"
+    },
+    {
+      "task_id": "mmlu:test:11036",
+      "subject": "professional_law",
+      "source_index": 11036,
+      "content_sha256": "279ca1b93937848c292058daba5787f1415a379964bc0209bfc3e6fd2df54ed3"
+    },
+    {
+      "task_id": "mmlu:test:11069",
+      "subject": "professional_law",
+      "source_index": 11069,
+      "content_sha256": "4708bee2610b8957b0a654f6b9354cd2c18648329e89c5b18b72f7e8be5b70d8"
+    },
+    {
+      "task_id": "mmlu:test:11098",
+      "subject": "professional_law",
+      "source_index": 11098,
+      "content_sha256": "f3711df493f27ed86443cbc7a9bb9124bb56f7e74939d4448c2b675592792973"
+    },
+    {
+      "task_id": "mmlu:test:11105",
+      "subject": "professional_law",
+      "source_index": 11105,
+      "content_sha256": "b82ff9a197cf2f42cd3b5b0dc412d97adb9544ed90549ad0a61c2c6423ab5c67"
+    },
+    {
+      "task_id": "mmlu:test:11185",
+      "subject": "professional_law",
+      "source_index": 11185,
+      "content_sha256": "30704955b81019e037429a41548b1dabc4c12da726bf97c5f9afa2c0cefd4dd2"
+    },
+    {
+      "task_id": "mmlu:test:11203",
+      "subject": "professional_law",
+      "source_index": 11203,
+      "content_sha256": "79b4aea6090cf46b0df4d505e9c27f36f93424a8908a32d98f709ee61dd8fe81"
+    },
+    {
+      "task_id": "mmlu:test:11304",
+      "subject": "professional_law",
+      "source_index": 11304,
+      "content_sha256": "841e503803544e8d78526c985000eff22b7bb2d03e70013bd144249cd89d5dcc"
+    },
+    {
+      "task_id": "mmlu:test:11355",
+      "subject": "professional_law",
+      "source_index": 11355,
+      "content_sha256": "75091705758048117056001b72061b34bbf798f0fd3ead035006ccea1ea7d2e8"
+    },
+    {
+      "task_id": "mmlu:test:11385",
+      "subject": "professional_law",
+      "source_index": 11385,
+      "content_sha256": "b272c4d943850c727d780a4d3318f0af9fefae3e8695c2abcdc3a0fc456565b4"
+    },
+    {
+      "task_id": "mmlu:test:11397",
+      "subject": "professional_law",
+      "source_index": 11397,
+      "content_sha256": "7fdfb65f13aa0ec02ad6875474a8da3458243ee8572d35df728e2c5446905ead"
+    },
+    {
+      "task_id": "mmlu:test:11437",
+      "subject": "professional_law",
+      "source_index": 11437,
+      "content_sha256": "0dd578675392f45f6a06c1ce99fb34528f46a029bae71edbc1b35f2a79b3dd59"
+    },
+    {
+      "task_id": "mmlu:test:11443",
+      "subject": "professional_law",
+      "source_index": 11443,
+      "content_sha256": "d4620cb596d9f3437fdaed82487294f2c588c490321f882fc4dc1b4d79cca4bc"
+    },
+    {
+      "task_id": "mmlu:test:11445",
+      "subject": "professional_law",
+      "source_index": 11445,
+      "content_sha256": "758a211fd92253ea4d4e61cdded825eba293f1d058004c272b74938d5ad3a1ce"
+    },
+    {
+      "task_id": "mmlu:test:11491",
+      "subject": "professional_law",
+      "source_index": 11491,
+      "content_sha256": "79a5c433f3b70b2cd347f27fd7a5476a8944573236fadd92f4bf2e160ae74186"
+    },
+    {
+      "task_id": "mmlu:test:11552",
+      "subject": "professional_law",
+      "source_index": 11552,
+      "content_sha256": "c298e76d2c539f797ad6493eda793554270edc602355a6487d4346bfe4dada10"
+    },
+    {
+      "task_id": "mmlu:test:11563",
+      "subject": "professional_law",
+      "source_index": 11563,
+      "content_sha256": "5af08ec5dbcf30a0c9cc0eb28f54fcc7d69153961919281e1c5c34e47566389f"
+    },
+    {
+      "task_id": "mmlu:test:11588",
+      "subject": "professional_law",
+      "source_index": 11588,
+      "content_sha256": "b6de10dc30fd040a8ec5d72024bf5b1306737c522b53666735c249b1bcb79bd6"
+    },
+    {
+      "task_id": "mmlu:test:11594",
+      "subject": "professional_law",
+      "source_index": 11594,
+      "content_sha256": "775170238ac72fd71f2493e6efdeba81c47ca58ca5d0709cb01bc3c846b5b969"
+    },
+    {
+      "task_id": "mmlu:test:11642",
+      "subject": "professional_law",
+      "source_index": 11642,
+      "content_sha256": "49284ff570ecfcf99d266326e142b6228552cc64e282aa71061958b87cb9d9d7"
+    },
+    {
+      "task_id": "mmlu:test:11672",
+      "subject": "professional_law",
+      "source_index": 11672,
+      "content_sha256": "60f2f7b4917062376044263dd76a9858adf8d4c9574087e689c44bb176abe5f6"
+    },
+    {
+      "task_id": "mmlu:test:11787",
+      "subject": "professional_law",
+      "source_index": 11787,
+      "content_sha256": "751f56b4d744a35f605508135b7042af746655cab7b2732008a5705ada755c71"
+    },
+    {
+      "task_id": "mmlu:test:11790",
+      "subject": "professional_law",
+      "source_index": 11790,
+      "content_sha256": "72a087ade726eff1e34f7a4b640624cf0dc8c6229011c84d0509b5095e183443"
+    },
+    {
+      "task_id": "mmlu:test:11808",
+      "subject": "professional_law",
+      "source_index": 11808,
+      "content_sha256": "cd92f8a540bdd64e44972dbab24467f23698e43c7119a98acb61c704fef24b33"
+    },
+    {
+      "task_id": "mmlu:test:11861",
+      "subject": "professional_law",
+      "source_index": 11861,
+      "content_sha256": "c956d5b53c9e0354050755b1ac98181554eb8e4049616e93eaf4b4615522deba"
+    },
+    {
+      "task_id": "mmlu:test:11890",
+      "subject": "professional_law",
+      "source_index": 11890,
+      "content_sha256": "f27727783dd3b2e1674e6e89c7987c1d51f124359af92b4ab467d36771dc83cc"
+    },
+    {
+      "task_id": "mmlu:test:11936",
+      "subject": "professional_law",
+      "source_index": 11936,
+      "content_sha256": "654eb55f82ae4d43bedc464d0eac2976261caf78023d6566595db704f3fb7de5"
+    },
+    {
+      "task_id": "mmlu:test:11945",
+      "subject": "professional_law",
+      "source_index": 11945,
+      "content_sha256": "463536b9a06f891f5af0575383d9a1d597c8f09d2f1467899eba0164debeffb7"
+    },
+    {
+      "task_id": "mmlu:test:11947",
+      "subject": "professional_law",
+      "source_index": 11947,
+      "content_sha256": "14cb35a10644ad5bcf32903943fc2e0728cc508b6dd9160f51f0096e5dc69b91"
+    },
+    {
+      "task_id": "mmlu:test:11967",
+      "subject": "professional_law",
+      "source_index": 11967,
+      "content_sha256": "2206003a28535f787e6b5e992e75f1d0b4b767d1a2706c22b78dcb49673ead27"
+    },
+    {
+      "task_id": "mmlu:test:11986",
+      "subject": "professional_law",
+      "source_index": 11986,
+      "content_sha256": "b72481d835bb22fadcd904af51151bc97df5839a9bd52dbae1917db2e862c15f"
+    },
+    {
+      "task_id": "mmlu:test:11996",
+      "subject": "professional_law",
+      "source_index": 11996,
+      "content_sha256": "35b3a87b573b8ebb083126f68ea2431efd8bbddf15486a82a291df75eaf540f1"
+    },
+    {
+      "task_id": "mmlu:test:12021",
+      "subject": "professional_law",
+      "source_index": 12021,
+      "content_sha256": "430af865f7d4e00d7bc5ef9042d6657f78490e2bd51db06a232fcec691fea12f"
+    },
+    {
+      "task_id": "mmlu:test:12099",
+      "subject": "professional_law",
+      "source_index": 12099,
+      "content_sha256": "0b90dd2deebc0edfc4029a31c389a60790243158beb1680312f5208940fac444"
+    },
+    {
+      "task_id": "mmlu:test:12127",
+      "subject": "professional_law",
+      "source_index": 12127,
+      "content_sha256": "103fbdd65936d5c43a2e0806e1e6109c905687769319def6f143645b3214f0f9"
+    },
+    {
+      "task_id": "mmlu:test:12149",
+      "subject": "professional_law",
+      "source_index": 12149,
+      "content_sha256": "ab0493e853da48f6f67e64b8b72de060dbe1b67dc8e33f3669b939f4df3c23c6"
+    },
+    {
+      "task_id": "mmlu:test:12197",
+      "subject": "professional_medicine",
+      "source_index": 12197,
+      "content_sha256": "4a27cc6264a0290069a459da813b5bc211876ad8f2df58cd8d8804396e725e68"
+    },
+    {
+      "task_id": "mmlu:test:12325",
+      "subject": "professional_medicine",
+      "source_index": 12325,
+      "content_sha256": "3cbbbda0a6332918c789ede65d5ba32c4b3d2ca9d404c3519e738847ba3f6037"
+    },
+    {
+      "task_id": "mmlu:test:12328",
+      "subject": "professional_medicine",
+      "source_index": 12328,
+      "content_sha256": "69f50a4b207bd9d155a81d7e5f10961101a141a2a846728a8cc696331ff11b46"
+    },
+    {
+      "task_id": "mmlu:test:12396",
+      "subject": "professional_medicine",
+      "source_index": 12396,
+      "content_sha256": "96565d67c54b7da61896b537a2562f94e22a6b8b3f4d1a8d24e50b6f9184d51c"
+    },
+    {
+      "task_id": "mmlu:test:12397",
+      "subject": "professional_medicine",
+      "source_index": 12397,
+      "content_sha256": "fda50baffc0af6d846189c3c82dd4a68c2ce1b738f3e4cbb874570dde267f01c"
+    },
+    {
+      "task_id": "mmlu:test:12408",
+      "subject": "professional_medicine",
+      "source_index": 12408,
+      "content_sha256": "2c408328d439b6dae92dd955998f4877e1a708ee5481864351efc736e8ab045d"
+    },
+    {
+      "task_id": "mmlu:test:12418",
+      "subject": "professional_medicine",
+      "source_index": 12418,
+      "content_sha256": "1abd9d7d087492273bc70ca768a924281d9db948268fd9c9382d569962528d8e"
+    },
+    {
+      "task_id": "mmlu:test:12419",
+      "subject": "professional_medicine",
+      "source_index": 12419,
+      "content_sha256": "1272365dbbafbb566b7498577e965e1a375f85a6d48cb3e77f23a80dc7e8db6e"
+    },
+    {
+      "task_id": "mmlu:test:12446",
+      "subject": "professional_psychology",
+      "source_index": 12446,
+      "content_sha256": "ce8335a390485fd3474b327773af3aec979808d6ebc9197381132f496e531cf5"
+    },
+    {
+      "task_id": "mmlu:test:12555",
+      "subject": "professional_psychology",
+      "source_index": 12555,
+      "content_sha256": "879fe971c64fac21cbe6f91161512b2209c2af008e60b342a86cce52680f8b97"
+    },
+    {
+      "task_id": "mmlu:test:12559",
+      "subject": "professional_psychology",
+      "source_index": 12559,
+      "content_sha256": "85d49e6124abfd1d3387e8d0653351b3de3789ce24e0b48e73f7aad4a207ece6"
+    },
+    {
+      "task_id": "mmlu:test:12679",
+      "subject": "professional_psychology",
+      "source_index": 12679,
+      "content_sha256": "89bc4c6267bf634c6f290dd96efb04cffd4481b40d1d43716c15449a9fb744a0"
+    },
+    {
+      "task_id": "mmlu:test:12687",
+      "subject": "professional_psychology",
+      "source_index": 12687,
+      "content_sha256": "ff34dc57941271d6bf519785332a0084a5141ef413b1f6c07034efe6eb40f5b9"
+    },
+    {
+      "task_id": "mmlu:test:12703",
+      "subject": "professional_psychology",
+      "source_index": 12703,
+      "content_sha256": "53548efc99dd81c2f79d55243d19bc317e7f5c21e55d2942e8f0e6cca5825aab"
+    },
+    {
+      "task_id": "mmlu:test:12722",
+      "subject": "professional_psychology",
+      "source_index": 12722,
+      "content_sha256": "91451e519c403832c74e5d7e9477a26ff88758c054ce699ee5e280113bbae984"
+    },
+    {
+      "task_id": "mmlu:test:12771",
+      "subject": "professional_psychology",
+      "source_index": 12771,
+      "content_sha256": "a435f934818307fd1e213a4f28a9791cf636f798d0b8f9b34135388681efc28f"
+    },
+    {
+      "task_id": "mmlu:test:12778",
+      "subject": "professional_psychology",
+      "source_index": 12778,
+      "content_sha256": "69b21e15c798d0227961291b3543b3a04190c689ebeb84a160f597b3c2a5b6c9"
+    },
+    {
+      "task_id": "mmlu:test:12866",
+      "subject": "professional_psychology",
+      "source_index": 12866,
+      "content_sha256": "e338e7592a576185c31469f5818c4e2b24f48476a033f48c09ccb5dc2d9b97c6"
+    },
+    {
+      "task_id": "mmlu:test:12885",
+      "subject": "professional_psychology",
+      "source_index": 12885,
+      "content_sha256": "c45fb1242fe8f1cf190ca92985fa6f4965354361ea7dbc500af517822517b8de"
+    },
+    {
+      "task_id": "mmlu:test:12938",
+      "subject": "professional_psychology",
+      "source_index": 12938,
+      "content_sha256": "44a307a50207fb68068f54084a11436f32c77dbc1cd7bede25cec544af2de114"
+    },
+    {
+      "task_id": "mmlu:test:13016",
+      "subject": "professional_psychology",
+      "source_index": 13016,
+      "content_sha256": "cfa75304e306d9cd4d5a74c876b2fbe91e12d855c93cc19c8aaa62b673eb2e1f"
+    },
+    {
+      "task_id": "mmlu:test:13032",
+      "subject": "professional_psychology",
+      "source_index": 13032,
+      "content_sha256": "462413e4c1989d71243f52d716857ae047723b3f82db5db3a73ba4eaae7a6afe"
+    },
+    {
+      "task_id": "mmlu:test:13043",
+      "subject": "professional_psychology",
+      "source_index": 13043,
+      "content_sha256": "c1b52ad66e67b213b418e3ed2e2b3582f4155cf82f956e7c62a5c7f4d1723584"
+    },
+    {
+      "task_id": "mmlu:test:13047",
+      "subject": "professional_psychology",
+      "source_index": 13047,
+      "content_sha256": "0aa2eae021d802970dca1a87e9d123896410b365d1f7db49226c88475f31e3b5"
+    },
+    {
+      "task_id": "mmlu:test:13114",
+      "subject": "public_relations",
+      "source_index": 13114,
+      "content_sha256": "0be85aa3079fcc33bb06657ff1ce3c0e28d1c76dff67d4f1c310cfe6010481f0"
+    },
+    {
+      "task_id": "mmlu:test:13124",
+      "subject": "public_relations",
+      "source_index": 13124,
+      "content_sha256": "acbb96e79d1a2dfae3e55abfa4b712e5aeef6714ca4e394cb6f92b8c5859003e"
+    },
+    {
+      "task_id": "mmlu:test:13136",
+      "subject": "public_relations",
+      "source_index": 13136,
+      "content_sha256": "c78955fa50cb86302cc4be4c0de896e1d419ccf5768cae7bb46f861344050565"
+    },
+    {
+      "task_id": "mmlu:test:13159",
+      "subject": "security_studies",
+      "source_index": 13159,
+      "content_sha256": "0392727a343b7ed03bf3e26266c903b015c7bd4ddcddc0585a69c4054ba941ff"
+    },
+    {
+      "task_id": "mmlu:test:13165",
+      "subject": "security_studies",
+      "source_index": 13165,
+      "content_sha256": "7af14b472c600e30b84d0c7b32a3611252a44684d3f31253ca10a6855a9d46ed"
+    },
+    {
+      "task_id": "mmlu:test:13207",
+      "subject": "security_studies",
+      "source_index": 13207,
+      "content_sha256": "61bd2c8c25f4d81c63e58160ff30e49907fc661a90c0481004f066161a40ce2a"
+    },
+    {
+      "task_id": "mmlu:test:13259",
+      "subject": "security_studies",
+      "source_index": 13259,
+      "content_sha256": "629f9d175666def6ddbcbc776e67e6bbb49dfebbe9b3230a27fe5d52cac10fd0"
+    },
+    {
+      "task_id": "mmlu:test:13271",
+      "subject": "security_studies",
+      "source_index": 13271,
+      "content_sha256": "6f51018a5ddb54dc572a3ba5cdabb64d7d75d30de2441a023a2ffaa70c9e7bb1"
+    },
+    {
+      "task_id": "mmlu:test:13356",
+      "subject": "security_studies",
+      "source_index": 13356,
+      "content_sha256": "8ce2badb52515c28e3918471137604dd2a29bd002ceb1ba9d10527b69777b159"
+    },
+    {
+      "task_id": "mmlu:test:13371",
+      "subject": "security_studies",
+      "source_index": 13371,
+      "content_sha256": "2a250d4679d89daaae2f127ecd065a837195cde421d1d758cdda8982ac2c6439"
+    },
+    {
+      "task_id": "mmlu:test:13504",
+      "subject": "sociology",
+      "source_index": 13504,
+      "content_sha256": "5fb982d02b965db9a97ab310c51d7ba2b9c756c31636fc068e72a09391ee5918"
+    },
+    {
+      "task_id": "mmlu:test:13516",
+      "subject": "sociology",
+      "source_index": 13516,
+      "content_sha256": "a26c62a9088b026f037c2283498faf5723e8a2685358b6d12570245da3211431"
+    },
+    {
+      "task_id": "mmlu:test:13549",
+      "subject": "sociology",
+      "source_index": 13549,
+      "content_sha256": "0a76e63baeb54a2aeb951576d21545c14e27deb811bc81cd84f1e9860d0d19c4"
+    },
+    {
+      "task_id": "mmlu:test:13554",
+      "subject": "sociology",
+      "source_index": 13554,
+      "content_sha256": "59cdcea20b147e8b0884766ad4c4d16659a24d4806c346e247f2e34b452920aa"
+    },
+    {
+      "task_id": "mmlu:test:13587",
+      "subject": "sociology",
+      "source_index": 13587,
+      "content_sha256": "7f76fabed911506598a053d058e544a7d8c14032bfee87a6b33e2ebfd9494146"
+    },
+    {
+      "task_id": "mmlu:test:13603",
+      "subject": "sociology",
+      "source_index": 13603,
+      "content_sha256": "421f2bf25da011cd92179f71f84852e4c86916205abbf0630e3ad28ff924831d"
+    },
+    {
+      "task_id": "mmlu:test:13647",
+      "subject": "us_foreign_policy",
+      "source_index": 13647,
+      "content_sha256": "9c80bd8601198d7fe546293926b064b4e748b36aa86b6e7719303c6be45db552"
+    },
+    {
+      "task_id": "mmlu:test:13660",
+      "subject": "us_foreign_policy",
+      "source_index": 13660,
+      "content_sha256": "2a35faf88c7cda0b7abd2c5e3337767acd583468cc55b558abea1df72441e3d5"
+    },
+    {
+      "task_id": "mmlu:test:13661",
+      "subject": "us_foreign_policy",
+      "source_index": 13661,
+      "content_sha256": "126ce430e6764931a0bc72e45409e190b4b4d6796937833a1162b8167ff89a2f"
+    },
+    {
+      "task_id": "mmlu:test:13711",
+      "subject": "virology",
+      "source_index": 13711,
+      "content_sha256": "16d2fc6d17e9701f9f72b591bc0595c4f10686ad1c1d4266a8e1f68db8a7d3dc"
+    },
+    {
+      "task_id": "mmlu:test:13746",
+      "subject": "virology",
+      "source_index": 13746,
+      "content_sha256": "fd637faac15d538da966364d0d66f80d44771a8fbd8e73d0456c8bbd987c6ea7"
+    },
+    {
+      "task_id": "mmlu:test:13801",
+      "subject": "virology",
+      "source_index": 13801,
+      "content_sha256": "a2bc503d154ae04389dba46d584f08c09822eb5aa570a4c658f9b8bf6825c094"
+    },
+    {
+      "task_id": "mmlu:test:13816",
+      "subject": "virology",
+      "source_index": 13816,
+      "content_sha256": "c64d9dce3753037a600796b0e85ac00027e2e0724e6b43474cdb72095e9caae4"
+    },
+    {
+      "task_id": "mmlu:test:13845",
+      "subject": "virology",
+      "source_index": 13845,
+      "content_sha256": "36e7b2ae18585f74926bae927a1e675a7a5a8337672632497585defe6d0af68c"
+    },
+    {
+      "task_id": "mmlu:test:13982",
+      "subject": "world_religions",
+      "source_index": 13982,
+      "content_sha256": "6f2242e6fa525511bb9e97d6122804f540a302cdab286fcb47828df1a078890c"
+    },
+    {
+      "task_id": "mmlu:test:13988",
+      "subject": "world_religions",
+      "source_index": 13988,
+      "content_sha256": "84468f8dbd46bf52c46051475b8f04de048dce8d2104e34a5f8e3f8a66bf8492"
+    },
+    {
+      "task_id": "mmlu:test:13998",
+      "subject": "world_religions",
+      "source_index": 13998,
+      "content_sha256": "da9f345b21c54655f6ad4501b70b706827b83f47c7fbfa32a72f189cbb94658e"
+    },
+    {
+      "task_id": "mmlu:test:14013",
+      "subject": "world_religions",
+      "source_index": 14013,
+      "content_sha256": "2627e1cccdf314f64713eec4a307ffe984948919c6f29a2e5c83f093d5f29359"
+    },
+    {
+      "task_id": "mmlu:test:14032",
+      "subject": "world_religions",
+      "source_index": 14032,
+      "content_sha256": "1627fd1d766393c226e56468ab914d363a6b788dda56d86a3be55b59f880fcb0"
+    }
+  ]
+}

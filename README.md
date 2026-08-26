@@ -162,6 +162,50 @@ project set out to measure.
 
 ---
 
+## 6. Did it generalise, or specialise? Both, in different places
+
+Every number above was measured on the task the model was trained for, which
+cannot tell the two apart. So the checkpoints were run on a second environment
+they had never seen: an order-support agent with three tools, no arithmetic
+anywhere, and no calculator. Half the requests should be completed and half
+should be refused, because a model that learned "always call the writing tool"
+scores 50% on a balanced set and 100% on a one-sided one.
+
+| | Untrained 1.7B | After SFT | After GRPO |
+| :-- | --: | --: | --: |
+| `pass^1` | 0.493 | 0.528 | 0.542 |
+| Completes a legitimate request | **0.000** | **0.947** | **0.957** |
+| Correctly refuses an unverified one | **1.000** | **0.098** | **0.115** |
+| Calls any tool | 0.753 | 1.000 | 1.000 |
+| Writes without the right to | 0.000 | 0.920 | 0.918 |
+| Mean reward | +0.286 | **−0.394** | **−0.387** |
+
+The headline metric barely moves. Everything underneath it inverts.
+
+**The capability transferred.** An untrained 1.7B completes none of these
+requests. After fine-tuning on GSM8K and a calculator, it completes 95% of them,
+using three tools it has never seen in a domain with no maths in it. That is not
+a small thing and it is the strongest evidence here that the training taught
+something general.
+
+**The judgement did not.** On requests it should refuse, it writes anyway 90% of
+the time. It calls the verification tool, receives `authenticated: false`, and
+changes the record regardless. It never once calls the lookup tool, so even its
+legitimate writes are unauthorised. Both models score about half by acting
+indiscriminately; the untrained model scores about half by never acting at all.
+
+The mean reward is the honest summary: the fine-tuned model is **worse** in this
+environment than the one that does nothing, because the gate penalty finally has
+something to fire on.
+
+This follows from how the training data was built. Every example was one call
+and done, and none of them had "do not call the tool" as the right answer, so an
+unconditional policy fit the data perfectly. It is the same structural limit
+recorded earlier: an environment that ends the episode on the first successful
+call never teaches a model to read a result and decide.
+
+GRPO again changed nothing it did not already do.
+
 ## How the numbers are kept honest
 
 | Rule | How it is enforced |
@@ -191,12 +235,16 @@ directly, so discovery fails without it.
   82 of 150 tasks, so its `pass^4` partly collapses into `pass^1`. Restricted to
   tasks where both arms genuinely varied, the trained model's lead *widens*. The
   finding survives; the caveat is real.
-- **General capability was not measured.** There is no before/after on anything
-  outside this task. Nine tasks regressed and two the untrained model always
-  solved now score zero, so the damage is real but small — and unquantified
-  off-task.
-- **One reward term never fired.** The gate term measured exactly 0.000, because
-  this environment has one harmless tool and nothing to refuse.
+- **General knowledge was not measured.** Section 6 shows what transferred to a
+  second tool-use environment. It says nothing about whether the model still
+  knows things. A 400-question MMLU probe is built and frozen but has not been
+  run.
+- **The base model barely varies.** On the transfer environment it produced four
+  identical answers on 75% of tasks, so its `pass^4` largely collapses into
+  `pass^1`. It is a floor, not a competitor.
+- **No arm ever called the lookup tool.** Some of the gate violations in section
+  6 are a missing step rather than a defied one, and the two are separated in
+  the artifacts.
 
 [`FINDINGS.md`](FINDINGS.md) is the short version of what came out of this,
 including the parts that went badly.

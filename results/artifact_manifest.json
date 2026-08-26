@@ -184,6 +184,24 @@
       "config_sha256": "57901682f8bc4576292483229289f22f5894cafb852ed357a9068b38fe24e170",
       "declares_gate_demotion": true
     },
+    "phase_b-base-8cef0b8.json": {
+      "sha256": "57b1bfe2e58f245b0296c09dfcf0f13fb4e75747608ffd4f59aa60a23a047e84",
+      "bytes": 1563,
+      "recorded_in_commit": null,
+      "kind": "phase_b_transfer_eval"
+    },
+    "phase_b-grpo-8cef0b8.json": {
+      "sha256": "a541695789746d8c1fa101dad47261220ffb8b330541cb28a5099a43e2de8316",
+      "bytes": 1647,
+      "recorded_in_commit": null,
+      "kind": "phase_b_transfer_eval"
+    },
+    "phase_b-sft-8cef0b8.json": {
+      "sha256": "6567da0a360a2587d1eb5f6f825994bc951575b1d0d69d528b9c6c0e458c45ed",
+      "bytes": 1629,
+      "recorded_in_commit": null,
+      "kind": "phase_b_transfer_eval"
+    },
     "sft-candidates-a2dbe77.json": {
       "sha256": "7972c19d490263fd0ee7f127080bd43d7ef4aae762b40194694f0fafb6308d49",
       "bytes": 2348,
