@@ -187,19 +187,19 @@
     "phase_b-base-8cef0b8.json": {
       "sha256": "57b1bfe2e58f245b0296c09dfcf0f13fb4e75747608ffd4f59aa60a23a047e84",
       "bytes": 1563,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
       "kind": "phase_b_transfer_eval"
     },
     "phase_b-grpo-8cef0b8.json": {
       "sha256": "a541695789746d8c1fa101dad47261220ffb8b330541cb28a5099a43e2de8316",
       "bytes": 1647,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
       "kind": "phase_b_transfer_eval"
     },
     "phase_b-sft-8cef0b8.json": {
       "sha256": "6567da0a360a2587d1eb5f6f825994bc951575b1d0d69d528b9c6c0e458c45ed",
       "bytes": 1629,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
       "kind": "phase_b_transfer_eval"
     },
     "sft-candidates-a2dbe77.json": {
@@ -297,6 +297,24 @@
       "bytes": 4089,
       "recorded_in_commit": "0932fbada47436b41c0a89cc1100c27149baf5d9",
       "kind": "phase_a_sft_arm"
+    },
+    "utility-base-30007ed.json": {
+      "sha256": "35bede7df004e7acfd209d3c2589370bab0fc00a32c017a3f4706734240612fe",
+      "bytes": 5999,
+      "recorded_in_commit": null,
+      "kind": "utility_eval"
+    },
+    "utility-grpo-30007ed.json": {
+      "sha256": "1b88cf099ba522130737d4f933d7e56650e11a395264cdf4a06f5e169aeda834",
+      "bytes": 6056,
+      "recorded_in_commit": null,
+      "kind": "utility_eval"
+    },
+    "utility-sft-30007ed.json": {
+      "sha256": "7b830f874e23fbe92ca069729fc8be9547f7f74cd31c5fcdd61eb3aa90054482",
+      "bytes": 6082,
+      "recorded_in_commit": null,
+      "kind": "utility_eval"
     }
   }
 }

@@ -52,6 +52,19 @@ class ExtractionTests(unittest.TestCase):
     def test_lowercase_is_read(self) -> None:
         self.assertEqual(extract_choice("the answer is b"), "B")
 
+    def test_answer_is_colon_is_read(self) -> None:
+        """A real miss, found by reading failures rather than trusting the rate.
+
+        The first version of this pattern allowed "answer is B" and "answer: B"
+        but not "answer is: B", which the model writes often. Correct answers
+        were being scored unreadable, and the probe would have reported damage
+        that had not happened.
+        """
+
+        self.assertEqual(
+            extract_choice("The correct answer is: **C. is a motor response**"), "C"
+        )
+
     def test_a_stated_answer_beats_a_letter_mentioned_while_reasoning(self) -> None:
         """Otherwise the probe scores the model's first thought, not its answer."""
 
@@ -154,6 +167,24 @@ class SummaryTests(unittest.TestCase):
 
     def test_an_empty_run_summarises_to_nothing(self) -> None:
         self.assertEqual(summarise([]), {"questions": 0})
+
+    def test_running_out_of_budget_is_separated_from_rambling_to_a_stop(self) -> None:
+        """These mean different things and must not share one number.
+
+        An answer cut off by the token budget says nothing about knowledge. One
+        that used less than its budget and still named no choice does. If one
+        arm reasons longer than another, folding the two together would bias
+        the accuracy comparison in the direction of whichever arm is terser.
+        """
+
+        scores = [
+            score_completion("Let me work through this...", gold_index=0, truncated=True),
+            score_completion("I have no idea.", gold_index=0, truncated=False),
+        ]
+        summary = summarise(scores)
+        self.assertEqual(summary["extraction_failure_rate"], 1.0)
+        self.assertEqual(summary["truncated_rate"], 0.5)
+        self.assertEqual(summary["unreadable_within_budget_rate"], 0.5)
 
 
 if __name__ == "__main__":

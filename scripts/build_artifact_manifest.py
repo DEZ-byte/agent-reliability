@@ -43,6 +43,7 @@ ARTIFACT_GLOBS: Final = (
     "comparator-*.json",
     "h1-comparison-*.json",
     "phase_b-*.json",
+    "utility-*.json",
 )
 
 SCHEMA_VERSION: Final = 1

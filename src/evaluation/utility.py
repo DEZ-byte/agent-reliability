@@ -37,7 +37,13 @@ CHOICE_LABELS: Final = ("A", "B", "C", "D")
 # Ordered most-specific first. "answer is B" must win over a stray "B" earlier
 # in the reasoning, so the explicit forms are tried before the bare letter.
 _PATTERNS: Final = (
-    re.compile(r"\banswer\s*(?:is|:)\s*\(?\*{0,2}([A-D])\b", re.IGNORECASE),
+    # "answer is B", "answer: B", and "answer is: B" all mean the same thing.
+    # An earlier version allowed only the first two, which scored a correctly
+    # answered question as unreadable and would have reported damage that had
+    # not happened. Found by reading the failures rather than trusting the rate.
+    re.compile(
+        r"\banswer\s*(?:is)?\s*:?\s*\(?\*{0,2}([A-D])\b", re.IGNORECASE
+    ),
     re.compile(r"^\s*\(?\*{0,2}([A-D])[\)\.\*:]", re.MULTILINE),
     re.compile(r"\boption\s+(?:is\s+)?\(?\*{0,2}([A-D])\b", re.IGNORECASE),
     re.compile(r"^\s*\*{0,2}([A-D])\s*$", re.MULTILINE),
@@ -54,6 +60,7 @@ class UtilityScore:
     extracted: str | None
     emitted_tool_call: bool
     generated_chars: int
+    truncated: bool = False
 
     @property
     def extraction_failed(self) -> bool:
@@ -88,8 +95,17 @@ def emitted_tool_call(completion: str) -> bool:
     return any(marker in completion for marker in _TOOL_CALL_MARKERS)
 
 
-def score_completion(completion: str, *, gold_index: int) -> UtilityScore:
-    """Score one multiple-choice answer."""
+def score_completion(
+    completion: str, *, gold_index: int, truncated: bool = False
+) -> UtilityScore:
+    """Score one multiple-choice answer.
+
+    `truncated` marks an answer that ran out of token budget before it named a
+    choice. Those are unreadable for a reason that has nothing to do with what
+    the model knows, and if one arm reasons at greater length than another the
+    rate will differ between them, so it is carried through to the summary
+    rather than folded into the accuracy.
+    """
 
     if not 0 <= gold_index < len(CHOICE_LABELS):
         raise ValueError(f"gold_index {gold_index} is outside the choice range")
@@ -99,6 +115,7 @@ def score_completion(completion: str, *, gold_index: int) -> UtilityScore:
         extracted=extracted,
         emitted_tool_call=emitted_tool_call(completion),
         generated_chars=len(completion),
+        truncated=truncated,
     )
 
 
@@ -116,6 +133,15 @@ def summarise(scores: Sequence[UtilityScore]) -> dict[str, Any]:
         # knowledge and lost the ability to answer plainly.
         "tool_call_rate": sum(1 for s in scores if s.emitted_tool_call) / total,
         "extraction_failure_rate": sum(1 for s in scores if s.extraction_failed)
+        / total,
+        # Split out because the two have different meanings. An answer that ran
+        # out of budget says nothing about knowledge; one that rambled to a stop
+        # inside the budget does. A difference in this rate between arms would
+        # also bias the accuracy comparison, so it must stay visible.
+        "truncated_rate": sum(1 for s in scores if s.truncated) / total,
+        "unreadable_within_budget_rate": sum(
+            1 for s in scores if s.extraction_failed and not s.truncated
+        )
         / total,
         "mean_generated_chars": sum(s.generated_chars for s in scores) / total,
     }

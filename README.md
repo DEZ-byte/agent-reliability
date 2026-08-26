@@ -159,6 +159,17 @@ project set out to measure.
 | "It got better at arithmetic." | No. Probed with no calculator at all: 64.0% before, 66.0% after. It got better at *writing the expression*. |
 | "It learned to cheat the grader." | No. The reward pays the same for restating a remembered answer as for real work — deliberately, so the behaviour is measured rather than hidden. The rate fell from 3.0% untrained to 1.2% fine-tuned to 1.0% after RL. |
 | "More seeds would sharpen this." | No. Between-run standard deviation is 0.019; a single run's interval is ~0.069 either side. Training is steadier than 150 tasks can resolve, so a bigger test split would buy more than more seeds. |
+| **"It forgot things."** | **No.** 400 held-out MMLU questions, no tool offered: 53.5% untrained, 54.3% fine-tuned. Paired difference +0.005, 95% interval −0.038 to +0.049. 38 questions improved, 36 got worse. |
+| **"It now calls tools at everything."** | **No.** On a benchmark offering no tools, every arm emitted a tool call on **0.0%** of questions. The habit is tied to being offered a tool, not to being asked a question. |
+
+The knowledge result is the one worth stating plainly, because it is the first
+thing anyone asks and the project could not answer it until now. Fine-tuning a
+1.7B on a thousand calculator trajectories did not measurably cost it general
+knowledge, and did not leak the tool-calling habit into contexts with no tools.
+
+One real behavioural change did show up. The fine-tuned model answers far more
+briefly — 227 characters on average against the untrained model's 628 — and is
+cut off by the token budget a quarter as often. Terser, not worse.
 
 ---
 
@@ -235,10 +246,14 @@ directly, so discovery fails without it.
   82 of 150 tasks, so its `pass^4` partly collapses into `pass^1`. Restricted to
   tasks where both arms genuinely varied, the trained model's lead *widens*. The
   finding survives; the caveat is real.
-- **General knowledge was not measured.** Section 6 shows what transferred to a
-  second tool-use environment. It says nothing about whether the model still
-  knows things. A 400-question MMLU probe is built and frozen but has not been
-  run.
+- **The knowledge probe is 400 questions, not 14,042.** A stratified sample of
+  MMLU, which bounds how small a change it could detect: the paired interval is
+  about ±4 points, so a loss smaller than that would not show up here.
+- **The untrained model is cut off more often.** It was truncated on 40% of
+  questions against the fine-tuned model's 16%, because it answers at length.
+  Most truncated answers still named a choice, and restricting to readable
+  answers moves the comparison by about a point in the other direction, so the
+  null holds either way — but it is a real asymmetry and it is recorded.
 - **The base model barely varies.** On the transfer environment it produced four
   identical answers on 75% of tasks, so its `pass^4` largely collapses into
   `pass^1`. It is a floor, not a competitor.

@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-26T10:46:37.806434Z",
+  "kind": "utility_eval",
+  "label": "base",
+  "model": {
+    "id": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+  },
+  "adapter": null,
+  "benchmark": "mmlu",
+  "split_manifest_sha256": "e6350e70e23948cd617fdf4a64a98e63fb69bdf98a0d47d97b9d3a72a145a13e",
+  "decoding": {
+    "greedy": true,
+    "max_new_tokens": 320
+  },
+  "tools_offered": false,
+  "prompt_sha256": {
+    "system": "38ea3ef2c10603c693854a3b35a6658898f1f986192c59639a8dfb31d39b5197",
+    "user": "4c4cd20005ff120d8212f5628afa101e77a28a02414cadb55ee77347070487ea"
+  },
+  "executed": true,
+  "source_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "summary": {
+    "questions": 400,
+    "accuracy": 0.535,
+    "tool_call_rate": 0.0,
+    "extraction_failure_rate": 0.0575,
+    "truncated_rate": 0.4,
+    "unreadable_within_budget_rate": 0.0,
+    "mean_generated_chars": 627.6975
+  },
+  "by_subject": {
+    "abstract_algebra": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "anatomy": {
+      "questions": 4,
+      "accuracy": 0.75
+    },
+    "astronomy": {
+      "questions": 4,
+      "accuracy": 0.5
+    },
+    "business_ethics": {
+      "questions": 3,
+      "accuracy": 0.3333333333333333
+    },
+    "clinical_knowledge": {
+      "questions": 8,
+      "accuracy": 0.75
+    },
+    "college_biology": {
+      "questions": 4,
+      "accuracy": 0.5
+    },
+    "college_chemistry": {
+      "questions": 3,
+      "accuracy": 0.3333333333333333
+    },
+    "college_computer_science": {
+      "questions": 3,
+      "accuracy": 0.0
+    },
+    "college_mathematics": {
+      "questions": 3,
+      "accuracy": 0.0
+    },
+    "college_medicine": {
+      "questions": 5,
+      "accuracy": 0.2
+    },
+    "college_physics": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "computer_security": {
+      "questions": 3,
+      "accuracy": 1.0
+    },
+    "conceptual_physics": {
+      "questions": 7,
+      "accuracy": 0.5714285714285714
+    },
+    "econometrics": {
+      "questions": 3,
+      "accuracy": 0.3333333333333333
+    },
+    "electrical_engineering": {
+      "questions": 4,
+      "accuracy": 0.75
+    },
+    "elementary_mathematics": {
+      "questions": 11,
+      "accuracy": 0.7272727272727273
+    },
+    "formal_logic": {
+      "questions": 4,
+      "accuracy": 0.0
+    },
+    "global_facts": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "high_school_biology": {
+      "questions": 9,
+      "accuracy": 0.6666666666666666
+    },
+    "high_school_chemistry": {
+      "questions": 6,
+      "accuracy": 0.8333333333333334
+    },
+    "high_school_computer_science": {
+      "questions": 3,
+      "accuracy": 0.3333333333333333
+    },
+    "high_school_european_history": {
+      "questions": 4,
+      "accuracy": 0.25
+    },
+    "high_school_geography": {
+      "questions": 6,
+      "accuracy": 0.6666666666666666
+    },
+    "high_school_government_and_politics": {
+      "questions": 5,
+      "accuracy": 0.4
+    },
+    "high_school_macroeconomics": {
+      "questions": 11,
+      "accuracy": 0.45454545454545453
+    },
+    "high_school_mathematics": {
+      "questions": 8,
+      "accuracy": 0.5
+    },
+    "high_school_microeconomics": {
+      "questions": 7,
+      "accuracy": 0.42857142857142855
+    },
+    "high_school_physics": {
+      "questions": 4,
+      "accuracy": 0.5
+    },
+    "high_school_psychology": {
+      "questions": 15,
+      "accuracy": 0.7333333333333333
+    },
+    "high_school_statistics": {
+      "questions": 6,
+      "accuracy": 0.3333333333333333
+    },
+    "high_school_us_history": {
+      "questions": 6,
+      "accuracy": 0.3333333333333333
+    },
+    "high_school_world_history": {
+      "questions": 7,
+      "accuracy": 0.7142857142857143
+    },
+    "human_aging": {
+      "questions": 5,
+      "accuracy": 0.4
+    },
+    "human_sexuality": {
+      "questions": 4,
+      "accuracy": 0.75
+    },
+    "international_law": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "jurisprudence": {
+      "questions": 3,
+      "accuracy": 0.3333333333333333
+    },
+    "logical_fallacies": {
+      "questions": 5,
+      "accuracy": 0.4
+    },
+    "machine_learning": {
+      "questions": 3,
+      "accuracy": 1.0
+    },
+    "management": {
+      "questions": 3,
+      "accuracy": 1.0
+    },
+    "marketing": {
+      "questions": 7,
+      "accuracy": 0.7142857142857143
+    },
+    "medical_genetics": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "miscellaneous": {
+      "questions": 22,
+      "accuracy": 0.6818181818181818
+    },
+    "moral_disputes": {
+      "questions": 10,
+      "accuracy": 0.7
+    },
+    "moral_scenarios": {
+      "questions": 25,
+      "accuracy": 0.12
+    },
+    "nutrition": {
+      "questions": 9,
+      "accuracy": 0.6666666666666666
+    },
+    "philosophy": {
+      "questions": 9,
+      "accuracy": 0.6666666666666666
+    },
+    "prehistory": {
+      "questions": 9,
+      "accuracy": 0.4444444444444444
+    },
+    "professional_accounting": {
+      "questions": 8,
+      "accuracy": 0.5
+    },
+    "professional_law": {
+      "questions": 44,
+      "accuracy": 0.3409090909090909
+    },
+    "professional_medicine": {
+      "questions": 8,
+      "accuracy": 0.5
+    },
+    "professional_psychology": {
+      "questions": 16,
+      "accuracy": 0.75
+    },
+    "public_relations": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "security_studies": {
+      "questions": 7,
+      "accuracy": 0.42857142857142855
+    },
+    "sociology": {
+      "questions": 6,
+      "accuracy": 0.8333333333333334
+    },
+    "us_foreign_policy": {
+      "questions": 3,
+      "accuracy": 0.6666666666666666
+    },
+    "virology": {
+      "questions": 5,
+      "accuracy": 0.8
+    },
+    "world_religions": {
+      "questions": 5,
+      "accuracy": 1.0
+    }
+  }
+}

@@ -53,7 +53,10 @@ SYSTEM_PROMPT: Final = (
 )
 USER_PROMPT: Final = "{question}\n\nA. {a}\nB. {b}\nC. {c}\nD. {d}\n\nAnswer:"
 
-MAX_NEW_TOKENS: Final = 128
+# 128 left a sixth of answers cut off mid-reasoning. That is not knowledge
+# lost, and if one arm reasons at greater length than another it would bias
+# the comparison, so the budget is wider and what still gets cut is counted.
+MAX_NEW_TOKENS: Final = 320
 MAX_SEQUENCE_TOKENS: Final = 2048
 
 
@@ -204,10 +207,17 @@ def main() -> int:
                     pad_token_id=pad,
                 )
             for question, row in zip(chunk, generated):
-                completion = tokenizer.decode(
-                    row[prompt_length:], skip_special_tokens=True
+                new_tokens = row[prompt_length:]
+                # A generation that used its whole budget without emitting a
+                # stop token was cut off rather than finished.
+                truncated = (
+                    len(new_tokens) >= MAX_NEW_TOKENS
+                    and int(new_tokens[-1]) != tokenizer.eos_token_id
                 )
-                score = score_completion(completion, gold_index=question.gold_index)
+                completion = tokenizer.decode(new_tokens, skip_special_tokens=True)
+                score = score_completion(
+                    completion, gold_index=question.gold_index, truncated=truncated
+                )
                 record = {
                     "task_id": question.task_id,
                     "subject": question.subject,
@@ -215,6 +225,7 @@ def main() -> int:
                     "extracted": score.extracted,
                     "correct": score.correct,
                     "emitted_tool_call": score.emitted_tool_call,
+                    "truncated": truncated,
                     "completion": completion,
                 }
                 rows.append(record)
@@ -227,7 +238,11 @@ def main() -> int:
             )
 
     scores = [
-        score_completion(r["completion"], gold_index=CHOICE_LABELS.index(r["gold"]))
+        score_completion(
+            r["completion"],
+            gold_index=CHOICE_LABELS.index(r["gold"]),
+            truncated=r["truncated"],
+        )
         for r in rows
     ]
     result["summary"] = summarise(scores)
