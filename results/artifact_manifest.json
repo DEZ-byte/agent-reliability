@@ -305,7 +305,7 @@
       "kind": "utility_eval"
     },
     "utility-grpo-30007ed.json": {
-      "sha256": "5f29ac819b9228df6f950b8204612b60f53bca125e673a3a28ffb653aedc521e",
+      "sha256": "1b88cf099ba522130737d4f933d7e56650e11a395264cdf4a06f5e169aeda834",
       "bytes": 6056,
       "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
       "kind": "utility_eval"
@@ -319,7 +319,7 @@
     "weight-change-7e33eb5.json": {
       "sha256": "1351fb972b1d81d6e8c75f894ee37c9aebc2b29219124c94008b7ac33b90ce51",
       "bytes": 1571,
-      "recorded_in_commit": null,
+      "recorded_in_commit": "9bc4f143ceda1ce562647357dc45f74d96e5a3ed",
       "kind": "weight_change"
     }
   }
