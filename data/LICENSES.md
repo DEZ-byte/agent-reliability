@@ -33,9 +33,19 @@ released artifact.
 | Scaffolded comparator | [`meta-llama/Llama-3.1-8B-Instruct`](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) @ [`0e9e39f249a16976918f6564b8830bc894c89659`](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct/tree/0e9e39f249a16976918f6564b8830bc894c89659) | **Manual gate**; a Hugging Face account must submit contact information and accept Meta's terms | [`llama3.1`](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct/blob/0e9e39f249a16976918f6564b8830bc894c89659/LICENSE), Llama 3.1 Community License plus the incorporated [Acceptable Use Policy](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct/blob/0e9e39f249a16976918f6564b8830bc894c89659/USE_POLICY.md) | Redistribution requires the agreement, “Built with Llama,” and the prescribed NOTICE. A distributed model improved with Llama materials or outputs must have a name beginning with “Llama.” The separate-license threshold applies when the licensee or affiliates exceeded 700M monthly active users in the preceding calendar month on the Llama 3.1 version's release date. The blueprint uses this checkpoint for inference only, not training. |
 | User simulator | [`Qwen/Qwen2.5-14B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct) @ [`cf98f3b3bbb457ad9e2bb7baf9a0125b6b88caa8`](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct/tree/cf98f3b3bbb457ad9e2bb7baf9a0125b6b88caa8) | Public; no click-through gate | [`apache-2.0`](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct/blob/cf98f3b3bbb457ad9e2bb7baf9a0125b6b88caa8/LICENSE) | Apache 2.0 redistribution duties apply. The planned role is evaluation-only; simulator outputs still need provenance if any are later retained or released. |
 
-The Qwen primary and scale winners remain pending the measured smoke test. The
-license table must not be used as a proxy for the required tool-template,
-VRAM, throughput, and training-stack measurements.
+The Qwen winners are settled. D-048 selected the Qwen3 bundle, so
+`Qwen/Qwen3-4B` and `Qwen/Qwen3-1.7B` are recorded `eligible`, and
+`Qwen/Qwen2.5-3B-Instruct` is `ineligible` because it ships under the
+non-commercial Qwen Research License rather than Apache 2.0. The decision is
+public in [`configs/release_decision.md`](../configs/release_decision.md),
+including which technical check the chosen bundle fails.
+
+The Llama entries and the user simulator remain `pending` with a null
+decision. They are used for inference only and nothing derived from them is
+distributed, so no release scope has had to be resolved.
+
+The license table is still not a proxy for the tool-template, VRAM, throughput
+and training-stack measurements. Those were run separately.
 
 Each registry entry also has an independent release gate. A
 `release_eligibility` value of `pending` requires a null `release_decision`.
@@ -64,9 +74,15 @@ source, subject to accepting its access conditions and resolving the card's
 “research purposes only” wording. Its CC BY attribution load is explicit and
 manageable, and its publisher provides materially stronger generation and
 verification provenance. Keep Glaive as a fallback only if its publisher adds
-or confirms full dataset license terms and adequate provenance. The registry
-therefore keeps both candidates at `pending`; this recommendation is not the
-dataset decision itself.
+or confirms full dataset license terms and adequate provenance. D-058 resolved
+this: the registry records `Salesforce/xlam-function-calling-60k` as
+`eligible` and `glaiveai/glaive-function-calling-v2` as `ineligible`.
+
+Neither was used in the end. The measured schema failure rate was 0.00% on
+both checkpoints, so there was no format problem for a format-grounding
+dataset to fix, and mixing one in would have spent data budget and CC BY
+attribution duty on nothing. See finding F in
+[`FINDINGS.md`](../FINDINGS.md).
 
 ## Release checklist
 

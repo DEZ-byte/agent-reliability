@@ -44,6 +44,7 @@ ARTIFACT_GLOBS: Final = (
     "h1-comparison-*.json",
     "phase_b-*.json",
     "utility-*.json",
+    "weight-change-*.json",
 )
 
 SCHEMA_VERSION: Final = 1

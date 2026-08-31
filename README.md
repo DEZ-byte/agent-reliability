@@ -96,10 +96,18 @@ a reasoning limit, not a formatting one.
 
 400 GRPO steps on an execution-backed reward, starting from the fine-tuned model.
 
-| Learning rate | `pass^1` change | 95% interval | Weights moved |
-| :-- | --: | :--: | --: |
-| 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% |
-| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% |
+| Learning rate | `pass^1` change | 95% interval | Adapter moved | What the model sees |
+| :-- | --: | :--: | --: | --: |
+| 1e-6 | +0.002 | −0.010 – 0.013 | 0.45% | 1.5% |
+| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% | 13.8% |
+
+The last two columns are recomputed from the adapters in
+[`results/weight-change-7e33eb5.json`](results/weight-change-7e33eb5.json)
+rather than quoted from a private note. "Adapter moved" is the relative
+Frobenius change across every adapter tensor; "what the model sees" is the same
+measure applied to the per-module LoRA product, which is what actually reaches
+the base weights. The higher rate moved the policy roughly nine times further on
+both.
 
 Both intervals contain zero. The tight one rules out any effect larger than about
 a point, rather than merely failing to find one.

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-30T16:57:23.339827Z",
+  "kind": "weight_change",
+  "method": "Relative Frobenius norm of the difference, computed in float64. The parameter figure is taken over every adapter tensor at once. The effective figure is taken over the per-module LoRA product (alpha / r) * B @ A, which is what the base weights actually see.",
+  "before": "checkpoints\\qwen3-1.7b-sft-seed20260824\\checkpoint-86",
+  "before_weights_sha256": "b46e412431d4d64273472b4a2e3c4e6cadcfaf132b7f5b5186622007f0ebe9da",
+  "comparisons": [
+    {
+      "after": "checkpoints\\qwen3-1.7b-grpo",
+      "after_weights_sha256": "83f7055c1a603386f142e9cd293b4a9b3fad0880ffaa5e47e307be42a396d7c2",
+      "adapter_parameter_relative_change": 0.004488470808625577,
+      "effective_delta_relative_change": 0.015458821297938592,
+      "modules_compared": 196,
+      "tensors_compared": 392,
+      "lora_scaling": {
+        "before": 2.0,
+        "after": 2.0
+      }
+    },
+    {
+      "after": "checkpoints\\qwen3-1.7b-grpo-lr1e5",
+      "after_weights_sha256": "16aca300e5c6d7dfe14868577ecb3a75effc284eb0d3a585d2197d11c52687b4",
+      "adapter_parameter_relative_change": 0.03817546852205232,
+      "effective_delta_relative_change": 0.13843684362780614,
+      "modules_compared": 196,
+      "tensors_compared": 392,
+      "lora_scaling": {
+        "before": 2.0,
+        "after": 2.0
+      }
+    }
+  ],
+  "executed": true,
+  "source_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}
