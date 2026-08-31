@@ -31,7 +31,22 @@ from scripts import generate_sft_trajectories as gen  # noqa: E402
 from scripts import run_primary_arm_pipeline as pipeline  # noqa: E402
 from scripts import select_checkpoint as selector  # noqa: E402
 
-BASE_ARGS = ["--student", "Qwen/Qwen3-4B", "--seed", "7", "--skip-comparator", "--teacher-deviation", "D-078"]
+BASE_ARGS = ["--student", "Qwen/Qwen3-4B", "--seed", "7", "--skip-comparator", "--teacher-deviation", "D-079"]
+
+
+def _fake_popen(side_effect=None, returncode=0, lines=("boom line\n",)):
+    """A Popen stand-in that streams `lines`, runs `side_effect`, then exits."""
+
+    def factory(command, cwd, stdout, stderr, text, errors):
+        if side_effect is not None:
+            side_effect()
+        fake = mock.Mock()
+        fake.stdout = iter(lines)
+        fake.wait = mock.Mock(return_value=None)
+        fake.returncode = returncode
+        return fake
+
+    return factory
 
 
 class BatchingTests(unittest.TestCase):
@@ -142,29 +157,27 @@ class StageRunnerTests(unittest.TestCase):
             run = self._pipeline(Path(tmp))
             done = run.results / "done.json"
             done.write_text(json.dumps({"executed": True}), encoding="utf-8")
-            with mock.patch.object(pipeline.subprocess, "run") as fake:
+            with mock.patch.object(pipeline.subprocess, "Popen") as fake:
                 run._run("stage", ["python", "x.py"], done)
                 fake.assert_not_called()
 
-            def writes_nothing(command, cwd, check):
-                return mock.Mock(returncode=0)
-
-            with mock.patch.object(pipeline.subprocess, "run", side_effect=writes_nothing):
+            with mock.patch.object(pipeline.subprocess, "Popen", side_effect=_fake_popen()),                     mock.patch.object(pipeline, "_git", return_value=""):
                 with self.assertRaises(pipeline.PipelineError):
                     run._run("stage", ["python", "x.py"], run.results / "never.json")
-            statuses = [json.loads(line)["status"] for line in run.log_path.read_text().splitlines()]
-            self.assertEqual(statuses, ["skipped", "failed"])
+            records = [json.loads(line) for line in run.log_path.read_text().splitlines()]
+            self.assertEqual([r["status"] for r in records], ["skipped", "failed"])
+            self.assertEqual(records[1]["output_tail"], ["boom line"])
+            self.assertTrue((run.run_dir / "logs" / "stage.log").is_file())
 
     def test_an_errored_artifact_is_set_aside_so_the_stage_runs_again(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             run = self._pipeline(Path(tmp))
             target = run.results / "comparator-8b-abc1234.json"
 
-            def writes_error(command, cwd, check):
+            def writes_error():
                 target.write_text(json.dumps({"executed": True, "results": [{"candidate": "llama", "error": "gated"}]}), encoding="utf-8")
-                return mock.Mock(returncode=0)
 
-            with mock.patch.object(pipeline.subprocess, "run", side_effect=writes_error):
+            with mock.patch.object(pipeline.subprocess, "Popen", side_effect=_fake_popen(writes_error)),                     mock.patch.object(pipeline, "_git", return_value=""):
                 with self.assertRaises(pipeline.PipelineError):
                     run._run("comparator", ["python", "x.py"], target)
             self.assertFalse(target.exists(), "the errored artifact must not block the next attempt")
@@ -186,7 +199,7 @@ class StageRunnerTests(unittest.TestCase):
                 pipeline.parse_args(["--run-dir", tmp, "--skip-comparator"])
             with self.assertRaises(SystemExit):
                 pipeline.parse_args(["--run-dir", tmp, "--skip-comparator", "--teacher-deviation", "pending"])
-            for ok in ("D-078", "none"):
+            for ok in ("D-079", "none"):
                 self.assertEqual(pipeline.parse_args(["--run-dir", tmp, "--skip-comparator", "--teacher-deviation", ok]).teacher_deviation, ok)
 
     def test_registered_teacher_uses_its_pinned_revision(self) -> None:
@@ -210,7 +223,7 @@ class StageRunnerTests(unittest.TestCase):
             self.assertIn(f"qwen3-4b-sft-seed7-{run.commit}", planned, "checkpoint dirs carry the commit")
             self.assertNotIn(str(PROJECT_ROOT / "results"), planned, "nothing may be written into the repository")
             self.assertIn("--resume", planned)
-            self.assertIn("--teacher-deviation D-078", planned)
+            self.assertIn("--teacher-deviation D-079", planned)
 
     def test_reuse_needs_the_matching_test_summary_and_the_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -221,13 +234,15 @@ class StageRunnerTests(unittest.TestCase):
                 (reuse / f"episodes-{stem}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
             run = self._pipeline(Path(tmp) / "run", "--reuse-dir", str(reuse))
             self.assertIsNone(run._find_reusable("episodes-phase_a-*.jsonl", "Qwen/Qwen3-4B"), "episodes without their summary are not reusable")
-            summary = {"executed": True, "eval_config": "eval.yaml", "results": [{"candidate": "Qwen/Qwen3-4B", "rungs": {}}, {"candidate": "Qwen/Qwen3-1.7B", "rungs": {}}]}
+            # Summary artifacts record the registry entry, episode rows the bare id.
+            summary = {"executed": True, "eval_config": "eval.yaml", "results": [{"candidate": {"role": "primary_small", "id": "Qwen/Qwen3-4B", "revision": "x"}, "rungs": {}}, {"candidate": "Qwen/Qwen3-1.7B", "rungs": {}}]}
             (reuse / "phase_a-dev-abc1234.json").write_text(json.dumps({**summary, "eval_config": "eval_dev.yaml"}), encoding="utf-8")
             self.assertIsNone(run._find_reusable("episodes-phase_a-*.jsonl", "Qwen/Qwen3-4B"), "a dev-split artifact never stands in for test")
-            (reuse / "phase_a-abc1234.json").write_text(json.dumps(summary), encoding="utf-8")
+            # The M1 baseline pair on disk is episodes-phase_a-X.jsonl + baseline-phase_a-X.json.
+            (reuse / "baseline-phase_a-abc1234.json").write_text(json.dumps(summary), encoding="utf-8")
             found = run._find_reusable("episodes-phase_a-*.jsonl", "Qwen/Qwen3-4B")
             self.assertEqual(found["episodes"].name, "episodes-phase_a-abc1234.jsonl")
-            self.assertEqual(found["summary"].name, "phase_a-abc1234.json")
+            self.assertEqual(found["summary"].name, "baseline-phase_a-abc1234.json")
             self.assertIsNone(run._find_reusable("episodes-phase_a-*.jsonl", "meta-llama/Llama-3.1-8B-Instruct"))
 
     def test_markdown_flags_a_smoke_run_and_a_reused_row(self) -> None:

@@ -1,27 +1,35 @@
 # Linux/Colab mirror of requirements-smoke.lock's measured stack.
 #
 # The lock is Windows-pinned (win_amd64 wheels, triton-windows). This file pins
-# the same versions for Linux so a Colab run records the same library stack as
-# the local measurements. Two things are deliberate:
+# the same library versions for Linux so a Colab run records the same training
+# stack as the local measurements (unsloth, TRL, transformers, peft, bnb). Two
+# things are deliberate, and one differs from the lock:
 #
 # * torch comes from PyTorch's cu128 index, not PyPI. PyPI's torch 2.11.0 for
 #   Linux is the CUDA 13 build (its nvidia-* dependencies are *-cu13), which
-#   needs a newer driver than Colab runtimes carry. The lock measured
-#   torch-2.11.0+cu128, and that is what this installs.
+#   needs a newer driver than Colab runtimes carry.
+# * unsloth requires xformers unconditionally on Linux x86_64, and the cu128
+#   index has no Linux xformers 0.0.35 (the lock's version). Its Linux xformers
+#   0.0.34 requires torch==2.10.0 exactly, so Linux pins torch 2.10.0+cu128 /
+#   torchvision 0.25.0+cu128 / xformers 0.0.34 - one minor version behind the
+#   lock's torch 2.11.0+cu128 / xformers 0.0.35. Every artifact records the
+#   versions actually loaded; the decision that adopts a Colab run should name
+#   this difference.
 # * unsloth 2026.8.18 declares trl<=0.24.0 and transformers<=5.5.0, so TRL 1.x
 #   cannot share the environment (see requirements-smoke.in).
 #
 # Install with
 #
-#   pip install -r requirements-colab.txt && pip install --no-deps -e .
+#   pip install -r requirements-colab.txt
 #
 # and then check `torch.version.cuda` starts with "12." before measuring.
+# No editable install: the scripts put src/ on sys.path themselves, and
+# Colab's Python 3.13 fails the project's requires-python <3.13 pin.
 --index-url https://download.pytorch.org/whl/cu128
 --extra-index-url https://pypi.org/simple
-torch==2.11.0+cu128
-torchvision==0.26.0+cu128
-xformers==0.0.35
-triton==3.6.0
+torch==2.10.0+cu128
+torchvision==0.25.0+cu128
+xformers==0.0.34
 unsloth==2026.8.18
 unsloth-zoo==2026.8.12
 transformers==5.5.0

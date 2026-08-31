@@ -133,11 +133,23 @@ def executed(path: Path) -> bool:
     return True
 
 
+def candidate_id(value: Any) -> str | None:
+    """The model id from a runner's `candidate` field.
+
+    Summary artifacts record the registry entry (`{"role", "id", "revision"}`);
+    episode rows record the bare id. Both must match the same `--candidate`.
+    """
+
+    if isinstance(value, dict):
+        return value.get("id")
+    return value if isinstance(value, str) else None
+
+
 def entry_for(payload: dict[str, Any], candidate: str) -> dict[str, Any] | None:
     """The results entry for one candidate in a runner artifact."""
 
     for entry in payload.get("results", []):
-        if entry.get("candidate") == candidate:
+        if candidate_id(entry.get("candidate")) == candidate:
             return entry
     return None
 
@@ -190,7 +202,32 @@ class Pipeline:
         print(f"\n[run ] {stage} (~{estimate} min on a 4060/L4)", flush=True)
         print("       " + " ".join(command), flush=True)
         started = time.time()
-        completed = subprocess.run(command, cwd=PROJECT_ROOT, check=False)
+        # Tee the stage's output: live to stdout (a notebook saves what the
+        # kernel prints, not what a child writes to the raw fd) and to a log
+        # file, keeping a tail for the pipeline log. Without this, a stage
+        # that dies in a Colab session leaves no readable reason behind.
+        logs_dir = self.run_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        stage_log = logs_dir / (stage.replace(":", "-").replace("/", "-") + ".log")
+        tail: list[str] = []
+        with stage_log.open("a", encoding="utf-8") as log_handle:
+            log_handle.write(f"\n===== {_now()} {' '.join(command)}\n")
+            process = subprocess.Popen(
+                command,
+                cwd=PROJECT_ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                errors="replace",
+            )
+            assert process.stdout is not None
+            for line in process.stdout:
+                print(line, end="", flush=True)
+                log_handle.write(line)
+                tail.append(line.rstrip("\n"))
+                del tail[:-25]
+            process.wait()
+        completed = process
         seconds = round(time.time() - started, 1)
         status = "ok" if completed.returncode == 0 and executed(produces) else "failed"
         detail = None
@@ -211,6 +248,7 @@ class Pipeline:
                 errors = []
             if errors:
                 print(f"[error] {errors[0]}", flush=True)
+        dirt = _git("status", "--porcelain") if status != "ok" else ""
         self._log(
             stage=stage,
             status=status,
@@ -218,9 +256,14 @@ class Pipeline:
             returncode=completed.returncode,
             artifact=str(produces),
             failed_artifact=detail,
+            output_tail=tail[-12:] if status != "ok" else None,
+            worktree_dirt=dirt or None,
+            stage_log=str(stage_log),
         )
         print(f"[{status}] {stage} in {seconds/60:.1f} min", flush=True)
         if status != "ok":
+            if dirt:
+                print(f"[dirt] the repository worktree is not clean:\n{dirt}", flush=True)
             raise PipelineError(
                 f"{stage} failed (exit {completed.returncode}) or left no "
                 f"executed, error-free artifact at {produces}"
@@ -247,10 +290,16 @@ class Pipeline:
         for episodes in sorted(Path(self.args.reuse_dir).glob(pattern)):
             if "-dev-" in episodes.name:
                 continue
-            summary = episodes.with_name(
-                episodes.name.replace("episodes-", "", 1)
-            ).with_suffix(".json")
-            if not executed(summary):
+            stem = episodes.name.replace("episodes-", "", 1)
+            # `episodes-comparator-8b-X.jsonl` sits beside `comparator-8b-X.json`;
+            # the M1 baseline pair is `episodes-phase_a-X.jsonl` and
+            # `baseline-phase_a-X.json`.
+            candidates_for_summary = [
+                episodes.with_name(stem).with_suffix(".json"),
+                episodes.with_name("baseline-" + stem).with_suffix(".json"),
+            ]
+            summary = next((c for c in candidates_for_summary if executed(c)), None)
+            if summary is None:
                 continue
             payload = _load(summary)
             config = payload.get("eval_config")
@@ -723,7 +772,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
     args = parser.parse_args(argv)
     if not DECISION_ID.match(args.teacher_deviation):
-        parser.error("--teacher-deviation must be a decision id like D-078, or 'none'")
+        parser.error("--teacher-deviation must be a decision id like D-079, or 'none'")
     args.student = args.student or ["Qwen/Qwen3-4B"]
     args.seed = args.seed or [20260826, 20260827, 20260828]
     return args
