@@ -304,6 +304,12 @@
       "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
       "kind": "utility_eval"
     },
+    "utility-comparison-48869b1.json": {
+      "sha256": "6082e5b7b2b3b5dc5caa9c0e03caba67265f33de7908fcc0032e84f5005d6982",
+      "bytes": 398156,
+      "recorded_in_commit": "5424bb2fdd0fc96c167027a5269033ebe5b694ff",
+      "kind": "utility_paired_comparison"
+    },
     "utility-grpo-30007ed.json": {
       "sha256": "1b88cf099ba522130737d4f933d7e56650e11a395264cdf4a06f5e169aeda834",
       "bytes": 6056,
