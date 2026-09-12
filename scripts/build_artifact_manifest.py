@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -49,6 +50,8 @@ ARTIFACT_GLOBS: Final = (
 
 SCHEMA_VERSION: Final = 1
 
+FULL_COMMIT: Final = re.compile(r"[0-9a-f]{40}")
+
 PURPOSE: Final = (
     "Frozen content hashes for every committed measurement artifact. These "
     "files are permanent records, not regenerable state. A test fails if any "
@@ -56,6 +59,10 @@ PURPOSE: Final = (
     "cannot be edited, re-signed, or quietly dropped. Adding a new run means "
     "adding a new entry; it never means changing an existing one."
 )
+
+
+class ManifestError(RuntimeError):
+    """The manifest cannot be built without recording something false."""
 
 
 def artifact_paths() -> list[Path]:
@@ -78,13 +85,41 @@ def _recording_commit(path: Path) -> str | None:
     return commit or None
 
 
+def _committed_bytes(commit: str, path: Path) -> bytes | None:
+    relative = path.relative_to(PROJECT_ROOT).as_posix()
+    completed = subprocess.run(
+        ["git", "show", f"{commit}:{relative}"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        check=False,
+    )
+    return completed.stdout if completed.returncode == 0 else None
+
+
 def _entry(path: Path) -> dict[str, Any]:
     raw = path.read_bytes()
     payload = json.loads(raw.decode("utf-8"))
+    # The manifest may only freeze bytes that a commit actually holds. The
+    # utility artifacts broke both halves of that (ERRATA.md, E1 and E2): they
+    # were indexed before they were committed, so the entries named no commit,
+    # and one file was still being rewritten by an overlapping evaluation, so
+    # the hash that was frozen belonged to bytes that never reached Git.
+    # Indexing only committed, unmodified files makes both impossible.
+    commit = _recording_commit(path)
+    if commit is None or not FULL_COMMIT.fullmatch(commit):
+        raise ManifestError(
+            f"{path.name} has no recording commit; commit the artifact first, "
+            "then rebuild the manifest in a separate commit"
+        )
+    if _committed_bytes(commit, path) != raw:
+        raise ManifestError(
+            f"{path.name} differs from the copy committed in {commit[:7]}; "
+            "the manifest would freeze bytes that no commit holds"
+        )
     entry: dict[str, Any] = {
         "sha256": hashlib.sha256(raw).hexdigest(),
         "bytes": len(raw),
-        "recorded_in_commit": _recording_commit(path),
+        "recorded_in_commit": commit,
         "kind": payload.get("kind", "model_smoke"),
     }
     # Model-smoke artifacts carry the two fields that tell the pre-D-046 and
@@ -113,7 +148,12 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    payload = json.dumps(build(), indent=2, ensure_ascii=False) + "\n"
+    try:
+        manifest = build()
+    except ManifestError as error:
+        print(str(error), file=sys.stderr)
+        return 1
+    payload = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
 
     if args.check:
         if not MANIFEST_PATH.exists():
@@ -132,7 +172,7 @@ def main() -> int:
     temporary = MANIFEST_PATH.with_suffix(".tmp")
     temporary.write_bytes(payload.encode("utf-8"))
     os.replace(temporary, MANIFEST_PATH)
-    print(json.dumps({"artifacts": len(build()["artifacts"])}))
+    print(json.dumps({"artifacts": len(manifest["artifacts"])}))
     return 0
 
 
