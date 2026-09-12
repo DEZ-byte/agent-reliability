@@ -167,17 +167,24 @@ project set out to measure.
 | "It got better at arithmetic." | No. Probed with no calculator at all: 64.0% before, 66.0% after. It got better at *writing the expression*. |
 | "It learned to cheat the grader." | No. The reward pays the same for restating a remembered answer as for real work — deliberately, so the behaviour is measured rather than hidden. The rate fell from 3.0% untrained to 1.2% fine-tuned to 1.0% after RL. |
 | "More seeds would sharpen this." | No. Between-run standard deviation is 0.019; a single run's interval is ~0.069 either side. Training is steadier than 150 tasks can resolve, so a bigger test split would buy more than more seeds. |
-| **"It forgot things."** | **No.** 400 held-out MMLU questions, no tool offered: 53.5% untrained, 54.3% fine-tuned. Paired difference +0.005, 95% interval −0.038 to +0.049. 38 questions improved, 36 got worse. |
+| **"It forgot things."** | **No detectable MMLU change on this 400-question sample.** No tool offered: 53.5% untrained (214/400), 54.25% fine-tuned (217/400). Paired difference +0.0075, 95% interval −0.035 to +0.050. 40 questions improved, 37 got worse. The interval still allows a loss of up to 3.5 points. |
 | **"It now calls tools at everything."** | **No.** On a benchmark offering no tools, every arm emitted a tool call on **0.0%** of questions. The habit is tied to being offered a tool, not to being asked a question. |
 
-The knowledge result is the one worth stating plainly, because it is the first
-thing anyone asks and the project could not answer it until now. Fine-tuning a
-1.7B on a thousand calculator trajectories did not measurably cost it general
-knowledge, and did not leak the tool-calling habit into contexts with no tools.
+The knowledge result needs careful wording, because it is the first thing anyone
+asks. There was no detectable MMLU change on this 400-question sample. That is
+not the same as no change: the interval reaches 3.5 points below zero, so a loss
+smaller than that would not show up here. What the sample does show cleanly is
+that the tool-calling habit did not leak into contexts with no tools.
+
+The comparison is frozen question by question in
+[`results/utility-comparison-48869b1.json`](results/utility-comparison-48869b1.json).
+An earlier version of this section reported +0.005 and 38/36. Those figures
+came from an incomplete response file, and [`ERRATA.md`](ERRATA.md) explains how.
 
 One real behavioural change did show up. The fine-tuned model answers far more
 briefly — 227 characters on average against the untrained model's 628 — and is
-cut off by the token budget a quarter as often. Terser, not worse.
+cut off by the token budget less than half as often (16% against 40%). Terser,
+with no detectable accuracy cost.
 
 ---
 
@@ -230,7 +237,7 @@ GRPO again changed nothing it did not already do.
 | Rule | How it is enforced |
 | :-- | :-- |
 | Accuracy comes from executing the tool | Never parsed from the model's prose |
-| Results cannot be edited after the fact | Every result file is frozen by SHA-256 in [`results/artifact_manifest.json`](results/artifact_manifest.json); a test fails if one changes |
+| Results cannot be edited after the fact | Every result file is frozen by SHA-256 in [`results/artifact_manifest.json`](results/artifact_manifest.json); a test fails if one changes. Corrections go in [`ERRATA.md`](ERRATA.md), never in place |
 | No train/test leakage | Splits are disjoint by task ID *and* by content hash |
 | No checkpoint cherry-picking | The selection rule was written into the config before any dev number existed; the winner runs on test exactly once |
 | Comparisons are paired | Task-level bootstrap intervals, paired permutation tests, exact sign test |
@@ -255,13 +262,15 @@ directly, so discovery fails without it.
   tasks where both arms genuinely varied, the trained model's lead *widens*. The
   finding survives; the caveat is real.
 - **The knowledge probe is 400 questions, not 14,042.** A stratified sample of
-  MMLU, which bounds how small a change it could detect: the paired interval is
-  about ±4 points, so a loss smaller than that would not show up here.
+  MMLU, which bounds how small a change it could detect: the paired interval
+  runs from −3.5 to +5.0 points, so a loss smaller than about 3.5 points would
+  not show up here.
 - **The untrained model is cut off more often.** It was truncated on 40% of
   questions against the fine-tuned model's 16%, because it answers at length.
-  Most truncated answers still named a choice, and restricting to readable
-  answers moves the comparison by about a point in the other direction, so the
-  null holds either way — but it is a real asymmetry and it is recorded.
+  Restricted to the 374 questions where both arms named a letter, the paired
+  difference is −0.008 (95% interval −0.051 to +0.035) instead of +0.0075. Still
+  no detectable change either way, but the sign depends on how unreadable
+  answers are counted, so the asymmetry is recorded.
 - **The base model barely varies.** On the transfer environment it produced four
   identical answers on 75% of tasks, so its `pass^4` largely collapses into
   `pass^1`. It is a floor, not a competitor.

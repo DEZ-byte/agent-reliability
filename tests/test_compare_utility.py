@@ -252,5 +252,78 @@ class PairedArithmeticTests(unittest.TestCase):
         )
 
 
+class CommittedComparisonTests(unittest.TestCase):
+    """The frozen comparison agrees with its own rows and the summaries it names."""
+
+    RESULTS = PROJECT_ROOT / "results"
+
+    def _artifacts(self) -> list[Path]:
+        return sorted(self.RESULTS.glob("utility-comparison-*.json"))
+
+    def test_a_comparison_is_committed(self) -> None:
+        self.assertTrue(self._artifacts())
+
+    def test_every_comparison_is_recomputable_from_its_rows(self) -> None:
+        for path in self._artifacts():
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            for entry in payload["comparisons"]:
+                base, treat = entry["baseline"], entry["treatment"]
+                with self.subTest(artifact=path.name, pair=f"{treat}-vs-{base}", scope=entry["scope"]):
+                    chosen = [
+                        row["arms"]
+                        for row in payload["rows"]
+                        if entry["scope"] == cu.SCOPE_ALL
+                        or (
+                            row["arms"][base]["extracted"] is not None
+                            and row["arms"][treat]["extracted"] is not None
+                        )
+                    ]
+                    before = [arms[base]["correct"] for arms in chosen]
+                    after = [arms[treat]["correct"] for arms in chosen]
+                    self.assertEqual(entry["questions"], len(chosen))
+                    self.assertEqual(entry["baseline_correct"], sum(before))
+                    self.assertEqual(entry["treatment_correct"], sum(after))
+                    self.assertEqual(
+                        entry["improved"], sum(a and not b for b, a in zip(before, after))
+                    )
+                    self.assertEqual(
+                        entry["regressed"], sum(b and not a for b, a in zip(before, after))
+                    )
+                    self.assertEqual(
+                        entry["difference"], (sum(after) - sum(before)) / len(chosen)
+                    )
+                    low, high = entry["difference_ci95"]
+                    self.assertLessEqual(low, entry["difference"])
+                    self.assertGreaterEqual(high, entry["difference"])
+
+    def test_every_arm_matches_the_frozen_summary_it_names(self) -> None:
+        manifest = json.loads(
+            (self.RESULTS / "artifact_manifest.json").read_text(encoding="utf-8")
+        )["artifacts"]
+        for path in self._artifacts():
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            for label, arm in payload["arms"].items():
+                with self.subTest(artifact=path.name, arm=label):
+                    self.assertEqual(
+                        arm["summary_sha256"], manifest[arm["summary_artifact"]]["sha256"]
+                    )
+                    recorded = json.loads(
+                        (self.RESULTS / arm["summary_artifact"]).read_text(encoding="utf-8")
+                    )["summary"]
+                    rows = [row["arms"][label] for row in payload["rows"]]
+                    self.assertEqual(len(rows), recorded["questions"])
+                    self.assertEqual(
+                        sum(r["correct"] for r in rows) / len(rows), recorded["accuracy"]
+                    )
+                    self.assertEqual(
+                        sum(r["truncated"] for r in rows) / len(rows),
+                        recorded["truncated_rate"],
+                    )
+                    self.assertEqual(
+                        sum(r["generated_chars"] for r in rows) / len(rows),
+                        recorded["mean_generated_chars"],
+                    )
+
+
 if __name__ == "__main__":
     unittest.main()

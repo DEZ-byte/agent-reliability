@@ -23,6 +23,8 @@ hash has moved, the test suite fails.
 | `h1-comparison-*.json` | The headline comparison: trained 1.7B against the scaffolded 8B |
 | `contamination-*.json` | The no-calculator probe, before and after training |
 | `masking-verification-*.json` | Proof the training loss covered assistant tokens only |
+| `utility-{base,sft,grpo}-*.json` | MMLU accuracy, tool-call and truncation rates per arm, with no tool offered |
+| `utility-comparison-*.json` | The paired MMLU comparison, question by question, built only from rows checked against those summaries |
 
 **The stack checks.** `smoke_environment.json` records the installed packages,
 the CUDA device and a hash of every source file the probe depends on. It refuses
@@ -37,7 +39,9 @@ are large, and they are reproducible from the artifact that references them.
 ## Why the failures are still here
 
 A measurement record is never edited or deleted, including when it is
-unflattering. Three examples:
+unflattering. When the index or a write-up turns out to be wrong, the
+correction goes in [`ERRATA.md`](../ERRATA.md) rather than being made quietly.
+Three examples of records kept as written:
 
 `model_smoke-qwen3-1.7b-6824196.json` is the first real attempt. Revision
 validation and assistant masking both failed. Keeping it is what makes the later
