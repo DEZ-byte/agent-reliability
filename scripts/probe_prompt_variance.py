@@ -52,7 +52,7 @@ from agent.dialects import template_uses_canonical_tags  # noqa: E402
 from agent.gates import GateEngine  # noqa: E402
 from env.phase_a import build_phase_a_registry, calculator_tool_schema  # noqa: E402
 from env.splits import load_split  # noqa: E402
-from evaluation.provenance import pinned_load_kwargs  # noqa: E402
+from evaluation.provenance import pinned_load_kwargs, require_clean_worktree  # noqa: E402
 from evaluation.rungs import SYSTEM_PROMPT, USER_PROMPT  # noqa: E402
 from training.config import config_hash_prefix, config_sha256, load_train_config  # noqa: E402
 from training.grpo_reward import score_completion  # noqa: E402
@@ -306,6 +306,8 @@ def main() -> int:
         )
         print(json.dumps({"planned": str(args.summary), "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     import unsloth  # noqa: F401  # must precede trl/transformers; it rewrites both
     from unsloth import FastLanguageModel

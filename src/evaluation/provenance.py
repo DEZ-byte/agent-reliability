@@ -58,6 +58,23 @@ def require_clean_worktree(root: Path) -> str:
     return head
 
 
+def require_outside_worktree(path: Path | str, root: Path) -> None:
+    """Refuse an output directory inside the repository.
+
+    Each step of a chain refuses a dirty tree, and a new file counts as dirt.
+    A chain that wrote inside the repository would block its own next step.
+    """
+
+    try:
+        Path(path).resolve().relative_to(Path(root).resolve())
+    except ValueError:
+        return
+    raise DirtyWorktreeError(
+        f"{path} is inside the repository; the next step would refuse the "
+        "files written there. Write run outputs outside the repository."
+    )
+
+
 def portable_path(path: Path | str, root: Path) -> str:
     """A repository-relative POSIX path, or the path unchanged if outside it."""
 
@@ -121,4 +138,5 @@ __all__ = [
     "pinned_revision",
     "portable_path",
     "require_clean_worktree",
+    "require_outside_worktree",
 ]

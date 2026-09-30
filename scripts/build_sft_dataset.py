@@ -32,7 +32,6 @@ import hashlib
 import json
 import os
 import platform
-import subprocess
 import sys
 from collections import Counter
 from datetime import datetime, timezone
@@ -43,6 +42,7 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import calculator_tool_schema  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from training.config import config_sha256, load_train_config  # noqa: E402
 from training.retention import completion_shape  # noqa: E402
 
@@ -63,17 +63,6 @@ def _sha256_text(text: str) -> str:
 
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
-
-
-def _git_commit() -> str:
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return completed.stdout.strip() or "unknown"
 
 
 def _train_task_ids() -> set[str]:
@@ -257,6 +246,7 @@ def main() -> int:
         print("dataset manifest reproduces exactly")
         return 0
 
+    source_commit = require_clean_worktree(PROJECT_ROOT)
     verification: dict[str, Any] | None = None
     if not args.skip_masking_check:
         revision = args.tokenizer_revision
@@ -316,7 +306,7 @@ def main() -> int:
             )
         ),
         "masking_verification": verification,
-        "source_commit": _git_commit(),
+        "source_commit": source_commit,
         "platform": {"python": platform.python_version(), "system": platform.system()},
     }
     summary_path = Path(args.summary)

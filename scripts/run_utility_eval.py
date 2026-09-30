@@ -40,7 +40,11 @@ from typing import Any, Final
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from evaluation.provenance import pinned_load_kwargs, pinned_revision  # noqa: E402
+from evaluation.provenance import (  # noqa: E402
+    pinned_load_kwargs,
+    pinned_revision,
+    require_clean_worktree,
+)
 from evaluation.utility import (  # noqa: E402
     CHOICE_LABELS,
     score_completion,
@@ -170,6 +174,8 @@ def main() -> int:
         )
         print(json.dumps({"planned": args.label, "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     questions = load_questions(SPLIT_MANIFEST_PATH, limit=args.limit)
 

@@ -40,7 +40,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from agent.dialects import template_uses_canonical_tags  # noqa: E402
 from env.phase_a import calculator_tool_schema  # noqa: E402
 from env.splits import load_split  # noqa: E402
-from evaluation.provenance import pinned_load_kwargs  # noqa: E402
+from evaluation.provenance import pinned_load_kwargs, require_clean_worktree  # noqa: E402
 from evaluation.rungs import SYSTEM_PROMPT, USER_PROMPT  # noqa: E402
 from training.config import (  # noqa: E402
     config_hash_prefix,
@@ -343,6 +343,8 @@ def main() -> int:
         )
         print(json.dumps({"planned": result["checkpoint_name"], "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     import unsloth  # noqa: F401  # must precede trl/transformers; it rewrites both
     from unsloth import FastLanguageModel

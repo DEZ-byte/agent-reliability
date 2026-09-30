@@ -137,9 +137,11 @@ class ScriptWiringTests(unittest.TestCase):
         return {"unsloth": unsloth, "torch": types.ModuleType("torch"), "trl": trl}
 
     def _run(self, module, argv: list[str]) -> dict:
+        # The worktree guard has its own tests; here it must not stop the run
+        # before the loader is reached.
         with mock.patch.dict(sys.modules, self._fakes()), mock.patch.object(
             sys, "argv", [module.__name__, *argv]
-        ):
+        ), mock.patch.object(module, "require_clean_worktree", return_value="0" * 40):
             with self.assertRaises(_Stop):
                 module.main()
         self.assertEqual(len(self.calls), 1)

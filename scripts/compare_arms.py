@@ -34,7 +34,6 @@ import math
 import os
 import platform
 import random
-import subprocess
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -43,6 +42,8 @@ from typing import Any, Final
 
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 
 SCHEMA_VERSION: Final = 1
 
@@ -55,17 +56,6 @@ CONFIDENCE: Final = 0.95
 
 class ComparisonError(RuntimeError):
     """The two arms cannot be compared as paired measurements."""
-
-
-def _git_commit() -> str:
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return completed.stdout.strip() or "unknown"
 
 
 def load_arm(
@@ -290,6 +280,7 @@ def main() -> int:
     parser.add_argument("--k", action="append", type=int, default=[])
     parser.add_argument("--summary", required=True)
     args = parser.parse_args()
+    source_commit = require_clean_worktree(PROJECT_ROOT)
 
     rungs = args.rung or ["R0", "R1"]
     ks = args.k or [1, 4]
@@ -356,7 +347,7 @@ def main() -> int:
         "sampling_degeneracy": degeneracies,
         "comparisons": comparisons,
         "restricted_comparisons": restricted,
-        "source_commit": _git_commit(),
+        "source_commit": source_commit,
         "platform": {"python": platform.python_version(), "system": platform.system()},
     }
 

@@ -66,6 +66,7 @@ from env.phase_a import (  # noqa: E402
 )
 from env.splits import load_split  # noqa: E402
 from evaluation.policy import build_policy  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from evaluation.rungs import (  # noqa: E402
     SYSTEM_PROMPT,
     USER_PROMPT,
@@ -508,6 +509,8 @@ def main() -> int:
         )
         print(json.dumps({"planned_model": model, "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     tasks = load_split(SPLIT_MANIFEST_PATH, args.split, limit=args.limit)
     result["task_count"] = len(tasks)

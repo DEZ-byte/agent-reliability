@@ -56,7 +56,11 @@ from env.phase_b import (  # noqa: E402
 )
 from env.phase_b_tasks import load_split  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
-from evaluation.provenance import pinned_load_kwargs, pinned_revision  # noqa: E402
+from evaluation.provenance import (  # noqa: E402
+    pinned_load_kwargs,
+    pinned_revision,
+    require_clean_worktree,
+)
 from training.rewards import score_episode  # noqa: E402
 
 SPLIT_MANIFEST_PATH: Final = PROJECT_ROOT / "configs" / "splits" / "phase_b_orders.json"
@@ -258,6 +262,8 @@ def main() -> int:
         )
         print(json.dumps({"planned": args.label, "tasks": len(tasks), "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     import unsloth  # noqa: F401  # must precede transformers; it rewrites it
     from unsloth import FastLanguageModel
