@@ -14,15 +14,19 @@ below pin both the equal reward and the fact that it is detected.
 
 from __future__ import annotations
 
+import functools
+import operator
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from agent.gates import GateEngine  # noqa: E402
 from env.phase_a import build_phase_a_registry  # noqa: E402
+import training.grpo_reward as grpo_reward_module  # noqa: E402
 from training.grpo_reward import (  # noqa: E402
     CompletionScore,
     group_health,
@@ -124,6 +128,21 @@ class GroupHealthTests(unittest.TestCase):
 
     def test_identical_candidates_are_flagged_as_zero_variance(self) -> None:
         health = group_health([self._fake(1.15) for _ in range(8)])
+        self.assertTrue(health["zero_variance"])
+        self.assertEqual(health["std"]["total"], 0.0)
+
+    def test_identical_candidates_stay_zero_variance_under_naive_summation(self) -> None:
+        """The same check with Python 3.11's uncompensated float sum().
+
+        Without the exact-equality guard this group reports a spread of about
+        1e-16 on 3.11 and stops being counted as teaching nothing.
+        """
+
+        def naive(values, start=0.0):
+            return functools.reduce(operator.add, values, start)
+
+        with mock.patch.object(grpo_reward_module, "sum", naive, create=True):
+            health = group_health([self._fake(0.7) for _ in range(16)])
         self.assertTrue(health["zero_variance"])
         self.assertEqual(health["std"]["total"], 0.0)
 

@@ -9,13 +9,22 @@ fail; the run would simply train on a subset chosen for a different task.
 
 That is the failure this file exists to catch, so both call sites are driven
 through one recording tokenizer and their arguments compared.
+
+Everything here runs offline. The trainer's path loads GSM8K from the Hugging
+Face Hub and builds a `datasets.Dataset`; neither is needed to check how a
+prompt is rendered, and needing them kept CI red for twenty runs. The loader
+and the `datasets` module are replaced with stand-ins, so the real
+`build_prompt_dataset` still runs end to end, on a synthetic task.
 """
 
 from __future__ import annotations
 
 import sys
+import types
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from unittest import mock
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -59,6 +68,35 @@ class SerialisingTokenizer:
         return {"input_ids": [0]}
 
 
+# Only the attributes `build_prompt_dataset` reads. A real split task would
+# come from the Hub, which is the dependency these tests exist to avoid.
+SYNTHETIC_TASK = types.SimpleNamespace(
+    task_id="gsm8k:train:0",
+    question="Ken packed 3 boxes with 4 pens each. How many pens did he pack?",
+    gold_answer=12.0,
+)
+
+
+class _ListDataset(list):
+    """Stands in for `datasets.Dataset`: indexable rows, built from a list."""
+
+    @classmethod
+    def from_list(cls, rows):
+        return cls(rows)
+
+
+@contextmanager
+def offline_trainer_inputs():
+    """Run the trainer's real prompt builder with no Hub and no `datasets`."""
+
+    fake_datasets = types.ModuleType("datasets")
+    fake_datasets.Dataset = _ListDataset
+    with mock.patch.dict(sys.modules, {"datasets": fake_datasets}), mock.patch.object(
+        train_grpo, "load_split", return_value=[SYNTHETIC_TASK]
+    ) as loader:
+        yield loader
+
+
 class RenderParityTests(unittest.TestCase):
     def _probe_call(self) -> dict:
         tokenizer = RecordingTokenizer()
@@ -68,8 +106,19 @@ class RenderParityTests(unittest.TestCase):
 
     def _trainer_call(self) -> dict:
         tokenizer = RecordingTokenizer()
-        train_grpo.build_prompt_dataset(tokenizer, 1)
+        with offline_trainer_inputs():
+            train_grpo.build_prompt_dataset(tokenizer, 1)
         return tokenizer.calls[0]
+
+    def test_the_trainer_asks_for_the_train_split_through_the_stand_in(self) -> None:
+        """The stand-in must replace the real loader, not sit beside it."""
+
+        with offline_trainer_inputs() as loader:
+            dataset, tasks = train_grpo.build_prompt_dataset(RecordingTokenizer(), 1)
+        loader.assert_called_once_with(train_grpo.SPLIT_MANIFEST_PATH, "train", limit=1)
+        self.assertEqual(tasks, [SYNTHETIC_TASK])
+        self.assertEqual(dataset[0]["task_id"], SYNTHETIC_TASK.task_id)
+        self.assertEqual(dataset[0]["gold_answer"], SYNTHETIC_TASK.gold_answer)
 
     def test_both_pass_exactly_the_same_template_arguments(self) -> None:
         """Every argument, not a named few.
@@ -110,7 +159,8 @@ class RenderParityTests(unittest.TestCase):
         )
 
         trainer_tokenizer = SerialisingTokenizer()
-        dataset, tasks = train_grpo.build_prompt_dataset(trainer_tokenizer, 1)
+        with offline_trainer_inputs():
+            dataset, tasks = train_grpo.build_prompt_dataset(trainer_tokenizer, 1)
         trainer_rendered = dataset[0]["prompt"]
 
         # Re-render the probe side against the trainer's actual question so the

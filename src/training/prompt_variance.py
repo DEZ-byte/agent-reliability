@@ -113,6 +113,11 @@ def standard_deviation(values: Sequence[float]) -> float:
 
     if len(values) < 2:
         return 0.0
+    # Exactly zero for identical values on every Python. 3.11's float sum() is
+    # not compensated and leaves about 1e-16 of rounding noise; see the same
+    # guard in training.grpo_reward.
+    if max(values) == min(values):
+        return 0.0
     mean = sum(values) / len(values)
     return math.sqrt(sum((v - mean) ** 2 for v in values) / (len(values) - 1))
 
