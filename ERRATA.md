@@ -9,10 +9,13 @@ this file is where they are corrected.
 | :-- | :-- | :-- | :-- |
 | **E1** | The manifest froze a hash for `utility-sft-30007ed.json` that matches no committed bytes | `7e33eb5` | `9bc4f14` changed the hash without saying so. This entry is the disclosure. |
 | **E2** | The manifest briefly froze a re-run's copy of `utility-grpo-30007ed.json` | `9bc4f14` | `cb9ea8d` |
-| **E3** | All three utility entries named no recording commit | `7e33eb5` | `9bc4f14`. The builder now refuses both E1 and E3 (`48869b1`). |
-| **E4** | The MMLU paired difference and the improved/regressed counts came from an incomplete file | `7e33eb5` | This correction |
-| **E5** | "It did not forget anything" claimed more than the interval supports | `7e33eb5` | This correction |
-| **E6** | Truncation was described as happening "a quarter as often" | `7e33eb5` | This correction |
+| **E3** | Four manifest entries named no recording commit | `7e33eb5`, `9bc4f14` | `9bc4f14`, `cb9ea8d`. The builder now refuses both E1 and E3 (`48869b1`) and is append-only (`fe42057`). |
+| **E4** | The MMLU paired difference and the improved/regressed counts came from an incomplete file | `7e33eb5` | `5424bb2` |
+| **E5** | "It did not forget anything" claimed more than the interval supports | `7e33eb5` | `5424bb2` |
+| **E6** | ~~Truncation "a quarter as often" corrected to "less than half as often"~~ | `7e33eb5` | Withdrawn. Both rates were wrong (E7). |
+| **E7** | The MMLU truncation rates counted batch padding as truncation | `7e33eb5` | Detector fixed in `72f7482`. Rates withdrawn until a re-run. |
+| **E8** | Three GRPO results used the final step-400 adapter, not the dev-selected checkpoint | `8cef0b8`, `30007ed`, `9bc4f14` | Weight change re-measured (`ece15b0`). Phase B and MMLU marked, not yet re-run. |
+| **E9** | Four artifacts name a source commit that did not hold the code that made them | `7e33eb5`, `9bc4f14` | Disclosed here. The weight-change script now refuses a dirty tree (`72f7482`). |
 
 E1 to E4 share one cause, explained under E1. Two evaluation processes were
 writing the same result files at the same time, and the manifest and the
@@ -80,6 +83,10 @@ rebuilt the manifest to add a new artifact. That rebuild replaced `7b830f…` wi
 silently, which is exactly what a manifest exists to prevent. This entry is the
 disclosure that should have come with `9bc4f14`.
 
+Since `fe42057` the builder reads the committed manifest first and refuses to
+rewrite or drop any entry in it. The rebuild in `9bc4f14` would now stop with an
+error instead of replacing the hash.
+
 ## E2. A re-run's timestamp, briefly frozen
 
 The same rebuild in `9bc4f14` hashed `utility-grpo-30007ed.json` from the
@@ -93,14 +100,20 @@ One consequence remains. The GRPO response file kept locally was written by
 that later evaluation, not by the one that wrote the committed GRPO summary.
 Decoding is greedy, and the later file reproduces every committed GRPO summary
 figure exactly, including all 57 subjects. Still, nothing can prove that the
-two runs agreed on every individual question. The GRPO rows in
-`utility-comparison-48869b1.json` carry that caveat.
+two runs agreed on every individual question. The comparison artifact does not
+flag this itself, so this entry is the caveat for the GRPO rows in
+`utility-comparison-48869b1.json`. Those rows also come from the step-400
+adapter (E8).
 
 ## E3. Entries with no recording commit
 
 At `7e33eb5`, all three utility entries had `"recorded_in_commit": null`. The
 manifest was built before those files were committed, so no commit held them
 yet. `9bc4f14` filled the field in.
+
+`weight-change-7e33eb5.json` had the same problem one commit later. At `9bc4f14`
+its entry was also null, because that manifest was built before the file was
+committed. `cb9ea8d` filled it in.
 
 `scripts/build_artifact_manifest.py` now refuses to index an artifact unless a
 full 40-character commit holds it, byte for byte. The E1 and E3 failure modes
@@ -131,7 +144,9 @@ only 391 questions were paired (E1 timeline).
 | GRPO vs untrained | +0.0025 | −0.0400 to +0.0450 | 40 / 39 | p = 1.00 |
 | GRPO vs SFT | −0.0050 | −0.0225 to +0.0125 | 5 / 7 | p = 0.77 |
 
-The GRPO counts were right the first time, because its file was complete. Its
+The GRPO rows compare the final step-400 adapter, not the selected GRPO
+checkpoint (E8). The GRPO counts were right the first time, because its file was
+complete. Its
 difference was printed as +0.003, a rounding of +0.0025. Its upper bound moves
 from +0.048 to +0.045 because the interval is now drawn from the project's pinned
 seed, not the one-off seed the terminal script used.
@@ -147,8 +162,105 @@ It does not show that nothing changed.
 Both documents now say: **no detectable MMLU change on this 400-question
 sample.**
 
-## E6. "A quarter as often"
+The same retention paragraph said the model had been trained on "a thousand
+calculator trajectories". The SFT set is 684 trajectories, at most one per task,
+kept from 4,000 teacher attempts over the 1,000 training tasks
+(`results/sft-dataset-54218c4.json`). That phrase was dropped in `5424bb2`
+without a note. This is the note.
 
-Both documents said the fine-tuned model runs out of token budget "a quarter as
-often" as the untrained one. The rates are 16% and 40%, so the ratio is 0.4. It
-runs out less than half as often.
+## E6. "A quarter as often" (withdrawn)
+
+This entry first said the fine-tuned model runs out of token budget "less than
+half as often" as the untrained one, because 16% / 40% = 0.4. Both rates were
+wrong (E7), so the correction was wrong too. It is withdrawn, and no ratio is
+claimed.
+
+## E7. Truncation rates that measured batches, not rows
+
+**What was wrong.** The MMLU truncation rates: 40% untrained, 16% after SFT,
+20% after GRPO (README section 5 and Limits, FINDINGS D3, and E6 above).
+
+**Why.** `scripts/run_utility_eval.py` flagged a row when its last new token was
+not `tokenizer.eos_token_id`. But `generate()` pads every row in a batch to the
+length of the longest one. Qwen3's pad token (`<|endoftext|>`, 151643) is not its
+eos token (`<|im_end|>`, 151645). So a row that finished early ended in padding
+and was flagged. Whenever one row in a batch of 8 used the full 320 tokens, all
+8 rows were flagged.
+
+**Evidence.** In all three response files the flags are all-or-none inside
+every batch of 8. There are 0 mixed batches out of 50, for every arm. The flagged
+counts are 160, 64 and 80, which is exactly 20, 8 and 10 whole batches. The
+published rates are the share of batches with one long row, not the share of
+rows that were cut off.
+
+**What it does not affect.** Accuracy, the extraction-failure rates and the
+readable-in-both comparison do not use this flag. The
+`unreadable_within_budget_rate` did use it. It read 0.0 for every arm, because
+every unreadable answer sat in a flagged batch, so it is withdrawn too. The
+per-row `truncated` field in `utility-comparison-48869b1.json` copies the flag as
+the evaluation wrote it, so that field is wrong as well.
+
+**Status.** The detector is fixed in `72f7482`. `evaluation.utility.was_truncated`
+flags a row only if it used the whole budget and emitted no stop token, and
+tests cover a padded batch. The true rates need a re-run, and that has not been
+done. Until then no truncation rate is published.
+
+## E8. GRPO results from the final adapter, not the selected one
+
+**What was wrong.** Three results labelled as the GRPO arm used the final
+step-400 adapters:
+
+| Artifact | Adapter used | Adapter that dev selection picked and test measured |
+| :-- | :-- | :-- |
+| `phase_b-grpo-8cef0b8.json` | run folder = step 400 (`83f7055c…`) | `checkpoint-200` (`024a1311…`) |
+| `utility-grpo-30007ed.json` | run folder = step 400 (`83f7055c…`) | `checkpoint-200` (`024a1311…`) |
+| `weight-change-7e33eb5.json` | step 400 at both rates (`83f7055c…`, `16aca300…`) | `checkpoint-200`, `checkpoint-300` (`39520ab1…`) |
+
+The top of each GRPO run folder holds a copy of the last checkpoint. Its
+adapter file is byte-identical to `checkpoint-400`. So an evaluation pointed at
+the run folder evaluated step 400. Nothing caught this, because the Phase B and
+MMLU artifacts record the adapter path, not a hash of its weights.
+
+**Evidence.** `grpo-test-qwen3-1.7b-e7b8d74.json` records `checkpoint-200` with
+weights `024a1311…`. `grpo-test-lr1e5-8182e7e.json` records `checkpoint-300`
+with weights `39520ab1…`. The adapter hashes above come from the files on the
+training machine.
+
+**Corrected: weight change.** Re-measured on the selected checkpoints in
+`weight-change-72f7482.json`, with the step-400 adapters beside them:
+
+| Rate | Adapter | Adapter moved | Effective delta moved |
+| :-- | :-- | --: | --: |
+| 1e-6 | `checkpoint-200` (selected) | 0.408% | 1.38% |
+| 1e-6 | step 400 | 0.449% | 1.55% |
+| 1e-5 | `checkpoint-300` (selected) | 3.769% | 13.68% |
+| 1e-5 | step 400 | 3.818% | 13.84% |
+
+This settles why FINDINGS said 0.41% and the README said 0.45%. They described
+different adapters. FINDINGS also paired 0.41% (checkpoint-200) with 3.82%
+(step 400) in one table.
+
+**Not yet corrected: Phase B and MMLU.** Re-running them on `checkpoint-200`
+needs a GPU and has not been done. Until then, their GRPO columns in the README
+and FINDINGS are marked as step-400 diagnostics. The SFT columns are not
+affected: they use the dev-selected `checkpoint-86`.
+
+## E9. Artifacts that name the wrong code
+
+**What was wrong.** Four artifacts record a `source_commit` that did not contain
+the code that produced them.
+
+| Artifact | Names | Why that is wrong |
+| :-- | :-- | :-- |
+| `utility-{base,sft,grpo}-30007ed.json` | `30007ed` | At `30007ed`, `run_utility_eval.py` set `MAX_NEW_TOKENS = 128` and wrote no truncation field. The artifacts record `max_new_tokens: 320` and `truncated_rate`. Both first appear in `7e33eb5`, committed after the runs finished. |
+| `weight-change-7e33eb5.json` | `7e33eb5` | Written 2026-08-30 16:57 UTC. `measure_weight_change.py` first appears in `9bc4f14`, committed 2026-08-31 16:54 UTC. |
+
+**Why.** These scripts recorded `git rev-parse HEAD` without checking for
+uncommitted changes. What ran was an uncommitted working tree. For the utility
+runs, every recorded setting matches what `7e33eb5` committed, but that cannot
+be proven byte for byte.
+
+**Status.** The artifacts stay as written. `measure_weight_change.py` now
+refuses a dirty tree (`72f7482`), and the artifact that replaces this one names
+the commit that ran it. The evaluation runners still need the same guard. That
+is planned with the GPU re-runs.

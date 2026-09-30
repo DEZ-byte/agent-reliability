@@ -104,7 +104,7 @@ general improvement from a narrow one, the checkpoints were run on a second
 environment: an order-support agent, three unseen tools, no arithmetic. Half the
 requests should be completed, half refused.
 
-| | Untrained | After SFT | After GRPO |
+| | Untrained | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.528 | 0.542 |
 | Completes a legitimate request | 0.000 | 0.947 | 0.957 |
@@ -144,14 +144,13 @@ this project could not answer, because every number was measured on the task the
 model was trained for. So all three checkpoints were run over 400 held-out MMLU
 questions, stratified across all 57 subjects, with no tool offered.
 
-| | Untrained | After SFT | After GRPO |
+| | Untrained | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
 | Accuracy | 0.5350 (214/400) | 0.5425 (217/400) | 0.5375 (215/400) |
 | Paired difference vs untrained | - | +0.0075 | +0.0025 |
 | 95% interval | - | -0.0350 to +0.0500 | -0.0400 to +0.0450 |
 | Questions improved / got worse | - | 40 / 37 | 40 / 39 |
 | Emitted a tool call | 0.000 | 0.000 | 0.000 |
-| Cut off by the token budget | 0.40 | 0.16 | 0.20 |
 | Mean answer length, characters | 628 | 227 | 233 |
 
 Every figure comes from
@@ -180,8 +179,13 @@ was the judgement of when to. Neither shows up here, because nothing here offers
 a tool to act with.
 
 One real change did show up. The fine-tuned model answers about a third as
-long, and runs out of token budget less than half as often (16% against 40%).
-Terser, with no detectable accuracy cost.
+long. Terser, with no detectable accuracy cost. The truncation rates published
+earlier counted batch padding as truncation and are withdrawn
+([`ERRATA.md`](ERRATA.md), E7).
+
+‡ In this table and in D2, the GRPO column used the final step-400 adapter, not
+the dev-selected checkpoint-200 (ERRATA E8). It is a diagnostic of where the
+run ended.
 
 Measured on 400 questions, so the interval reaches about four points either side
 of the estimate, and a smaller loss than that would not have been visible. No
@@ -196,13 +200,19 @@ decision entry yet.
 | Learning rate | `pass^1` change | 95% interval | Weights moved |
 | :-- | --: | :--: | --: |
 | 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% |
-| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% |
+| 1e-5 | +0.010 | −0.020 – 0.040 | 3.77% |
+
+All four numbers come from the checkpoints dev selection picked (checkpoint-200
+and checkpoint-300). The weight figures are in
+[`results/weight-change-72f7482.json`](results/weight-change-72f7482.json). An
+earlier version showed 3.82% here, which was the final step-400 adapter
+(ERRATA E8).
 
 The interval on the first run excludes an effect larger than about a point,
 rather than merely failing to find one.
 
 The obvious objection was that the run barely moved the model, and that objection
-was correct. Rerunning at ten times the rate moved the weights nearly ten times as
+was correct. Rerunning at ten times the rate moved the weights about nine times as
 far and produced an identical dev peak. Two nulls across a tenfold rate range are
 much harder to dismiss than one.
 

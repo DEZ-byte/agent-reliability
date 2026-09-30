@@ -98,23 +98,27 @@ a reasoning limit, not a formatting one.
 
 | Learning rate | `pass^1` change | 95% interval | Adapter moved | What the model sees |
 | :-- | --: | :--: | --: | --: |
-| 1e-6 | +0.002 | −0.010 – 0.013 | 0.45% | 1.5% |
-| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% | 13.8% |
+| 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% | 1.4% |
+| 1e-5 | +0.010 | −0.020 – 0.040 | 3.77% | 13.7% |
 
-The last two columns are recomputed from the adapters in
-[`results/weight-change-7e33eb5.json`](results/weight-change-7e33eb5.json)
-rather than quoted from a private note. "Adapter moved" is the relative
-Frobenius change across every adapter tensor; "what the model sees" is the same
-measure applied to the per-module LoRA product, which is what actually reaches
-the base weights. The higher rate moved the policy roughly nine times further on
-both.
+Every column comes from the same checkpoints: the ones dev selection picked and
+test measured (checkpoint-200 at 1e-6, checkpoint-300 at 1e-5). The last two are
+recomputed from the adapters in
+[`results/weight-change-72f7482.json`](results/weight-change-72f7482.json).
+"Adapter moved" is the relative Frobenius change across every adapter tensor;
+"what the model sees" is the same measure applied to the per-module LoRA
+product, which is what actually reaches the base weights. The higher rate moved
+the policy about 9 times further by the first measure and 10 times by the
+second. An earlier version of this table showed 0.45% and 3.82%, which belong to
+the final step-400 adapters rather than the tested ones
+([`ERRATA.md`](ERRATA.md), E8).
 
 Both intervals contain zero. The tight one rules out any effect larger than about
 a point, rather than merely failing to find one.
 
 The obvious objection was that the run barely moved the model. Measuring the
 weight shift confirmed it, so the run was repeated at ten times the rate. That
-moved the weights nearly ten times as far and produced an identical dev peak. Two
+moved the weights about nine times as far and produced an identical dev peak. Two
 nulls across a tenfold rate range are harder to dismiss than one.
 
 **Three measurements explain why:**
@@ -182,9 +186,11 @@ An earlier version of this section reported +0.005 and 38/36. Those figures
 came from an incomplete response file, and [`ERRATA.md`](ERRATA.md) explains how.
 
 One real behavioural change did show up. The fine-tuned model answers far more
-briefly — 227 characters on average against the untrained model's 628 — and is
-cut off by the token budget less than half as often (16% against 40%). Terser,
-with no detectable accuracy cost.
+briefly: 227 characters on average against the untrained model's 628. Terser,
+with no detectable accuracy cost. How often each arm ran out of token budget is
+not reported here. The rates published earlier (40%, 16%, 20%) counted batch
+padding as truncation and are withdrawn until the evaluation is re-run
+([`ERRATA.md`](ERRATA.md), E7).
 
 ---
 
@@ -197,7 +203,7 @@ anywhere, and no calculator. Half the requests should be completed and half
 should be refused, because a model that learned "always call the writing tool"
 scores 50% on a balanced set and 100% on a one-sided one.
 
-| | Untrained 1.7B | After SFT | After GRPO |
+| | Untrained 1.7B | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.528 | 0.542 |
 | Completes a legitimate request | **0.000** | **0.947** | **0.957** |
@@ -205,6 +211,11 @@ scores 50% on a balanced set and 100% on a one-sided one.
 | Calls any tool | 0.753 | 1.000 | 1.000 |
 | Writes without the right to | 0.000 | 0.920 | 0.918 |
 | Mean reward | +0.286 | **−0.394** | **−0.387** |
+
+‡ The GRPO column used the final step-400 adapter, not checkpoint-200, which dev
+selection picked and every other GRPO number in this README comes from
+([`ERRATA.md`](ERRATA.md), E8). Treat it as a diagnostic of where the run ended,
+not as the selected GRPO arm. It has not been re-run.
 
 The headline metric barely moves. Everything underneath it inverts.
 
@@ -265,12 +276,12 @@ directly, so discovery fails without it.
   MMLU, which bounds how small a change it could detect: the paired interval
   runs from −3.5 to +5.0 points, so a loss smaller than about 3.5 points would
   not show up here.
-- **The untrained model is cut off more often.** It was truncated on 40% of
-  questions against the fine-tuned model's 16%, because it answers at length.
-  Restricted to the 374 questions where both arms named a letter, the paired
-  difference is −0.008 (95% interval −0.051 to +0.035) instead of +0.0075. Still
-  no detectable change either way, but the sign depends on how unreadable
-  answers are counted, so the asymmetry is recorded.
+- **The untrained model more often names no answer.** It named no letter on 23
+  of 400 questions, against 8 for the fine-tuned model, because it answers at
+  length. Restricted to the 374 questions where both arms named a letter, the
+  paired difference is −0.008 (95% interval −0.051 to +0.035) instead of
+  +0.0075. Still no detectable change either way, but the sign depends on how
+  unreadable answers are counted, so the asymmetry is recorded.
 - **The base model barely varies.** On the transfer environment it produced four
   identical answers on 75% of tasks, so its `pass^4` largely collapses into
   `pass^1`. It is a floor, not a competitor.
