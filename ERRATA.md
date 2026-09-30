@@ -16,6 +16,9 @@ this file is where they are corrected.
 | **E7** | The MMLU truncation rates counted batch padding as truncation | `7e33eb5` | Detector fixed in `72f7482`. Rates withdrawn until a re-run. |
 | **E8** | Three GRPO results used the final step-400 adapter, not the dev-selected checkpoint | `8cef0b8`, `30007ed`, `9bc4f14` | Weight change re-measured (`ece15b0`). Phase B and MMLU marked, not yet re-run. |
 | **E9** | Four artifacts name a source commit that did not hold the code that made them | `7e33eb5`, `9bc4f14` | Disclosed here. The weight-change script now refuses a dirty tree (`72f7482`). |
+| **E10** | Four Phase B statements were false, and "worse than doing nothing" rested on an unstated rule | `30007ed` | This correction, with `phase_b-gates-d692d43.json` |
+| **E11** | The headline left out the untrained 4B teacher, which beats every arm, and mixed rungs | `1249806` onward | This correction, with `sft-vs-teacher-*-d692d43.json` |
+| **E12** | Ten phrases claimed more than their numbers | various | This correction |
 
 E1 to E4 share one cause, explained under E1. Two evaluation processes were
 writing the same result files at the same time, and the manifest and the
@@ -264,3 +267,76 @@ be proven byte for byte.
 refuses a dirty tree (`72f7482`), and the artifact that replaces this one names
 the commit that ran it. The evaluation runners still need the same guard. That
 is planned with the GPU re-runs.
+
+## E10. Phase B: what the model did, and what the reward assumed
+
+Four statements about the transfer environment were false:
+
+| Published | What the episodes show |
+| :-- | :-- |
+| It learned to operate "three tools it has never seen". | It operated two of the three offered tools, `authenticate` and `update_order`. |
+| "It never once calls the lookup tool." | `get_order` was called in 3 of 600 SFT episodes and 2 of 600 GRPO episodes. |
+| "It calls the verification tool, receives `authenticated: false`, and changes the record regardless." | Phase B is single-shot. The model writes every tool call before any tool runs, so it never receives a result. It emits the verification and the write together. |
+| "The fine-tuned model is worse in this environment than the one that does nothing." | See below. |
+
+**The reward verdict.** The fine-tuned model's mean reward, −0.394, is below the
+untrained model's +0.286. That comparison counts two different violations the
+same way. `results/phase_b-gates-d692d43.json` replays all 1,800 episodes,
+reproduces every stored reward, and splits them:
+
+| | After SFT | After GRPO (step 400) |
+| :-- | --: | --: |
+| Writes for an unverified customer | 267 | 262 |
+| Verified writes that only skipped `get_order` | 285 | 289 |
+| Mean reward, as scored | −0.394 | −0.387 |
+| Mean reward, if skipping the lookup were not penalised | +0.366 | +0.384 |
+
+The prompt tells the model to verify the customer. It never tells it to look the
+order up first, yet the `order_id_exists` gate requires exactly that, and the
+reward treats a verified write without a lookup like an unauthorised one. With
+that penalty lifted, the fine-tuned model scores above the untrained one. So the
+"worse than doing nothing" claim is withdrawn. The refusal failure stands: 267 of
+296 writes on requests that should have been refused.
+
+The rescoring is arithmetic on the same episodes, not a new run. A fair verdict
+needs a re-run with a prompt that asks for the lookup.
+
+## E11. The teacher was missing from the headline
+
+**Omitted.** The untrained Qwen3-4B wrote the SFT trajectories and was measured
+on the same test split (`baseline-phase_a-3cc174f.json`): `pass^1` 0.608 and
+`pass^4` 0.567 at R1. That beats every arm in the headline table, which did not
+show it. Paired against each SFT run at R1, the fine-tuned 1.7B is lower on
+`pass^4` by 0.173, 0.153 and 0.107, and every 95% interval excludes zero
+(`sft-vs-teacher-run{1,2,3}-d692d43.json`). The headline now says the fine-tuned
+1.7B beats the 8B but does not reach its teacher.
+
+**Mixed rungs.** The headline table showed the 8B at R1 and every other arm at
+R0, while the paired intervals beneath it compared R1 with R1. Every arm is now
+shown at R1, with a rung column. The largest shift is the untrained 1.7B, by up to
+0.04.
+
+**Cost.** "Costs about a third as much to run" is now "uses about 31% of the
+parameter-weighted generated-token proxy per attempt". The proxy counts decoding
+only, the column was per attempt rather than per task, and the parameter counts
+come from model configs, not from an artifact.
+
+## E12. Phrases that claimed more than their numbers
+
+| Was | Now | Why |
+| :-- | :-- | :-- |
+| Format and tool reach were "most of the untrained gap" | 56 of the 149 removed failures, about 38% | 62 → 6 in those rows, 356 → 263 in the wrong-value row † |
+| Wrong-value failures: "the third row barely moves" | Fell substantially, by 26%, but still 263 of 269 remaining failures | 356 → 263 † |
+| "About +33 points" loosely, "+15" strictly | +27 to +33, and +15 to +21 | The old pair set the best `pass@4` run against the worst `pass^4` run |
+| "~1 step in 4 carried no gradient: all 8 attempts scored alike" | 23% and 27% of steps, in which all 16 attempts (2 problems × 8) scored alike | The reward function never received the group size, so each step was logged as one group of 16: 400 groups in 400 steps |
+| "Three of the four reward terms never varied" | Accuracy dominated; format and efficiency varied negligibly; the gate term was inert | Format (0.006) and efficiency (0.002) did vary, a little |
+| "Nothing left to reach"; SFT "removed every failure a preference signal can fix" | Consistent with the null, not tested as a cause | No experiment tested it |
+| "Reinforcement learning added nothing" | No detectable GRPO benefit at these learning rates and this budget | A null at one budget and one task |
+| The dead-group fix "was not implemented" | It is built but has not been run | `--prompt-filter` in `scripts/train_grpo.py` |
+| "More seeds would sharpen this: No." | Probably not; three runs make the between-run spread rough | The standard deviation came from three runs |
+| MMLU "blind to losses under ~3.5 points" | Reliably detects only changes of about 6 points | 77 of 400 answers changed; that gives about 80% power at about 6 points |
+
+Numbers that come only from local logs or configs are now marked † in the README
+and FINDINGS: the failure counts in README section 2, the grader-gaming rates,
+the untrained token ratio, the band-test p-value, the parameter counts and the
+serving memory.
