@@ -119,6 +119,12 @@ def group_health(scores: Sequence[CompletionScore]) -> dict[str, Any]:
     def spread(values: list[float]) -> float:
         if len(values) < 2:
             return 0.0
+        # Identical values have no spread, exactly. Computing it would leave
+        # rounding noise on Python 3.11, whose float sum() is not compensated:
+        # eight copies of 1.15 give about 1e-16, and a group that teaches
+        # nothing would stop being flagged as zero-variance. 3.12 sums exactly.
+        if max(values) == min(values):
+            return 0.0
         mean = sum(values) / len(values)
         return math.sqrt(sum((v - mean) ** 2 for v in values) / (len(values) - 1))
 
