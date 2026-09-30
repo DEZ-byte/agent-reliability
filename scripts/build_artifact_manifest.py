@@ -8,7 +8,15 @@ This script writes that index. It covers every measurement family, so adding a
 new kind of result means adding it to `ARTIFACT_GLOBS` rather than quietly
 leaving it unprotected.
 
-Adding a run means adding an entry. It never means changing one.
+Adding a run means adding an entry. It never means changing one, and this
+script enforces that: it reads the committed manifest first and refuses to
+rewrite or drop any entry already in it. An earlier version rebuilt the index
+from scratch, so a committed edit to a result would have been re-signed with a
+new hash, and a deleted result silently dropped. That is how one hash was
+replaced without notice (ERRATA.md, E1).
+
+If the committed manifest itself is wrong, correct the entry by hand and
+explain why in ERRATA.md. That friction is deliberate.
 """
 
 from __future__ import annotations
@@ -131,11 +139,42 @@ def _entry(path: Path) -> dict[str, Any]:
     return entry
 
 
-def build() -> dict[str, Any]:
+def check_append_only(
+    previous: dict[str, Any], current: dict[str, Any]
+) -> None:
+    """Refuse a rebuild that would drop or rewrite a recorded entry."""
+
+    missing = sorted(set(previous) - set(current))
+    if missing:
+        raise ManifestError(
+            "recorded artifact(s) would disappear from the manifest: "
+            + ", ".join(missing)
+            + "; a measurement record is never deleted"
+        )
+    changed = sorted(name for name in previous if previous[name] != current[name])
+    if changed:
+        raise ManifestError(
+            "recorded entr(ies) would change: "
+            + ", ".join(changed)
+            + "; an existing entry is never rewritten. If the committed entry "
+            "is wrong, correct it by hand and explain why in ERRATA.md"
+        )
+
+
+def load_previous() -> dict[str, Any] | None:
+    if not MANIFEST_PATH.exists():
+        return None
+    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8")).get("artifacts", {})
+
+
+def build(previous: dict[str, Any] | None = None) -> dict[str, Any]:
+    artifacts = {path.name: _entry(path) for path in artifact_paths()}
+    if previous is not None:
+        check_append_only(previous, artifacts)
     return {
         "schema_version": SCHEMA_VERSION,
         "purpose": PURPOSE,
-        "artifacts": {path.name: _entry(path) for path in artifact_paths()},
+        "artifacts": artifacts,
     }
 
 
@@ -149,7 +188,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        manifest = build()
+        manifest = build(load_previous())
     except ManifestError as error:
         print(str(error), file=sys.stderr)
         return 1
