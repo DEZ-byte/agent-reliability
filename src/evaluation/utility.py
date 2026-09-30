@@ -85,6 +85,23 @@ def extract_choice(completion: str) -> str | None:
     return None
 
 
+def was_truncated(
+    new_tokens: Sequence[int], *, max_new_tokens: int, stop_token_ids: set[int]
+) -> bool:
+    """Whether generation was cut off by the token budget.
+
+    True only if the row used the whole budget and never emitted a stop token.
+    Checking only the last token is wrong in a batch: `generate` pads every row
+    to the longest one, so a row that finished early ends in padding rather
+    than a stop token. The first version made that mistake and flagged every
+    row in any batch where one row ran long (ERRATA.md, E7). Pass the pad id
+    among the stop ids; padding only follows a finished row.
+    """
+
+    ids = [int(token) for token in new_tokens]
+    return len(ids) >= max_new_tokens and not any(t in stop_token_ids for t in ids)
+
+
 def emitted_tool_call(completion: str) -> bool:
     """Whether the model reached for a tool that was never offered.
 
@@ -154,4 +171,5 @@ __all__ = [
     "extract_choice",
     "score_completion",
     "summarise",
+    "was_truncated",
 ]

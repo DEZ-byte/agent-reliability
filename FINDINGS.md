@@ -15,7 +15,7 @@ four decisions the licence gate depends on are public in
 | **C** | [What improved was tool use, not arithmetic](#c-what-improved-was-tool-use-not-arithmetic) | Confirmed |
 | **D** | [It reproduced three times, and got cheaper](#d-it-reproduced-three-times-and-got-cheaper) | Confirmed |
 | **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | New, and the sharpest result here |
-| **D3** | [It did not forget anything](#d3-it-did-not-forget-anything) | Clean null, and reassuring |
+| **D3** | [No detectable MMLU change on this sample](#d3-no-detectable-mmlu-change-on-this-sample) | Null, blind to losses under ~3.5 points |
 | **E** | [Reinforcement learning added nothing after SFT](#e-reinforcement-learning-added-nothing-after-sft) | Null, twice |
 | **F** | [Tool formatting was never the problem](#f-tool-formatting-was-never-the-problem) | Killed a planned mitigation |
 | **G** | [The retry rung had almost nothing to fix](#g-the-retry-rung-had-almost-nothing-to-fix) | Killed a planned arm |
@@ -104,7 +104,7 @@ general improvement from a narrow one, the checkpoints were run on a second
 environment: an order-support agent, three unseen tools, no arithmetic. Half the
 requests should be completed, half refused.
 
-| | Untrained | After SFT | After GRPO |
+| | Untrained | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.528 | 0.542 |
 | Completes a legitimate request | 0.000 | 0.947 | 0.957 |
@@ -137,26 +137,36 @@ model to read a result and decide what to do about it.
 Measured on the 150-task transfer split, four attempts per task, in audit mode
 so an unauthorised write lands and can be counted. No decision entry yet.
 
-## D3. It did not forget anything
+## D3. No detectable MMLU change on this sample
 
 The first question anyone asks about fine-tuning is what it broke. Until now
 this project could not answer, because every number was measured on the task the
 model was trained for. So all three checkpoints were run over 400 held-out MMLU
 questions, stratified across all 57 subjects, with no tool offered.
 
-| | Untrained | After SFT | After GRPO |
+| | Untrained | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
-| Accuracy | 0.535 | 0.543 | 0.537 |
-| Paired difference vs untrained | - | +0.005 | +0.003 |
-| 95% interval | - | -0.038 to +0.049 | -0.040 to +0.048 |
+| Accuracy | 0.5350 (214/400) | 0.5425 (217/400) | 0.5375 (215/400) |
+| Paired difference vs untrained | - | +0.0075 | +0.0025 |
+| 95% interval | - | -0.0350 to +0.0500 | -0.0400 to +0.0450 |
+| Questions improved / got worse | - | 40 / 37 | 40 / 39 |
 | Emitted a tool call | 0.000 | 0.000 | 0.000 |
 | Mean answer length, characters | 628 | 227 | 233 |
 
+Every figure comes from
+[`results/utility-comparison-48869b1.json`](results/utility-comparison-48869b1.json),
+which pairs the arms question by question. An earlier version of this table
+reported +0.005 and 38 / 36. Those figures came from an incomplete response
+file ([`ERRATA.md`](ERRATA.md), E4).
+
 Two results, and the second was not the expected one.
 
-General knowledge is unchanged. The interval straddles zero and is nearly
-symmetric; 38 questions improved and 36 got worse. Training a 1.7B on a thousand
-calculator trajectories did not measurably cost it anything MMLU can see.
+There was no detectable MMLU change on this 400-question sample. That is weaker
+than "nothing was forgotten". The interval allows a loss of up to 3.5 points,
+and a loss that size would not show up here. Restricted to the 374 questions
+where both arms named a letter, the difference is -0.008 (-0.051 to +0.035). So
+the sign depends on how unreadable answers are counted, and neither reading can
+be told apart from zero.
 
 The tool-calling habit did not leak. Going in, the obvious worry was that a
 model trained to emit a tool call on every single example would start emitting
@@ -169,10 +179,17 @@ was the judgement of when to. Neither shows up here, because nothing here offers
 a tool to act with.
 
 One real change did show up. The fine-tuned model answers about a third as
-long, and runs out of token budget a quarter as often. Terser, not worse.
+long. Terser, with no detectable accuracy cost. The truncation rates published
+earlier counted batch padding as truncation and are withdrawn
+([`ERRATA.md`](ERRATA.md), E7).
 
-Measured on 400 questions, so the interval is about four points wide; a smaller
-loss than that would not have been visible. No decision entry yet.
+‡ In this table and in D2, the GRPO column used the final step-400 adapter, not
+the dev-selected checkpoint-200 (ERRATA E8). It is a diagnostic of where the
+run ended.
+
+Measured on 400 questions, so the interval reaches about four points either side
+of the estimate, and a smaller loss than that would not have been visible. No
+decision entry yet.
 
 ---
 
@@ -183,13 +200,19 @@ loss than that would not have been visible. No decision entry yet.
 | Learning rate | `pass^1` change | 95% interval | Weights moved |
 | :-- | --: | :--: | --: |
 | 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% |
-| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% |
+| 1e-5 | +0.010 | −0.020 – 0.040 | 3.77% |
+
+All four numbers come from the checkpoints dev selection picked (checkpoint-200
+and checkpoint-300). The weight figures are in
+[`results/weight-change-72f7482.json`](results/weight-change-72f7482.json). An
+earlier version showed 3.82% here, which was the final step-400 adapter
+(ERRATA E8).
 
 The interval on the first run excludes an effect larger than about a point,
 rather than merely failing to find one.
 
 The obvious objection was that the run barely moved the model, and that objection
-was correct. Rerunning at ten times the rate moved the weights nearly ten times as
+was correct. Rerunning at ten times the rate moved the weights about nine times as
 far and produced an identical dev peak. Two nulls across a tenfold rate range are
 much harder to dismiss than one.
 

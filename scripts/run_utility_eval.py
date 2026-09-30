@@ -40,7 +40,12 @@ from typing import Any, Final
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from evaluation.utility import CHOICE_LABELS, score_completion, summarise  # noqa: E402
+from evaluation.utility import (  # noqa: E402
+    CHOICE_LABELS,
+    score_completion,
+    summarise,
+    was_truncated,
+)
 from evaluation.utility_split import MMLU_MANIFEST_NAME, load_questions  # noqa: E402
 
 SPLIT_MANIFEST_PATH: Final = PROJECT_ROOT / "configs" / "splits" / MMLU_MANIFEST_NAME
@@ -189,6 +194,15 @@ def main() -> int:
 
     pad = tokenizer.pad_token_id or tokenizer.eos_token_id
     tokenizer.padding_side = "left"
+    # Every id that ends a row: the tokenizer's eos, the model's configured
+    # stop ids (Qwen3 has two), and the pad id, which only follows a finished
+    # row in a padded batch.
+    configured = getattr(loaded.generation_config, "eos_token_id", None)
+    if configured is None:
+        configured = []
+    elif isinstance(configured, int):
+        configured = [configured]
+    stop_token_ids = {tokenizer.eos_token_id, pad, *configured} - {None}
     rows: list[dict[str, Any]] = []
     responses_path = Path(args.responses)
     responses_path.parent.mkdir(parents=True, exist_ok=True)
@@ -208,11 +222,10 @@ def main() -> int:
                 )
             for question, row in zip(chunk, generated):
                 new_tokens = row[prompt_length:]
-                # A generation that used its whole budget without emitting a
-                # stop token was cut off rather than finished.
-                truncated = (
-                    len(new_tokens) >= MAX_NEW_TOKENS
-                    and int(new_tokens[-1]) != tokenizer.eos_token_id
+                truncated = was_truncated(
+                    new_tokens.tolist(),
+                    max_new_tokens=MAX_NEW_TOKENS,
+                    stop_token_ids=stop_token_ids,
                 )
                 completion = tokenizer.decode(new_tokens, skip_special_tokens=True)
                 score = score_completion(

@@ -23,6 +23,10 @@ hash has moved, the test suite fails.
 | `h1-comparison-*.json` | The headline comparison: trained 1.7B against the scaffolded 8B |
 | `contamination-*.json` | The no-calculator probe, before and after training |
 | `masking-verification-*.json` | Proof the training loss covered assistant tokens only |
+| `utility-{base,sft,grpo}-*.json` | MMLU accuracy, tool-call and truncation rates per arm, with no tool offered |
+| `utility-comparison-*.json` | The paired MMLU comparison, question by question, built only from rows checked against those summaries |
+| `phase_b-*.json` | The transfer environment: an order-support agent with three unseen tools |
+| `weight-change-*.json` | How far GRPO moved the adapter from its SFT start. Use `weight-change-72f7482.json`, which measures the tested checkpoints; the older file measured the final step-400 adapters ([`ERRATA.md`](../ERRATA.md), E8) |
 
 **The stack checks.** `smoke_environment.json` records the installed packages,
 the CUDA device and a hash of every source file the probe depends on. It refuses
@@ -34,10 +38,18 @@ purpose.
 Episode logs (`*.jsonl`) hold one row per attempt and are not committed. They
 are large, and they are reproducible from the artifact that references them.
 
+**Absolute paths.** 21 older artifacts hold 81 absolute paths from the machine
+that wrote them, including a user name and temporary session folders. Those
+files are frozen, so the paths stay. Read them as labels, not as locations: the
+checkpoint name at the end of each path is the part that matters. New scripts
+record paths relative to the repository.
+
 ## Why the failures are still here
 
 A measurement record is never edited or deleted, including when it is
-unflattering. Three examples:
+unflattering. When the index or a write-up turns out to be wrong, the
+correction goes in [`ERRATA.md`](../ERRATA.md) rather than being made quietly.
+Three examples of records kept as written:
 
 `model_smoke-qwen3-1.7b-6824196.json` is the first real attempt. Revision
 validation and assistant masking both failed. Keeping it is what makes the later

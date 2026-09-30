@@ -98,23 +98,27 @@ a reasoning limit, not a formatting one.
 
 | Learning rate | `pass^1` change | 95% interval | Adapter moved | What the model sees |
 | :-- | --: | :--: | --: | --: |
-| 1e-6 | +0.002 | −0.010 – 0.013 | 0.45% | 1.5% |
-| 1e-5 | +0.010 | −0.020 – 0.040 | 3.82% | 13.8% |
+| 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% | 1.4% |
+| 1e-5 | +0.010 | −0.020 – 0.040 | 3.77% | 13.7% |
 
-The last two columns are recomputed from the adapters in
-[`results/weight-change-7e33eb5.json`](results/weight-change-7e33eb5.json)
-rather than quoted from a private note. "Adapter moved" is the relative
-Frobenius change across every adapter tensor; "what the model sees" is the same
-measure applied to the per-module LoRA product, which is what actually reaches
-the base weights. The higher rate moved the policy roughly nine times further on
-both.
+Every column comes from the same checkpoints: the ones dev selection picked and
+test measured (checkpoint-200 at 1e-6, checkpoint-300 at 1e-5). The last two are
+recomputed from the adapters in
+[`results/weight-change-72f7482.json`](results/weight-change-72f7482.json).
+"Adapter moved" is the relative Frobenius change across every adapter tensor;
+"what the model sees" is the same measure applied to the per-module LoRA
+product, which is what actually reaches the base weights. The higher rate moved
+the policy about 9 times further by the first measure and 10 times by the
+second. An earlier version of this table showed 0.45% and 3.82%, which belong to
+the final step-400 adapters rather than the tested ones
+([`ERRATA.md`](ERRATA.md), E8).
 
 Both intervals contain zero. The tight one rules out any effect larger than about
 a point, rather than merely failing to find one.
 
 The obvious objection was that the run barely moved the model. Measuring the
 weight shift confirmed it, so the run was repeated at ten times the rate. That
-moved the weights nearly ten times as far and produced an identical dev peak. Two
+moved the weights about nine times as far and produced an identical dev peak. Two
 nulls across a tenfold rate range are harder to dismiss than one.
 
 **Three measurements explain why:**
@@ -167,17 +171,26 @@ project set out to measure.
 | "It got better at arithmetic." | No. Probed with no calculator at all: 64.0% before, 66.0% after. It got better at *writing the expression*. |
 | "It learned to cheat the grader." | No. The reward pays the same for restating a remembered answer as for real work — deliberately, so the behaviour is measured rather than hidden. The rate fell from 3.0% untrained to 1.2% fine-tuned to 1.0% after RL. |
 | "More seeds would sharpen this." | No. Between-run standard deviation is 0.019; a single run's interval is ~0.069 either side. Training is steadier than 150 tasks can resolve, so a bigger test split would buy more than more seeds. |
-| **"It forgot things."** | **No.** 400 held-out MMLU questions, no tool offered: 53.5% untrained, 54.3% fine-tuned. Paired difference +0.005, 95% interval −0.038 to +0.049. 38 questions improved, 36 got worse. |
+| **"It forgot things."** | **No detectable MMLU change on this 400-question sample.** No tool offered: 53.5% untrained (214/400), 54.25% fine-tuned (217/400). Paired difference +0.0075, 95% interval −0.035 to +0.050. 40 questions improved, 37 got worse. The interval still allows a loss of up to 3.5 points. |
 | **"It now calls tools at everything."** | **No.** On a benchmark offering no tools, every arm emitted a tool call on **0.0%** of questions. The habit is tied to being offered a tool, not to being asked a question. |
 
-The knowledge result is the one worth stating plainly, because it is the first
-thing anyone asks and the project could not answer it until now. Fine-tuning a
-1.7B on a thousand calculator trajectories did not measurably cost it general
-knowledge, and did not leak the tool-calling habit into contexts with no tools.
+The knowledge result needs careful wording, because it is the first thing anyone
+asks. There was no detectable MMLU change on this 400-question sample. That is
+not the same as no change: the interval reaches 3.5 points below zero, so a loss
+smaller than that would not show up here. What the sample does show cleanly is
+that the tool-calling habit did not leak into contexts with no tools.
+
+The comparison is frozen question by question in
+[`results/utility-comparison-48869b1.json`](results/utility-comparison-48869b1.json).
+An earlier version of this section reported +0.005 and 38/36. Those figures
+came from an incomplete response file, and [`ERRATA.md`](ERRATA.md) explains how.
 
 One real behavioural change did show up. The fine-tuned model answers far more
-briefly — 227 characters on average against the untrained model's 628 — and is
-cut off by the token budget a quarter as often. Terser, not worse.
+briefly: 227 characters on average against the untrained model's 628. Terser,
+with no detectable accuracy cost. How often each arm ran out of token budget is
+not reported here. The rates published earlier (40%, 16%, 20%) counted batch
+padding as truncation and are withdrawn until the evaluation is re-run
+([`ERRATA.md`](ERRATA.md), E7).
 
 ---
 
@@ -190,7 +203,7 @@ anywhere, and no calculator. Half the requests should be completed and half
 should be refused, because a model that learned "always call the writing tool"
 scores 50% on a balanced set and 100% on a one-sided one.
 
-| | Untrained 1.7B | After SFT | After GRPO |
+| | Untrained 1.7B | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.528 | 0.542 |
 | Completes a legitimate request | **0.000** | **0.947** | **0.957** |
@@ -198,6 +211,11 @@ scores 50% on a balanced set and 100% on a one-sided one.
 | Calls any tool | 0.753 | 1.000 | 1.000 |
 | Writes without the right to | 0.000 | 0.920 | 0.918 |
 | Mean reward | +0.286 | **−0.394** | **−0.387** |
+
+‡ The GRPO column used the final step-400 adapter, not checkpoint-200, which dev
+selection picked and every other GRPO number in this README comes from
+([`ERRATA.md`](ERRATA.md), E8). Treat it as a diagnostic of where the run ended,
+not as the selected GRPO arm. It has not been re-run.
 
 The headline metric barely moves. Everything underneath it inverts.
 
@@ -230,7 +248,7 @@ GRPO again changed nothing it did not already do.
 | Rule | How it is enforced |
 | :-- | :-- |
 | Accuracy comes from executing the tool | Never parsed from the model's prose |
-| Results cannot be edited after the fact | Every result file is frozen by SHA-256 in [`results/artifact_manifest.json`](results/artifact_manifest.json); a test fails if one changes |
+| Results cannot be edited after the fact | Every result file is frozen by SHA-256 in [`results/artifact_manifest.json`](results/artifact_manifest.json); a test fails if one changes. Corrections go in [`ERRATA.md`](ERRATA.md), never in place |
 | No train/test leakage | Splits are disjoint by task ID *and* by content hash |
 | No checkpoint cherry-picking | The selection rule was written into the config before any dev number existed; the winner runs on test exactly once |
 | Comparisons are paired | Task-level bootstrap intervals, paired permutation tests, exact sign test |
@@ -255,13 +273,15 @@ directly, so discovery fails without it.
   tasks where both arms genuinely varied, the trained model's lead *widens*. The
   finding survives; the caveat is real.
 - **The knowledge probe is 400 questions, not 14,042.** A stratified sample of
-  MMLU, which bounds how small a change it could detect: the paired interval is
-  about ±4 points, so a loss smaller than that would not show up here.
-- **The untrained model is cut off more often.** It was truncated on 40% of
-  questions against the fine-tuned model's 16%, because it answers at length.
-  Most truncated answers still named a choice, and restricting to readable
-  answers moves the comparison by about a point in the other direction, so the
-  null holds either way — but it is a real asymmetry and it is recorded.
+  MMLU, which bounds how small a change it could detect: the paired interval
+  runs from −3.5 to +5.0 points, so a loss smaller than about 3.5 points would
+  not show up here.
+- **The untrained model more often names no answer.** It named no letter on 23
+  of 400 questions, against 8 for the fine-tuned model, because it answers at
+  length. Restricted to the 374 questions where both arms named a letter, the
+  paired difference is −0.008 (95% interval −0.051 to +0.035) instead of
+  +0.0075. Still no detectable change either way, but the sign depends on how
+  unreadable answers are counted, so the asymmetry is recorded.
 - **The base model barely varies.** On the transfer environment it produced four
   identical answers on 75% of tasks, so its `pass^4` largely collapses into
   `pass^1`. It is a floor, not a competitor.

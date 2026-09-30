@@ -27,6 +27,7 @@ from evaluation.utility import (  # noqa: E402
     extract_choice,
     score_completion,
     summarise,
+    was_truncated,
 )
 
 
@@ -185,6 +186,49 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(summary["extraction_failure_rate"], 1.0)
         self.assertEqual(summary["truncated_rate"], 0.5)
         self.assertEqual(summary["unreadable_within_budget_rate"], 0.5)
+
+
+class TruncationTests(unittest.TestCase):
+    """A row is cut off only if it used the budget and never stopped.
+
+    The published detector read only the last token. In a padded batch a row
+    that finished early ends in padding, so every row in any batch with one
+    long row was flagged, and the published rates came out 40%, 16% and 20%.
+    """
+
+    EOS = 151645  # <|im_end|>
+    PAD = 151643  # <|endoftext|>, Qwen3's pad and second stop id
+    STOPS = {EOS, PAD}
+
+    def test_a_row_that_finished_early_in_a_padded_batch_is_not_truncated(self) -> None:
+        row = [11, 12, 13, self.EOS] + [self.PAD] * 4
+        self.assertFalse(was_truncated(row, max_new_tokens=8, stop_token_ids=self.STOPS))
+
+    def test_the_old_last_token_check_would_have_flagged_it(self) -> None:
+        """Pins the bug: the padded row's last token is not the eos id."""
+
+        row = [11, 12, 13, self.EOS] + [self.PAD] * 4
+        self.assertNotEqual(row[-1], self.EOS)
+
+    def test_a_row_that_used_the_whole_budget_without_stopping_is_truncated(self) -> None:
+        row = [11, 12, 13, 14, 15, 16, 17, 18]
+        self.assertTrue(was_truncated(row, max_new_tokens=8, stop_token_ids=self.STOPS))
+
+    def test_a_row_that_stopped_on_its_last_budgeted_token_is_not_truncated(self) -> None:
+        row = [11, 12, 13, 14, 15, 16, 17, self.EOS]
+        self.assertFalse(was_truncated(row, max_new_tokens=8, stop_token_ids=self.STOPS))
+
+    def test_a_short_row_is_never_truncated(self) -> None:
+        self.assertFalse(was_truncated([11, 12], max_new_tokens=8, stop_token_ids=self.STOPS))
+
+    def test_a_batch_is_judged_row_by_row(self) -> None:
+        batch = [
+            [11, 12, self.EOS, self.PAD, self.PAD, self.PAD],
+            [21, 22, 23, 24, 25, 26],
+            [31, 32, 33, 34, self.EOS, self.PAD],
+        ]
+        flags = [was_truncated(r, max_new_tokens=6, stop_token_ids=self.STOPS) for r in batch]
+        self.assertEqual(flags, [False, True, False])
 
 
 if __name__ == "__main__":
