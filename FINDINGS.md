@@ -8,15 +8,19 @@ kept outside this repository for now. This page is the readable version. The
 four decisions the licence gate depends on are public in
 [`configs/release_decision.md`](configs/release_decision.md).
 
+Numbers marked † come from local logs or configs, not from a committed artifact.
+Corrections to earlier versions of this page are in [`ERRATA.md`](ERRATA.md).
+
 | | Finding | Verdict |
 | :-- | :-- | :-- |
 | **A** | [A trained 1.7B beat a scaffolded 8B](#a-a-trained-17b-beat-a-scaffolded-8b) | Confirmed |
+| **A2** | [It did not reach its teacher](#a2-it-did-not-reach-its-teacher) | Confirmed on `pass^4` in all three runs |
 | **B** | [Training raised capability faster than reliability](#b-training-raised-capability-faster-than-reliability) | Confirmed, and awkward |
 | **C** | [What improved was tool use, not arithmetic](#c-what-improved-was-tool-use-not-arithmetic) | Confirmed |
 | **D** | [It reproduced three times, and got cheaper](#d-it-reproduced-three-times-and-got-cheaper) | Confirmed |
-| **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | New, and the sharpest result here |
-| **D3** | [No detectable MMLU change on this sample](#d3-no-detectable-mmlu-change-on-this-sample) | Null, blind to losses under ~3.5 points |
-| **E** | [Reinforcement learning added nothing after SFT](#e-reinforcement-learning-added-nothing-after-sft) | Null, twice |
+| **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | Refusal failure confirmed; the reward verdict is withdrawn |
+| **D3** | [No detectable MMLU change on this sample](#d3-no-detectable-mmlu-change-on-this-sample) | Null; reliably detects only changes of about 6 points |
+| **E** | [No detectable GRPO benefit at these rates and this budget](#e-no-detectable-grpo-benefit-at-these-rates-and-this-budget) | Null, twice |
 | **F** | [Tool formatting was never the problem](#f-tool-formatting-was-never-the-problem) | Killed a planned mitigation |
 | **G** | [The retry rung had almost nothing to fix](#g-the-retry-rung-had-almost-nothing-to-fix) | Killed a planned arm |
 | **H** | [This environment cannot teach self-correction](#h-this-environment-cannot-teach-self-correction) | Structural, deferred |
@@ -31,25 +35,45 @@ four decisions the licence gate depends on are public in
 
 The comparison the project was built to make.
 
-| | Llama-3.1-8B, scaffolded | Qwen3-1.7B, fine-tuned |
-| :-- | --: | --: |
-| `pass^1` | 0.415 | 0.515 – 0.552 |
-| `pass^4` | 0.293 | 0.393 – 0.460 |
-| Cost per task, parameter-weighted | 236 | 72 |
-| Memory to serve at 4-bit | ~6 GB | ~1.5 GB |
+All arms at rung R1 (one retry when the output does not parse).
 
-Three training runs, three paired comparisons, every interval excluding zero on
-both metrics.
+| | Llama-3.1-8B, scaffolded | Qwen3-1.7B, fine-tuned | Qwen3-4B, untrained (teacher) |
+| :-- | --: | --: | --: |
+| `pass^1` | 0.415 | 0.517 – 0.553 | 0.608 |
+| `pass^4` | 0.293 | 0.393 – 0.460 | 0.567 |
+| Cost per attempt, parameter-weighted † | 236 | 73 – 75 | not recorded |
+| Memory to serve at 4-bit † | ~6 GB | ~1.5 GB | not measured |
+
+Three training runs, three paired comparisons against the 8B, every interval
+excluding zero on both metrics.
 
 Cost went the same way once measured properly. The 8B emits *fewer* raw tokens
-per task. Weighting by parameters reverses that, which is the honest comparison
-when the question is what it costs to serve.
+per attempt. Weighting by parameters reverses that: the 1.7B uses about 31% of
+the 8B's parameter-weighted generated-token proxy per attempt. The proxy counts
+decoding only, and the parameter counts come from the model configs †.
 
 `D-076`
 
+## A2. It did not reach its teacher
+
+The untrained Qwen3-4B wrote the trajectories the 1.7B was trained on. It never
+appeared in a table until now, and it beats every arm.
+
+| Training run | `pass^1` gap to the 4B | 95% interval | `pass^4` gap to the 4B | 95% interval |
+| :-- | --: | :--: | --: | :--: |
+| Run 1 | −0.078 | −0.143 to −0.013 | −0.173 | −0.253 to −0.093 |
+| Run 2 | −0.092 | −0.157 to −0.028 | −0.153 | −0.227 to −0.073 |
+| Run 3 | −0.055 | −0.120 to +0.008 | −0.107 | −0.187 to −0.027 |
+
+Both arms at R1, from
+[`results/sft-vs-teacher-run1-d692d43.json`](results/sft-vs-teacher-run1-d692d43.json)
+and its two siblings. The `pass^4` gap excludes zero in every run. Fine-tuning
+closed most of the single-attempt gap to the teacher and less of the reliability
+gap. No decision entry yet.
+
 ## B. Training raised capability faster than reliability
 
-The headline, and the second half matters more than the first.
+The headline, and the second half matters more than the first. All at R0.
 
 | Metric | Untrained | Fine-tuned |
 | :-- | --: | --: |
@@ -58,7 +82,7 @@ The headline, and the second half matters more than the first.
 | Solved *sometimes* but not always | 0.107 | 0.213 – 0.287 |
 
 Training was supposed to close the reliability gap. It widened it. Reported
-loosely this is about +33 points; reported strictly it is +15.
+loosely this is +27 to +33 points; reported strictly it is +15 to +21.
 
 The gap between those two numbers is the entire reason the project measures
 `pass^k`.
@@ -84,12 +108,13 @@ the wrong reading.
 | 2 | +0.212 | 0.4700 |
 | 3 | +0.248 | 0.4975 |
 
-The trained model also spends about 0.78× the tokens of the untrained one.
+The trained model also spends about 0.78× the tokens of the untrained one †.
 
 The more useful number is what the spread says about the experiment. Between runs
 the standard deviation is 0.019; within a single run the confidence interval is
-about 0.069 either side. Training is steadier than 150 test tasks can measure, so
-the way to sharpen this result is a bigger test split, not more seeds.
+about 0.069 either side. Three runs make that standard deviation rough, but the
+gap is large, so a bigger test split would likely sharpen this result more than
+more seeds.
 
 Dev told a slightly different story from test. A project that ran once and
 happened to draw the third seed would have reported a better number, with nothing
@@ -101,32 +126,47 @@ in that single run to say so.
 
 Everything above was measured on the task the model was trained for. To tell a
 general improvement from a narrow one, the checkpoints were run on a second
-environment: an order-support agent, three unseen tools, no arithmetic. Half the
-requests should be completed, half refused.
+environment: an order-support agent offered three unseen tools, no arithmetic.
+Half the requests should be completed, half refused. It runs in audit mode, so a
+write the gates should stop still lands. It is single-shot: the model writes all
+its tool calls before any tool runs, and never sees a result.
 
 | | Untrained | After SFT | After GRPO ‡ |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.528 | 0.542 |
-| Completes a legitimate request | 0.000 | 0.947 | 0.957 |
+| Completes a legitimate request (outcome) | 0.000 | 0.947 | 0.957 |
 | Correctly refuses an unverified one | 1.000 | 0.098 | 0.115 |
-| Writes without the right to | 0.000 | 0.920 | 0.918 |
-| Mean reward | +0.286 | -0.394 | -0.387 |
+| Writes for an unverified customer (of 296) | 0 | 267 | 262 |
+| Verified writes that skipped the lookup (of 304) | 0 | 285 | 289 |
+| Episodes that called the lookup tool (of 600) | 0 | 3 | 2 |
+| Mean reward, as scored | +0.286 | -0.394 | -0.387 |
+| Mean reward, if skipping the lookup were not penalised | +0.286 | +0.366 | +0.384 |
+
+The gate split and the rescoring come from
+[`results/phase_b-gates-d692d43.json`](results/phase_b-gates-d692d43.json), which
+replays all 1,800 episodes and reproduces every stored reward.
 
 The headline moves by three points. Underneath, the two halves swap places.
 
-Fine-tuning on GSM8K and a calculator taught the model to operate three tools it
-had never seen, in a domain with no maths in it, from a standing start of zero.
-That is real transfer and it is the best news in this project.
+Fine-tuning on GSM8K and a calculator taught the model to complete 95% of
+legitimate requests by outcome, in audit mode, with severe authorisation
+failures. It operated two of the three offered tools, in a domain with no maths
+in it, from a standing start of zero. That is real transfer and it is the best
+news in this project.
 
-It also taught it to act unconditionally. On requests it should refuse it writes
-anyway nine times in ten, having called the verification tool, received
-`authenticated: false`, and proceeded regardless. It never calls the lookup tool
-at all. The untrained model scores about half by never acting; the trained one
-scores about half by always acting.
+It also taught it to act unconditionally. On requests it should refuse, it wrote
+anyway in 267 of 296 episodes. It emits the verification call and the write in
+the same turn, so it never learns that verification failed. The untrained model
+scores about half by never writing; the trained one scores about half by always
+writing.
 
-Mean reward is the summary that matters: negative after training, positive
-before. In an environment with something to protect, the fine-tuned model is
-worse than the one that does nothing.
+The mean reward does not settle which is worse. As scored, it is negative after
+training and positive before. But 285 of the 552 violations are writes for a
+verified customer that only skipped `get_order`, and the prompt never asks for a
+lookup. Without that penalty the fine-tuned model scores +0.366, above the
+untrained +0.286. The earlier claim that it is worse than doing nothing is
+withdrawn (ERRATA E10). A re-run with a prompt that asks for the lookup would
+settle it.
 
 None of this is mysterious. Every training example was one call and done, and
 not one had "do not call the tool" as the correct answer, so an unconditional
@@ -162,8 +202,10 @@ file ([`ERRATA.md`](ERRATA.md), E4).
 Two results, and the second was not the expected one.
 
 There was no detectable MMLU change on this 400-question sample. That is weaker
-than "nothing was forgotten". The interval allows a loss of up to 3.5 points,
-and a loss that size would not show up here. Restricted to the 374 questions
+than "nothing was forgotten". The interval runs from -3.5 to +5.0 points. With 77
+of 400 questions changing answer, a test this size has about an 80% chance of
+detecting a change of about 6 points, and less for anything smaller. Restricted
+to the 374 questions
 where both arms named a letter, the difference is -0.008 (-0.051 to +0.035). So
 the sign depends on how unreadable answers are counted, and neither reading can
 be told apart from zero.
@@ -187,17 +229,15 @@ earlier counted batch padding as truncation and are withdrawn
 the dev-selected checkpoint-200 (ERRATA E8). It is a diagnostic of where the
 run ended.
 
-Measured on 400 questions, so the interval reaches about four points either side
-of the estimate, and a smaller loss than that would not have been visible. No
-decision entry yet.
+Measured on 400 questions. No decision entry yet.
 
 ---
 
 # Things that did not work
 
-## E. Reinforcement learning added nothing after SFT
+## E. No detectable GRPO benefit at these rates and this budget
 
-| Learning rate | `pass^1` change | 95% interval | Weights moved |
+| Learning rate | `pass^1` change (R0) | 95% interval | Weights moved |
 | :-- | --: | :--: | --: |
 | 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% |
 | 1e-5 | +0.010 | −0.020 – 0.040 | 3.77% |
@@ -208,7 +248,7 @@ and checkpoint-300). The weight figures are in
 earlier version showed 3.82% here, which was the final step-400 adapter
 (ERRATA E8).
 
-The interval on the first run excludes an effect larger than about a point,
+The interval on the first run excludes an effect much larger than a point,
 rather than merely failing to find one.
 
 The obvious objection was that the run barely moved the model, and that objection
@@ -216,13 +256,13 @@ was correct. Rerunning at ten times the rate moved the weights about nine times 
 far and produced an identical dev peak. Two nulls across a tenfold rate range are
 much harder to dismiss than one.
 
-**Why:**
+**Consistent with the null, though none was tested as a cause:**
 
-| Cause | Measurement |
+| Measurement | Value |
 | :-- | :-- |
-| Nearly a quarter of steps carried no gradient | All 8 attempts scored alike, and a group-relative advantage is zero there |
-| Only one reward term varied | Accuracy spread 0.339, format 0.006, efficiency 0.002, gate exactly 0.000 |
-| Nothing left to reach | SFT had already removed every failure a preference signal can fix |
+| Steps with no gradient | 23% at 1e-6, 27% at 1e-5. Each step scored 16 attempts, 8 at each of 2 problems, and in these steps all 16 scored alike. The per-problem rate was not logged; it is at least as high. |
+| Reward spread within a step | Accuracy dominated (0.339); format (0.006) and efficiency (0.002) varied negligibly; the gate term was inert (0.000) |
+| What was left to fix | After SFT almost every failure is a well-formed call with the wrong value, which GRPO can learn from only when some attempts get it right |
 
 The gate term reads 0.000 for a structural reason: this environment has one
 harmless tool, so no gate can ever fire.
@@ -230,7 +270,7 @@ harmless tool, so no gate can ever fire.
 One direction worth chasing, not yet a result: the higher rate raised `pass^4` and
 lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to 0.167. That is
 what a policy-gradient method concentrating probability mass looks like, and it is
-the trade this project cares about. A paired test gives p = 0.24, so it is a hint.
+the trade this project cares about. A paired test gives p = 0.24 †, so it is a hint.
 
 `D-077` · `D-078`
 
@@ -285,7 +325,7 @@ The reward pays exactly the same for this as for genuine work. That was
 deliberate: measure the behaviour rather than penalise it, so the rate stays
 visible instead of being pushed somewhere harder to see.
 
-| Model | Rate |
+| Model | Rate † |
 | :-- | --: |
 | Untrained | 3.0% |
 | Fine-tuned | 1.2% |
@@ -319,7 +359,8 @@ measured against it.
 | Open question | Status |
 | :-- | :-- |
 | Does the same hold for a same-family 8B? | Not run. The comparator is a Llama, so size and pretraining are tangled. |
-| Does the 4B benefit from training too? | Not run. It was used as the teacher, so only the 1.7B has a trained arm. `D-072` |
-| Did training damage anything off-task? | Not measured. Nine tasks regressed and two now score zero, but there is no before/after outside this task. |
-| Would GRPO work with dead groups filtered out? | Not tried. The null above is a statement about this budget and this setup, not about the method. |
-| Can a gate-bearing environment be built? | Deferred to a later stage. Until then a quarter of the reward surface is inert. |
+| Does the 4B benefit from training too? | Not run. It was used as the teacher, so only the 1.7B has a trained arm. Untrained, it already beats every arm (A2). `D-072` |
+| Did training damage anything off-task? | Partly answered. No detectable MMLU change on 400 questions (D3), but that test only reliably detects changes of about 6 points. |
+| Would GRPO work with dead groups filtered out? | Not tried. The filter is built but has not been run. The null above is a statement about this budget and this setup, not about the method. |
+| Does the Phase B refusal failure survive a prompt that asks for the lookup? | Not run. The gate environment is built and measured (D2), but its reward verdict depends on a lookup the prompt never asked for. |
+| Do the Phase B and MMLU GRPO numbers hold on the selected checkpoint? | Not run. Both used the final step-400 adapter (ERRATA E8). |

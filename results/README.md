@@ -1,8 +1,10 @@
 # Results
 
 Every number in [`README.md`](../README.md) and [`FINDINGS.md`](../FINDINGS.md)
-comes from a file in this folder. Nothing is retyped by hand, and nothing is
-edited after it is written.
+comes from a file in this folder, except the ones marked †. Those come from local
+episode logs or model configs that are not committed. Nothing here is edited
+after it is written. `tests/test_docs_match_artifacts.py` recomputes the main
+tables from these files and fails if the documents disagree.
 
 ## What is here
 
@@ -23,9 +25,10 @@ hash has moved, the test suite fails.
 | `h1-comparison-*.json` | The headline comparison: trained 1.7B against the scaffolded 8B |
 | `contamination-*.json` | The no-calculator probe, before and after training |
 | `masking-verification-*.json` | Proof the training loss covered assistant tokens only |
-| `utility-{base,sft,grpo}-*.json` | MMLU accuracy, tool-call and truncation rates per arm, with no tool offered |
+| `sft-vs-teacher-*.json` | Each SFT run paired with the untrained Qwen3-4B that wrote its training data |
+| `utility-{base,sft,grpo}-*.json` | MMLU accuracy and tool-call rate per arm, with no tool offered. Their truncation rates are wrong ([`ERRATA.md`](../ERRATA.md), E7) |
 | `utility-comparison-*.json` | The paired MMLU comparison, question by question, built only from rows checked against those summaries |
-| `phase_b-*.json` | The transfer environment: an order-support agent with three unseen tools |
+| `phase_b-*.json` | The transfer environment: an order-support agent with three unseen tools. `phase_b-gates-*.json` splits its violations by which gate failed |
 | `weight-change-*.json` | How far GRPO moved the adapter from its SFT start. Use `weight-change-72f7482.json`, which measures the tested checkpoints; the older file measured the final step-400 adapters ([`ERRATA.md`](../ERRATA.md), E8) |
 
 **The stack checks.** `smoke_environment.json` records the installed packages,
