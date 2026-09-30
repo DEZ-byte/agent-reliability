@@ -184,17 +184,35 @@
       "config_sha256": "57901682f8bc4576292483229289f22f5894cafb852ed357a9068b38fe24e170",
       "declares_gate_demotion": true
     },
+    "phase_b-base-10f9d97.json": {
+      "sha256": "8c7c08aa21bf96d8a3a0deaf3adfd90db333a65747d9f0d41f12755ac57d6fef",
+      "bytes": 1591,
+      "recorded_in_commit": "aa593308c41ed653e1bf29cdf83929d43724b051",
+      "kind": "phase_b_transfer_eval"
+    },
     "phase_b-base-8cef0b8.json": {
       "sha256": "57b1bfe2e58f245b0296c09dfcf0f13fb4e75747608ffd4f59aa60a23a047e84",
       "bytes": 1563,
       "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
       "kind": "phase_b_transfer_eval"
     },
+    "phase_b-gates-913520c.json": {
+      "sha256": "c204b61e431fc00f57ad513dc9eb9eb9c73608642d8caa7f9b87c679796857dc",
+      "bytes": 4615,
+      "recorded_in_commit": "b3d7695c907d1bd3faf92903908d098e29958883",
+      "kind": "phase_b_gate_breakdown"
+    },
     "phase_b-gates-d692d43.json": {
       "sha256": "858d61eb8980718213cd7682eb3a8bf794caf88ec9e60526a601b1e517d17858",
       "bytes": 4599,
       "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
       "kind": "phase_b_gate_breakdown"
+    },
+    "phase_b-grpo-4134ef3.json": {
+      "sha256": "5c4a9b1f7b03ea6ad92dd7da459917e88768da49329a8a226540ce4973f81f4f",
+      "bytes": 1695,
+      "recorded_in_commit": "001023ed06a11656dbf5b2d190a1811e18a0b2e8",
+      "kind": "phase_b_transfer_eval"
     },
     "phase_b-grpo-8cef0b8.json": {
       "sha256": "a541695789746d8c1fa101dad47261220ffb8b330541cb28a5099a43e2de8316",
@@ -206,6 +224,12 @@
       "sha256": "6567da0a360a2587d1eb5f6f825994bc951575b1d0d69d528b9c6c0e458c45ed",
       "bytes": 1629,
       "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
+      "kind": "phase_b_transfer_eval"
+    },
+    "phase_b-sft-aa59330.json": {
+      "sha256": "3b61d4127b7a7e7db2ac76657d02cab39f486dd25254dcbfea8a14c30505be95",
+      "bytes": 1706,
+      "recorded_in_commit": "4134ef3fd292ca2d5e285eb0f3e8a5fb0575428f",
       "kind": "phase_b_transfer_eval"
     },
     "sft-candidates-a2dbe77.json": {
@@ -322,6 +346,12 @@
       "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
       "kind": "paired_arm_comparison"
     },
+    "utility-base-001023e.json": {
+      "sha256": "375540da75ff5544b1058ac7b2b1409e75f939f00be4826490e51d241a5593bb",
+      "bytes": 5974,
+      "recorded_in_commit": "bb6764e939630318f5d8b1a00750185111917b38",
+      "kind": "utility_eval"
+    },
     "utility-base-30007ed.json": {
       "sha256": "35bede7df004e7acfd209d3c2589370bab0fc00a32c017a3f4706734240612fe",
       "bytes": 5999,
@@ -334,16 +364,34 @@
       "recorded_in_commit": "5424bb2fdd0fc96c167027a5269033ebe5b694ff",
       "kind": "utility_paired_comparison"
     },
+    "utility-comparison-b3d7695.json": {
+      "sha256": "8781062343e513548f04645c82f7d5de5a925244ca7d346378d86967f961f0b9",
+      "bytes": 398161,
+      "recorded_in_commit": "f66c67eb9ffb6603b7bb16eb208bc8d5d33e1f4e",
+      "kind": "utility_paired_comparison"
+    },
     "utility-grpo-30007ed.json": {
       "sha256": "1b88cf099ba522130737d4f933d7e56650e11a395264cdf4a06f5e169aeda834",
       "bytes": 6056,
       "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
       "kind": "utility_eval"
     },
+    "utility-grpo-50f604a.json": {
+      "sha256": "1b08e3575fe0ebf2dedc92e02d768a5231eb410b11f58ef69515923a49306b5d",
+      "bytes": 6133,
+      "recorded_in_commit": "913520cedc88fbea9eb8d4833160507ecfaf5ce9",
+      "kind": "utility_eval"
+    },
     "utility-sft-30007ed.json": {
       "sha256": "591654473d824d26523301b9bcb84aa82d26e4e4ae124e8929aa441e14c2a7d2",
       "bytes": 6082,
       "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
+      "kind": "utility_eval"
+    },
+    "utility-sft-bb6764e.json": {
+      "sha256": "cc8f0dfc6e646ecb8991c35ff5a5fc559289ebb2cd4735c399b356296ebea3ee",
+      "bytes": 6138,
+      "recorded_in_commit": "50f604a335d6558a3e7a253807206706efcdc9ab",
       "kind": "utility_eval"
     },
     "weight-change-72f7482.json": {
