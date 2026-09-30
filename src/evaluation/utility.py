@@ -36,16 +36,16 @@ CHOICE_LABELS: Final = ("A", "B", "C", "D")
 
 # Ordered most-specific first. "answer is B" must win over a stray "B" earlier
 # in the reasoning, so the explicit forms are tried before the bare letter.
+# Only the keywords ignore case. The letter must be a capital: with the whole
+# pattern case-blind, "the answer is a matter of..." read the article as A.
 _PATTERNS: Final = (
     # "answer is B", "answer: B", and "answer is: B" all mean the same thing.
     # An earlier version allowed only the first two, which scored a correctly
     # answered question as unreadable and would have reported damage that had
     # not happened. Found by reading the failures rather than trusting the rate.
-    re.compile(
-        r"\banswer\s*(?:is)?\s*:?\s*\(?\*{0,2}([A-D])\b", re.IGNORECASE
-    ),
+    re.compile(r"\b(?i:answer)\s*(?:(?i:is))?\s*:?\s*\(?\*{0,2}([A-D])\b"),
     re.compile(r"^\s*\(?\*{0,2}([A-D])[\)\.\*:]", re.MULTILINE),
-    re.compile(r"\boption\s+(?:is\s+)?\(?\*{0,2}([A-D])\b", re.IGNORECASE),
+    re.compile(r"\b(?i:option)\s+(?:(?i:is)\s+)?\(?\*{0,2}([A-D])\b"),
     re.compile(r"^\s*\*{0,2}([A-D])\s*$", re.MULTILINE),
 )
 
@@ -74,14 +74,19 @@ def extract_choice(completion: str) -> str | None:
     guessing keeps an unreadable answer separate from a wrong one, which is the
     difference between a model that has lost knowledge and one that has lost the
     ability to answer in the requested shape.
+
+    Only the text after the last `</think>` is read, and within it the last
+    match wins. Reasoning can name a letter it then rejects, and a model that
+    corrects itself means its final answer, not its first.
     """
 
     if not completion:
         return None
+    text = completion.rsplit("</think>", 1)[-1]
     for pattern in _PATTERNS:
-        match = pattern.search(completion)
-        if match:
-            return match.group(1).upper()
+        matches = pattern.findall(text)
+        if matches:
+            return matches[-1]
     return None
 
 
