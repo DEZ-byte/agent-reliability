@@ -389,6 +389,7 @@ def main() -> int:
 
     health: list[dict[str, Any]] = []
     reward = make_reward_function(
+        group_size=grpo["num_generations"],
         normalise_dialect=not template_uses_canonical_tags(tokenizer.chat_template),
         health_log=health,
     )

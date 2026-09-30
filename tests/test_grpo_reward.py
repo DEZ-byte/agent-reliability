@@ -175,5 +175,42 @@ class GroupHealthTests(unittest.TestCase):
         self.assertEqual(health["laundered_fraction"], 0.25)
 
 
+class RewardBatchTests(unittest.TestCase):
+    """One TRL call can hold several prompts; health is logged per group.
+
+    TRL does not pass `num_generations` to the reward, so reading it from the
+    call fell back to the whole batch and logged two prompts as one group.
+    """
+
+    def _call(self, completions: list[str], group_size: int = 8) -> list[dict]:
+        health: list[dict] = []
+        reward = grpo_reward_module.make_reward_function(
+            group_size=group_size, health_log=health
+        )
+        rewards = reward(
+            completions=completions,
+            gold_answer=[GOLD] * len(completions),
+            question=[QUESTION] * len(completions),
+        )
+        self.assertEqual(len(rewards), len(completions))
+        return health
+
+    def test_two_prompts_of_eight_give_two_health_entries(self) -> None:
+        solved = [call("2 + 2*2")] * 8
+        unsolved = ["The answer is 6."] * 8
+        health = self._call(solved + unsolved)
+        self.assertEqual(len(health), 2)
+        self.assertEqual(health[0]["correct_fraction"], 1.0)
+        self.assertEqual(health[1]["correct_fraction"], 0.0)
+
+    def test_a_batch_that_is_not_whole_groups_is_refused(self) -> None:
+        with self.assertRaises(ValueError):
+            self._call([call("2 + 2*2")] * 15)
+
+    def test_a_group_size_below_one_is_refused(self) -> None:
+        with self.assertRaises(ValueError):
+            grpo_reward_module.make_reward_function(group_size=0)
+
+
 if __name__ == "__main__":
     unittest.main()

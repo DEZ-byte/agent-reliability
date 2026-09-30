@@ -154,18 +154,35 @@ def group_health(scores: Sequence[CompletionScore]) -> dict[str, Any]:
     }
 
 
-def make_reward_function(*, normalise_dialect: bool = False, health_log: list | None = None):
+def make_reward_function(
+    *,
+    group_size: int,
+    normalise_dialect: bool = False,
+    health_log: list | None = None,
+):
     """Build the callable TRL invokes, closing over one registry and gate engine.
 
     TRL calls this as `f(prompts=..., completions=..., **columns)` where every
     dataset column arrives already expanded to one entry per generation, so the
     gold answer for each candidate travels alongside it.
+
+    One call can hold several prompts. TRL lays out each prompt's
+    `group_size` (G) candidates next to each other and does not pass G in, so
+    it comes from the config. Health is logged per group of G: a batch of two
+    prompts is two groups, not one group of sixteen.
     """
 
+    if group_size < 1:
+        raise ValueError(f"group_size must be >= 1, got {group_size}")
     registry = build_phase_a_registry()
     gate_engine = GateEngine.from_mapping({})
 
     def reward(completions, gold_answer, question=None, **kwargs):
+        if len(completions) % group_size:
+            raise ValueError(
+                f"{len(completions)} completions do not split into whole groups "
+                f"of {group_size}"
+            )
         questions = question or [""] * len(completions)
         scores = [
             score_completion(
@@ -178,12 +195,9 @@ def make_reward_function(*, normalise_dialect: bool = False, health_log: list | 
             )
             for text, gold, q in zip(completions, gold_answer, questions)
         ]
-        if health_log is not None:
-            size = kwargs.get("num_generations") or len(scores)
-            for start in range(0, len(scores), size):
-                chunk = scores[start : start + size]
-                if len(chunk) > 1:
-                    health_log.append(group_health(chunk))
+        if health_log is not None and group_size > 1:
+            for start in range(0, len(scores), group_size):
+                health_log.append(group_health(scores[start : start + group_size]))
         return [s.total for s in scores]
 
     reward.__name__ = "execution_backed_composite"
