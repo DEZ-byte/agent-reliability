@@ -15,6 +15,7 @@
 # Evidence files: never translated, under any local setting.
 results/*.json   -text
 configs/*.json   -text
+configs/splits/*.json -text
 *.lock           -text
 
 # Genuinely binary.
