@@ -33,9 +33,10 @@ def score_episode(
     no_required_execution = tool_required and executed_calls == 0
     accuracy = 1.0 if outcome.correct and not gate_violation and not no_required_execution else 0.0
 
-    # BLUEPRINT_v2 s7.0 and D-017 define the format term as a conjunction over
-    # emitted blocks. Evidence that belongs to no block, such as a stray closing
-    # tag in prose, is retained in the trace but must not fail a valid block.
+    # Section 7.0 of the project plan and decision D-017 (both private planning
+    # notes) define the format term as a conjunction over emitted blocks.
+    # Evidence that belongs to no block, such as a stray closing tag in prose, is
+    # retained in the trace but must not fail a valid block.
     block_issues = [issue for issue in trace.parse.issues if issue.attached_to_block]
     parsed_every_block = (
         not block_issues

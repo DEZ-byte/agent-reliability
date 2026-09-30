@@ -1,8 +1,9 @@
 """Measuring how much of GSM8K the base models already remember.
 
-BLUEPRINT_v2 section 5.4 requires this before any Phase A baseline is read.
-The models under test were trained on public web text, and GSM8K is public web
-text. A score that looks like reasoning may be recall.
+Section 5.4 of the project plan (private planning notes) requires this before
+any Phase A baseline is read. The models under test were trained on public web
+text, and GSM8K is public web text. A score that looks like reasoning may be
+recall.
 
 Two things follow, and only the first is obvious.
 

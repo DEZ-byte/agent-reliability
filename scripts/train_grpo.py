@@ -40,6 +40,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from agent.dialects import template_uses_canonical_tags  # noqa: E402
 from env.phase_a import calculator_tool_schema  # noqa: E402
 from env.splits import load_split  # noqa: E402
+from evaluation.provenance import pinned_load_kwargs, require_clean_worktree  # noqa: E402
 from evaluation.rungs import SYSTEM_PROMPT, USER_PROMPT  # noqa: E402
 from training.config import (  # noqa: E402
     config_hash_prefix,
@@ -343,21 +344,31 @@ def main() -> int:
         print(json.dumps({"planned": result["checkpoint_name"], "executed": False}))
         return 0
 
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
+
     import unsloth  # noqa: F401  # must precede trl/transformers; it rewrites both
     from unsloth import FastLanguageModel
 
     import torch
     from trl import GRPOConfig, GRPOTrainer
 
-    # Loading the adapter directory gives back the SFT policy with its adapter
-    # already attached and trainable, which is what section 7.1 asks GRPO to
-    # continue from.
+    # The base at its pinned revision, then the SFT adapter on top, trainable,
+    # which is the policy section 7.1 asks GRPO to continue from. Loading the
+    # adapter directory would fetch the base from its default branch. The two
+    # calls after the load are the ones Unsloth makes when it loads an adapter
+    # directory itself.
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=str(args.adapter),
+        **pinned_load_kwargs(args.model, REGISTRY_PATH, args.adapter),
         max_seq_length=grpo["max_prompt_length"] + grpo["max_completion_length"],
         dtype=None,
         load_in_4bit=config["sft"]["load_in_4bit"],
         trust_remote_code=False,
+    )
+    from peft import PeftModel
+
+    model = PeftModel.from_pretrained(model, str(args.adapter), is_trainable=True)
+    model = FastLanguageModel.patch_peft_model(
+        model, use_gradient_checkpointing="unsloth"
     )
 
     dataset, tasks = build_prompt_dataset(tokenizer, args.limit, keep)
@@ -378,6 +389,7 @@ def main() -> int:
 
     health: list[dict[str, Any]] = []
     reward = make_reward_function(
+        group_size=grpo["num_generations"],
         normalise_dialect=not template_uses_canonical_tags(tokenizer.chat_template),
         health_log=health,
     )

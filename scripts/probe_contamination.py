@@ -1,6 +1,7 @@
 """Measure what a base checkpoint can do on Phase A tasks with no tool.
 
-BLUEPRINT_v2 section 5.4 requires this before any Phase A baseline is read.
+Section 5.4 of the project plan (private planning notes) requires this before
+any Phase A baseline is read.
 
 Two conditions, because one number cannot answer both questions. Given room to
 think, these models solve GSM8K by reasoning in prose, so a correct answer there
@@ -23,7 +24,6 @@ import hashlib
 import json
 import os
 import platform
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +33,7 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import ANSWER_TOLERANCE, parse_gsm8k_answer  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from evaluation.contamination import (  # noqa: E402
     correct_rate,
     score_no_tool_attempt,
@@ -84,27 +85,6 @@ MEASURED_ROLES: Final = (
 
 class ProbeError(RuntimeError):
     """Raised when the probe cannot honestly proceed."""
-
-
-def _git(*args: str) -> str:
-    completed = subprocess.run(
-        ["git", *args],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise ProbeError("git " + " ".join(args) + " failed")
-    return completed.stdout.strip()
-
-
-def _require_clean_worktree() -> None:
-    if _git("status", "--porcelain"):
-        raise ProbeError(
-            "refusing to measure on a dirty worktree; commit first so the "
-            "artifact names the exact source that produced it"
-        )
 
 
 def _sha256_file(path: Path) -> str:
@@ -358,8 +338,7 @@ def main() -> int:
         print(json.dumps({"planned_candidates": len(candidates)}))
         return 0
 
-    _require_clean_worktree()
-    result["source_commit"] = _git("rev-parse", "HEAD")
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
     result["platform"] = platform.platform()
 
     for candidate in candidates:

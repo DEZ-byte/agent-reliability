@@ -23,7 +23,6 @@ import math
 import os
 import platform
 import random
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,6 +41,7 @@ from agent.dialects import template_uses_canonical_tags  # noqa: E402
 from env.splits import load_split  # noqa: E402
 from agent.gates import GateEngine  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from evaluation.rungs import (  # noqa: E402
     SYSTEM_PROMPT,
     USER_PROMPT,
@@ -65,31 +65,6 @@ MEASURED_ROLES: Final = (
     "cross_family_check",
     "scaffolded_comparator",
 )
-
-
-class BaselineError(RuntimeError):
-    """Raised when the run cannot honestly proceed."""
-
-
-def _git(*args: str) -> str:
-    completed = subprocess.run(
-        ["git", *args],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise BaselineError("git " + " ".join(args) + " failed")
-    return completed.stdout.strip()
-
-
-def _require_clean_worktree() -> None:
-    if _git("status", "--porcelain"):
-        raise BaselineError(
-            "refusing to measure on a dirty worktree; commit first so the "
-            "artifact names the exact source that produced it"
-        )
 
 
 def _sha256_file(path: Path) -> str:
@@ -506,8 +481,7 @@ def main() -> int:
         print(json.dumps({"planned_candidates": len(candidates)}))
         return 0
 
-    _require_clean_worktree()
-    result["source_commit"] = _git("rev-parse", "HEAD")
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
     result["platform"] = platform.platform()
 
     tasks = _load_tasks(config, args.limit)

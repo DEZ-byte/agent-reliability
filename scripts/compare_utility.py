@@ -61,6 +61,7 @@ from compare_arms import (  # noqa: E402
     permutation_p,
     sign_test_p,
 )
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from evaluation.utility import CHOICE_LABELS, UtilityScore, summarise  # noqa: E402
 from run_utility_eval import SPLIT_MANIFEST_PATH, by_subject  # noqa: E402
 
@@ -309,17 +310,6 @@ def _git(*args: str) -> subprocess.CompletedProcess[bytes]:
     )
 
 
-def _require_clean_tree() -> str:
-    status = _git("status", "--porcelain")
-    if status.returncode != 0:
-        raise UtilityComparisonError("git status failed; cannot prove a clean tree")
-    if status.stdout.strip():
-        raise UtilityComparisonError(
-            "the working tree is dirty; commit first so source_commit is the code that ran"
-        )
-    return _git("rev-parse", "HEAD").stdout.decode().strip()
-
-
 def _committed(path: Path) -> tuple[str, str]:
     """The file's SHA-256 and the commit holding exactly those bytes."""
 
@@ -354,7 +344,7 @@ def main() -> int:
     parser.add_argument("--summary", required=True)
     args = parser.parse_args()
 
-    source_commit = _require_clean_tree()
+    source_commit = require_clean_worktree(PROJECT_ROOT)
 
     split_raw = SPLIT_MANIFEST_PATH.read_bytes()
     split_sha256 = hashlib.sha256(split_raw).hexdigest()

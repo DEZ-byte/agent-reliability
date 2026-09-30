@@ -56,6 +56,13 @@ from env.phase_b import (  # noqa: E402
 )
 from env.phase_b_tasks import load_split  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
+from evaluation.provenance import (  # noqa: E402
+    adapter_weights_sha256,
+    pinned_load_kwargs,
+    pinned_revision,
+    portable_path,
+    require_clean_worktree,
+)
 from training.rewards import score_episode  # noqa: E402
 
 SPLIT_MANIFEST_PATH: Final = PROJECT_ROOT / "configs" / "splits" / "phase_b_orders.json"
@@ -100,15 +107,6 @@ def _git_commit() -> str:
         check=False,
     )
     return completed.stdout.strip() or "unknown"
-
-
-def _revision_for(model_id: str) -> str | None:
-    registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
-    for entries in registry["roles"].values():
-        for entry in entries:
-            if entry["id"] == model_id:
-                return entry["revision"]
-    return None
 
 
 def evaluate_completion(completion: str, task, *, normalise: bool) -> dict[str, Any]:
@@ -234,8 +232,16 @@ def main() -> int:
         .replace("+00:00", "Z"),
         "kind": "phase_b_transfer_eval",
         "label": args.label,
-        "model": {"id": args.model, "revision": _revision_for(args.model)},
-        "adapter": args.adapter,
+        "model": {
+            "id": args.model,
+            "revision": pinned_revision(args.model, REGISTRY_PATH),
+        },
+        "adapter": None
+        if args.adapter is None
+        else portable_path(args.adapter, PROJECT_ROOT),
+        # The weights actually loaded on top of the pinned base; null for
+        # the base model itself, whose revision above already pins it.
+        "weights_sha256": adapter_weights_sha256(args.adapter),
         "split": args.split,
         "split_manifest_sha256": hashlib.sha256(
             SPLIT_MANIFEST_PATH.read_bytes()
@@ -264,18 +270,26 @@ def main() -> int:
         print(json.dumps({"planned": args.label, "tasks": len(tasks), "executed": False}))
         return 0
 
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
+
     import unsloth  # noqa: F401  # must precede transformers; it rewrites it
     from unsloth import FastLanguageModel
 
     import torch
 
+    # The base at its pinned revision, then the adapter on top. Loading the
+    # adapter directory would fetch the base from its default branch.
     loaded, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=str(args.adapter or args.model),
+        **pinned_load_kwargs(args.model, REGISTRY_PATH, args.adapter),
         max_seq_length=MAX_SEQUENCE_TOKENS,
         dtype=None,
         load_in_4bit=True,
         trust_remote_code=False,
     )
+    if args.adapter:
+        from peft import PeftModel
+
+        loaded = PeftModel.from_pretrained(loaded, str(args.adapter))
     FastLanguageModel.for_inference(loaded)
     normalise = not template_uses_canonical_tags(tokenizer.chat_template)
     result["normalise_dialect"] = normalise

@@ -1,5 +1,7 @@
 # Agent Reliability
 
+[![ci](https://github.com/DEZ-byte/agent-reliability/actions/workflows/ci.yml/badge.svg)](https://github.com/DEZ-byte/agent-reliability/actions/workflows/ci.yml)
+
 **Does fine-tuning a small model beat wrapping a bigger one in retry logic?**
 
 A model that solves a task once is not reliable. This project measures `pass^k` —
@@ -294,12 +296,17 @@ GRPO, measured at step 400, sits within two points of SFT on every rate.
 | Comparisons are paired | Task-level bootstrap intervals, paired permutation tests, exact sign test |
 | Numbers without an artifact are marked | † means the number comes from local logs or configs that are not committed |
 
+The tests need Python 3.11 or 3.12. Install the package, then run the suite the
+way CI does, with the network blocked:
+
 ```bash
-pip install -e . && python -m unittest discover -s tests
+pip install -e .
+python scripts/run_tests_offline.py -v
 ```
 
-The editable install is not optional: most test modules import `agent` and `env`
-directly, so discovery fails without it.
+The editable install is not optional. Many test modules import `agent` and `env`
+directly, so running one module on its own, such as
+`python -m unittest tests.test_gates`, fails without it.
 
 ---
 

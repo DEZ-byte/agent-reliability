@@ -35,7 +35,6 @@ script refuses a dirty tree and records repository-relative paths.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import os
@@ -48,7 +47,11 @@ from typing import Any, Final
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from evaluation.provenance import portable_path, require_clean_worktree  # noqa: E402
+from evaluation.provenance import (  # noqa: E402
+    adapter_weights_sha256,
+    portable_path,
+    require_clean_worktree,
+)
 
 SCHEMA_VERSION: Final = 1
 WEIGHTS_NAME: Final = "adapter_model.safetensors"
@@ -57,10 +60,6 @@ CONFIG_NAME: Final = "adapter_config.json"
 
 class WeightChangeError(RuntimeError):
     """The comparison could not be made as described."""
-
-
-def _sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _load(adapter: Path) -> dict[str, Any]:
@@ -173,7 +172,7 @@ def main() -> int:
         comparisons.append(
             {
                 "after": portable_path(after, PROJECT_ROOT),
-                "after_weights_sha256": _sha256_file(after / WEIGHTS_NAME),
+                "after_weights_sha256": adapter_weights_sha256(after),
                 **measured,
             }
         )
@@ -191,7 +190,7 @@ def main() -> int:
             "(alpha / r) * B @ A, which is what the base weights actually see."
         ),
         "before": portable_path(args.before, PROJECT_ROOT),
-        "before_weights_sha256": _sha256_file(args.before / WEIGHTS_NAME),
+        "before_weights_sha256": adapter_weights_sha256(args.before),
         "comparisons": comparisons,
         "executed": True,
         "source_commit": source_commit,

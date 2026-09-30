@@ -46,6 +46,13 @@ from pathlib import Path
 from typing import Any, Final
 
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from evaluation.provenance import (  # noqa: E402
+    require_clean_worktree,
+    require_outside_worktree,
+)
+
 SCRIPTS: Final = PROJECT_ROOT / "scripts"
 EVAL_TEST: Final = PROJECT_ROOT / "configs" / "eval.yaml"
 REGISTRY_PATH: Final = PROJECT_ROOT / "configs" / "model_candidates.json"
@@ -155,8 +162,11 @@ def entry_for(payload: dict[str, Any], candidate: str) -> dict[str, Any] | None:
 
 
 class Pipeline:
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(
+        self, args: argparse.Namespace, source_commit: str | None = None
+    ) -> None:
         self.args = args
+        self.source_commit = source_commit
         base_dir = Path(args.run_dir).resolve()
         self.smoke = bool(args.limit or args.max_steps)
         self.run_dir = (
@@ -644,7 +654,9 @@ class Pipeline:
             "schema_version": 1,
             "created_at_utc": _now(),
             "kind": "primary_arm_pipeline_summary",
-            "source_commit": _git("rev-parse", "HEAD") or "unknown",
+            "source_commit": self.source_commit
+            or _git("rev-parse", "HEAD")
+            or "unknown",
             "smoke": self.smoke,
             "limit": self.args.limit,
             "max_steps": self.args.max_steps,
@@ -780,13 +792,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    source_commit = None
+    if not args.dry_run:
+        # Every stage refuses a dirty tree. The chain has to start clean and
+        # write nowhere a later stage's `git status` would see.
+        require_outside_worktree(args.run_dir, PROJECT_ROOT)
+        source_commit = require_clean_worktree(PROJECT_ROOT)
     if args.limit or args.max_steps:
         print(
             "[smoke] --limit/--max-steps set: outputs go to a smoke-… subdirectory "
             "and must not be quoted",
             flush=True,
         )
-    pipeline = Pipeline(args)
+    pipeline = Pipeline(args, source_commit)
     try:
         pipeline.run()
     except PipelineError as error:

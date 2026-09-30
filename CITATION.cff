@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Agent Reliability"
+type: software
+authors:
+  - family-names: "Sharma"
+    given-names: "Anirudh Raj"
+version: "0.1.0"
+license: Apache-2.0
+repository-code: "https://github.com/DEZ-byte/agent-reliability"

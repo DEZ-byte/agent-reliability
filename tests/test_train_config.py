@@ -1,8 +1,9 @@
 """The training config must match what was pre-registered, and admit what is not yet measured.
 
-BLUEPRINT_v2 section 7.4 fixes several training values before any measurement
-exists. Those are asserted here against the blueprint rather than against
-themselves, so that editing the config to match a run cannot pass silently.
+Section 7.4 of the project plan (private planning notes) fixes several training
+values before any measurement exists. Those are asserted here against the plan
+rather than against themselves, so that editing the config to match a run
+cannot pass silently.
 
 The rest were null until a dev-split measurement set them, and are asserted
 against that measurement. The risk with a null is that a script falls back to a
@@ -41,7 +42,7 @@ PENDING: set[str] = set()
 
 
 class PreRegisteredValueTests(unittest.TestCase):
-    """Asserted against BLUEPRINT_v2 section 7.4, not against the file itself."""
+    """Asserted against section 7.4 of the plan, not against the file itself."""
 
     def setUp(self) -> None:
         self.config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))

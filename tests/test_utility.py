@@ -50,8 +50,34 @@ class ExtractionTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(extract_choice(text), "B", text)
 
-    def test_lowercase_is_read(self) -> None:
-        self.assertEqual(extract_choice("the answer is b"), "B")
+    def test_the_keyword_ignores_case_but_the_letter_does_not(self) -> None:
+        self.assertEqual(extract_choice("ANSWER: B"), "B")
+        self.assertEqual(extract_choice("The Correct OPTION is B"), "B")
+        self.assertIsNone(extract_choice("the answer is b"))
+
+    def test_the_article_a_is_never_answer_a(self) -> None:
+        """A case-blind letter read the article as a choice."""
+
+        self.assertIsNone(extract_choice("The answer is a matter of definition."))
+        self.assertIsNone(extract_choice("Option a seems unlikely here."))
+        self.assertEqual(
+            extract_choice("The answer is a close call, but the answer is D."), "D"
+        )
+
+    def test_a_decoy_inside_the_think_block_is_ignored(self) -> None:
+        text = "<think>\nThe answer is A? No.\n</think>\n\nThe answer is C."
+        self.assertEqual(extract_choice(text), "C")
+
+    def test_an_answer_only_inside_the_think_block_is_not_an_answer(self) -> None:
+        self.assertIsNone(extract_choice("<think>The answer is A.</think>\n\n"))
+
+    def test_the_last_stated_answer_wins(self) -> None:
+        self.assertEqual(
+            extract_choice("The answer is A. Wait, I misread. The answer is C."), "C"
+        )
+
+    def test_a_bold_letter_on_its_own_line_is_read(self) -> None:
+        self.assertEqual(extract_choice("Let me think.\n**B**"), "B")
 
     def test_answer_is_colon_is_read(self) -> None:
         """A real miss, found by reading failures rather than trusting the rate.

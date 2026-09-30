@@ -1,9 +1,10 @@
 """Score every saved checkpoint on dev and pick the winner by the pinned rule.
 
-BLUEPRINT_v2 section 7.4: evaluate on the dev split only, freeze the dev
-winner, and run it on test exactly once. The rule this script applies - which
-split, which rung, which metric - is read from `configs/train_config.yaml`,
-where it was written before any dev number existed.
+Section 7.4 of the project plan (private planning notes): evaluate on the dev
+split only, freeze the dev winner, and run it on test exactly once. The rule
+this script applies - which split, which rung, which metric - is read from
+`configs/train_config.yaml`, where it was written before any dev number
+existed.
 
 That matters more than it looks. With several checkpoints and one obvious
 number per checkpoint, the temptation is to glance at the results and pick.
@@ -41,6 +42,12 @@ from typing import Any, Final
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from evaluation.provenance import (  # noqa: E402
+    adapter_weights_sha256,
+    portable_path,
+    require_clean_worktree,
+    require_outside_worktree,
+)
 from training.config import config_sha256, load_train_config  # noqa: E402
 
 TRAIN_CONFIG_PATH: Final = PROJECT_ROOT / "configs" / "train_config.yaml"
@@ -54,17 +61,6 @@ SCHEMA_VERSION: Final = 1
 
 class SelectionError(RuntimeError):
     """Selection could not be carried out as pinned."""
-
-
-def _git_commit() -> str:
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return completed.stdout.strip() or "unknown"
 
 
 def discover_checkpoints(adapter_dir: Path) -> list[Path]:
@@ -167,7 +163,8 @@ def score(
         if reused is not None:
             return {
                 "checkpoint": checkpoint.name,
-                "path": str(checkpoint),
+                "path": portable_path(checkpoint, PROJECT_ROOT),
+                "weights_sha256": adapter_weights_sha256(checkpoint),
                 "score": reused["score"],
                 "no_arithmetic_rate": reused["no_arithmetic_rate"],
                 "artifact": str(result_path),
@@ -207,7 +204,8 @@ def score(
         raise SelectionError(f"{metric} not produced by the runner")
     return {
         "checkpoint": checkpoint.name,
-        "path": str(checkpoint),
+        "path": portable_path(checkpoint, PROJECT_ROOT),
+        "weights_sha256": adapter_weights_sha256(checkpoint),
         "score": metrics[metric],
         "no_arithmetic_rate": entry["rungs"][rung]["no_arithmetic_rate"],
         "artifact": str(result_path),
@@ -248,6 +246,10 @@ def main() -> int:
             f"{rule['checkpoints_evaluated']!r}"
         )
 
+    # Each checkpoint is scored by a runner that refuses a dirty tree, so its
+    # scratch files must land where `git status` cannot see them.
+    require_outside_worktree(args.scratch, PROJECT_ROOT)
+    source_commit = require_clean_worktree(PROJECT_ROOT)
     args.scratch.mkdir(parents=True, exist_ok=True)
     checkpoints = discover_checkpoints(args.adapter_dir)
 
@@ -289,7 +291,7 @@ def main() -> int:
         "base_model": args.base_model,
         "candidates": scored,
         "selected": scored[best],
-        "source_commit": _git_commit(),
+        "source_commit": source_commit,
         "platform": {"python": platform.python_version(), "system": platform.system()},
     }
 

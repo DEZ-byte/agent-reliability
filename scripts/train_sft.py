@@ -43,6 +43,7 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import calculator_tool_schema  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from training.masking import IGNORE_INDEX  # noqa: E402
 from training.config import (  # noqa: E402
     config_hash_prefix,
@@ -343,6 +344,8 @@ def main() -> int:
         )
         print(json.dumps({"planned": result["checkpoint_name"], "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     import unsloth  # noqa: F401  # must precede trl/transformers; it rewrites both
     from unsloth import FastLanguageModel

@@ -1,8 +1,9 @@
 """Load the frozen training configuration and refuse the unmeasured parts.
 
 `configs/train_config.yaml` holds two kinds of value. Pre-registered ones come
-from BLUEPRINT_v2 section 7.4 and were fixed before any measurement. Measured
-ones are null until the measurement that sets them exists.
+from section 7.4 of the project plan (private planning notes) and were fixed
+before any measurement. Measured ones are null until the measurement that sets
+them exists.
 
 A null that scripts quietly tolerate is worse than no field at all, because a
 run would proceed with a default nobody recorded and the artifact would name a

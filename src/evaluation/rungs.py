@@ -1,11 +1,11 @@
 """Framework-neutral R0 and R1 episode loops for Phase A.
 
-`RUNG_PROTOCOL.md` section 4 defines these rungs, and section 1 defines the
-counters every episode must record. This module implements both without
-importing a model, a GPU, or an agent framework: the policy is a callable that
-takes messages and returns text. That is what makes the rung semantics testable
-on CPU, which matters because the whole study rests on the two rungs differing
-by exactly one thing.
+The rung protocol (private planning notes) defines these rungs in section 4,
+and in section 1 the counters every episode must record. This module
+implements both without importing a model, a GPU, or an agent framework: the
+policy is a callable that takes messages and returns text. That is what makes
+the rung semantics testable on CPU, which matters because the whole study
+rests on the two rungs differing by exactly one thing.
 
 The difference is one model decision. R0 gets a single generation per agent
 turn and no second chance when it fails. R1 gets one additional generation that
@@ -34,7 +34,7 @@ Rung = Literal["R0", "R1"]
 
 REFERENCE_ENVIRONMENT_TURN_CAP: Final = 20
 
-# RUNG_PROTOCOL section 3: model decisions permitted inside one agent turn.
+# Rung protocol section 3: model decisions permitted inside one agent turn.
 MODEL_DECISION_BUDGET: Final[dict[str, int]] = {"R0": 1, "R1": 2}
 
 
@@ -46,7 +46,7 @@ class Policy(Protocol):
 
 @dataclass(slots=True)
 class EpisodeCounters:
-    """The counters RUNG_PROTOCOL section 1.4 requires on every episode.
+    """The counters the rung protocol (section 1.4) requires on every episode.
 
     Kept as separate fields on purpose: the protocol forbids reporting one
     counter as another's proxy, and separate names make that hard to do by

@@ -10,8 +10,8 @@ nothing.
 does not catch the decorated form, and decoration is one character of effort:
 `391 + 0` and `391 * 1` both parse as arithmetic and both compute nothing. A
 filter that misses them lets the training set fill with answer-first
-reconstructions, which is precisely the behaviour BLUEPRINT_v2 section 5.4 says
-must not be rewarded.
+reconstructions, which is precisely the behaviour section 5.4 of the project
+plan (private planning notes) says must not be rewarded.
 
 So retention asks a harder question: does this expression look like it was
 built from the numbers in the problem, or from the answer? The signals are

@@ -28,7 +28,6 @@ import hashlib
 import json
 import os
 import platform
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,6 +37,7 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from env.phase_a import calculator_tool_schema  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from evaluation.rungs import SYSTEM_PROMPT, USER_PROMPT  # noqa: E402
 from training.masking import (  # noqa: E402
     IGNORE_INDEX,
@@ -71,17 +71,6 @@ class VerificationError(RuntimeError):
 
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _git_commit() -> str:
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return completed.stdout.strip() or "unknown"
 
 
 def _candidates(selected: list[str]) -> list[dict[str, str]]:
@@ -198,6 +187,7 @@ def main() -> int:
     candidates = _candidates(args.candidate)
     if not candidates:
         parser.error("no registry candidate matched --candidate")
+    source_commit = require_clean_worktree(PROJECT_ROOT)
 
     results: list[dict[str, Any]] = []
     for candidate in candidates:
@@ -222,7 +212,7 @@ def main() -> int:
             "user": _sha256_text(USER_PROMPT),
         },
         "fixture_sha256": _sha256_text(FIXTURE_QUESTION + FIXTURE_CALL),
-        "source_commit": _git_commit(),
+        "source_commit": source_commit,
         "platform": {
             "python": platform.python_version(),
             "system": platform.system(),

@@ -1,10 +1,10 @@
 """Roll out a policy over the frozen train split and keep what the grader passes.
 
-BLUEPRINT_v2 section 5.2: the teacher plays the agent on the Phase A train
-split, every trajectory is graded by the deterministic grader, and only passing
-trajectories are kept. The grader doubles as the data filter, which is what
-makes this rejection sampling rather than distillation of whatever the teacher
-happened to say.
+Section 5.2 of the project plan (private planning notes): the teacher plays the
+agent on the Phase A train split, every trajectory is graded by the
+deterministic grader, and only passing trajectories are kept. The grader
+doubles as the data filter, which is what makes this rejection sampling rather
+than distillation of whatever the teacher happened to say.
 
 Every candidate is written, passing or not, each carrying the grader's verdict
 and the laundering verdict. Nothing is dropped here: capping, de-duplication
@@ -66,6 +66,7 @@ from env.phase_a import (  # noqa: E402
 )
 from env.splits import load_split  # noqa: E402
 from evaluation.policy import build_policy  # noqa: E402
+from evaluation.provenance import require_clean_worktree  # noqa: E402
 from evaluation.rungs import (  # noqa: E402
     SYSTEM_PROMPT,
     USER_PROMPT,
@@ -508,6 +509,8 @@ def main() -> int:
         )
         print(json.dumps({"planned_model": model, "executed": False}))
         return 0
+
+    result["source_commit"] = require_clean_worktree(PROJECT_ROOT)
 
     tasks = load_split(SPLIT_MANIFEST_PATH, args.split, limit=args.limit)
     result["task_count"] = len(tasks)
