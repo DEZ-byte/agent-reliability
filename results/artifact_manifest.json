@@ -190,6 +190,12 @@
       "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
       "kind": "phase_b_transfer_eval"
     },
+    "phase_b-gates-d692d43.json": {
+      "sha256": "858d61eb8980718213cd7682eb3a8bf794caf88ec9e60526a601b1e517d17858",
+      "bytes": 4599,
+      "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
+      "kind": "phase_b_gate_breakdown"
+    },
     "phase_b-grpo-8cef0b8.json": {
       "sha256": "a541695789746d8c1fa101dad47261220ffb8b330541cb28a5099a43e2de8316",
       "bytes": 1647,
@@ -297,6 +303,24 @@
       "bytes": 4089,
       "recorded_in_commit": "0932fbada47436b41c0a89cc1100c27149baf5d9",
       "kind": "phase_a_sft_arm"
+    },
+    "sft-vs-teacher-run1-d692d43.json": {
+      "sha256": "540e4a07a7fe1e2d9763f6148fc1e8922ad71507c830d0af13db7f5a383b77ac",
+      "bytes": 6826,
+      "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
+      "kind": "paired_arm_comparison"
+    },
+    "sft-vs-teacher-run2-d692d43.json": {
+      "sha256": "ffce75b867ac8e95ef69441400c019031e0644266f77c2ad30c60a2d048c8653",
+      "bytes": 6806,
+      "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
+      "kind": "paired_arm_comparison"
+    },
+    "sft-vs-teacher-run3-d692d43.json": {
+      "sha256": "8319e3c5326182223260d9e65634b781c954eb8360873f32e91a1de4bfa4b654",
+      "bytes": 6800,
+      "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
+      "kind": "paired_arm_comparison"
     },
     "utility-base-30007ed.json": {
       "sha256": "35bede7df004e7acfd209d3c2589370bab0fc00a32c017a3f4706734240612fe",
