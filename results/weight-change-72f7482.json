@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-09-30T09:16:11.236967Z",
+  "kind": "weight_change",
+  "method": "Relative Frobenius norm of the difference, computed in float64. The parameter figure is taken over every adapter tensor at once. The effective figure is taken over the per-module LoRA product (alpha / r) * B @ A, which is what the base weights actually see.",
+  "before": "checkpoints/qwen3-1.7b-sft-seed20260824/checkpoint-86",
+  "before_weights_sha256": "b46e412431d4d64273472b4a2e3c4e6cadcfaf132b7f5b5186622007f0ebe9da",
+  "comparisons": [
+    {
+      "after": "checkpoints/qwen3-1.7b-grpo/checkpoint-200",
+      "after_weights_sha256": "024a1311789dd072aa8bff753fffc755376238d13a23787c335339c7227a98c7",
+      "adapter_parameter_relative_change": 0.004081648833531624,
+      "effective_delta_relative_change": 0.013814280397480474,
+      "modules_compared": 196,
+      "tensors_compared": 392,
+      "lora_scaling": {
+        "before": 2.0,
+        "after": 2.0
+      }
+    },
+    {
+      "after": "checkpoints/qwen3-1.7b-grpo/checkpoint-400",
+      "after_weights_sha256": "83f7055c1a603386f142e9cd293b4a9b3fad0880ffaa5e47e307be42a396d7c2",
+      "adapter_parameter_relative_change": 0.004488470808625577,
+      "effective_delta_relative_change": 0.015458821297938592,
+      "modules_compared": 196,
+      "tensors_compared": 392,
+      "lora_scaling": {
+        "before": 2.0,
+        "after": 2.0
+      }
+    },
+    {
+      "after": "checkpoints/qwen3-1.7b-grpo-lr1e5/checkpoint-300",
+      "after_weights_sha256": "39520ab1c87c239874f9647405b8cfaa601cc14fd199588ddc7334b110f78db2",
+      "adapter_parameter_relative_change": 0.03768632611921602,
+      "effective_delta_relative_change": 0.1367959232996735,
+      "modules_compared": 196,
+      "tensors_compared": 392,
+      "lora_scaling": {
+        "before": 2.0,
+        "after": 2.0
+      }
+    },
+    {
+      "after": "checkpoints/qwen3-1.7b-grpo-lr1e5/checkpoint-400",
+      "after_weights_sha256": "16aca300e5c6d7dfe14868577ecb3a75effc284eb0d3a585d2197d11c52687b4",
+      "adapter_parameter_relative_change": 0.03817546852205232,
+      "effective_delta_relative_change": 0.13843684362780614,
+      "modules_compared": 196,
+      "tensors_compared": 392,
+      "lora_scaling": {
+        "before": 2.0,
+        "after": 2.0
+      }
+    }
+  ],
+  "executed": true,
+  "source_commit": "72f7482433aea51613b1f93afe02f82f81da0cbe",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}
