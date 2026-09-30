@@ -1,10 +1,10 @@
 """Roll out a policy over the frozen train split and keep what the grader passes.
 
-BLUEPRINT_v2 section 5.2: the teacher plays the agent on the Phase A train
-split, every trajectory is graded by the deterministic grader, and only passing
-trajectories are kept. The grader doubles as the data filter, which is what
-makes this rejection sampling rather than distillation of whatever the teacher
-happened to say.
+Section 5.2 of the project plan (private planning notes): the teacher plays the
+agent on the Phase A train split, every trajectory is graded by the
+deterministic grader, and only passing trajectories are kept. The grader
+doubles as the data filter, which is what makes this rejection sampling rather
+than distillation of whatever the teacher happened to say.
 
 Every candidate is written, passing or not, each carrying the grader's verdict
 and the laundering verdict. Nothing is dropped here: capping, de-duplication

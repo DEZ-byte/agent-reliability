@@ -1,10 +1,11 @@
 """Compare two arms on the same tasks: paired interval first, tests second.
 
-HYPOTHESIS_PROTOCOL section 6.2 is explicit that "permutation tests are
-secondary to estimates and CIs", and section 6.1 pins 10,000 replicates with a
-stored seed. An earlier version of this script reported a p-value and no
-interval at all, which inverts the protocol's own priority and leaves a reader
-with a significance verdict and no idea how precise the estimate is.
+The analysis protocol (private planning notes) is explicit in section 6.2 that
+"permutation tests are secondary to estimates and CIs", and section 6.1 pins
+10,000 replicates with a stored seed. An earlier version of this script
+reported a p-value and no interval at all, which inverts the protocol's own
+priority and leaves a reader with a significance verdict and no idea how
+precise the estimate is.
 
 Three things this reports that a naive comparison omits.
 
@@ -47,7 +48,7 @@ from evaluation.provenance import require_clean_worktree  # noqa: E402
 
 SCHEMA_VERSION: Final = 1
 
-# HYPOTHESIS_PROTOCOL sections 6.1 and 6.2 both pin 10,000 with a stored seed.
+# Analysis protocol sections 6.1 and 6.2 both pin 10,000 with a stored seed.
 BOOTSTRAP_REPLICATES: Final = 10000
 PERMUTATION_RESAMPLES: Final = 10000
 SEED: Final = 20260820
@@ -325,7 +326,7 @@ def main() -> int:
         "kind": "paired_arm_comparison",
         "method": (
             "Task-level bootstrap interval on the paired difference, which "
-            "HYPOTHESIS_PROTOCOL section 6.2 makes primary, with the paired "
+            "the analysis protocol makes primary, with the paired "
             "sign-flip permutation p-value and the exact paired sign test as "
             "secondary. Tasks are the sampling unit. Permutation p-values are "
             "add-one corrected so they cannot be reported as zero."

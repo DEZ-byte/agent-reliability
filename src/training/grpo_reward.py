@@ -1,15 +1,16 @@
 """Score a GRPO completion by executing it, never by reading it.
 
-BLUEPRINT_v2 section 7.0 bans substring rewards. The reward here is the same
-composite the evaluator grades with: accuracy from the sandbox result, a format
-term over emitted blocks, a gate term replayed from the event log, and an
-efficiency penalty. One parser, one gate engine and one reward function serve
-both the runtime scaffold and training, so the constraint the model is trained
-against cannot drift from the one it is measured against.
+Section 7.0 of the project plan (private planning notes) bans substring
+rewards. The reward here is the same composite the evaluator grades with:
+accuracy from the sandbox result, a format term over emitted blocks, a gate
+term replayed from the event log, and an efficiency penalty. One parser, one
+gate engine and one reward function serve both the runtime scaffold and
+training, so the constraint the model is trained against cannot drift from the
+one it is measured against.
 
 The practical consequence is that every candidate costs a real tool execution.
 That is the price of an execution-backed reward and it is not negotiable: a
-cheaper proxy is exactly the substring reward the blueprint forbids.
+cheaper proxy is exactly the substring reward the plan forbids.
 
 Section 7.3 warns about the failure mode this setup invites. GRPO advantages are
 group-relative, so any reward component identical across all G candidates

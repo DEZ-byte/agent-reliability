@@ -1,8 +1,9 @@
 """Turn a graded trajectory into token ids and assistant-only training labels.
 
-BLUEPRINT_v2 section 7.2 requires `labels[t] = -100` for every token outside an
-assistant turn. That is the direct defence against training the model to
-produce its own tool observations, which is the `fabricated_result` failure.
+Section 7.2 of the project plan (private planning notes) requires
+`labels[t] = -100` for every token outside an assistant turn. That is the
+direct defence against training the model to produce its own tool
+observations, which is the `fabricated_result` failure.
 
 Every guard here exists because the failure it catches is silent. The mask
 comes from `return_assistant_tokens_mask`, which returns all zeros rather than

@@ -1,9 +1,10 @@
 """Score every saved checkpoint on dev and pick the winner by the pinned rule.
 
-BLUEPRINT_v2 section 7.4: evaluate on the dev split only, freeze the dev
-winner, and run it on test exactly once. The rule this script applies - which
-split, which rung, which metric - is read from `configs/train_config.yaml`,
-where it was written before any dev number existed.
+Section 7.4 of the project plan (private planning notes): evaluate on the dev
+split only, freeze the dev winner, and run it on test exactly once. The rule
+this script applies - which split, which rung, which metric - is read from
+`configs/train_config.yaml`, where it was written before any dev number
+existed.
 
 That matters more than it looks. With several checkpoints and one obvious
 number per checkpoint, the temptation is to glance at the results and pick.

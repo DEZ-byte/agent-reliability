@@ -1,7 +1,8 @@
 """Phase A: single-turn math tasks solved through a calculator tool.
 
-BLUEPRINT_v2 section 5.1 names this honestly: GSM8K wrapped in this project's
-own calculator environment. There is no benchmark called "GSM8K-Tool".
+Section 5.1 of the project plan (private planning notes) names this honestly:
+GSM8K wrapped in this project's own calculator environment. There is no
+benchmark called "GSM8K-Tool".
 
 The point of the wrapper is the grading rule. A model that writes the right
 number in prose scores nothing. Accuracy comes from a tool call that actually

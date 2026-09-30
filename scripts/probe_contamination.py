@@ -1,6 +1,7 @@
 """Measure what a base checkpoint can do on Phase A tasks with no tool.
 
-BLUEPRINT_v2 section 5.4 requires this before any Phase A baseline is read.
+Section 5.4 of the project plan (private planning notes) requires this before
+any Phase A baseline is read.
 
 Two conditions, because one number cannot answer both questions. Given room to
 think, these models solve GSM8K by reasoning in prose, so a correct answer there

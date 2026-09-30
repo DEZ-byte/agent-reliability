@@ -96,7 +96,7 @@ class FeedbackTests(unittest.TestCase):
 
 
 class CounterTests(unittest.TestCase):
-    """RUNG_PROTOCOL section 1.4 forbids one counter proxying for another."""
+    """The rung protocol (section 1.4) forbids one counter proxying for another."""
 
     def test_every_required_counter_exists(self) -> None:
         required = {
