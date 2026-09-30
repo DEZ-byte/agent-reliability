@@ -25,6 +25,11 @@ one, so the product is computed per module and compared directly.
 Both are reported. Where they disagree, the effective delta is the honest
 answer to "did the policy change", and the parameter change is the honest
 answer to "did training touch anything".
+
+Compare the checkpoints that were actually evaluated. The first artifact this
+script wrote compared the final step-400 adapters, while the test results came
+from the dev-selected checkpoint-200 and checkpoint-300 (ERRATA.md, E8). The
+script refuses a dirty tree and records repository-relative paths.
 """
 
 from __future__ import annotations
@@ -35,7 +40,6 @@ import json
 import math
 import os
 import platform
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,6 +48,8 @@ from typing import Any, Final
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from evaluation.provenance import portable_path, require_clean_worktree  # noqa: E402
+
 SCHEMA_VERSION: Final = 1
 WEIGHTS_NAME: Final = "adapter_model.safetensors"
 CONFIG_NAME: Final = "adapter_config.json"
@@ -51,17 +57,6 @@ CONFIG_NAME: Final = "adapter_config.json"
 
 class WeightChangeError(RuntimeError):
     """The comparison could not be made as described."""
-
-
-def _git_commit() -> str:
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return completed.stdout.strip() or "unknown"
 
 
 def _sha256_file(path: Path) -> str:
@@ -171,12 +166,13 @@ def main() -> int:
     parser.add_argument("--summary", required=True)
     args = parser.parse_args()
 
+    source_commit = require_clean_worktree(PROJECT_ROOT)
     comparisons = []
     for after in args.after:
         measured = compare(args.before, after)
         comparisons.append(
             {
-                "after": str(after),
+                "after": portable_path(after, PROJECT_ROOT),
                 "after_weights_sha256": _sha256_file(after / WEIGHTS_NAME),
                 **measured,
             }
@@ -194,11 +190,11 @@ def main() -> int:
             "The effective figure is taken over the per-module LoRA product "
             "(alpha / r) * B @ A, which is what the base weights actually see."
         ),
-        "before": str(args.before),
+        "before": portable_path(args.before, PROJECT_ROOT),
         "before_weights_sha256": _sha256_file(args.before / WEIGHTS_NAME),
         "comparisons": comparisons,
         "executed": True,
-        "source_commit": _git_commit(),
+        "source_commit": source_commit,
         "platform": {"python": platform.python_version(), "system": platform.system()},
     }
 
