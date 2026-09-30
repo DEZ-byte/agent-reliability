@@ -1,5 +1,7 @@
 # Agent Reliability
 
+[![ci](https://github.com/DEZ-byte/agent-reliability/actions/workflows/ci.yml/badge.svg)](https://github.com/DEZ-byte/agent-reliability/actions/workflows/ci.yml)
+
 **Does fine-tuning a small model beat wrapping a bigger one in retry logic?**
 
 A model that solves a task once is not reliable. This project measures `pass^k` —
