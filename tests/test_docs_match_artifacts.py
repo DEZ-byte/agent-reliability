@@ -200,12 +200,13 @@ class CapabilityTests(unittest.TestCase):
 
 class MmluTests(unittest.TestCase):
     def test_paired_comparison(self) -> None:
-        payload = load("utility-comparison-48869b1.json")
+        payload = load("utility-comparison-b3d7695.json")
         entries = {(c["treatment"], c["baseline"], c["scope"]): c for c in payload["comparisons"]}
         sft = entries[("sft", "base", "all_questions")]
         readable = entries[("sft", "base", "readable_in_both")]
         low, high = sft["difference_ci95"]
-        self.assertIn(f"Paired difference +{sft['difference']:.4f}", README)
+        difference = ("+" if sft["difference"] >= 0 else MINUS) + f"{abs(sft['difference']):.4f}"
+        self.assertIn(f"Paired difference {difference}", README)
         self.assertIn(f"95% interval {MINUS}{abs(low):.3f} to +{high:.3f}", README)
         self.assertIn(
             f"{sft['improved']} questions improved, {sft['regressed']} got worse", README
@@ -221,11 +222,24 @@ class MmluTests(unittest.TestCase):
             README,
         )
 
+    def test_truncation_rates(self) -> None:
+        names = {"base": "001023e", "sft": "bb6764e", "grpo": "50f604a"}
+        rates = {
+            arm: load(f"utility-{arm}-{commit}.json")["summary"]["truncated_rate"]
+            for arm, commit in names.items()
+        }
+        self.assertIn(
+            f"{100 * rates['sft']:.1f}% of answers hit the 320-token limit, against "
+            f"{100 * rates['base']:.2f}% untrained and {100 * rates['grpo']:.1f}% after GRPO",
+            README,
+        )
+
 
 class PhaseBTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.summaries = {arm: load(f"phase_b-{arm}-8cef0b8.json") for arm in ("base", "sft", "grpo")}
-        self.gates = load("phase_b-gates-d692d43.json")["arms"]
+        names = {"base": "10f9d97", "sft": "aa59330", "grpo": "4134ef3"}
+        self.summaries = {arm: load(f"phase_b-{arm}-{commit}.json") for arm, commit in names.items()}
+        self.gates = load("phase_b-gates-913520c.json")["arms"]
 
     def row(self, label: str, values: list[str], bold: bool = False) -> str:
         cells = [f"**{v}**" if bold else v for v in values]

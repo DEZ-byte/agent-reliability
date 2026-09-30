@@ -197,27 +197,30 @@ is the part the project set out to measure.
 | "It got better at arithmetic." | No. Probed with no calculator at all: 64.0% before, 66.0% after. It got better at *writing the expression*. |
 | "It learned to cheat the grader." | No. The reward pays the same for restating a remembered answer as for real work, deliberately, so the behaviour is measured rather than hidden. The rate fell from 3.0% untrained to 1.2% fine-tuned to 1.0% after RL †. |
 | "More seeds would sharpen this." | Probably not. Across three runs, `pass^1` had a standard deviation of 0.019, while one run's interval is about 0.069 either side. Three runs make that standard deviation rough, but the gap is large: a bigger test split would likely buy more than more seeds. |
-| **"It forgot things."** | **No detectable MMLU change on this 400-question sample.** No tool offered: 53.5% untrained (214/400), 54.25% fine-tuned (217/400). Paired difference +0.0075, 95% interval −0.035 to +0.050. 40 questions improved, 37 got worse. |
+| **"It forgot things."** | **No detectable MMLU change on this 400-question sample.** No tool offered: 53.25% untrained (213/400), 53.0% fine-tuned (212/400). Paired difference −0.0025, 95% interval −0.048 to +0.045. 44 questions improved, 45 got worse. |
 | **"It now calls tools at everything."** | **No.** On a benchmark offering no tools, every arm emitted a tool call on **0.0%** of questions. The habit is tied to being offered a tool, not to being asked a question. |
 
 The knowledge result needs careful wording, because it is the first thing anyone
 asks. There was no detectable MMLU change on this sample, which is not the same as
-no change. The interval runs from −3.5 to +5.0 points. With 77 of 400 questions
+no change. The interval runs from −4.75 to +4.5 points. With 89 of 400 questions
 changing answer, a test this size has about an 80% chance of detecting a change of
-about 6 points, and less for anything smaller. What the sample does show cleanly
+about 7 points, and less for anything smaller. What the sample does show cleanly
 is that the tool-calling habit did not leak into contexts with no tools.
 
 The comparison is frozen question by question in
-[`results/utility-comparison-48869b1.json`](results/utility-comparison-48869b1.json).
+[`results/utility-comparison-b3d7695.json`](results/utility-comparison-b3d7695.json).
 An earlier version of this section reported +0.005 and 38/36. Those figures
 came from an incomplete response file, and [`ERRATA.md`](ERRATA.md) explains how.
+The version after that reported +0.0075 and 40/37, from runs made before the
+model loader was fixed to load the pinned base revision
+([`ERRATA.md`](ERRATA.md), E8).
 
 One real behavioural change did show up. The fine-tuned model answers far more
-briefly: 227 characters on average against the untrained model's 628. Terser,
-with no detectable accuracy cost. How often each arm ran out of token budget is
-not reported here. The rates published earlier (40%, 16%, 20%) counted batch
-padding as truncation and are withdrawn until the evaluation is re-run
-([`ERRATA.md`](ERRATA.md), E7).
+briefly: 171 characters on average against the untrained model's 536. Terser,
+with no detectable accuracy cost. It also runs out of token budget less often:
+2.0% of answers hit the 320-token limit, against 8.25% untrained and 2.5% after
+GRPO. The rates published earlier (40%, 16%, 20%) counted batch padding as
+truncation ([`ERRATA.md`](ERRATA.md), E7).
 
 ---
 
@@ -234,48 +237,48 @@ The environment runs in audit mode, so a write the gates should stop still lands
 and can be counted. It is single-shot: the model writes every tool call in one
 turn, before any tool runs, and never sees a tool result.
 
-| | Untrained 1.7B | After SFT | After GRPO ‡ |
+| | Untrained 1.7B | After SFT | After GRPO |
 | :-- | --: | --: | --: |
-| `pass^1` | 0.493 | 0.528 | 0.542 |
-| Completes a legitimate request (outcome) | **0.000** | **0.947** | **0.957** |
-| Correctly refuses an unverified one | **1.000** | **0.098** | **0.115** |
-| Calls any tool | 0.753 | 1.000 | 1.000 |
-| Writes for an unverified customer (of 296 refusal episodes) | 0 | 267 | 262 |
-| Verified writes that skipped the lookup (of 304 legitimate episodes) | 0 | 285 | 289 |
-| Episodes that called the lookup tool (of 600) | 0 | 3 | 2 |
-| Mean reward, as scored | +0.286 | **−0.394** | **−0.387** |
-| Mean reward, if skipping the lookup were not penalised | +0.286 | +0.366 | +0.384 |
-
-‡ The GRPO column used the final step-400 adapter, not checkpoint-200, which dev
-selection picked and every other GRPO number in this README comes from
-([`ERRATA.md`](ERRATA.md), E8). Treat it as a diagnostic of where the run ended,
-not as the selected GRPO arm. It has not been re-run.
+| `pass^1` | 0.493 | 0.515 | 0.530 |
+| Completes a legitimate request (outcome) | **0.000** | **0.905** | **0.921** |
+| Correctly refuses an unverified one | **1.000** | **0.115** | **0.128** |
+| Calls any tool | 0.840 | 1.000 | 1.000 |
+| Writes for an unverified customer (of 296 refusal episodes) | 0 | 262 | 258 |
+| Verified writes that skipped the lookup (of 304 legitimate episodes) | 0 | 274 | 279 |
+| Episodes that called the lookup tool (of 600) | 11 | 1 | 1 |
+| Mean reward, as scored | +0.411 | **−0.370** | **−0.364** |
+| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.380 |
 
 The last five rows come from
-[`results/phase_b-gates-d692d43.json`](results/phase_b-gates-d692d43.json), which
+[`results/phase_b-gates-913520c.json`](results/phase_b-gates-913520c.json), which
 replays all 1,800 episodes and reproduces every stored reward exactly.
 
 **The capability transferred.** An untrained 1.7B completes none of these
-requests. After fine-tuning on GSM8K and a calculator, it completes 95% of them
+requests. After fine-tuning on GSM8K and a calculator, it completes 90% of them
 by outcome, in audit mode, with severe authorisation failures. It operated two of
 the three offered tools, `authenticate` and `update_order`, in a domain with no
 maths in it. That is the strongest evidence here that the training taught
 something general.
 
-**The judgement did not.** On requests it should refuse, it wrote anyway in 267
-of 296 episodes, or 90%. Because the episode is single-shot, it emits the
+**The judgement did not.** On requests it should refuse, it wrote anyway in 262
+of 296 episodes, or 89%. Because the episode is single-shot, it emits the
 verification call and the write together, so it never learns that verification
 failed. It acts unconditionally. The untrained model scores about half by never
 writing; the trained one scores about half by always writing.
 
 **The mean reward needs a caveat.** As scored, the fine-tuned model earns less
-than the untrained one: −0.394 against +0.286. But 285 of its 552 violations are
+than the untrained one: −0.370 against +0.411. But 274 of its 536 violations are
 writes for a verified customer whose only fault is skipping `get_order`. The
 prompt asks for verification and never asks for a lookup. Rescored as if only
-verification were required, the fine-tuned model earns +0.366, above the
-untrained model. So the earlier claim that it is worse than doing nothing is
-withdrawn ([`ERRATA.md`](ERRATA.md), E10). A fair verdict needs a re-run with a
-prompt that asks for the lookup.
+verification were required, the fine-tuned model earns +0.361. That is still
+below the untrained model's +0.411. So by either scoring, the fine-tuned model
+earns less reward here than the untrained one. An earlier version said the
+rescored model was above the untrained one. That no longer holds on the re-run
+([`ERRATA.md`](ERRATA.md), E10). The change comes mostly from the untrained
+model. Its reward rose from +0.286 to +0.411 on the re-run, partly because fewer
+of its episodes called no tool at all: 96 of 600, against 148 before. The prompt
+still never asks for the lookup, so a fair verdict still needs a re-run with a
+prompt that does.
 
 This follows from how the training data was built. Every example was one call
 and done, and none of them had "do not call the tool" as the right answer, so an
@@ -283,7 +286,8 @@ unconditional policy fit the data perfectly. It is the same structural limit
 recorded earlier: an environment that ends the episode on the first successful
 call never teaches a model to read a result and decide.
 
-GRPO, measured at step 400, sits within two points of SFT on every rate.
+GRPO, measured at the selected checkpoint-200, sits within two points of SFT on
+every rate.
 
 ## How the numbers are kept honest
 
@@ -321,18 +325,20 @@ directly, so running one module on its own, such as
   tasks where both arms genuinely varied, the trained model's lead *widens*. The
   finding survives; the caveat is real.
 - **The knowledge probe is 400 questions, not 14,042.** A stratified sample of
-  MMLU. Its paired interval runs from −3.5 to +5.0 points, and it reliably detects
-  only changes of about 6 points or more.
-- **The untrained model more often names no answer.** It named no letter on 23
-  of 400 questions, against 8 for the fine-tuned model, because it answers at
-  length. Restricted to the 374 questions where both arms named a letter, the
-  paired difference is −0.008 (95% interval −0.051 to +0.035) instead of
-  +0.0075. Still no detectable change either way, but the sign depends on how
-  unreadable answers are counted, so the asymmetry is recorded.
+  MMLU. Its paired interval runs from −4.75 to +4.5 points, and it reliably
+  detects only changes of about 7 points or more.
+- **The untrained model more often names no answer.** It named no letter on 24
+  of 400 questions, against 6 for the fine-tuned model, because it answers at
+  length. It also hit the 320-token limit on 8.25% of questions, against 2.0%.
+  Restricted to the 375 questions where both arms named a letter, the paired
+  difference is −0.032 (95% interval −0.077 to +0.016) instead of −0.0025.
+  Still no detectable change either way. Both readings are negative, but the
+  size depends on how unreadable answers are counted, so the asymmetry is
+  recorded.
 - **The base model barely varies.** On the transfer environment it produced four
   identical answers on 75% of tasks, so its `pass^4` largely collapses into
   `pass^1`. It is a floor, not a competitor.
-- **The lookup tool was almost never called.** 3 of 600 SFT episodes and 2 of 600
+- **The lookup tool was almost never called.** 1 of 600 SFT episodes and 1 of 600
   GRPO episodes called `get_order`, and the prompt never asked for it. Section 6
   separates the violations this causes from writes for unverified customers.
 - **Some evidence lives only on the author's machine.** Episode and response logs

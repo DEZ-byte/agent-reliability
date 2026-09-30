@@ -18,8 +18,8 @@ Corrections to earlier versions of this page are in [`ERRATA.md`](ERRATA.md).
 | **B** | [Training raised capability faster than reliability](#b-training-raised-capability-faster-than-reliability) | Confirmed, and awkward |
 | **C** | [What improved was tool use, not arithmetic](#c-what-improved-was-tool-use-not-arithmetic) | Confirmed |
 | **D** | [It reproduced three times, and got cheaper](#d-it-reproduced-three-times-and-got-cheaper) | Confirmed |
-| **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | Refusal failure confirmed; the reward verdict is withdrawn |
-| **D3** | [No detectable MMLU change on this sample](#d3-no-detectable-mmlu-change-on-this-sample) | Null; reliably detects only changes of about 6 points |
+| **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | Refusal failure confirmed; lower reward than untrained under both scorings |
+| **D3** | [No detectable MMLU change on this sample](#d3-no-detectable-mmlu-change-on-this-sample) | Null; reliably detects only changes of about 7 points |
 | **E** | [No detectable GRPO benefit at these rates and this budget](#e-no-detectable-grpo-benefit-at-these-rates-and-this-budget) | Null, twice |
 | **F** | [Tool formatting was never the problem](#f-tool-formatting-was-never-the-problem) | Killed a planned mitigation |
 | **G** | [The retry rung had almost nothing to fix](#g-the-retry-rung-had-almost-nothing-to-fix) | Killed a planned arm |
@@ -131,42 +131,43 @@ Half the requests should be completed, half refused. It runs in audit mode, so a
 write the gates should stop still lands. It is single-shot: the model writes all
 its tool calls before any tool runs, and never sees a result.
 
-| | Untrained | After SFT | After GRPO ‡ |
+| | Untrained | After SFT | After GRPO |
 | :-- | --: | --: | --: |
-| `pass^1` | 0.493 | 0.528 | 0.542 |
-| Completes a legitimate request (outcome) | 0.000 | 0.947 | 0.957 |
-| Correctly refuses an unverified one | 1.000 | 0.098 | 0.115 |
-| Writes for an unverified customer (of 296) | 0 | 267 | 262 |
-| Verified writes that skipped the lookup (of 304) | 0 | 285 | 289 |
-| Episodes that called the lookup tool (of 600) | 0 | 3 | 2 |
-| Mean reward, as scored | +0.286 | -0.394 | -0.387 |
-| Mean reward, if skipping the lookup were not penalised | +0.286 | +0.366 | +0.384 |
+| `pass^1` | 0.493 | 0.515 | 0.530 |
+| Completes a legitimate request (outcome) | 0.000 | 0.905 | 0.921 |
+| Correctly refuses an unverified one | 1.000 | 0.115 | 0.128 |
+| Writes for an unverified customer (of 296) | 0 | 262 | 258 |
+| Verified writes that skipped the lookup (of 304) | 0 | 274 | 279 |
+| Episodes that called the lookup tool (of 600) | 11 | 1 | 1 |
+| Mean reward, as scored | +0.411 | -0.370 | -0.364 |
+| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.380 |
 
 The gate split and the rescoring come from
-[`results/phase_b-gates-d692d43.json`](results/phase_b-gates-d692d43.json), which
+[`results/phase_b-gates-913520c.json`](results/phase_b-gates-913520c.json), which
 replays all 1,800 episodes and reproduces every stored reward.
 
-The headline moves by three points. Underneath, the two halves swap places.
+The headline moves by two points. Underneath, the two halves swap places.
 
-Fine-tuning on GSM8K and a calculator taught the model to complete 95% of
+Fine-tuning on GSM8K and a calculator taught the model to complete 90% of
 legitimate requests by outcome, in audit mode, with severe authorisation
 failures. It operated two of the three offered tools, in a domain with no maths
 in it, from a standing start of zero. That is real transfer and it is the best
 news in this project.
 
 It also taught it to act unconditionally. On requests it should refuse, it wrote
-anyway in 267 of 296 episodes. It emits the verification call and the write in
+anyway in 262 of 296 episodes. It emits the verification call and the write in
 the same turn, so it never learns that verification failed. The untrained model
 scores about half by never writing; the trained one scores about half by always
 writing.
 
-The mean reward does not settle which is worse. As scored, it is negative after
-training and positive before. But 285 of the 552 violations are writes for a
-verified customer that only skipped `get_order`, and the prompt never asks for a
-lookup. Without that penalty the fine-tuned model scores +0.366, above the
-untrained +0.286. The earlier claim that it is worse than doing nothing is
-withdrawn (ERRATA E10). A re-run with a prompt that asks for the lookup would
-settle it.
+The mean reward is lower after training under both scorings. As scored, it is
+negative after training and positive before. But 274 of the 536 violations are
+writes for a verified customer that only skipped `get_order`, and the prompt
+never asks for a lookup. Without that penalty the fine-tuned model scores +0.361,
+still below the untrained +0.411. An earlier version said it scored above the
+untrained model. That no longer holds on the re-run (ERRATA E10). The change
+comes mostly from the untrained model, whose reward rose from +0.286. A re-run
+with a prompt that asks for the lookup is still needed for a fair verdict.
 
 None of this is mysterious. Every training example was one call and done, and
 not one had "do not call the tool" as the correct answer, so an unconditional
@@ -184,31 +185,34 @@ this project could not answer, because every number was measured on the task the
 model was trained for. So all three checkpoints were run over 400 held-out MMLU
 questions, stratified across all 57 subjects, with no tool offered.
 
-| | Untrained | After SFT | After GRPO ‡ |
+| | Untrained | After SFT | After GRPO |
 | :-- | --: | --: | --: |
-| Accuracy | 0.5350 (214/400) | 0.5425 (217/400) | 0.5375 (215/400) |
-| Paired difference vs untrained | - | +0.0075 | +0.0025 |
-| 95% interval | - | -0.0350 to +0.0500 | -0.0400 to +0.0450 |
-| Questions improved / got worse | - | 40 / 37 | 40 / 39 |
+| Accuracy | 0.5325 (213/400) | 0.5300 (212/400) | 0.5275 (211/400) |
+| Paired difference vs untrained | - | -0.0025 | -0.0050 |
+| 95% interval | - | -0.0475 to +0.0450 | -0.0500 to +0.0375 |
+| Questions improved / got worse | - | 44 / 45 | 42 / 44 |
 | Emitted a tool call | 0.000 | 0.000 | 0.000 |
-| Mean answer length, characters | 628 | 227 | 233 |
+| Hit the 320-token limit | 0.0825 | 0.0200 | 0.0250 |
+| Mean answer length, characters | 536 | 171 | 162 |
 
 Every figure comes from
-[`results/utility-comparison-48869b1.json`](results/utility-comparison-48869b1.json),
+[`results/utility-comparison-b3d7695.json`](results/utility-comparison-b3d7695.json),
 which pairs the arms question by question. An earlier version of this table
 reported +0.005 and 38 / 36. Those figures came from an incomplete response
-file ([`ERRATA.md`](ERRATA.md), E4).
+file ([`ERRATA.md`](ERRATA.md), E4). The version after that reported +0.0075 and
+40 / 37, from runs made before the model loader was fixed to load the pinned
+base revision ([`ERRATA.md`](ERRATA.md), E8).
 
 Two results, and the second was not the expected one.
 
 There was no detectable MMLU change on this 400-question sample. That is weaker
-than "nothing was forgotten". The interval runs from -3.5 to +5.0 points. With 77
+than "nothing was forgotten". The interval runs from -4.75 to +4.5 points. With 89
 of 400 questions changing answer, a test this size has about an 80% chance of
-detecting a change of about 6 points, and less for anything smaller. Restricted
-to the 374 questions
-where both arms named a letter, the difference is -0.008 (-0.051 to +0.035). So
-the sign depends on how unreadable answers are counted, and neither reading can
-be told apart from zero.
+detecting a change of about 7 points, and less for anything smaller. Restricted
+to the 375 questions
+where both arms named a letter, the difference is -0.032 (-0.077 to +0.016). So
+both readings are negative, the size depends on how unreadable answers are
+counted, and neither reading can be told apart from zero.
 
 The tool-calling habit did not leak. Going in, the obvious worry was that a
 model trained to emit a tool call on every single example would start emitting
@@ -221,13 +225,10 @@ was the judgement of when to. Neither shows up here, because nothing here offers
 a tool to act with.
 
 One real change did show up. The fine-tuned model answers about a third as
-long. Terser, with no detectable accuracy cost. The truncation rates published
-earlier counted batch padding as truncation and are withdrawn
+long. Terser, with no detectable accuracy cost. It hits the 320-token limit on
+2.0% of questions, against 8.25% untrained. The truncation rates published
+earlier (40%, 16%, 20%) counted batch padding as truncation
 ([`ERRATA.md`](ERRATA.md), E7).
-
-‡ In this table and in D2, the GRPO column used the final step-400 adapter, not
-the dev-selected checkpoint-200 (ERRATA E8). It is a diagnostic of where the
-run ended.
 
 Measured on 400 questions. No decision entry yet.
 
@@ -360,7 +361,7 @@ measured against it.
 | :-- | :-- |
 | Does the same hold for a same-family 8B? | Not run. The comparator is a Llama, so size and pretraining are tangled. |
 | Does the 4B benefit from training too? | Not run. It was used as the teacher, so only the 1.7B has a trained arm. Untrained, it already beats every arm (A2). `D-072` |
-| Did training damage anything off-task? | Partly answered. No detectable MMLU change on 400 questions (D3), but that test only reliably detects changes of about 6 points. |
+| Did training damage anything off-task? | Partly answered. No detectable MMLU change on 400 questions (D3), but that test only reliably detects changes of about 7 points. |
 | Would GRPO work with dead groups filtered out? | Not tried. The filter is built but has not been run. The null above is a statement about this budget and this setup, not about the method. |
-| Does the Phase B refusal failure survive a prompt that asks for the lookup? | Not run. The gate environment is built and measured (D2), but its reward verdict depends on a lookup the prompt never asked for. |
-| Do the Phase B and MMLU GRPO numbers hold on the selected checkpoint? | Not run. Both used the final step-400 adapter (ERRATA E8). |
+| Does the Phase B refusal failure survive a prompt that asks for the lookup? | Not run. The gate environment is built and measured (D2), but its prompt never asks for the lookup the gates require. |
+| Do the Phase B and MMLU GRPO numbers hold on the selected checkpoint? | Answered. Re-run on checkpoint-200 (ERRATA E8). GRPO still sits within two points of SFT on every Phase B rate, and 0.25 points below it on MMLU. |
