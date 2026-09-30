@@ -10,14 +10,18 @@ that still carry a gradient.
 
 from __future__ import annotations
 
+import functools
+import operator
 import sys
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
+from unittest import mock
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+import training.prompt_variance as prompt_variance_module  # noqa: E402
 from training.prompt_variance import (  # noqa: E402
     DEAD_ALL_CORRECT,
     DEAD_ALL_WRONG,
@@ -103,6 +107,21 @@ class SpreadTests(unittest.TestCase):
     def test_fewer_than_two_values_have_no_spread(self) -> None:
         self.assertEqual(standard_deviation([1.15]), 0.0)
         self.assertEqual(standard_deviation([]), 0.0)
+
+    def test_identical_values_have_no_spread_under_naive_summation(self) -> None:
+        """Python 3.11 sums floats naively; 3.12 compensates.
+
+        Naive summation of sixteen copies of 0.7 leaves about 1e-16 of spread,
+        which is how the 3.11 CI legs failed. This emulates 3.11 on any
+        interpreter so the guard is tested where it matters.
+        """
+
+        def naive(values, start=0.0):
+            return functools.reduce(operator.add, values, start)
+
+        with mock.patch.object(prompt_variance_module, "sum", naive, create=True):
+            self.assertEqual(standard_deviation([0.7] * 16), 0.0)
+            self.assertGreater(standard_deviation([0.7] * 15 + [0.2]), 0.0)
 
     def test_a_live_group_records_real_spread(self) -> None:
         self.assertGreater(classify_group(group("ccww"), task_id="t").total_std, 0.0)
