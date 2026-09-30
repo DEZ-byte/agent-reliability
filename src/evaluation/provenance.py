@@ -16,10 +16,13 @@ all. The default branch of a Hub repository can move under a published number.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
 from typing import Any
+
+ADAPTER_WEIGHTS_NAME = "adapter_model.safetensors"
 
 
 class DirtyWorktreeError(RuntimeError):
@@ -85,6 +88,19 @@ def portable_path(path: Path | str, root: Path) -> str:
         return str(path)
 
 
+def adapter_weights_sha256(adapter: Path | str | None) -> str | None:
+    """SHA-256 of an adapter's weights file, read whole; None for the base model.
+
+    measure_weight_change.py hashes the same bytes the same way, so a new
+    record can be matched to an old one by value.
+    """
+
+    if adapter is None:
+        return None
+    weights = Path(adapter) / ADAPTER_WEIGHTS_NAME
+    return hashlib.sha256(weights.read_bytes()).hexdigest()
+
+
 def pinned_revision(model_id: str, registry_path: Path) -> str:
     """The revision the registry pins for `model_id`, or an error."""
 
@@ -132,8 +148,10 @@ def pinned_load_kwargs(
 
 
 __all__ = [
+    "ADAPTER_WEIGHTS_NAME",
     "DirtyWorktreeError",
     "UnpinnedModelError",
+    "adapter_weights_sha256",
     "pinned_load_kwargs",
     "pinned_revision",
     "portable_path",

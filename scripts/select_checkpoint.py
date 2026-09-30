@@ -42,6 +42,8 @@ PROJECT_ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from evaluation.provenance import (  # noqa: E402
+    adapter_weights_sha256,
+    portable_path,
     require_clean_worktree,
     require_outside_worktree,
 )
@@ -160,7 +162,8 @@ def score(
         if reused is not None:
             return {
                 "checkpoint": checkpoint.name,
-                "path": str(checkpoint),
+                "path": portable_path(checkpoint, PROJECT_ROOT),
+                "weights_sha256": adapter_weights_sha256(checkpoint),
                 "score": reused["score"],
                 "no_arithmetic_rate": reused["no_arithmetic_rate"],
                 "artifact": str(result_path),
@@ -200,7 +203,8 @@ def score(
         raise SelectionError(f"{metric} not produced by the runner")
     return {
         "checkpoint": checkpoint.name,
-        "path": str(checkpoint),
+        "path": portable_path(checkpoint, PROJECT_ROOT),
+        "weights_sha256": adapter_weights_sha256(checkpoint),
         "score": metrics[metric],
         "no_arithmetic_rate": entry["rungs"][rung]["no_arithmetic_rate"],
         "artifact": str(result_path),

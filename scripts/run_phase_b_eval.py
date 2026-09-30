@@ -57,8 +57,10 @@ from env.phase_b import (  # noqa: E402
 from env.phase_b_tasks import load_split  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
 from evaluation.provenance import (  # noqa: E402
+    adapter_weights_sha256,
     pinned_load_kwargs,
     pinned_revision,
+    portable_path,
     require_clean_worktree,
 )
 from training.rewards import score_episode  # noqa: E402
@@ -234,7 +236,12 @@ def main() -> int:
             "id": args.model,
             "revision": pinned_revision(args.model, REGISTRY_PATH),
         },
-        "adapter": args.adapter,
+        "adapter": None
+        if args.adapter is None
+        else portable_path(args.adapter, PROJECT_ROOT),
+        # The weights actually loaded on top of the pinned base; null for
+        # the base model itself, whose revision above already pins it.
+        "weights_sha256": adapter_weights_sha256(args.adapter),
         "split": args.split,
         "split_manifest_sha256": hashlib.sha256(
             SPLIT_MANIFEST_PATH.read_bytes()

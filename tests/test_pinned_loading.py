@@ -56,6 +56,7 @@ def _adapter(root: Path, base: str = MODEL) -> Path:
     (adapter / "adapter_config.json").write_text(
         json.dumps({"base_model_name_or_path": base}), encoding="utf-8"
     )
+    (adapter / "adapter_model.safetensors").write_bytes(b"weights")
     return adapter
 
 
