@@ -19,6 +19,7 @@ this file is where they are corrected.
 | **E10** | Four Phase B statements were false, and "worse than doing nothing" rested on an unstated rule | `30007ed` | This correction, with `phase_b-gates-d692d43.json` |
 | **E11** | The headline left out the untrained 4B teacher, which beats every arm, and mixed rungs | `1249806` onward | This correction, with `sft-vs-teacher-*-d692d43.json` |
 | **E12** | Ten phrases claimed more than their numbers | various | This correction |
+| **E13** | Both GRPO runs most likely trained on a pre-quantised copy of the base model, not the pinned base | `6aa47f0` onward | Both rates trained again on the pinned base, `a498a7b` to `a4b4bc2` |
 
 E1 to E4 share one cause, explained under E1. Two evaluation processes were
 writing the same result files at the same time, and the manifest and the
@@ -296,6 +297,9 @@ Three statements reversed:
   so both readings are negative.
 - On Phase B, the rescored SFT reward is now below the untrained model's (E10).
 
+The GRPO rows above were later replaced by a GRPO run trained again on the
+pinned base (E13).
+
 ## E9. Artifacts that name the wrong code
 
 **What was wrong.** Four artifacts record a `source_commit` that did not contain
@@ -409,3 +413,81 @@ Numbers that come only from local logs or configs are now marked † in the READ
 and FINDINGS: the failure counts in README section 2, the grader-gaming rates,
 the untrained token ratio, the band-test p-value, the parameter counts and the
 serving memory.
+
+## E13. GRPO trained on a pre-quantised copy of the base
+
+**What was wrong.** Both GRPO runs (1e-6 and 1e-5) most likely trained on
+`unsloth/qwen3-1.7b-unsloth-bnb-4bit`, Unsloth's pre-quantised copy of
+Qwen3-1.7B, not on `Qwen/Qwen3-1.7B` at the pinned revision `70d244cc…`. Their
+test runs loaded the pinned base. So the arm was trained on one base and
+measured on another.
+
+**Evidence.** It is circumstantial. No artifact records which base file loaded.
+
+- Before `17a4545`, `train_grpo.py` loaded the SFT adapter folder through
+  Unsloth with no revision and without `use_exact_model_name`. Unsloth can then
+  swap the base name for its pre-quantised copy.
+- The Hugging Face cache on the training machine holds that copy. It was
+  downloaded on 2026-08-22 at 16:46–16:47, the minute of commit `6aa47f0`, which
+  added the GRPO arm. The GRPO checkpoints are dated 17:11–18:08 (1e-6) and
+  20:17–21:20 (1e-5) that day.
+- The SFT checkpoints date from 2026-08-21, before the copy existed, and
+  `train_sft.py` already loaded the pinned base. `run_phase_a_baseline.py`, which
+  ran every test, did too.
+
+**What was done.** Both rates were trained again from the same SFT checkpoint,
+with the same config (`c00e5b6f…`), seed and 400 steps. The only change is the
+base load (`17a4545`). Each run then went through dev selection, one test run,
+the paired comparison with SFT, and the weight-change measure. The 1e-6 arm was
+re-run on Phase B and MMLU.
+
+Two attempts at the 1e-6 run were not used:
+
+- The first failed at import, before training. Windows Smart App Control
+  blocked a DLL inside `pyarrow`. Nothing was written.
+- The second broke at step 114. The tool that launched it hit a time limit and
+  stopped the job's wrapper at that step. From then on every completion scored
+  0.15, the score for a well-formed call with a wrong value, because the sandbox
+  no longer ran calls and the environment records a sandbox failure as a wrong
+  answer. No gradient flowed for most of the remaining 287 steps. The run was
+  set aside and nothing from it was committed. It matched the run reported here
+  on every one of steps 1–113, so setting it aside chose no different numbers.
+
+**Results.** Old runs against the runs trained on the pinned base:
+
+| | 1e-6 old | 1e-6 new | 1e-5 old | 1e-5 new |
+| :-- | --: | --: | --: | --: |
+| Dev pick | checkpoint-200 | checkpoint-200 | checkpoint-300 | checkpoint-300 |
+| Test R1 `pass^1` | 0.555 | 0.562 | 0.563 | 0.588 |
+| Test R1 `pass^4` | 0.460 | 0.467 | 0.480 | 0.507 |
+| R0 `pass^1` vs SFT | +0.002 | +0.008 | +0.010 | +0.035 |
+| 95% interval | −0.010 to +0.013 | +0.000 to +0.017 | −0.020 to +0.040 | +0.005 to +0.068 |
+| Permutation p | 1.00 | 0.12 | 0.60 | 0.04 |
+| Adapter moved | 0.41% | 0.40% | 3.77% | 4.63% |
+| Phase B `pass^1` | 0.530 | 0.530 | – | – |
+| MMLU accuracy | 0.5275 | 0.5325 | – | – |
+
+New artifacts: `grpo-run-qwen3-1.7b-a498a7b.json`,
+`grpo-run-qwen3-1.7b-lr1e5-3d7e90f.json`, `grpo-selection-qwen3-1.7b-7be7eab.json`,
+`grpo-selection-lr1e5-cc1841e.json`, `grpo-test-qwen3-1.7b-f6138ee.json`,
+`grpo-test-lr1e5-ce5f2ca.json`, `grpo-vs-sft-c364562.json`,
+`grpo-lr1e5-vs-sft-91a2de9.json`, `weight-change-b23567a.json`,
+`phase_b-grpo-42e347c.json`, `phase_b-gates-8d5825b.json`,
+`utility-grpo-76a1e3f.json` and `utility-comparison-26ce399.json`. The old Phase B
+and MMLU GRPO columns came from the old 1e-6 checkpoint-200 (E8).
+
+**What changed in the text.**
+
+| Was | Now |
+| :-- | :-- |
+| "No detectable GRPO benefit at these learning rates and this budget" | No detectable gain at 1e-6. At 1e-5, +0.035 `pass^1`, with an interval that excludes zero, p = 0.04 and sign-test p = 0.22, one run |
+| "Two nulls across a tenfold rate range" | Removed |
+| The higher rate "produced an identical dev peak" | Within a point (0.5025 and 0.51) |
+| The higher rate moved the weights "about 9 times" (10 by the second measure) | About 11 times by both |
+| Grader gaming "went down" after RL (1.2% to 1.0%) | 1.2% before, 1.3% and 1.2% after |
+| GRPO "within two points of SFT" on Phase B | Within three points |
+| Steps with no gradient: 23% and 27% | Problems with no gradient: 65% and 66%. The new runs log one group per problem (the group-size fix in `af65b87`), so this is a different measure, not a change in training. |
+| Band test p = 0.24 † | p = 0.17 † (same test, reproduced on the old files first) |
+
+**Not affected.** The SFT training runs and their test results, the untrained
+and teacher baselines, and the 8B comparator. Those runs loaded the pinned base.
