@@ -35,7 +35,7 @@ SFT_TESTS = (
     "sft-test-qwen3-1.7b-seed20260823-67488ea.json",
     "sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
 )
-GRPO_TESTS = ("grpo-test-qwen3-1.7b-e7b8d74.json", "grpo-test-lr1e5-8182e7e.json")
+GRPO_TESTS = ("grpo-test-qwen3-1.7b-f6138ee.json", "grpo-test-lr1e5-ce5f2ca.json")
 H1 = (
     "h1-comparison-2889b6d.json",
     "h1-comparison-seed20260823-2889b6d.json",
@@ -152,11 +152,11 @@ class GrpoTests(unittest.TestCase):
     def test_pass1_change_and_weight_shift_come_from_the_same_checkpoints(self) -> None:
         shifts = {
             Path(entry["after"]).name + "@" + Path(entry["after"]).parent.name: entry
-            for entry in load("weight-change-72f7482.json")["comparisons"]
+            for entry in load("weight-change-b23567a.json")["comparisons"]
         }
         rows = (
-            ("1e-6", "grpo-vs-sft-e7b8d74.json", "checkpoint-200@qwen3-1.7b-grpo"),
-            ("1e-5", "grpo-lr1e5-vs-sft-8182e7e.json", "checkpoint-300@qwen3-1.7b-grpo-lr1e5"),
+            ("1e-6", "grpo-vs-sft-c364562.json", "checkpoint-200@qwen3-1.7b-grpo-pinned"),
+            ("1e-5", "grpo-lr1e5-vs-sft-91a2de9.json", "checkpoint-300@qwen3-1.7b-grpo-lr1e5-pinned"),
         )
         for rate, name, adapter in rows:
             one = comparison(name, "R0", 1)
@@ -169,12 +169,13 @@ class GrpoTests(unittest.TestCase):
             )
             self.assertIn(row, README)
 
-    def test_dead_steps_and_reward_spread(self) -> None:
-        low = load("grpo-run-qwen3-1.7b-d5b5c6d.json")["group_health"]
-        high = load("grpo-run-qwen3-1.7b-lr1e5-4502f7c.json")["group_health"]
-        self.assertEqual(low["groups"], 400, "one logged group per step")
+    def test_dead_problems_and_reward_spread(self) -> None:
+        low = load("grpo-run-qwen3-1.7b-a498a7b.json")["group_health"]
+        high = load("grpo-run-qwen3-1.7b-lr1e5-3d7e90f.json")["group_health"]
+        self.assertEqual(low["groups"], 800, "one logged group per problem, two per step")
+        self.assertEqual(high["groups"], 800, "one logged group per problem, two per step")
         text = (
-            f"{round(100 * low['zero_variance_fraction'])}% of steps at 1e-6, "
+            f"{round(100 * low['zero_variance_fraction'])}% of problems at 1e-6, "
             f"{round(100 * high['zero_variance_fraction'])}% at 1e-5"
         )
         self.assertIn(text, README)
@@ -200,7 +201,7 @@ class CapabilityTests(unittest.TestCase):
 
 class MmluTests(unittest.TestCase):
     def test_paired_comparison(self) -> None:
-        payload = load("utility-comparison-b3d7695.json")
+        payload = load("utility-comparison-26ce399.json")
         entries = {(c["treatment"], c["baseline"], c["scope"]): c for c in payload["comparisons"]}
         sft = entries[("sft", "base", "all_questions")]
         readable = entries[("sft", "base", "readable_in_both")]
@@ -223,23 +224,23 @@ class MmluTests(unittest.TestCase):
         )
 
     def test_truncation_rates(self) -> None:
-        names = {"base": "001023e", "sft": "bb6764e", "grpo": "50f604a"}
+        names = {"base": "001023e", "sft": "bb6764e", "grpo": "76a1e3f"}
         rates = {
             arm: load(f"utility-{arm}-{commit}.json")["summary"]["truncated_rate"]
             for arm, commit in names.items()
         }
         self.assertIn(
             f"{100 * rates['sft']:.1f}% of answers hit the 320-token limit, against "
-            f"{100 * rates['base']:.2f}% untrained and {100 * rates['grpo']:.1f}% after GRPO",
+            f"{100 * rates['base']:.2f}% untrained and {100 * rates['grpo']:.2f}% after GRPO",
             README,
         )
 
 
 class PhaseBTests(unittest.TestCase):
     def setUp(self) -> None:
-        names = {"base": "10f9d97", "sft": "aa59330", "grpo": "4134ef3"}
+        names = {"base": "10f9d97", "sft": "aa59330", "grpo": "42e347c"}
         self.summaries = {arm: load(f"phase_b-{arm}-{commit}.json") for arm, commit in names.items()}
-        self.gates = load("phase_b-gates-913520c.json")["arms"]
+        self.gates = load("phase_b-gates-8d5825b.json")["arms"]
 
     def row(self, label: str, values: list[str], bold: bool = False) -> str:
         cells = [f"**{v}**" if bold else v for v in values]
@@ -318,6 +319,11 @@ class WithdrawnClaimsTests(unittest.TestCase):
         "a thousand calculator trajectories",
         "blind to losses",
         "Nothing left to reach",
+        "identical dev peak",
+        "Two nulls",
+        "Null, twice",
+        "The rate went down instead",
+        "within two points of SFT",
     )
 
     def test_no_withdrawn_phrase_survives(self) -> None:

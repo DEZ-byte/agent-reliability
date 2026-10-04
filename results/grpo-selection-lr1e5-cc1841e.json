@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-04T02:04:52.096944Z",
+  "kind": "checkpoint_selection",
+  "train_config_sha256": "c00e5b6f8dcbd7a4272a115db15722e4df2274528aab7454f1026d84b4f4d3d3",
+  "rule": {
+    "split": "dev",
+    "rung": "R0",
+    "metric": "pass^1",
+    "tie_break": "earliest_checkpoint",
+    "note": "Pinned in configs/train_config.yaml before any dev number existed. The winner runs on test exactly once."
+  },
+  "base_model": "Qwen/Qwen3-1.7B",
+  "candidates": [
+    {
+      "checkpoint": "checkpoint-100",
+      "path": "checkpoints/qwen3-1.7b-grpo-lr1e5-pinned/checkpoint-100",
+      "weights_sha256": "08a7daed8c3739c4e4feebecfd0c1509e29fb95aaf4eddb3117b66ce85b966f6",
+      "score": 0.4875,
+      "no_arithmetic_rate": 0.0,
+      "artifact": "C:\\Users\\Anirudh\\AppData\\Local\\Temp\\claude\\C--Users-Anirudh-Documents-My-projects-Aligning-Small-Language-Models-for-Verifiable-Tool-Execution---Self-Correction\\88efa00f-c88c-41f5-8c0f-8774e79740ce\\scratchpad\\selection-grpo-lr1e5-pinned\\select-checkpoint-100.json"
+    },
+    {
+      "checkpoint": "checkpoint-200",
+      "path": "checkpoints/qwen3-1.7b-grpo-lr1e5-pinned/checkpoint-200",
+      "weights_sha256": "0e82f3f90defe32dd94f4a2d66b75802878f0f07f64bb84b581ee37f28568872",
+      "score": 0.5025,
+      "no_arithmetic_rate": 0.0025,
+      "artifact": "C:\\Users\\Anirudh\\AppData\\Local\\Temp\\claude\\C--Users-Anirudh-Documents-My-projects-Aligning-Small-Language-Models-for-Verifiable-Tool-Execution---Self-Correction\\88efa00f-c88c-41f5-8c0f-8774e79740ce\\scratchpad\\selection-grpo-lr1e5-pinned\\select-checkpoint-200.json"
+    },
+    {
+      "checkpoint": "checkpoint-300",
+      "path": "checkpoints/qwen3-1.7b-grpo-lr1e5-pinned/checkpoint-300",
+      "weights_sha256": "fe7aabd9ba8d732d5721bdfcfd739eb708636e6bb5940c2a33c54e24bc2fcf21",
+      "score": 0.51,
+      "no_arithmetic_rate": 0.0025,
+      "artifact": "C:\\Users\\Anirudh\\AppData\\Local\\Temp\\claude\\C--Users-Anirudh-Documents-My-projects-Aligning-Small-Language-Models-for-Verifiable-Tool-Execution---Self-Correction\\88efa00f-c88c-41f5-8c0f-8774e79740ce\\scratchpad\\selection-grpo-lr1e5-pinned\\select-checkpoint-300.json"
+    },
+    {
+      "checkpoint": "checkpoint-400",
+      "path": "checkpoints/qwen3-1.7b-grpo-lr1e5-pinned/checkpoint-400",
+      "weights_sha256": "3fcfb695dd7ccf31d473d8e3ca944218837fdbd2d9a02ce8371f6c6bff4dbf24",
+      "score": 0.51,
+      "no_arithmetic_rate": 0.0025,
+      "artifact": "C:\\Users\\Anirudh\\AppData\\Local\\Temp\\claude\\C--Users-Anirudh-Documents-My-projects-Aligning-Small-Language-Models-for-Verifiable-Tool-Execution---Self-Correction\\88efa00f-c88c-41f5-8c0f-8774e79740ce\\scratchpad\\selection-grpo-lr1e5-pinned\\select-checkpoint-400.json"
+    }
+  ],
+  "selected": {
+    "checkpoint": "checkpoint-300",
+    "path": "checkpoints/qwen3-1.7b-grpo-lr1e5-pinned/checkpoint-300",
+    "weights_sha256": "fe7aabd9ba8d732d5721bdfcfd739eb708636e6bb5940c2a33c54e24bc2fcf21",
+    "score": 0.51,
+    "no_arithmetic_rate": 0.0025,
+    "artifact": "C:\\Users\\Anirudh\\AppData\\Local\\Temp\\claude\\C--Users-Anirudh-Documents-My-projects-Aligning-Small-Language-Models-for-Verifiable-Tool-Execution---Self-Correction\\88efa00f-c88c-41f5-8c0f-8774e79740ce\\scratchpad\\selection-grpo-lr1e5-pinned\\select-checkpoint-300.json"
+  },
+  "source_commit": "cc1841ed8002ecb4428536c1ed922e02cf396edf",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

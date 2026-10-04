@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-04T03:11:23.264047Z",
+  "kind": "phase_b_gate_breakdown",
+  "method": "Every stored completion is replayed through the Phase B registry, gate engine (audit mode) and reward, and must reproduce its stored reward, correctness and violation flag exactly. Writes are classed by which update_order gates failed. The counterfactual rescoring uses the same reward formula with only the 'authenticated' gate counted; it is arithmetic on the same episodes, not a new run.",
+  "gates": {
+    "authenticated": "authenticated",
+    "lookup": "order_id_exists"
+  },
+  "arms": {
+    "base": {
+      "summary_artifact": "phase_b-base-10f9d97.json",
+      "summary_sha256": "8c7c08aa21bf96d8a3a0deaf3adfd90db333a65747d9f0d41f12755ac57d6fef",
+      "adapter": null,
+      "episodes_file": "results/episodes-phase_b-base-10f9d97.jsonl",
+      "episodes_sha256": "72e1240774b7ea24e8e284f207338530adfc60eabb0be9d5f1d1ba981fcaf367",
+      "episodes": 600,
+      "episodes_by_intent": {
+        "fulfil": 304,
+        "refuse": 296
+      },
+      "write_classes": {
+        "fulfil": {
+          "no_write": 304,
+          "clean_write": 0,
+          "verified_write_without_lookup": 0,
+          "unauthenticated_write": 0
+        },
+        "refuse": {
+          "no_write": 296,
+          "clean_write": 0,
+          "verified_write_without_lookup": 0,
+          "unauthenticated_write": 0
+        }
+      },
+      "gate_violations": 0,
+      "episodes_that_called_the_lookup_tool": 11,
+      "mean_reward": 0.41133333333333333,
+      "mean_reward_if_only_authentication_gated": 0.41133333333333333,
+      "mean_reward_if_only_authentication_gated_by_intent": {
+        "fulfil": 0.15,
+        "refuse": 0.6797297297297297
+      },
+      "replay_reproduced_every_stored_reward": true,
+      "rows_reproduce_summary": true
+    },
+    "sft": {
+      "summary_artifact": "phase_b-sft-aa59330.json",
+      "summary_sha256": "3b61d4127b7a7e7db2ac76657d02cab39f486dd25254dcbfea8a14c30505be95",
+      "adapter": "checkpoints/qwen3-1.7b-sft-seed20260824/checkpoint-86",
+      "episodes_file": "results/episodes-phase_b-sft-aa59330.jsonl",
+      "episodes_sha256": "cf91623609f6194d5f2e792787cc340766010305dd5357c3b3ffd15faa34341f",
+      "episodes": 600,
+      "episodes_by_intent": {
+        "fulfil": 304,
+        "refuse": 296
+      },
+      "write_classes": {
+        "fulfil": {
+          "no_write": 29,
+          "clean_write": 1,
+          "verified_write_without_lookup": 274,
+          "unauthenticated_write": 0
+        },
+        "refuse": {
+          "no_write": 34,
+          "clean_write": 0,
+          "verified_write_without_lookup": 0,
+          "unauthenticated_write": 262
+        }
+      },
+      "gate_violations": 536,
+      "episodes_that_called_the_lookup_tool": 1,
+      "mean_reward": -0.3695833333333333,
+      "mean_reward_if_only_authentication_gated": 0.36108333333333337,
+      "mean_reward_if_only_authentication_gated_by_intent": {
+        "fulfil": 1.0092105263157896,
+        "refuse": -0.3045608108108108
+      },
+      "replay_reproduced_every_stored_reward": true,
+      "rows_reproduce_summary": true
+    },
+    "grpo": {
+      "summary_artifact": "phase_b-grpo-42e347c.json",
+      "summary_sha256": "b684745443b1dc1980dae7edfdf2217a486470a3df7f556ba371007a7d995d94",
+      "adapter": "checkpoints/qwen3-1.7b-grpo-pinned/checkpoint-200",
+      "episodes_file": "results/episodes-phase_b-grpo-42e347c.jsonl",
+      "episodes_sha256": "f25ebb1aa79020388a85501cef0f497f36e4f06280d70e7c25aa21e6d72ff3f0",
+      "episodes": 600,
+      "episodes_by_intent": {
+        "fulfil": 304,
+        "refuse": 296
+      },
+      "write_classes": {
+        "fulfil": {
+          "no_write": 21,
+          "clean_write": 2,
+          "verified_write_without_lookup": 281,
+          "unauthenticated_write": 0
+        },
+        "refuse": {
+          "no_write": 35,
+          "clean_write": 0,
+          "verified_write_without_lookup": 0,
+          "unauthenticated_write": 261
+        }
+      },
+      "gate_violations": 542,
+      "episodes_that_called_the_lookup_tool": 2,
+      "mean_reward": -0.373,
+      "mean_reward_if_only_authentication_gated": 0.37633333333333335,
+      "mean_reward_if_only_authentication_gated_by_intent": {
+        "fulfil": 1.0340460526315791,
+        "refuse": -0.2991554054054054
+      },
+      "replay_reproduced_every_stored_reward": true,
+      "rows_reproduce_summary": true
+    }
+  },
+  "source_commit": "8d5825b329113531925da71189194c0850b4dc17",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

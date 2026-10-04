@@ -20,7 +20,7 @@ Corrections to earlier versions of this page are in [`ERRATA.md`](ERRATA.md).
 | **D** | [It reproduced three times, and got cheaper](#d-it-reproduced-three-times-and-got-cheaper) | Confirmed |
 | **D2** | [The capability transferred; the judgement did not](#d2-the-capability-transferred-the-judgement-did-not) | Refusal failure confirmed; lower reward than untrained under both scorings |
 | **D3** | [No detectable MMLU change on this sample](#d3-no-detectable-mmlu-change-on-this-sample) | Null; reliably detects only changes of about 7 points |
-| **E** | [No detectable GRPO benefit at these rates and this budget](#e-no-detectable-grpo-benefit-at-these-rates-and-this-budget) | Null, twice |
+| **E** | [GRPO: no detectable gain at 1e-6, a small one at 1e-5](#e-grpo-no-detectable-gain-at-1e-6-a-small-one-at-1e-5) | Null at 1e-6; +3.5 points at 1e-5, interval excludes zero, p = 0.04, one run |
 | **F** | [Tool formatting was never the problem](#f-tool-formatting-was-never-the-problem) | Killed a planned mitigation |
 | **G** | [The retry rung had almost nothing to fix](#g-the-retry-rung-had-almost-nothing-to-fix) | Killed a planned arm |
 | **H** | [This environment cannot teach self-correction](#h-this-environment-cannot-teach-self-correction) | Structural, deferred |
@@ -134,16 +134,16 @@ its tool calls before any tool runs, and never sees a result.
 | | Untrained | After SFT | After GRPO |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.515 | 0.530 |
-| Completes a legitimate request (outcome) | 0.000 | 0.905 | 0.921 |
-| Correctly refuses an unverified one | 1.000 | 0.115 | 0.128 |
-| Writes for an unverified customer (of 296) | 0 | 262 | 258 |
-| Verified writes that skipped the lookup (of 304) | 0 | 274 | 279 |
-| Episodes that called the lookup tool (of 600) | 11 | 1 | 1 |
-| Mean reward, as scored | +0.411 | -0.370 | -0.364 |
-| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.380 |
+| Completes a legitimate request (outcome) | 0.000 | 0.905 | 0.931 |
+| Correctly refuses an unverified one | 1.000 | 0.115 | 0.118 |
+| Writes for an unverified customer (of 296) | 0 | 262 | 261 |
+| Verified writes that skipped the lookup (of 304) | 0 | 274 | 281 |
+| Episodes that called the lookup tool (of 600) | 11 | 1 | 2 |
+| Mean reward, as scored | +0.411 | -0.370 | -0.373 |
+| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.376 |
 
 The gate split and the rescoring come from
-[`results/phase_b-gates-913520c.json`](results/phase_b-gates-913520c.json), which
+[`results/phase_b-gates-8d5825b.json`](results/phase_b-gates-8d5825b.json), which
 replays all 1,800 episodes and reproduces every stored reward.
 
 The headline moves by two points. Underneath, the two halves swap places.
@@ -187,16 +187,16 @@ questions, stratified across all 57 subjects, with no tool offered.
 
 | | Untrained | After SFT | After GRPO |
 | :-- | --: | --: | --: |
-| Accuracy | 0.5325 (213/400) | 0.5300 (212/400) | 0.5275 (211/400) |
-| Paired difference vs untrained | - | -0.0025 | -0.0050 |
-| 95% interval | - | -0.0475 to +0.0450 | -0.0500 to +0.0375 |
-| Questions improved / got worse | - | 44 / 45 | 42 / 44 |
+| Accuracy | 0.5325 (213/400) | 0.5300 (212/400) | 0.5325 (213/400) |
+| Paired difference vs untrained | - | -0.0025 | +0.0000 |
+| 95% interval | - | -0.0475 to +0.0450 | -0.0475 to +0.0450 |
+| Questions improved / got worse | - | 44 / 45 | 44 / 44 |
 | Emitted a tool call | 0.000 | 0.000 | 0.000 |
-| Hit the 320-token limit | 0.0825 | 0.0200 | 0.0250 |
-| Mean answer length, characters | 536 | 171 | 162 |
+| Hit the 320-token limit | 0.0825 | 0.0200 | 0.0275 |
+| Mean answer length, characters | 536 | 171 | 176 |
 
 Every figure comes from
-[`results/utility-comparison-b3d7695.json`](results/utility-comparison-b3d7695.json),
+[`results/utility-comparison-26ce399.json`](results/utility-comparison-26ce399.json),
 which pairs the arms question by question. An earlier version of this table
 reported +0.005 and 38 / 36. Those figures came from an incomplete response
 file ([`ERRATA.md`](ERRATA.md), E4). The version after that reported +0.0075 and
@@ -236,42 +236,50 @@ Measured on 400 questions. No decision entry yet.
 
 # Things that did not work
 
-## E. No detectable GRPO benefit at these rates and this budget
+## E. GRPO: no detectable gain at 1e-6, a small one at 1e-5
 
 | Learning rate | `pass^1` change (R0) | 95% interval | Weights moved |
 | :-- | --: | :--: | --: |
-| 1e-6 | +0.002 | −0.010 – 0.013 | 0.41% |
-| 1e-5 | +0.010 | −0.020 – 0.040 | 3.77% |
+| 1e-6 | +0.008 | +0.000 – 0.017 | 0.40% |
+| 1e-5 | +0.035 | +0.005 – 0.068 | 4.63% |
 
 All four numbers come from the checkpoints dev selection picked (checkpoint-200
 and checkpoint-300). The weight figures are in
-[`results/weight-change-72f7482.json`](results/weight-change-72f7482.json). An
+[`results/weight-change-b23567a.json`](results/weight-change-b23567a.json). An
 earlier version showed 3.82% here, which was the final step-400 adapter
-(ERRATA E8).
+(ERRATA E8). The version after that showed +0.002 and +0.010, from GRPO runs that
+most likely trained on a pre-quantised copy of the base model. Both rates were
+trained again on the pinned base (ERRATA E13).
 
-The interval on the first run excludes an effect much larger than a point,
-rather than merely failing to find one.
+At 1e-6 the interval runs from 0.000 to +0.017: no detectable change. At 1e-5 it
+excludes zero, so by the primary test GRPO gained 3.5 points of `pass^1`. The
+secondary tests are weaker: permutation p = 0.04, above the Bonferroni threshold
+of 0.025 the artifact reports, and exact sign test p = 0.22 (20 tasks improved,
+12 got worse). `pass^4` rose by 0.047, with an interval (−0.007 to +0.100) that
+contains zero. It is one run.
 
-The obvious objection was that the run barely moved the model, and that objection
-was correct. Rerunning at ten times the rate moved the weights about nine times as
-far and produced an identical dev peak. Two nulls across a tenfold rate range are
-much harder to dismiss than one.
+The obvious objection was that the first run barely moved the model, and that
+objection was correct. Rerunning at ten times the rate moved the weights about 11
+times as far. On dev the two runs peaked within a point of each other (0.5025 and
+0.51). On test the higher rate gained 3.5 points over SFT, and the lower rate
+under one.
 
-**Consistent with the null, though none was tested as a cause:**
+**Measurements of how little signal the training had, none tested as a cause:**
 
 | Measurement | Value |
 | :-- | :-- |
-| Steps with no gradient | 23% at 1e-6, 27% at 1e-5. Each step scored 16 attempts, 8 at each of 2 problems, and in these steps all 16 scored alike. The per-problem rate was not logged; it is at least as high. |
-| Reward spread within a step | Accuracy dominated (0.339); format (0.006) and efficiency (0.002) varied negligibly; the gate term was inert (0.000) |
+| Problems with no gradient | 65% at 1e-6, 66% at 1e-5. Each step scored 8 attempts at each of 2 problems; for these problems all 8 scored alike. An earlier version reported 23% and 27% of whole steps, because the logger was not told the group size. |
+| Reward spread within a problem | Accuracy dominated (0.150); format (0.002) and efficiency (0.001) varied negligibly; the gate term was inert (0.000) |
 | What was left to fix | After SFT almost every failure is a well-formed call with the wrong value, which GRPO can learn from only when some attempts get it right |
 
 The gate term reads 0.000 for a structural reason: this environment has one
 harmless tool, so no gate can ever fire.
 
 One direction worth chasing, not yet a result: the higher rate raised `pass^4` and
-lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to 0.167. That is
+lowered `pass@4`, narrowing the sometimes-solved band from 0.213 to 0.160. That is
 what a policy-gradient method concentrating probability mass looks like, and it is
-the trade this project cares about. A paired test gives p = 0.24 †, so it is a hint.
+the trade this project cares about. A paired test gives p = 0.17 †, so it is still
+a hint.
 
 `D-077` · `D-078`
 
@@ -330,10 +338,12 @@ visible instead of being pushed somewhere harder to see.
 | :-- | --: |
 | Untrained | 3.0% |
 | Fine-tuned | 1.2% |
-| After reinforcement learning | 1.0% |
+| After reinforcement learning | 1.3% at 1e-6, 1.2% at 1e-5 |
 
 RL optimises whatever scores highest, so this was the cheapest available shortcut
-and it had 400 steps to find it. The rate went down instead.
+and it had 400 steps to find it. The rate did not go up much: 7 of 600 test
+episodes before RL, 8 and 7 after. An earlier version said it went down, from
+GRPO runs that were later trained again (ERRATA E13).
 
 `D-062` · `D-077`
 
@@ -362,6 +372,6 @@ measured against it.
 | Does the same hold for a same-family 8B? | Not run. The comparator is a Llama, so size and pretraining are tangled. |
 | Does the 4B benefit from training too? | Not run. It was used as the teacher, so only the 1.7B has a trained arm. Untrained, it already beats every arm (A2). `D-072` |
 | Did training damage anything off-task? | Partly answered. No detectable MMLU change on 400 questions (D3), but that test only reliably detects changes of about 7 points. |
-| Would GRPO work with dead groups filtered out? | Not tried. The filter is built but has not been run. The null above is a statement about this budget and this setup, not about the method. |
+| Would GRPO work with dead groups filtered out? | Not tried. The filter is built but has not been run. The results above are statements about this budget and this setup, not about the method. |
 | Does the Phase B refusal failure survive a prompt that asks for the lookup? | Not run. The gate environment is built and measured (D2), but its prompt never asks for the lookup the gates require. |
-| Do the Phase B and MMLU GRPO numbers hold on the selected checkpoint? | Answered. Re-run on checkpoint-200 (ERRATA E8). GRPO still sits within two points of SFT on every Phase B rate, and 0.25 points below it on MMLU. |
+| Do the Phase B and MMLU GRPO numbers hold on the selected checkpoint? | Answered. Re-run on checkpoint-200 (ERRATA E8), then on the GRPO run trained again on the pinned base (ERRATA E13). GRPO sits within three points of SFT on every Phase B rate, and 0.25 points above it on MMLU. |
