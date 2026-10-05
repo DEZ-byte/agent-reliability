@@ -38,7 +38,6 @@ MANIFEST_PATH: Final = RESULTS_DIR / "artifact_manifest.json"
 # Every family of committed measurement record. The manifest test walks the
 # same list, so a family absent here is a family nothing protects.
 ARTIFACT_GLOBS: Final = (
-    "model_smoke-*.json",
     "contamination-*.json",
     "baseline-*.json",
     "masking-*.json",
@@ -129,14 +128,8 @@ def _entry(path: Path) -> dict[str, Any]:
         "sha256": hashlib.sha256(raw).hexdigest(),
         "bytes": len(raw),
         "recorded_in_commit": commit,
-        "kind": payload.get("kind", "model_smoke"),
+        "kind": payload.get("kind"),
     }
-    # Model-smoke artifacts carry the two fields that tell the pre-D-046 and
-    # post-D-046 evidence regimes apart. Other families have neither.
-    if "config_sha256" in payload:
-        entry["config_sha256"] = payload["config_sha256"]
-    if "lane" in payload:
-        entry["declares_gate_demotion"] = bool(payload["lane"].get("gate_demotions"))
     return entry
 
 

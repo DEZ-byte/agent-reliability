@@ -9,7 +9,6 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = PROJECT_ROOT / "configs" / "model_candidates.json"
-SMOKE_CONFIG_PATH = PROJECT_ROOT / "configs" / "model_smoke.json"
 
 EXPECTED_ROLES = {
     "primary_small",
@@ -34,13 +33,6 @@ ALLOWED_LICENSE_IDS = {
 ALLOWED_LICENSE_NAMES = {"qwen-research"}
 IMMUTABLE_REVISION = re.compile(r"[0-9a-f]{40}\Z")
 RELEASE_DECISION = re.compile(r"D-[0-9]{3}\Z")
-
-EXPECTED_SMOKE_ROLES = {
-    "Qwen/Qwen2.5-3B-Instruct": ("primary_small", "qwen2.5"),
-    "Qwen/Qwen3-4B": ("primary_small", "qwen3"),
-    "Qwen/Qwen2.5-1.5B-Instruct": ("scale_check", "qwen2.5"),
-    "Qwen/Qwen3-1.7B": ("scale_check", "qwen3"),
-}
 
 
 def _load_json_object(path: Path) -> dict[str, Any]:
@@ -151,39 +143,6 @@ class ModelCandidateRegistryTests(unittest.TestCase):
                 self.assertEqual(
                     license_name == "qwen-research",
                     license_id == "other",
-                )
-
-    def test_qwen_smoke_candidates_match_registry_id_revision_and_role(self) -> None:
-        smoke_config = _load_json_object(SMOKE_CONFIG_PATH)
-        smoke_candidates = smoke_config.get("candidates")
-        self.assertIsInstance(smoke_candidates, list)
-        self.assertEqual(len(smoke_candidates), 4)
-
-        registry_by_id = {
-            candidate["id"]: (role, candidate)
-            for role, candidate in self._entries()
-        }
-        smoke_by_id: dict[str, dict[str, Any]] = {}
-        for candidate in smoke_candidates:
-            self.assertIsInstance(candidate, dict)
-            model_id = candidate.get("model_id")
-            self.assertIsInstance(model_id, str)
-            self.assertNotIn(model_id, smoke_by_id, msg=f"duplicate smoke ID: {model_id}")
-            smoke_by_id[model_id] = candidate
-
-        self.assertEqual(set(smoke_by_id), set(EXPECTED_SMOKE_ROLES))
-        for model_id, (expected_role, expected_bundle) in EXPECTED_SMOKE_ROLES.items():
-            with self.subTest(model_id=model_id):
-                registry_role, registry_candidate = registry_by_id[model_id]
-                smoke_candidate = smoke_by_id[model_id]
-                self.assertEqual(registry_role, expected_role)
-                self.assertEqual(smoke_candidate.get("role"), expected_role)
-                self.assertEqual(smoke_candidate.get("bundle"), expected_bundle)
-                self.assertEqual(
-                    registry_candidate.get("smoke_bundle"), expected_bundle
-                )
-                self.assertEqual(
-                    smoke_candidate.get("revision"), registry_candidate["revision"]
                 )
 
 

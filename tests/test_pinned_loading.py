@@ -36,8 +36,6 @@ from scripts import train_grpo  # noqa: E402
 
 REGISTRY = PROJECT_ROOT / "configs" / "model_candidates.json"
 MODEL = "Qwen/Qwen3-1.7B"
-# The frozen smoke script is pinned by digest and cannot be edited.
-FROZEN = {"smoke_models.py"}
 
 
 def _registered_revision(model_id: str) -> str:
@@ -206,8 +204,6 @@ class EveryLoaderIsPinnedTests(unittest.TestCase):
     def test_every_fast_language_model_load_is_pinned(self) -> None:
         checked = 0
         for path in sorted((PROJECT_ROOT / "scripts").glob("*.py")):
-            if path.name in FROZEN:
-                continue
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for node in ast.walk(tree):
                 if not (

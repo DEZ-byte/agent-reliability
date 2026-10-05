@@ -11,8 +11,8 @@ evidence the model recalled it. Reporting only the first and calling it recall
 would be a false label; an early version of this probe did exactly that.
 
 Offline by default. Loading a checkpoint needs --run-load and --allow-download,
-matching scripts/smoke_models.py, and a measured run refuses to start on a dirty
-worktree so every artifact names the exact source that produced it.
+and a measured run refuses to start on a dirty worktree so every artifact names
+the exact source that produced it.
 
 These are diagnostics, never task scores.
 """

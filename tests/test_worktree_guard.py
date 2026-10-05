@@ -54,13 +54,11 @@ GUARDED = {
     "train_sft.py",
     "verify_masking.py",
 }
-# These write no source_commit, or must run on any tree (CI, the smoke probe,
-# and the manifest builder, which runs before the artifacts are committed).
+# These write no source_commit, or must run on any tree (CI, and the manifest
+# builder, which runs before the artifacts are committed).
 NEVER = {
     "build_artifact_manifest.py",
-    "probe_smoke_environment.py",
     "run_tests_offline.py",
-    "smoke_models.py",
 }
 
 

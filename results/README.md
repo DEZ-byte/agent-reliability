@@ -27,9 +27,6 @@ from the index. A file that a later run replaced is removed only with
 | `utility-{base,sft,grpo}-*.json`, `utility-comparison-*.json` | MMLU with no tool offered, and the paired comparison question by question |
 | `phase_b-*.json` | Transfer to an order-support agent with three unseen tools, and its gate failures |
 
-`model_smoke-*.json` and `smoke_environment.json` are early checks that the
-training stack loads each candidate model.
-
 Episode logs (`*.jsonl`) hold one row per attempt. They are large and are not
 committed.
 

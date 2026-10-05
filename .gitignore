@@ -31,10 +31,6 @@ notebooks/.ipynb_checkpoints/
 # planning and protocol material, not the result, and 35,000 words of it in
 # front of the README buried the findings.
 BLUEPRINT_v2.md
-# The decision log is untracked for now. The licence gate used to read it
-# directly, which would have turned CI red; it reads
-# configs/release_decision.md instead, which carries the entries it verifies.
-# Track this again when the full log should be public.
 DECISIONS.md
 PLAN.md
 HYPOTHESIS_PROTOCOL.md
