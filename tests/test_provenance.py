@@ -1,8 +1,8 @@
 """A script may only name a commit if it ran exactly that commit's code.
 
-Four artifacts named a commit that did not yet contain the code that produced
-them (ERRATA.md, E9). The guard runs against a real throwaway repository here,
-because a mocked `git status` would prove nothing about the real one.
+Four artifacts once named a commit that did not yet contain the code that
+produced them. The guard runs against a real throwaway repository here, because
+a mocked `git status` would prove nothing about the real one.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from evaluation.provenance import (  # noqa: E402
     DirtyWorktreeError,
     portable_path,
     require_clean_worktree,
+    require_outside_worktree,
 )
 
 
@@ -71,6 +72,14 @@ class CleanWorktreeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as bare:
             with self.assertRaises(DirtyWorktreeError):
                 require_clean_worktree(Path(bare))
+
+    def test_scratch_output_must_live_outside_the_repository(self) -> None:
+        """A run writing into the tree would make the next guarded step refuse."""
+
+        with tempfile.TemporaryDirectory() as outside:
+            require_outside_worktree(Path(outside) / "scratch", self.root)
+        with self.assertRaises(DirtyWorktreeError):
+            require_outside_worktree(self.root / "results", self.root)
 
 
 class PortablePathTests(unittest.TestCase):

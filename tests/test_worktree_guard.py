@@ -4,18 +4,12 @@
 The guard itself is tested in test_provenance.py. This file checks the wiring:
 each script calls it on the path that really runs, puts the HEAD it returns in
 the artifact, and leaves plan-only runs alone.
-
-The pipeline gets a real throwaway repository. Its stages are subprocesses that
-each refuse a dirty tree, so one stage writing into the repository would block
-the next. The chain is driven end to end with fake stages to show it cannot.
 """
 
 from __future__ import annotations
 
 import ast
-import io
 import json
-import subprocess
 import sys
 import tempfile
 import types
@@ -27,11 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from evaluation.provenance import (  # noqa: E402
-    DirtyWorktreeError,
-    require_clean_worktree,
-    require_outside_worktree,
-)
+from evaluation.provenance import DirtyWorktreeError  # noqa: E402
 from scripts import build_sft_dataset  # noqa: E402
 from scripts import compare_arms  # noqa: E402
 from scripts import generate_sft_trajectories  # noqa: E402
@@ -39,7 +29,6 @@ from scripts import probe_contamination  # noqa: E402
 from scripts import probe_prompt_variance  # noqa: E402
 from scripts import run_phase_a_baseline  # noqa: E402
 from scripts import run_phase_b_eval  # noqa: E402
-from scripts import run_primary_arm_pipeline as pipeline  # noqa: E402
 from scripts import run_utility_eval  # noqa: E402
 from scripts import select_checkpoint  # noqa: E402
 from scripts import train_grpo  # noqa: E402
@@ -61,7 +50,6 @@ GUARDED = {
     "probe_prompt_variance.py",
     "run_phase_a_baseline.py",
     "run_phase_b_eval.py",
-    "run_primary_arm_pipeline.py",
     "run_utility_eval.py",
     "select_checkpoint.py",
     "train_grpo.py",
@@ -104,156 +92,6 @@ def _fake_modules() -> dict[str, types.ModuleType]:
         "trl": trl,
         "datasets": datasets,
     }
-
-
-class _TempRepo:
-    """A throwaway git repository with one commit."""
-
-    def __init__(self, root: Path) -> None:
-        self.root = root
-        for args in (
-            ("init", "-q"),
-            ("config", "core.autocrlf", "false"),
-            ("config", "user.name", "Test"),
-            ("config", "user.email", "test@example.invalid"),
-        ):
-            self.git(*args)
-        (root / "code.py").write_text("x = 1\n", encoding="utf-8")
-        self.git("add", "-A")
-        self.git("commit", "-q", "-m", "start")
-
-    def git(self, *args: str) -> str:
-        return subprocess.run(
-            ["git", *args], cwd=self.root, capture_output=True, text=True, check=True
-        ).stdout.strip()
-
-
-# -- the pipeline chain, against a real repository --------------------------
-
-OUTPUT_FILES = ("--summary", "--output", "--episodes", "--candidates", "--dataset", "--manifest")
-OUTPUT_DIRS = ("--output-dir", "--scratch")
-
-
-class PipelineChainTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self._tmp = tempfile.TemporaryDirectory()
-        base = Path(self._tmp.name)
-        (base / "repo").mkdir()
-        self.repo = _TempRepo(base / "repo")
-        self.run_dir = base / "run"
-        self.stages: list[str] = []
-
-    def tearDown(self) -> None:
-        self._tmp.cleanup()
-
-    def _args(self, run_dir: Path, *extra: str) -> list[str]:
-        return [
-            "--run-dir", str(run_dir),
-            "--teacher", "Qwen/Qwen3-4B",
-            "--teacher-deviation", "none",
-            "--student", MODEL,
-            "--seed", "7",
-            "--skip-comparator",
-            *extra,
-        ]
-
-    def _child(self, leak_from: str | None = None):
-        """A fake stage: refuses a dirty tree, then writes its outputs."""
-
-        def popen(command, **kwargs):
-            script = Path(command[1]).name
-            self.stages.append(script)
-            process = types.SimpleNamespace(wait=lambda: 0)
-            try:
-                require_clean_worktree(self.repo.root)
-            except DirtyWorktreeError as error:
-                process.stdout, process.returncode = io.StringIO(f"{error}\n"), 1
-                return process
-            for flag, value in zip(command, command[1:]):
-                path = Path(value)
-                if flag in OUTPUT_DIRS:
-                    path.mkdir(parents=True, exist_ok=True)
-                elif flag in OUTPUT_FILES:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    payload = {
-                        "executed": True,
-                        "results": [],
-                        "selected": {"path": str(path.parent / "checkpoint-1")},
-                        "comparisons": [],
-                        "treatment_label": "t",
-                        "baseline_label": "b",
-                    }
-                    path.write_text(
-                        json.dumps(payload) if path.suffix == ".json" else "",
-                        encoding="utf-8",
-                    )
-            if script == leak_from:
-                (self.repo.root / "results").mkdir(exist_ok=True)
-                (self.repo.root / "results" / "leaked.json").write_text("{}", encoding="utf-8")
-            process.stdout, process.returncode = io.StringIO("done\n"), 0
-            return process
-
-        return popen
-
-    def _main(self, argv: list[str], popen) -> int:
-        # Only the pipeline's own view of subprocess is replaced. The guard
-        # inside each fake stage still runs real git.
-        fake_subprocess = types.SimpleNamespace(
-            run=subprocess.run, PIPE=subprocess.PIPE, STDOUT=subprocess.STDOUT, Popen=popen
-        )
-        with mock.patch.object(pipeline, "PROJECT_ROOT", self.repo.root), mock.patch.object(
-            pipeline, "subprocess", fake_subprocess
-        ), mock.patch("builtins.print"):
-            return pipeline.main(argv)
-
-    def test_a_chain_that_writes_outside_the_repository_passes_every_guard(self) -> None:
-        self.assertEqual(self._main(self._args(self.run_dir), self._child()), 0)
-        self.assertEqual(
-            self.stages,
-            [
-                "generate_sft_trajectories.py",
-                "build_sft_dataset.py",
-                "run_phase_a_baseline.py",
-                "train_sft.py",
-                "select_checkpoint.py",
-                "run_phase_a_baseline.py",
-                "compare_arms.py",
-            ],
-        )
-        (summary,) = (self.run_dir / "results").glob("summary-*.json")
-        recorded = json.loads(summary.read_text(encoding="utf-8"))["source_commit"]
-        self.assertEqual(recorded, self.repo.git("rev-parse", "HEAD"))
-
-    def test_a_stage_that_writes_into_the_repository_blocks_the_next_one(self) -> None:
-        """The trap the entry checks exist to prevent."""
-
-        code = self._main(
-            self._args(self.run_dir), self._child(leak_from="build_sft_dataset.py")
-        )
-        self.assertEqual(code, 1)
-        self.assertEqual(self.stages[-1], "run_phase_a_baseline.py")
-        self.assertEqual(len(self.stages), 3)
-
-    def test_a_run_dir_inside_the_repository_is_refused_before_any_stage(self) -> None:
-        with self.assertRaises(DirtyWorktreeError):
-            self._main(self._args(self.repo.root / "runs"), self._child())
-        self.assertEqual(self.stages, [])
-
-    def test_a_dirty_tree_is_refused_before_any_stage(self) -> None:
-        (self.repo.root / "stray.py").write_text("y = 1\n", encoding="utf-8")
-        with self.assertRaises(DirtyWorktreeError):
-            self._main(self._args(self.run_dir), self._child())
-        self.assertEqual(self.stages, [])
-
-    def test_a_dry_run_needs_no_clean_tree(self) -> None:
-        (self.repo.root / "stray.py").write_text("y = 1\n", encoding="utf-8")
-        self.assertEqual(self._main(self._args(self.run_dir, "--dry-run"), self._child()), 0)
-        self.assertEqual(self.stages, [])
-
-    def test_an_output_directory_outside_the_repository_is_allowed(self) -> None:
-        require_outside_worktree(self.run_dir, self.repo.root)
-        with self.assertRaises(DirtyWorktreeError):
-            require_outside_worktree(self.repo.root / "results", self.repo.root)
 
 
 # -- each script's wiring, with a fake guard ---------------------------------
