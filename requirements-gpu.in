@@ -25,10 +25,10 @@ bitsandbytes==0.50.1
 huggingface-hub==1.27.0
 peft==0.20.0
 
-# Keep the reliability-kernel contract version identical in the smoke env.
+# Keep the reliability-kernel contract version identical to requirements.lock.
 pydantic==2.13.4
 
-# The executed generation probe imports the shared parser and tool contracts.
+# The runners import the shared parser and tool contracts.
 -e .
 
 # Lock generator/runtime helper; keeping it here makes `uv pip sync` exact.

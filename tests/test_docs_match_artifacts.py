@@ -1,9 +1,11 @@
-"""Every number in the README must be the number in a frozen artifact.
+"""The README's result numbers must be the numbers in the frozen artifacts.
 
 Each figure below is recomputed from a committed file in results/ and looked up
-in the README as it is printed there. A README edited to a nicer number, or an
-artifact the README never caught up with, fails here. The two parameter counts
-used for the cost column come from the model configs and are pinned below.
+in the README as it is printed there, together with the sentence that states
+it. A README edited to a nicer number, or an artifact the README never caught
+up with, fails here. The two parameter counts used for the cost column come
+from the model configs, which are not in the repository, so they are pinned
+below.
 
 The last tests check that every relative link resolves, and that phrases an
 earlier version had to withdraw do not come back.
@@ -13,14 +15,27 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import unittest
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from env.phase_a import calculator_tool_schema  # noqa: E402
+from env.phase_b import phase_b_tool_schemas  # noqa: E402
+
 RESULTS = PROJECT_ROOT / "results"
 README_PATH = PROJECT_ROOT / "README.md"
-# Whitespace is collapsed so a figure wrapped across two lines still matches.
-README = " ".join(README_PATH.read_text(encoding="utf-8").split())
+RESULTS_README_PATH = RESULTS / "README.md"
+
+
+def _collapse(path: Path) -> str:
+    # Whitespace is collapsed so a figure wrapped across two lines still matches.
+    return " ".join(path.read_text(encoding="utf-8").split())
+
+
+README = _collapse(README_PATH)
 
 MINUS = "−"  # the typographic minus the README uses
 
@@ -90,6 +105,10 @@ def bold(text: str) -> str:
     return f"**{text}**"
 
 
+def posix(path: str) -> str:
+    return path.replace("\\", "/")
+
+
 def cost(rungs: list[dict], params: float) -> list[int]:
     return [
         round(r["generated_tokens_per_episode"] * params)
@@ -100,6 +119,32 @@ def cost(rungs: list[dict], params: float) -> list[int]:
 
 class ResultTableTests(unittest.TestCase):
     """The result table: every model at R1."""
+
+    def test_the_setup_line(self) -> None:
+        for name, candidate in (
+            [(BASELINE, QWEN_SMALL), (BASELINE, QWEN_TEACHER), (COMPARATOR, LLAMA)]
+            + [(name, QWEN_SMALL) for name in SFT_TESTS + GRPO_TESTS]
+        ):
+            r1 = rung(name, candidate, "R1")
+            self.assertEqual((r1["tasks"], r1["runs_per_task"]), (150, 4), name)
+        self.assertIn("150 held-out test tasks, 4 attempts per task.", README)
+
+    def test_what_the_ranges_span(self) -> None:
+        self.assertEqual(len(SFT_TESTS), 3)
+        self.assertIn("The SFT range spans three training runs", README)
+        run3 = posix(load(SFT_TESTS[2])["adapter"]["path"])
+        for _, _, run in GRPO_VS_SFT:
+            self.assertEqual(posix(load(run)["init_from_adapter"]), run3)
+        self.assertIn("spans two learning rates, one run each, both from SFT run 3", README)
+
+    def test_the_teacher_has_the_best_reliability(self) -> None:
+        teacher = rung(BASELINE, QWEN_TEACHER, "R1")["metrics"]
+        others = [rung(COMPARATOR, LLAMA, "R1")["metrics"]] + [
+            rung(name, QWEN_SMALL, "R1")["metrics"] for name in SFT_TESTS + GRPO_TESTS
+        ]
+        for metric in ("pass^1", "pass^4"):
+            self.assertGreater(teacher[metric], max(m[metric] for m in others), metric)
+        self.assertIn("teacher still has the best `pass^1` and `pass^4`", README)
 
     def test_untrained_and_teacher_rows(self) -> None:
         for label, candidate in (
@@ -142,6 +187,8 @@ class ResultTableTests(unittest.TestCase):
     def test_cost_ratio_and_raw_token_caveat(self) -> None:
         big = rung(COMPARATOR, LLAMA, "R1")["generated_tokens_per_episode"]
         measured = 0
+        self.assertNotIn("generated_tokens_per_episode", rung(SFT_TESTS[0], QWEN_SMALL, "R1"))
+        self.assertIn("SFT run 1 did not record token counts", README)
         for name in SFT_TESTS:
             tokens = rung(name, QWEN_SMALL, "R1").get("generated_tokens_per_episode")
             if tokens is None:
@@ -150,7 +197,8 @@ class ResultTableTests(unittest.TestCase):
             ratio = tokens * QWEN3_1_7B_PARAMS_B / (big * LLAMA_3_1_8B_PARAMS_B)
             self.assertTrue(0.30 <= ratio <= 0.32, (name, ratio))
             self.assertLess(big, tokens, "the README says the 8B writes fewer tokens")
-        self.assertEqual(measured, 2, "the README says only run 1 lacks token counts")
+        self.assertEqual(measured, 2)
+        self.assertIn("8B is cheaper, because it writes fewer tokens per attempt", README)
         self.assertIn("about 31% of the 8B's cost", README)
         self.assertIn("2.03 for Qwen3-1.7B and 8.03 for Llama-3.1-8B", README)
 
@@ -171,6 +219,8 @@ class EightBTests(unittest.TestCase):
             )
             self.assertGreater(one["difference_ci95"][0], 0.0)
             self.assertGreater(four["difference_ci95"][0], 0.0)
+        self.assertIn("SFT beats the scaffolded 8B.", README)
+        self.assertIn("Every interval excludes zero.", README)
 
 
 class TeacherTests(unittest.TestCase):
@@ -183,8 +233,10 @@ class TeacherTests(unittest.TestCase):
         self.assertIn(f"`pass^1` gap is smaller, {signed(min(gaps1))} to {signed(max(gaps1))}", README)
         for entry in four:
             self.assertLess(entry["difference_ci95"][1], 0.0, "every pass^4 interval excludes zero")
+        self.assertIn("and every interval excludes zero", README)
         low, high = one[2]["difference_ci95"]
-        self.assertTrue(low < 0.0 < high, "run 3's pass^1 interval includes zero")
+        self.assertTrue(low < 0.0 < high)
+        self.assertIn("run 3's interval includes zero", README)
 
 
 class CapabilityTests(unittest.TestCase):
@@ -231,13 +283,22 @@ class CapabilityTests(unittest.TestCase):
 
 
 class GrpoTests(unittest.TestCase):
+    def test_the_setup(self) -> None:
+        for _, _, run in GRPO_VS_SFT:
+            self.assertEqual(load(run)["train"]["global_step"], 400)
+            self.assertEqual(load(run)["resolved"]["num_generations"], 8)
+        self.assertIn("400 steps from SFT run 3", README)
+        self.assertIn("all 8 of its attempts score the same", README)
+        picked = [posix(load(name)["adapter"]["path"]) for name in GRPO_TESTS]
+        self.assertTrue(picked[0].endswith("grpo-pinned/checkpoint-200"), picked[0])
+        self.assertTrue(picked[1].endswith("grpo-lr1e5-pinned/checkpoint-300"), picked[1])
+        self.assertIn("picked step 200 at 1e-6 and step 300 at 1e-5", README)
+
     def test_rows(self) -> None:
         for rate, name, run in GRPO_VS_SFT:
             one = comparison(name, "R0", 1)
             health = load(run)["group_health"]
             self.assertEqual(health["groups"], 800, "one logged group per problem, two per step")
-            self.assertEqual(load(run)["train"]["global_step"], 400)
-            self.assertEqual(load(run)["resolved"]["num_generations"], 8)
             low, high = one["difference_ci95"]
             self.assertIn(
                 row(
@@ -253,7 +314,7 @@ class GrpoTests(unittest.TestCase):
         name = GRPO_VS_SFT[1][1]
         one, four = comparison(name, "R0", 1), comparison(name, "R0", 4)
         self.assertGreater(one["difference_ci95"][0], 0.0)
-        self.assertIn(f"(p = {one['p_sign_test_exact']:.2f})", README)
+        self.assertIn(f"the sign test does not agree (p = {one['p_sign_test_exact']:.2f})", README)
         self.assertGreater(one["p_sign_test_exact"], 0.05)
         low, high = four["difference_ci95"]
         self.assertTrue(low < 0.0 < high)
@@ -266,6 +327,7 @@ class MmluTests(unittest.TestCase):
         entries = {(c["treatment"], c["baseline"], c["scope"]): c for c in payload["comparisons"]}
         sft = entries[("sft", "base", "all_questions")]
         self.assertEqual(sft["questions"], 400)
+        self.assertIn("On 400 MMLU questions with no tool offered", README)
         self.assertIn(
             f"{100 * sft['baseline_correct'] / 400:.2f}% untrained ({sft['baseline_correct']}/400)",
             README,
@@ -279,7 +341,25 @@ class MmluTests(unittest.TestCase):
         self.assertIn(
             f"Paired difference {difference}, 95% interval {signed(low)} to {signed(high)}", README
         )
-        self.assertTrue(0.04 < max(-low, high) <= 0.05, "printed as about 5 points")
+        self.assertTrue(0.04 < max(-low, high) <= 0.05)
+        self.assertIn("cannot rule out a change of up to about 5 points", README)
+
+    def test_the_readable_questions_caveat(self) -> None:
+        payload = load("utility-comparison-26ce399.json")
+        (readable,) = [
+            c
+            for c in payload["comparisons"]
+            if (c["treatment"], c["baseline"], c["scope"]) == ("sft", "base", "readable_in_both")
+        ]
+        low, high = readable["difference_ci95"]
+        self.assertTrue(low < 0.0 < high)
+        self.assertTrue(-0.08 < low < -0.07, "printed as almost 8 points down")
+        self.assertIn(
+            f"On the {readable['questions']} questions where both models named an answer, "
+            f"the difference is {signed(readable['difference'])} "
+            f"(95% interval {signed(low)} to {signed(high)})",
+            README,
+        )
 
     def test_no_checkpoint_called_a_tool(self) -> None:
         for name in ("utility-base-001023e.json", "utility-sft-bb6764e.json", "utility-grpo-76a1e3f.json"):
@@ -293,6 +373,14 @@ class TransferTests(unittest.TestCase):
         names = {"base": "10f9d97", "sft": "aa59330", "grpo": "42e347c"}
         self.summaries = {arm: load(f"phase_b-{arm}-{commit}.json") for arm, commit in names.items()}
         self.gates = load("phase_b-gates-8d5825b.json")["arms"]
+
+    def test_the_setup(self) -> None:
+        for summary in self.summaries.values():
+            self.assertEqual((summary["tasks"], summary["runs_per_task"]), (150, 4))
+            self.assertEqual(summary["gate_mode"], "audit")
+        self.assertIn("There are 150 requests, run 4 times each.", README)
+        self.assertIn("The grader runs in audit mode", README)
+        self.assertIn("| | Untrained 1.7B | SFT run 3 | GRPO 1e-6 |", README)
 
     def test_rows(self) -> None:
         s = self.summaries
@@ -312,6 +400,12 @@ class TransferTests(unittest.TestCase):
             README,
         )
 
+    def test_three_tools_none_of_them_trained_on(self) -> None:
+        tools = phase_b_tool_schemas()
+        self.assertEqual(len(tools), 3)
+        self.assertNotIn(calculator_tool_schema(), tools)
+        self.assertIn("three tools that were not in training", README)
+
     def test_the_checkpoints_are_the_ones_named(self) -> None:
         self.assertIn("qwen3-1.7b-sft-seed20260824/checkpoint-86", self.summaries["sft"]["adapter"])
         self.assertIn("qwen3-1.7b-grpo-pinned/checkpoint-200", self.summaries["grpo"]["adapter"])
@@ -319,6 +413,15 @@ class TransferTests(unittest.TestCase):
     def test_the_prose_counts(self) -> None:
         sft = self.gates["sft"]
         self.assertEqual(sft["episodes_by_intent"], {"fulfil": 304, "refuse": 296})
+        fulfil = sft["write_classes"]["fulfil"]
+        completed = fulfil["clean_write"] + fulfil["verified_write_without_lookup"]
+        rate = self.summaries["sft"]["by_intent"]["fulfil"]["correct_rate"]
+        self.assertEqual(completed, round(rate * 304), "every completion is a write")
+        self.assertIn(
+            f"{fulfil['verified_write_without_lookup']} of its {completed} completions "
+            "skipped the order lookup",
+            README,
+        )
         self.assertIn(
             f"{sft['write_classes']['refuse']['unauthenticated_write']} of 296 refusal episodes",
             README,
@@ -337,9 +440,13 @@ class HowItWorksTests(unittest.TestCase):
         self.assertIn("1,000 train, 100 dev and 150 test tasks", README)
 
     def test_sft_data(self) -> None:
+        counts = load("sft-candidates-a2dbe77.json")["result"]["counts"]
         stats = load("sft-dataset-54218c4.json")["selection_stats"]
+        self.assertEqual(counts["episodes"], stats["candidates"])
+        self.assertEqual(counts["graded_correct"] - counts["laundered"], stats["usable"])
         self.assertIn(f"wrote {stats['candidates']:,} attempts", README)
-        self.assertIn(f"{stats['usable']:,} executed to the right answer", README)
+        self.assertIn(f"{counts['graded_correct']:,} executed to the right answer", README)
+        self.assertIn(f"{counts['laundered']} of those only restated the answer", README)
         self.assertEqual(stats["selected"], stats["distinct_tasks"])
         self.assertIn(f"One per task was kept: {stats['selected']} examples", README)
 
@@ -359,7 +466,7 @@ class LinkTests(unittest.TestCase):
     LINK = re.compile(r"\]\(([^)\s]+)\)")
 
     def test_relative_links_resolve(self) -> None:
-        for document in (README_PATH, RESULTS / "README.md"):
+        for document in (README_PATH, RESULTS_README_PATH):
             for target in self.LINK.findall(document.read_text(encoding="utf-8")):
                 if re.match(r"[a-z]+://", target):
                     continue
@@ -398,9 +505,11 @@ class WithdrawnClaimsTests(unittest.TestCase):
     )
 
     def test_no_withdrawn_phrase_survives(self) -> None:
-        for phrase in self.WITHDRAWN:
-            with self.subTest(phrase=phrase):
-                self.assertNotIn(phrase, README)
+        documents = (README, _collapse(RESULTS_README_PATH))
+        for phrase in self.WITHDRAWN + ("unseen tools",):
+            for document in documents:
+                with self.subTest(phrase=phrase):
+                    self.assertNotIn(phrase, document)
 
     def test_every_number_has_an_artifact(self) -> None:
         """The dagger used to mark numbers with no committed artifact. None remain."""

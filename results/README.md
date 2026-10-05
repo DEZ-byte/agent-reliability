@@ -1,9 +1,9 @@
 # Results
 
-Every number in the [README](../README.md) comes from a file in this folder.
+The results in the [README](../README.md) come from the files in this folder.
 Nothing here is edited after it is written.
-`tests/test_docs_match_artifacts.py` recomputes the README tables from these
-files and fails if they disagree.
+`tests/test_docs_match_artifacts.py` checks the README's result numbers against
+these files and fails if they disagree.
 
 `artifact_manifest.json` records a SHA-256, a byte length and the recording
 commit for every file. A test fails if a file changes, or if a file is missing
@@ -25,7 +25,7 @@ from the index. A file that a later run replaced is removed only with
 | `weight-change-*.json` | How far GRPO moved the adapter from its SFT start |
 | `contamination-*.json` | The same tasks with no calculator, before and after training |
 | `utility-{base,sft,grpo}-*.json`, `utility-comparison-*.json` | MMLU with no tool offered, and the paired comparison question by question |
-| `phase_b-*.json` | Transfer to an order-support agent with three unseen tools, and its gate failures |
+| `phase_b-*.json` | Transfer to an order-support agent with three tools that were not in training, and its gate failures |
 
 Episode logs (`*.jsonl`) hold one row per attempt. They are large and are not
 committed.
