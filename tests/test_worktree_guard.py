@@ -26,7 +26,6 @@ from scripts import build_sft_dataset  # noqa: E402
 from scripts import compare_arms  # noqa: E402
 from scripts import generate_sft_trajectories  # noqa: E402
 from scripts import probe_contamination  # noqa: E402
-from scripts import probe_prompt_variance  # noqa: E402
 from scripts import run_phase_a_baseline  # noqa: E402
 from scripts import run_phase_b_eval  # noqa: E402
 from scripts import run_utility_eval  # noqa: E402
@@ -47,7 +46,6 @@ GUARDED = {
     "generate_sft_trajectories.py",
     "measure_weight_change.py",
     "probe_contamination.py",
-    "probe_prompt_variance.py",
     "run_phase_a_baseline.py",
     "run_phase_b_eval.py",
     "run_utility_eval.py",
@@ -161,13 +159,6 @@ class ScriptWiringTests(unittest.TestCase):
             train_sft,
             ["--dataset", str(dataset), "--model", MODEL,
              "--output-dir", str(self.root / "out"), "--summary", str(self.root / "s.json")],
-        )
-
-    def test_probe_prompt_variance(self) -> None:
-        self._check_run_path(
-            probe_prompt_variance,
-            ["--adapter", str(self.adapter), "--model", MODEL,
-             "--output", str(self.root / "o.jsonl"), "--summary", str(self.root / "s.json")],
         )
 
     def test_generate_sft_trajectories(self) -> None:

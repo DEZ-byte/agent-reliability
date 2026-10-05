@@ -30,7 +30,6 @@ from evaluation.provenance import (  # noqa: E402
     pinned_load_kwargs,
     pinned_revision,
 )
-from scripts import probe_prompt_variance  # noqa: E402
 from scripts import run_phase_b_eval  # noqa: E402
 from scripts import run_utility_eval  # noqa: E402
 from scripts import train_grpo  # noqa: E402
@@ -190,10 +189,6 @@ class ScriptWiringTests(unittest.TestCase):
         extra = ["--adapter", str(self.adapter), "--output-dir", str(self.root / "out")]
         self._assert_pinned(self._run(train_grpo, self._common() + extra))
 
-    def test_probe_prompt_variance(self) -> None:
-        extra = ["--adapter", str(self.adapter), "--output", str(self.root / "o.jsonl")]
-        self._assert_pinned(self._run(probe_prompt_variance, self._common() + extra))
-
     def test_an_unregistered_model_never_reaches_the_loader(self) -> None:
         argv = self._common() + ["--label", "x", "--episodes", str(self.root / "e.jsonl")]
         argv[1] = "Qwen/Not-A-Model"
@@ -240,9 +235,9 @@ class EveryLoaderIsPinnedTests(unittest.TestCase):
                 self.assertTrue(
                     isinstance(exact, ast.Constant) and exact.value is True, where
                 )
-        # Eight scripts load a model this way today; finding none would mean
+        # Seven scripts load a model this way today; finding none would mean
         # the sweep stopped looking, not that every load is pinned.
-        self.assertGreaterEqual(checked, 8)
+        self.assertGreaterEqual(checked, 7)
 
 
 if __name__ == "__main__":
