@@ -4,12 +4,13 @@ At 7e33eb5 the three utility artifacts were indexed before they were committed,
 so their entries named no recording commit, and one of them was rewritten by an
 overlapping evaluation between indexing and committing, so the frozen hash
 matched nothing in Git. A later rebuild then replaced that hash without notice.
-ERRATA.md records all of it. These tests pin the guards, first with mocks and
-then against a real throwaway Git repository.
+These tests pin the guards, first with mocks and then against a real throwaway
+Git repository. The last tests cover `--retire`, the one deliberate way out.
 """
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import subprocess
@@ -26,6 +27,37 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 import build_artifact_manifest as builder  # noqa: E402
 
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
+
+
+class FrozenArtifactTests(unittest.TestCase):
+    """Measurement records are permanent. They may be added to, never edited."""
+
+    def setUp(self) -> None:
+        self.recorded = json.loads(builder.MANIFEST_PATH.read_text(encoding="utf-8"))[
+            "artifacts"
+        ]
+
+    def test_every_committed_artifact_matches_its_frozen_hash(self) -> None:
+        for path in builder.artifact_paths():
+            with self.subTest(artifact=path.name):
+                self.assertIn(
+                    path.name,
+                    self.recorded,
+                    "a result artifact is not listed in results/artifact_manifest.json",
+                )
+                raw = path.read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(raw).hexdigest(),
+                    self.recorded[path.name]["sha256"],
+                    "a committed measurement record was modified after the fact",
+                )
+                self.assertEqual(len(raw), self.recorded[path.name]["bytes"])
+
+    def test_no_listed_artifact_has_been_deleted(self) -> None:
+        present = {path.name for path in builder.artifact_paths()}
+        for name in self.recorded:
+            with self.subTest(artifact=name):
+                self.assertIn(name, present, "a recorded measurement was removed")
 
 
 class RecordingCommitTests(unittest.TestCase):
@@ -127,7 +159,10 @@ class RealGitTests(unittest.TestCase):
         self.commit("chore: freeze")
 
     def check(self) -> int:
-        argv = ["build_artifact_manifest.py", "--check"]
+        return self.run_script("--check")
+
+    def run_script(self, *args: str) -> int:
+        argv = ["build_artifact_manifest.py", *args]
         quiet_out, quiet_err = io.StringIO(), io.StringIO()
         with mock.patch.object(sys, "argv", argv), redirect_stdout(quiet_out):
             with redirect_stderr(quiet_err):
@@ -203,6 +238,45 @@ class RealGitTests(unittest.TestCase):
         self.git("reset", "-q", "--soft", base)
         self.git("commit", "-q", "-m", "squashed")
         self.assertEqual(self.check(), 1)
+
+    def test_retiring_a_deleted_artifact_drops_only_its_entry(self) -> None:
+        self.write("utility-a.json", {"kind": "utility_eval"})
+        self.write("utility-b.json", {"kind": "utility_eval"})
+        self.commit("feat: a and b")
+        self.freeze()
+        kept = builder.load_previous()["utility-b.json"]
+        self.git("rm", "-q", "results/utility-a.json")
+        self.assertEqual(self.run_script("--retire", "utility-a.json"), 0)
+        self.commit("chore: retire a")
+        self.assertEqual(builder.load_previous(), {"utility-b.json": kept})
+        self.assertEqual(self.check(), 0)
+
+    def test_an_artifact_still_on_disk_cannot_be_retired(self) -> None:
+        self.write("utility-a.json", {"kind": "utility_eval"})
+        self.commit("feat: a")
+        self.freeze()
+        before = builder.MANIFEST_PATH.read_bytes()
+        self.assertEqual(self.run_script("--retire", "utility-a.json"), 1)
+        self.assertEqual(builder.MANIFEST_PATH.read_bytes(), before)
+
+    def test_an_unknown_name_cannot_be_retired(self) -> None:
+        self.write("utility-a.json", {"kind": "utility_eval"})
+        self.commit("feat: a")
+        self.freeze()
+        with self.assertRaisesRegex(builder.ManifestError, "not in the manifest"):
+            builder.retire(builder.load_previous(), ["utility-z.json"])
+        self.assertEqual(self.run_script("--retire", "utility-z.json"), 1)
+
+    def test_retiring_one_artifact_does_not_excuse_another_deletion(self) -> None:
+        self.write("utility-a.json", {"kind": "utility_eval"})
+        self.write("utility-b.json", {"kind": "utility_eval"})
+        self.commit("feat: a and b")
+        self.freeze()
+        self.git("rm", "-q", "results/utility-a.json", "results/utility-b.json")
+        previous = builder.retire(builder.load_previous(), ["utility-a.json"])
+        with self.assertRaisesRegex(builder.ManifestError, "would disappear from the manifest: utility-b.json"):
+            builder.build(previous)
+        self.assertEqual(self.run_script("--retire", "utility-a.json"), 1)
 
 
 if __name__ == "__main__":

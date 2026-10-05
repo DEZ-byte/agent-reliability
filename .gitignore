@@ -3,38 +3,26 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
-.mypy_cache/
-.ruff_cache/
+.env
+.env.*
+
+# Local caches and model weights from the GPU runs.
 .uv-cache-smoke/
 .hf-cache-smoke/
 .triton-cache-smoke/
 unsloth_compiled_cache/
-.coverage
-htmlcov/
-.env
-.env.*
-!.env.example
-artifacts/
 checkpoints/
-wandb/
-data/raw/
-data/processed/
-# Generated trajectories and built SFT rows are bulk. The committed record is
-# configs/splits/sft_phase_a.json plus the hashed summary in results/.
+
+# Generated trajectories, built SFT rows and episode logs are bulk. The
+# committed record is configs/splits/sft_phase_a.json plus the hashed
+# summaries in results/.
 data/teacher/
 data/sft/
 results/**/*.jsonl
-results/**/*.parquet
-notebooks/.ipynb_checkpoints/
 
 # Working documents. These stay on the author's machine on purpose: they are
-# planning and protocol material, not the result, and 35,000 words of it in
-# front of the README buried the findings.
+# planning and protocol material, not the result.
 BLUEPRINT_v2.md
-# The decision log is untracked for now. The licence gate used to read it
-# directly, which would have turned CI red; it reads
-# configs/release_decision.md instead, which carries the entries it verifies.
-# Track this again when the full log should be public.
 DECISIONS.md
 PLAN.md
 HYPOTHESIS_PROTOCOL.md
@@ -42,6 +30,7 @@ RUNG_PROTOCOL.md
 MODEL_SMOKE_PROTOCOL.md
 SELF_CORRECTION_SPEC.md
 RELATED_WORK.md
+notebooks/
 
-# Colab experiment notebooks stay local.
-notebooks/*.ipynb
+# Local drafts of write-ups that are not published yet.
+drafts/

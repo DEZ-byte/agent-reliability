@@ -3,12 +3,12 @@
 Every artifact names the commit it came from in `source_commit`. That field is
 only true if the code that ran is exactly the code in that commit, so a script
 that writes a record must refuse to run on a dirty tree. Four artifacts broke
-this before the rule was enforced here (ERRATA.md, E9): they named a commit that
-did not yet contain the code that produced them.
+this before the rule was enforced here: they named a commit that did not yet
+contain the code that produced them.
 
 Paths are recorded relative to the repository. An absolute path names one
-person's machine and says nothing to anyone else (results/README.md lists the
-older artifacts that carry them).
+person's machine and says nothing to anyone else (results/README.md explains
+the older artifacts that carry them).
 
 A model is loaded at the revision configs/model_candidates.json pins, or not at
 all. The default branch of a Hub repository can move under a published number.

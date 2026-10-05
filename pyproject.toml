@@ -3,9 +3,9 @@ requires = ["setuptools==83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "internalizing-agent-reliability"
+name = "agent-reliability"
 version = "0.1.0"
-description = "Execution-backed reliability primitives for tool-calling model research"
+description = "Fine-tuning a small model to call tools reliably, measured by executing every call"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [

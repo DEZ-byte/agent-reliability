@@ -1,88 +1,36 @@
 # Results
 
-Every number in [`README.md`](../README.md) and [`FINDINGS.md`](../FINDINGS.md)
-comes from a file in this folder, except the ones marked †. Those come from local
-episode logs or model configs that are not committed. Nothing here is edited
-after it is written. `tests/test_docs_match_artifacts.py` recomputes the main
-tables from these files and fails if the documents disagree.
+The results in the [README](../README.md) come from the files in this folder.
+Nothing here is edited after it is written.
+`tests/test_docs_match_artifacts.py` checks the README's result numbers against
+these files and fails if they disagree.
 
-## What is here
+`artifact_manifest.json` records a SHA-256, a byte length and the recording
+commit for every file. A test fails if a file changes, or if a file is missing
+from the index. A file that a later run replaced is removed only with
+`scripts/build_artifact_manifest.py --retire`, and Git history keeps it.
 
-**The index.** `artifact_manifest.json` records a SHA-256, a byte length and the
-recording commit for every measurement file. If a file is missing from it, or a
-hash has moved, the test suite fails.
-
-**The measurements**, roughly in the order they were made:
-
-| File pattern | What it holds |
+| Files | What they hold |
 | :-- | :-- |
-| `baseline-phase_a-*.json` | Untrained Qwen3-1.7B and Qwen3-4B on the frozen splits |
-| `sft-dataset-*.json`, `sft-run-*.json` | The training set that was built, and each of the three training runs |
-| `sft-selection-*.json` | Every checkpoint's dev score, and which one the pinned rule picked |
-| `sft-test-*.json`, `sft-comparison-*.json` | The dev winner on test, and the paired comparison against base |
-| `grpo-run-*.json`, `grpo-test-*.json`, `grpo-vs-sft-*.json` | Both GRPO arms, at 1e-6 and at 1e-5 |
-| `comparator-8b-*.json` | Llama-3.1-8B with retry scaffolding |
-| `h1-comparison-*.json` | The headline comparison: trained 1.7B against the scaffolded 8B |
-| `contamination-*.json` | The no-calculator probe, before and after training |
-| `masking-verification-*.json` | Proof the training loss covered assistant tokens only |
-| `sft-vs-teacher-*.json` | Each SFT run paired with the untrained Qwen3-4B that wrote its training data |
-| `utility-{base,sft,grpo}-*.json` | MMLU accuracy and tool-call rate per arm, with no tool offered. Their truncation rates are wrong ([`ERRATA.md`](../ERRATA.md), E7) |
-| `utility-comparison-*.json` | The paired MMLU comparison, question by question, built only from rows checked against those summaries |
-| `phase_b-*.json` | The transfer environment: an order-support agent with three unseen tools. `phase_b-gates-*.json` splits its violations by which gate failed |
-| `weight-change-*.json` | How far GRPO moved the adapter from its SFT start. Use `weight-change-72f7482.json`, which measures the tested checkpoints; the older file measured the final step-400 adapters ([`ERRATA.md`](../ERRATA.md), E8) |
+| `baseline-phase_a-*.json` | Untrained Qwen3-1.7B and Qwen3-4B, on the dev and test splits |
+| `sft-candidates-*.json`, `sft-dataset-*.json` | Qwen3-4B teacher trajectories, and the SFT set kept from them |
+| `masking-verification-*.json` | Proof that the training loss covered assistant tokens only |
+| `sft-run-*.json`, `sft-selection-*.json` | The three SFT runs, and the dev score of every checkpoint |
+| `sft-test-*.json`, `sft-comparison-*.json` | Each dev-selected SFT checkpoint on test, paired against the untrained 1.7B |
+| `sft-vs-teacher-*.json` | Each SFT run paired against the Qwen3-4B teacher |
+| `comparator-8b-*.json` | Llama-3.1-8B with retry scaffolding, on test |
+| `h1-comparison-*.json` | The headline: each SFT run against the scaffolded 8B |
+| `grpo-run-*.json`, `grpo-selection-*.json` | GRPO on top of SFT run 3, at learning rates 1e-6 and 1e-5 |
+| `grpo-test-*.json`, `grpo-vs-sft-*.json`, `grpo-lr1e5-vs-sft-*.json` | Both GRPO arms on test, paired against SFT |
+| `weight-change-*.json` | How far GRPO moved the adapter from its SFT start |
+| `contamination-*.json` | The same tasks with no calculator, before and after training |
+| `utility-{base,sft,grpo}-*.json`, `utility-comparison-*.json` | MMLU with no tool offered, and the paired comparison question by question |
+| `phase_b-*.json` | Transfer to an order-support agent with three tools that were not in training, and its gate failures |
 
-**The stack checks.** `smoke_environment.json` records the installed packages,
-the CUDA device and a hash of every source file the probe depends on. It refuses
-to write anything while the Git tree is dirty, so a record always corresponds to
-committed code. The `model_smoke-*.json` files are compatibility runs from
-before any measurement existed; several are failures and they are kept on
-purpose.
+Episode logs (`*.jsonl`) hold one row per attempt. They are large and are not
+committed.
 
-Episode logs (`*.jsonl`) hold one row per attempt and are not committed. They
-are large, and they are reproducible from the artifact that references them.
-
-**Absolute paths.** 21 older artifacts hold 81 absolute paths from the machine
-that wrote them, including a user name and temporary session folders. Those
-files are frozen, so the paths stay. Read them as labels, not as locations: the
-checkpoint name at the end of each path is the part that matters. New scripts
-record paths relative to the repository.
-
-## Why the failures are still here
-
-A measurement record is never edited or deleted, including when it is
-unflattering. When the index or a write-up turns out to be wrong, the
-correction goes in [`ERRATA.md`](../ERRATA.md) rather than being made quietly.
-Three examples of records kept as written:
-
-`model_smoke-qwen3-1.7b-6824196.json` is the first real attempt. Revision
-validation and assistant masking both failed. Keeping it is what makes the later
-success meaningful.
-
-`model_smoke-qwen3-1.7b-3e2522f.json` recorded a *false* failure: the placement
-check rejected an empty Unsloth device map even though every parameter was on
-`cuda:0` with no offload. That artifact is the evidence that motivated fixing the
-check, and it stays as it was written.
-
-`grpo-run-qwen3-1.7b-d5b5c6d.json` is a null result. GRPO on top of SFT moved
-`pass^1` by 0.002. The run at ten times the learning rate next to it moved it by
-0.010, on an interval spanning zero. Both are kept, and both are reported.
-
-## Reading a status honestly
-
-A P5 probe can report `passed_with_demoted_gates`. That is **not** a pass under
-the pre-registered rule. It means the probe cleared its hard gates only because
-`prefix_preserved_after_tool_observation` was re-scoped to a diagnostic by D-046
-(2026-08-18), and `passed_under_preregistered_p5_rule` in the same file says
-`false`.
-
-Artifacts written before D-046 recorded a genuine hard failure under the stronger
-rule. They are never reinterpreted as passes. Their `config_sha256` differs from
-every later artifact, so the two evidence regimes can be told apart by hash
-alone.
-
-Never write "Qwen3 passed P1–P6" without the qualifier.
-
-## Rule for anything generated from these files
-
-Every table or plot must be produced from the versioned logs, and every number
-shown must link back to the artifact it came from.
+Some older artifacts hold absolute paths from the machine that wrote them.
+Those files are frozen, so the paths stay. Read them as labels: the checkpoint
+name at the end of each path is the part that matters. Newer scripts record
+paths relative to the repository.

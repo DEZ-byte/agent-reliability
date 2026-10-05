@@ -1,6 +1,6 @@
 # This project's integrity model is content hashing: results/artifact_manifest.json
-# and results/smoke_environment.json record SHA-256 digests of committed files,
-# and configs are pinned by digest inside every measurement artifact.
+# records SHA-256 digests of committed files, and configs are pinned by digest
+# inside every measurement artifact.
 #
 # Git's end-of-line translation breaks that. With core.autocrlf=true, a Windows
 # checkout rewrites LF to CRLF, so the same commit produces different bytes on
