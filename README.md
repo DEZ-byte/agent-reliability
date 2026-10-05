@@ -25,7 +25,7 @@ the output does not parse).
 | Qwen3-1.7B, untrained | 1.7B | R1 | 0.333 | 0.287 | not recorded | ~1.5 GB |
 | Llama-3.1-8B + retry scaffolding | 8B | R1 | 0.415 | 0.293 | 236 | ~6 GB |
 | **Qwen3-1.7B, fine-tuned** | **1.7B** | **R1** | **0.517 – 0.553** | **0.393 – 0.460** | **73 – 75** | **~1.5 GB** |
-| Qwen3-1.7B, fine-tuned + GRPO | 1.7B | R1 | 0.555 – 0.563 | 0.460 – 0.480 | 74 – 76 | ~1.5 GB |
+| Qwen3-1.7B, fine-tuned + GRPO | 1.7B | R1 | 0.562 – 0.588 | 0.467 – 0.507 | 74 – 75 | ~1.5 GB |
 | Qwen3-4B, untrained (the teacher) | 4B | R1 | 0.608 | 0.567 | not recorded | not measured |
 
 Cost is billion-parameter-tokens: generated tokens per attempt, from the
@@ -118,56 +118,66 @@ model that calls the calculator correctly and asks it the wrong question.
 
 ---
 
-## 3. No detectable GRPO benefit at these learning rates and this budget
+## 3. GRPO: no detectable gain at 1e-6, a small one at 1e-5
 
 400 GRPO steps on an execution-backed reward, starting from the fine-tuned model.
 
 | Learning rate | Rung | `pass^1` change | 95% interval | Adapter moved | What the model sees |
 | :-- | :-- | --: | :--: | --: | --: |
-| 1e-6 | R0 | +0.002 | −0.010 – 0.013 | 0.41% | 1.4% |
-| 1e-5 | R0 | +0.010 | −0.020 – 0.040 | 3.77% | 13.7% |
+| 1e-6 | R0 | +0.008 | +0.000 – 0.017 | 0.40% | 1.4% |
+| 1e-5 | R0 | +0.035 | +0.005 – 0.068 | 4.63% | 15.3% |
 
 Every column comes from the same checkpoints: the ones dev selection picked and
 test measured (checkpoint-200 at 1e-6, checkpoint-300 at 1e-5). The last two are
 recomputed from the adapters in
-[`results/weight-change-72f7482.json`](results/weight-change-72f7482.json).
+[`results/weight-change-b23567a.json`](results/weight-change-b23567a.json).
 "Adapter moved" is the relative Frobenius change across every adapter tensor;
 "what the model sees" is the same measure applied to the per-module LoRA
 product, which is what actually reaches the base weights. The higher rate moved
-the policy about 9 times further by the first measure and 10 times by the
-second. An earlier version of this table showed 0.45% and 3.82%, which belong to
-the final step-400 adapters rather than the tested ones
-([`ERRATA.md`](ERRATA.md), E8).
+the policy about 11 times further by both measures. An earlier version of this
+table showed 0.45% and 3.82%, which belong to the final step-400 adapters rather
+than the tested ones ([`ERRATA.md`](ERRATA.md), E8). The version after that
+showed `pass^1` changes of +0.002 and +0.010. Those GRPO runs most likely trained
+on a pre-quantised copy of the base model, so both rates were trained again on
+the pinned base ([`ERRATA.md`](ERRATA.md), E13).
 
-Both intervals contain zero. The tight one rules out an effect much larger than
-a point, rather than merely failing to find one.
+At 1e-6 the interval runs from 0.000 to +0.017: no detectable change. At 1e-5
+the interval, +0.005 to +0.068, excludes zero. The bootstrap interval is the
+primary test, so at 1e-5 this is a detectable `pass^1` gain of 3.5 points. The
+secondary tests are weaker. The permutation p is 0.04, above the Bonferroni
+threshold of 0.025 that the artifact reports for its two comparisons. The exact
+sign test gives p = 0.22: 20 tasks improved and 12 got worse. `pass^4` rose by
+0.047, but its interval, −0.007 to +0.100, contains zero. It is one run.
 
-The obvious objection was that the run barely moved the model. Measuring the
-weight shift confirmed it, so the run was repeated at ten times the rate. That
-moved the weights about nine times as far and produced an identical dev peak. Two
-nulls across a tenfold rate range are harder to dismiss than one.
+The obvious objection to the first run was that it barely moved the model.
+Measuring the weight shift confirmed it, so the run was repeated at ten times the
+rate. That moved the weights about 11 times as far. On dev the two runs peaked
+within a point of each other (0.5025 and 0.51). On test the higher rate gained
+3.5 points over SFT, and the lower rate under one.
 
-**Three measurements are consistent with the null.** None was tested as a cause.
+**Three measurements describe how little signal the training had.** None was
+tested as a cause.
 
 | Measurement | Value | What it means |
 | :-- | :-- | :-- |
-| Steps with no gradient | 23% of steps at 1e-6, 27% at 1e-5 | Each step scored 16 attempts: 8 at each of 2 problems. In these steps all 16 scored alike, so there was nothing to compare. The share of single problems whose 8 attempts all scored alike was not logged. It is at least as high. |
-| Reward spread within a step | Accuracy 0.339, format 0.006, efficiency 0.002, gate 0.000 | Accuracy dominated; format and efficiency varied negligibly; the gate term was inert, because this task has one harmless tool and no gate can fire. |
+| Problems with no gradient | 65% of problems at 1e-6, 66% at 1e-5 | Each step scored 8 attempts at each of 2 problems. For these problems all 8 attempts scored alike, so there was nothing to compare. An earlier version reported 23% and 27% of whole steps, because the logger was not told the group size. |
+| Reward spread within a problem | Accuracy 0.150, format 0.002, efficiency 0.001, gate 0.000 | Accuracy dominated; format and efficiency varied negligibly; the gate term was inert, because this task has one harmless tool and no gate can fire. |
 | What was left to fix | See §2 | After SFT almost every failure is a well-formed call with the wrong value. GRPO can learn from a problem only when some of its attempts get it right. |
 
-This is a null **at this budget, on this task, from this starting point**. It is
-not evidence that reinforcement learning cannot help tool-calling models. The
-known fix, discarding zero-variance groups and refilling the batch, is built but
-has not been run.
+At 1e-6 this is a null **at this budget, on this task, from this starting
+point**. At 1e-5 it is one run with a small gain. Neither is evidence about
+reinforcement learning for tool-calling models in general. The known fix for
+problems with no gradient, discarding zero-variance groups and refilling the
+batch, is built but has not been run.
 
 One direction is worth chasing but is not yet a result. The higher rate raised
-`pass^4` and lowered `pass@4`, narrowing the band of sometimes-solved tasks. That
-is what a policy-gradient method concentrating probability mass looks like, and it
-is the trade this project cares about. A paired permutation test on the per-task
-band width gives p = 0.24 †, so it is a hint. That is a different test from the
-`pass^k` comparisons recorded in
-[`results/grpo-lr1e5-vs-sft-8182e7e.json`](results/grpo-lr1e5-vs-sft-8182e7e.json),
-which report p = 0.60.
+`pass^4` and lowered `pass@4`, narrowing the band of sometimes-solved tasks from
+0.213 to 0.160. That is what a policy-gradient method concentrating probability
+mass looks like, and it is the trade this project cares about. A paired
+permutation test on the per-task band width gives p = 0.17 †, so it is still a
+hint. That is a different test from the `pass^k` comparisons recorded in
+[`results/grpo-lr1e5-vs-sft-91a2de9.json`](results/grpo-lr1e5-vs-sft-91a2de9.json),
+which report p = 0.04 for `pass^1` and p = 0.15 for `pass^4`.
 
 ---
 
@@ -195,7 +205,7 @@ is the part the project set out to measure.
 | Claim someone might make | What the measurement says |
 | :-- | :-- |
 | "It got better at arithmetic." | No. Probed with no calculator at all: 64.0% before, 66.0% after. It got better at *writing the expression*. |
-| "It learned to cheat the grader." | No. The reward pays the same for restating a remembered answer as for real work, deliberately, so the behaviour is measured rather than hidden. The rate fell from 3.0% untrained to 1.2% fine-tuned to 1.0% after RL †. |
+| "It learned to cheat the grader." | No. The reward pays the same for restating a remembered answer as for real work, deliberately, so the behaviour is measured rather than hidden. The rate fell from 3.0% untrained to 1.2% fine-tuned, and was 1.3% after RL †. |
 | "More seeds would sharpen this." | Probably not. Across three runs, `pass^1` had a standard deviation of 0.019, while one run's interval is about 0.069 either side. Three runs make that standard deviation rough, but the gap is large: a bigger test split would likely buy more than more seeds. |
 | **"It forgot things."** | **No detectable MMLU change on this 400-question sample.** No tool offered: 53.25% untrained (213/400), 53.0% fine-tuned (212/400). Paired difference −0.0025, 95% interval −0.048 to +0.045. 44 questions improved, 45 got worse. |
 | **"It now calls tools at everything."** | **No.** On a benchmark offering no tools, every arm emitted a tool call on **0.0%** of questions. The habit is tied to being offered a tool, not to being asked a question. |
@@ -218,7 +228,7 @@ model loader was fixed to load the pinned base revision
 One real behavioural change did show up. The fine-tuned model answers far more
 briefly: 171 characters on average against the untrained model's 536. Terser,
 with no detectable accuracy cost. It also runs out of token budget less often:
-2.0% of answers hit the 320-token limit, against 8.25% untrained and 2.5% after
+2.0% of answers hit the 320-token limit, against 8.25% untrained and 2.75% after
 GRPO. The rates published earlier (40%, 16%, 20%) counted batch padding as
 truncation ([`ERRATA.md`](ERRATA.md), E7).
 
@@ -240,17 +250,17 @@ turn, before any tool runs, and never sees a tool result.
 | | Untrained 1.7B | After SFT | After GRPO |
 | :-- | --: | --: | --: |
 | `pass^1` | 0.493 | 0.515 | 0.530 |
-| Completes a legitimate request (outcome) | **0.000** | **0.905** | **0.921** |
-| Correctly refuses an unverified one | **1.000** | **0.115** | **0.128** |
+| Completes a legitimate request (outcome) | **0.000** | **0.905** | **0.931** |
+| Correctly refuses an unverified one | **1.000** | **0.115** | **0.118** |
 | Calls any tool | 0.840 | 1.000 | 1.000 |
-| Writes for an unverified customer (of 296 refusal episodes) | 0 | 262 | 258 |
-| Verified writes that skipped the lookup (of 304 legitimate episodes) | 0 | 274 | 279 |
-| Episodes that called the lookup tool (of 600) | 11 | 1 | 1 |
-| Mean reward, as scored | +0.411 | **−0.370** | **−0.364** |
-| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.380 |
+| Writes for an unverified customer (of 296 refusal episodes) | 0 | 262 | 261 |
+| Verified writes that skipped the lookup (of 304 legitimate episodes) | 0 | 274 | 281 |
+| Episodes that called the lookup tool (of 600) | 11 | 1 | 2 |
+| Mean reward, as scored | +0.411 | **−0.370** | **−0.373** |
+| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.376 |
 
 The last five rows come from
-[`results/phase_b-gates-913520c.json`](results/phase_b-gates-913520c.json), which
+[`results/phase_b-gates-8d5825b.json`](results/phase_b-gates-8d5825b.json), which
 replays all 1,800 episodes and reproduces every stored reward exactly.
 
 **The capability transferred.** An untrained 1.7B completes none of these
@@ -286,8 +296,8 @@ unconditional policy fit the data perfectly. It is the same structural limit
 recorded earlier: an environment that ends the episode on the first successful
 call never teaches a model to read a result and decide.
 
-GRPO, measured at the selected checkpoint-200, sits within two points of SFT on
-every rate.
+GRPO, measured at the selected checkpoint-200 of the 1e-6 run, sits within three
+points of SFT on every rate.
 
 ## How the numbers are kept honest
 
@@ -338,7 +348,7 @@ directly, so running one module on its own, such as
 - **The base model barely varies.** On the transfer environment it produced four
   identical answers on 75% of tasks, so its `pass^4` largely collapses into
   `pass^1`. It is a floor, not a competitor.
-- **The lookup tool was almost never called.** 1 of 600 SFT episodes and 1 of 600
+- **The lookup tool was almost never called.** 1 of 600 SFT episodes and 2 of 600
   GRPO episodes called `get_order`, and the prompt never asked for it. Section 6
   separates the violations this causes from writes for unverified customers.
 - **Some evidence lives only on the author's machine.** Episode and response logs
