@@ -99,8 +99,8 @@ def was_truncated(
     Checking only the last token is wrong in a batch: `generate` pads every row
     to the longest one, so a row that finished early ends in padding rather
     than a stop token. The first version made that mistake and flagged every
-    row in any batch where one row ran long (ERRATA.md, E7). Pass the pad id
-    among the stop ids; padding only follows a finished row.
+    row in any batch where one row ran long. Pass the pad id among the stop
+    ids; padding only follows a finished row.
     """
 
     ids = [int(token) for token in new_tokens]

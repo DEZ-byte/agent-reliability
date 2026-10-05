@@ -41,3 +41,6 @@ RELATED_WORK.md
 
 # Colab experiment notebooks stay local.
 notebooks/*.ipynb
+
+# Local drafts of write-ups that are not published yet.
+drafts/

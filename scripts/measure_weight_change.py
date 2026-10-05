@@ -1,11 +1,8 @@
 """Measure how far GRPO moved the policy away from the SFT checkpoint it started from.
 
-The README argues that two GRPO nulls across a tenfold learning-rate range are
-harder to dismiss than one, and that argument rests on the weights having
-actually moved further at the higher rate. Those figures were computed once,
-by hand, and recorded only in a decision log that is not public. A reader of
-the repository could not check them, which is exactly the kind of gap this
-project is otherwise careful about.
+The two GRPO runs differ tenfold in learning rate, and comparing them only
+makes sense if the weights really moved further at the higher rate. Those
+figures were first computed by hand and recorded nowhere a reader could check.
 
 This recomputes them from the adapters on disk and writes an artifact, so the
 number is reproducible from files anyone can hash.
@@ -28,8 +25,8 @@ answer to "did training touch anything".
 
 Compare the checkpoints that were actually evaluated. The first artifact this
 script wrote compared the final step-400 adapters, while the test results came
-from the dev-selected checkpoint-200 and checkpoint-300 (ERRATA.md, E8). The
-script refuses a dirty tree and records repository-relative paths.
+from the dev-selected checkpoint-200 and checkpoint-300. The script refuses a
+dirty tree and records repository-relative paths.
 """
 
 from __future__ import annotations

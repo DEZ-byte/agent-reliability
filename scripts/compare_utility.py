@@ -6,7 +6,7 @@ artifacts record: 214 of 400 before training and 217 after is a difference of
 three questions, so improved minus regressed has to be three and the mean
 difference has to be +0.0075. The comparison had been typed into a terminal and
 run while the fine-tuned arm's response file was still being rewritten, with
-391 of its 400 rows on disk. ERRATA.md has the full account.
+391 of its 400 rows on disk.
 
 So the comparison is now an artifact rather than terminal output, and it is
 built only from rows that provably belong to the headline numbers. Before
