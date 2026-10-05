@@ -1,1 +1,1 @@
-"""Evaluation metrics and versioned trajectory artifacts."""
+"""Evaluation metrics, prompt rungs and provenance checks."""
