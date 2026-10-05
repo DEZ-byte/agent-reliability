@@ -10,6 +10,7 @@ Git repository. The last tests cover `--retire`, the one deliberate way out.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import subprocess
@@ -26,6 +27,37 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 import build_artifact_manifest as builder  # noqa: E402
 
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
+
+
+class FrozenArtifactTests(unittest.TestCase):
+    """Measurement records are permanent. They may be added to, never edited."""
+
+    def setUp(self) -> None:
+        self.recorded = json.loads(builder.MANIFEST_PATH.read_text(encoding="utf-8"))[
+            "artifacts"
+        ]
+
+    def test_every_committed_artifact_matches_its_frozen_hash(self) -> None:
+        for path in builder.artifact_paths():
+            with self.subTest(artifact=path.name):
+                self.assertIn(
+                    path.name,
+                    self.recorded,
+                    "a result artifact is not listed in results/artifact_manifest.json",
+                )
+                raw = path.read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(raw).hexdigest(),
+                    self.recorded[path.name]["sha256"],
+                    "a committed measurement record was modified after the fact",
+                )
+                self.assertEqual(len(raw), self.recorded[path.name]["bytes"])
+
+    def test_no_listed_artifact_has_been_deleted(self) -> None:
+        present = {path.name for path in builder.artifact_paths()}
+        for name in self.recorded:
+            with self.subTest(artifact=name):
+                self.assertIn(name, present, "a recorded measurement was removed")
 
 
 class RecordingCommitTests(unittest.TestCase):
