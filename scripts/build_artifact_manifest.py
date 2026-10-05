@@ -1,8 +1,7 @@
 """Freeze every committed measurement record by hash.
 
-D-052 made result artifacts immutable: they are permanent records, not
-regenerable state, and editing an unflattering one into a flattering one must
-fail a test rather than pass silently.
+Result artifacts are permanent records, not regenerable state. Editing an
+unflattering one into a flattering one must fail a test, not pass silently.
 
 This script writes that index. It covers every measurement family, so adding a
 new kind of result means adding it to `ARTIFACT_GLOBS` rather than quietly
@@ -12,11 +11,12 @@ Adding a run means adding an entry. It never means changing one, and this
 script enforces that: it reads the committed manifest first and refuses to
 rewrite or drop any entry already in it. An earlier version rebuilt the index
 from scratch, so a committed edit to a result would have been re-signed with a
-new hash, and a deleted result silently dropped. That is how one hash was
-replaced without notice (ERRATA.md, E1).
+new hash, and a deleted result silently dropped. That is how one hash was once
+replaced without notice.
 
-If the committed manifest itself is wrong, correct the entry by hand and
-explain why in ERRATA.md. That friction is deliberate.
+An artifact that a later run replaced can leave `results/`, but only on
+purpose: `git rm` the file, then run this script with `--retire NAME`. Git
+history keeps the bytes under the commit the entry recorded.
 """
 
 from __future__ import annotations
@@ -43,11 +43,10 @@ ARTIFACT_GLOBS: Final = (
     "baseline-*.json",
     "masking-*.json",
     "sft-*.json",
-    # These four families were produced after the list was first written and
-    # went unprotected for a while, which is worth naming because they are the
-    # evidence behind the two headline claims: that the trained 1.7B beats the
-    # scaffolded 8B, and that GRPO added nothing on top. A freeze that covers
-    # the safe results and misses the load-bearing ones is not a freeze.
+    # These families were produced after the list was first written and went
+    # unprotected for a while. They hold the headline evidence, so a freeze
+    # that missed them would protect the safe results and not the ones that
+    # carry the claims.
     "grpo-*.json",
     "comparator-*.json",
     "h1-comparison-*.json",
@@ -65,7 +64,9 @@ PURPOSE: Final = (
     "files are permanent records, not regenerable state. A test fails if any "
     "hash changes or any artifact is missing from this list, so a result "
     "cannot be edited, re-signed, or quietly dropped. Adding a new run means "
-    "adding a new entry; it never means changing an existing one."
+    "adding a new entry; it never means changing an existing one. An entry is "
+    "removed only with --retire, after its file is deleted; git history keeps "
+    "its bytes under the recorded commit."
 )
 
 
@@ -108,10 +109,10 @@ def _entry(path: Path) -> dict[str, Any]:
     raw = path.read_bytes()
     payload = json.loads(raw.decode("utf-8"))
     # The manifest may only freeze bytes that a commit actually holds. The
-    # utility artifacts broke both halves of that (ERRATA.md, E1 and E2): they
-    # were indexed before they were committed, so the entries named no commit,
-    # and one file was still being rewritten by an overlapping evaluation, so
-    # the hash that was frozen belonged to bytes that never reached Git.
+    # utility artifacts once broke both halves of that: they were indexed
+    # before they were committed, so the entries named no commit, and one file
+    # was still being rewritten by an overlapping evaluation, so the hash that
+    # was frozen belonged to bytes that never reached Git.
     # Indexing only committed, unmodified files makes both impossible.
     commit = _recording_commit(path)
     if commit is None or not FULL_COMMIT.fullmatch(commit):
@@ -149,16 +150,28 @@ def check_append_only(
         raise ManifestError(
             "recorded artifact(s) would disappear from the manifest: "
             + ", ".join(missing)
-            + "; a measurement record is never deleted"
+            + "; to remove a replaced record on purpose, use --retire"
         )
     changed = sorted(name for name in previous if previous[name] != current[name])
     if changed:
         raise ManifestError(
             "recorded entr(ies) would change: "
             + ", ".join(changed)
-            + "; an existing entry is never rewritten. If the committed entry "
-            "is wrong, correct it by hand and explain why in ERRATA.md"
+            + "; an existing entry is never rewritten"
         )
+
+
+def retire(previous: dict[str, Any], names: list[str]) -> dict[str, Any]:
+    """Drop the named entries, but only for files already gone from results/."""
+
+    for name in names:
+        if name not in previous:
+            raise ManifestError(f"{name} is not in the manifest")
+        if (RESULTS_DIR / name).exists():
+            raise ManifestError(
+                f"{name} is still in results/; git rm it before retiring its entry"
+            )
+    return {name: entry for name, entry in previous.items() if name not in names}
 
 
 def load_previous() -> dict[str, Any] | None:
@@ -180,15 +193,28 @@ def build(previous: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--check",
         action="store_true",
         help="rebuild and fail if the committed manifest would change",
     )
+    mode.add_argument(
+        "--retire",
+        nargs="+",
+        metavar="NAME",
+        default=[],
+        help="drop these entries; each file must already be deleted from results/",
+    )
     args = parser.parse_args()
 
     try:
-        manifest = build(load_previous())
+        previous = load_previous()
+        if args.retire:
+            if previous is None:
+                raise ManifestError("there is no manifest to retire entries from")
+            previous = retire(previous, args.retire)
+        manifest = build(previous)
     except ManifestError as error:
         print(str(error), file=sys.stderr)
         return 1
