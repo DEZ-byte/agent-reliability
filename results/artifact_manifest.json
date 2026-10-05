@@ -32,12 +32,6 @@
       "recorded_in_commit": "4de6c16368c05585ecbed63099e2f041adda8815",
       "kind": "phase_a_no_tool_diagnostic"
     },
-    "grpo-lr1e5-vs-sft-8182e7e.json": {
-      "sha256": "e5a35d4e27c763bcaa1ce860a5d776ebffc97cfb5ba264139b8f37c7512efb11",
-      "bytes": 3879,
-      "recorded_in_commit": "5da0c4cc5e25a412893374f00709b78fd53bea16",
-      "kind": "paired_arm_comparison"
-    },
     "grpo-lr1e5-vs-sft-91a2de9.json": {
       "sha256": "b30a1a86a4167430f73c40b803108e71b851a960492e62df63d99bcd67ee7346",
       "bytes": 3839,
@@ -50,22 +44,10 @@
       "recorded_in_commit": "7be7eab64c80f982d5c5ae895c21890e682a5140",
       "kind": "grpo_run"
     },
-    "grpo-run-qwen3-1.7b-d5b5c6d.json": {
-      "sha256": "a840ee6719f829bd981eda6efccb1b9a54652267ff00ffbd3af736de7cd02f2e",
-      "bytes": 1969,
-      "recorded_in_commit": "a570130138d38c63ac5447b760492cb0614ad141",
-      "kind": "grpo_run"
-    },
     "grpo-run-qwen3-1.7b-lr1e5-3d7e90f.json": {
       "sha256": "d9db16f33d28853b0cc3f7e46ae1e7cd959186d85bd4f989a3da6fe8b22d54d8",
       "bytes": 2197,
       "recorded_in_commit": "cc1841ed8002ecb4428536c1ed922e02cf396edf",
-      "kind": "grpo_run"
-    },
-    "grpo-run-qwen3-1.7b-lr1e5-4502f7c.json": {
-      "sha256": "7c7159410dec4973553148e2d4ad7e616fb8a80bc1857606e8706c76caba86ea",
-      "bytes": 2087,
-      "recorded_in_commit": "d07f302b22690a69660112ef79ce82c4fef0ae4b",
       "kind": "grpo_run"
     },
     "grpo-selection-lr1e5-cc1841e.json": {
@@ -74,40 +56,16 @@
       "recorded_in_commit": "ce5f2caf9e99647360f80f3d8970a6cea4438d43",
       "kind": "checkpoint_selection"
     },
-    "grpo-selection-lr1e5-d07f302.json": {
-      "sha256": "3c018861fcaac0732317687cd0f3d003c6e0c2dfa5e47cc2a345e354f861a111",
-      "bytes": 2949,
-      "recorded_in_commit": "8182e7e571118664aa926f937d2e3701378b07ef",
-      "kind": "checkpoint_selection"
-    },
     "grpo-selection-qwen3-1.7b-7be7eab.json": {
       "sha256": "6e962a48b7edf460064b47e1c753fc865c224fd078489c95f5dd9cd448e2de0e",
       "bytes": 3413,
       "recorded_in_commit": "f6138eefcffdb1721801e9518201720420f9f21e",
       "kind": "checkpoint_selection"
     },
-    "grpo-selection-qwen3-1.7b-a570130.json": {
-      "sha256": "c354fce4a16186e6d97e760a0bb83900e02cb6f67d5b757b5ce765ef4daec7d5",
-      "bytes": 2897,
-      "recorded_in_commit": "e7b8d74a5d639d052b65704a4cea602ec226d648",
-      "kind": "checkpoint_selection"
-    },
-    "grpo-test-lr1e5-8182e7e.json": {
-      "sha256": "fa8b814e21605a3080ad3d079b5d82e5075c5f122f3ed467fe7d500ff684a1f0",
-      "bytes": 4091,
-      "recorded_in_commit": "5da0c4cc5e25a412893374f00709b78fd53bea16",
-      "kind": "phase_a_sft_arm"
-    },
     "grpo-test-lr1e5-ce5f2ca.json": {
       "sha256": "78916d1f1dd94d45179aeb32da29eb0b146d05a65c96721ad9c7aeec392efb7b",
       "bytes": 4203,
       "recorded_in_commit": "91a2de9b7579b1232238f0f35b842c2be3374779",
-      "kind": "phase_a_sft_arm"
-    },
-    "grpo-test-qwen3-1.7b-e7b8d74.json": {
-      "sha256": "b16ff01010e8110ec017f6a16e4f9dad769f0f68e92ab43cb856826dccc900a4",
-      "bytes": 4034,
-      "recorded_in_commit": "e9828a38e93b877132c7411ec44600c4edef0076",
       "kind": "phase_a_sft_arm"
     },
     "grpo-test-qwen3-1.7b-f6138ee.json": {
@@ -120,12 +78,6 @@
       "sha256": "cec3b760adb2f65c55173debbb713f46cf3e2639442bf9d9991f17b3073aa1b2",
       "bytes": 3879,
       "recorded_in_commit": "3d7e90f001c78939b203a6f54a25d6d3f691326d",
-      "kind": "paired_arm_comparison"
-    },
-    "grpo-vs-sft-e7b8d74.json": {
-      "sha256": "b6c566217deb37a88b2a2a13ddb7ed95f8089d58e41d9f753f7ca360b4111a32",
-      "bytes": 3838,
-      "recorded_in_commit": "e9828a38e93b877132c7411ec44600c4edef0076",
       "kind": "paired_arm_comparison"
     },
     "h1-comparison-2889b6d.json": {
@@ -238,52 +190,16 @@
       "recorded_in_commit": "aa593308c41ed653e1bf29cdf83929d43724b051",
       "kind": "phase_b_transfer_eval"
     },
-    "phase_b-base-8cef0b8.json": {
-      "sha256": "57b1bfe2e58f245b0296c09dfcf0f13fb4e75747608ffd4f59aa60a23a047e84",
-      "bytes": 1563,
-      "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
-      "kind": "phase_b_transfer_eval"
-    },
     "phase_b-gates-8d5825b.json": {
       "sha256": "a48da488184bde27b0cbf691ca0920fa88c0fb8da3b0c07b1b124f315ed51349",
       "bytes": 4610,
       "recorded_in_commit": "26ce3999cf27200d6d923663b0a35fa863a6087f",
       "kind": "phase_b_gate_breakdown"
     },
-    "phase_b-gates-913520c.json": {
-      "sha256": "c204b61e431fc00f57ad513dc9eb9eb9c73608642d8caa7f9b87c679796857dc",
-      "bytes": 4615,
-      "recorded_in_commit": "b3d7695c907d1bd3faf92903908d098e29958883",
-      "kind": "phase_b_gate_breakdown"
-    },
-    "phase_b-gates-d692d43.json": {
-      "sha256": "858d61eb8980718213cd7682eb3a8bf794caf88ec9e60526a601b1e517d17858",
-      "bytes": 4599,
-      "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
-      "kind": "phase_b_gate_breakdown"
-    },
-    "phase_b-grpo-4134ef3.json": {
-      "sha256": "5c4a9b1f7b03ea6ad92dd7da459917e88768da49329a8a226540ce4973f81f4f",
-      "bytes": 1695,
-      "recorded_in_commit": "001023ed06a11656dbf5b2d190a1811e18a0b2e8",
-      "kind": "phase_b_transfer_eval"
-    },
     "phase_b-grpo-42e347c.json": {
       "sha256": "b684745443b1dc1980dae7edfdf2217a486470a3df7f556ba371007a7d995d94",
       "bytes": 1700,
       "recorded_in_commit": "76a1e3f80eb197939dc4dc7ef7fbd1c9582c1c19",
-      "kind": "phase_b_transfer_eval"
-    },
-    "phase_b-grpo-8cef0b8.json": {
-      "sha256": "a541695789746d8c1fa101dad47261220ffb8b330541cb28a5099a43e2de8316",
-      "bytes": 1647,
-      "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
-      "kind": "phase_b_transfer_eval"
-    },
-    "phase_b-sft-8cef0b8.json": {
-      "sha256": "6567da0a360a2587d1eb5f6f825994bc951575b1d0d69d528b9c6c0e458c45ed",
-      "bytes": 1629,
-      "recorded_in_commit": "30007ed87a6f3c53fa11644fa42f71da39d82ef2",
       "kind": "phase_b_transfer_eval"
     },
     "phase_b-sft-aa59330.json": {
@@ -302,12 +218,6 @@
       "sha256": "9320b3399798bdc1d2bb0ab3f86f54501c66cf27fae2766dead10aa451ca9f85",
       "bytes": 6845,
       "recorded_in_commit": "1cea806c4aec9d788eb8b5bc7b0a3c5c36ef18cd",
-      "kind": "paired_arm_comparison"
-    },
-    "sft-comparison-qwen3-1.7b-c16530e.json": {
-      "sha256": "53d62e6c86f817ab48423fa2337aa87b6c75fbc15ada793c8ea0ba1ae9561f2b",
-      "bytes": 2067,
-      "recorded_in_commit": "2e4b4095dda631fc2fa095e8867aacd22c5d9297",
       "kind": "paired_arm_comparison"
     },
     "sft-comparison-qwen3-1.7b-seed20260823-67488ea.json": {
@@ -332,12 +242,6 @@
       "sha256": "b344f0fe2cb731f2038f22312e6a76159d6a7ad80d93a43de856dae77423f1f6",
       "bytes": 1676,
       "recorded_in_commit": "51f0c2568f2a8b190cca46cf2d411272305c0921",
-      "kind": "sft_run"
-    },
-    "sft-run-qwen3-1.7b-seed20260822-5a5e0f9.json": {
-      "sha256": "726e5321d3f40c1db536d6de29159002e5063e8f53a3f9d3d12118579faf7afe",
-      "bytes": 1797,
-      "recorded_in_commit": "59a20bea0dc77795ba948ea4fdb10d22cb9457a3",
       "kind": "sft_run"
     },
     "sft-run-qwen3-1.7b-seed20260823-a7bb0e7.json": {
@@ -412,41 +316,11 @@
       "recorded_in_commit": "bb6764e939630318f5d8b1a00750185111917b38",
       "kind": "utility_eval"
     },
-    "utility-base-30007ed.json": {
-      "sha256": "35bede7df004e7acfd209d3c2589370bab0fc00a32c017a3f4706734240612fe",
-      "bytes": 5999,
-      "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
-      "kind": "utility_eval"
-    },
     "utility-comparison-26ce399.json": {
       "sha256": "6d71baf87065f1965d50ac713bd35bf1af0c74b4566afad58b3bb3a137b615db",
       "bytes": 398132,
       "recorded_in_commit": "be956d4acdc3780022dbba118ffeb724df943400",
       "kind": "utility_paired_comparison"
-    },
-    "utility-comparison-48869b1.json": {
-      "sha256": "6082e5b7b2b3b5dc5caa9c0e03caba67265f33de7908fcc0032e84f5005d6982",
-      "bytes": 398156,
-      "recorded_in_commit": "5424bb2fdd0fc96c167027a5269033ebe5b694ff",
-      "kind": "utility_paired_comparison"
-    },
-    "utility-comparison-b3d7695.json": {
-      "sha256": "8781062343e513548f04645c82f7d5de5a925244ca7d346378d86967f961f0b9",
-      "bytes": 398161,
-      "recorded_in_commit": "f66c67eb9ffb6603b7bb16eb208bc8d5d33e1f4e",
-      "kind": "utility_paired_comparison"
-    },
-    "utility-grpo-30007ed.json": {
-      "sha256": "1b88cf099ba522130737d4f933d7e56650e11a395264cdf4a06f5e169aeda834",
-      "bytes": 6056,
-      "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
-      "kind": "utility_eval"
-    },
-    "utility-grpo-50f604a.json": {
-      "sha256": "1b08e3575fe0ebf2dedc92e02d768a5231eb410b11f58ef69515923a49306b5d",
-      "bytes": 6133,
-      "recorded_in_commit": "913520cedc88fbea9eb8d4833160507ecfaf5ce9",
-      "kind": "utility_eval"
     },
     "utility-grpo-76a1e3f.json": {
       "sha256": "ca1f04e0553d5041f42279cfaf411460cb623d51853f17f505f3cd0919cc7fb5",
@@ -454,29 +328,11 @@
       "recorded_in_commit": "8d5825b329113531925da71189194c0850b4dc17",
       "kind": "utility_eval"
     },
-    "utility-sft-30007ed.json": {
-      "sha256": "591654473d824d26523301b9bcb84aa82d26e4e4ae124e8929aa441e14c2a7d2",
-      "bytes": 6082,
-      "recorded_in_commit": "7e33eb54da8ed583edad282db9d644f30ef80fc3",
-      "kind": "utility_eval"
-    },
     "utility-sft-bb6764e.json": {
       "sha256": "cc8f0dfc6e646ecb8991c35ff5a5fc559289ebb2cd4735c399b356296ebea3ee",
       "bytes": 6138,
       "recorded_in_commit": "50f604a335d6558a3e7a253807206706efcdc9ab",
       "kind": "utility_eval"
-    },
-    "weight-change-72f7482.json": {
-      "sha256": "15fb72da6e82d04db1623107d3ce20bea35bc77023cc2ca29867ca4be21e4c97",
-      "bytes": 2476,
-      "recorded_in_commit": "ece15b0c215cc90cbfb3f93ba29d8335e6e2a043",
-      "kind": "weight_change"
-    },
-    "weight-change-7e33eb5.json": {
-      "sha256": "1351fb972b1d81d6e8c75f894ee37c9aebc2b29219124c94008b7ac33b90ce51",
-      "bytes": 1571,
-      "recorded_in_commit": "9bc4f143ceda1ce562647357dc45f74d96e5a3ed",
-      "kind": "weight_change"
     },
     "weight-change-b23567a.json": {
       "sha256": "93545d9ffc7731e51868e1694090f0e8e5401a0a6ca7f598feea1f8478492b69",

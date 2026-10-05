@@ -218,7 +218,7 @@ about 7 points, and less for anything smaller. What the sample does show cleanly
 is that the tool-calling habit did not leak into contexts with no tools.
 
 The comparison is frozen question by question in
-[`results/utility-comparison-b3d7695.json`](results/utility-comparison-b3d7695.json).
+[`results/utility-comparison-26ce399.json`](results/utility-comparison-26ce399.json).
 An earlier version of this section reported +0.005 and 38/36. Those figures
 came from an incomplete response file, and [`ERRATA.md`](ERRATA.md) explains how.
 The version after that reported +0.0075 and 40/37, from runs made before the
