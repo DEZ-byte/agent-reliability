@@ -1,5 +1,4 @@
-# Initial CPU-kernel lock. The ML stack gets a separate lock after the M0
-# Qwen/Unsloth/TRL compatibility smoke test.
+# CPU lock for CI and the unit tests. GPU runs use requirements-gpu.lock.
 annotated-types==0.8.0
 pydantic==2.13.4
 pydantic-core==2.46.4
