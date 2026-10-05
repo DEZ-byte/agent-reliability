@@ -13,8 +13,8 @@ this file is where they are corrected.
 | **E4** | The MMLU paired difference and the improved/regressed counts came from an incomplete file | `7e33eb5` | `5424bb2` |
 | **E5** | "It did not forget anything" claimed more than the interval supports | `7e33eb5` | `5424bb2` |
 | **E6** | ~~Truncation "a quarter as often" corrected to "less than half as often"~~ | `7e33eb5` | Withdrawn. Both rates were wrong (E7). |
-| **E7** | The MMLU truncation rates counted batch padding as truncation | `7e33eb5` | Detector fixed in `72f7482`. Rates withdrawn until a re-run. |
-| **E8** | Three GRPO results used the final step-400 adapter, not the dev-selected checkpoint | `8cef0b8`, `30007ed`, `9bc4f14` | Weight change re-measured (`ece15b0`). Phase B and MMLU marked, not yet re-run. |
+| **E7** | The MMLU truncation rates counted batch padding as truncation | `7e33eb5` | Detector fixed in `72f7482`. Rates withdrawn until a re-run. Closed: true rates in `utility-{base-001023e,sft-bb6764e,grpo-50f604a}.json`. |
+| **E8** | Three GRPO results used the final step-400 adapter, not the dev-selected checkpoint | `8cef0b8`, `30007ed`, `9bc4f14` | Weight change re-measured (`ece15b0`). Phase B and MMLU marked, not yet re-run. Closed: re-run on `checkpoint-200` in `phase_b-grpo-4134ef3.json` and `utility-grpo-50f604a.json`. |
 | **E9** | Four artifacts name a source commit that did not hold the code that made them | `7e33eb5`, `9bc4f14` | Disclosed here. The weight-change script now refuses a dirty tree (`72f7482`). |
 | **E10** | Four Phase B statements were false, and "worse than doing nothing" rested on an unstated rule | `30007ed` | This correction, with `phase_b-gates-d692d43.json` |
 | **E11** | The headline left out the untrained 4B teacher, which beats every arm, and mixed rungs | `1249806` onward | This correction, with `sft-vs-teacher-*-d692d43.json` |
@@ -208,6 +208,20 @@ flags a row only if it used the whole budget and emitted no stop token, and
 tests cover a padded batch. The true rates need a re-run, and that has not been
 done. Until then no truncation rate is published.
 
+**Closed.** All three arms were re-run with the fixed detector:
+
+| Arm | Artifact | Hit the 320-token limit | Withdrawn rate | Unreadable within budget |
+| :-- | :-- | --: | --: | --: |
+| Untrained | `utility-base-001023e.json` | 8.25% (33 of 400) | 40% | 0.75% (3) |
+| After SFT | `utility-sft-bb6764e.json` | 2.0% (8 of 400) | 16% | 0.5% (2) |
+| After GRPO | `utility-grpo-50f604a.json` | 2.5% (10 of 400) | 20% | 1.0% (4) |
+
+The flags are no longer all-or-none. Every batch with a flagged row also holds
+unflagged rows: 19, 7 and 8 such batches, and none flagged whole. The per-row
+`truncated` field in `utility-comparison-b3d7695.json` carries the fixed flag.
+The GRPO row uses `checkpoint-200`, and every arm loads the pinned base
+revision (E8).
+
 ## E8. GRPO results from the final adapter, not the selected one
 
 **What was wrong.** Three results labelled as the GRPO arm used the final
@@ -248,6 +262,40 @@ needs a GPU and has not been done. Until then, their GRPO columns in the README
 and FINDINGS are marked as step-400 diagnostics. The SFT columns are not
 affected: they use the dev-selected `checkpoint-86`.
 
+**Corrected: Phase B and MMLU.** All three arms were re-run with the same
+settings. The GRPO arm now uses `checkpoint-200`, and its artifacts record
+weights `024a1311…`. Each run passed the clean-tree check and names the commit
+that ran it.
+
+| Benchmark | Arm | Old artifact | Old | New artifact | New |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| Phase B `pass^1` | Untrained | `phase_b-base-8cef0b8.json` | 0.493 | `phase_b-base-10f9d97.json` | 0.493 |
+| Phase B `pass^1` | After SFT | `phase_b-sft-8cef0b8.json` | 0.528 | `phase_b-sft-aa59330.json` | 0.515 |
+| Phase B `pass^1` | After GRPO | `phase_b-grpo-8cef0b8.json` | 0.542 | `phase_b-grpo-4134ef3.json` | 0.530 |
+| MMLU accuracy | Untrained | `utility-base-30007ed.json` | 0.5350 | `utility-base-001023e.json` | 0.5325 |
+| MMLU accuracy | After SFT | `utility-sft-30007ed.json` | 0.5425 | `utility-sft-bb6764e.json` | 0.5300 |
+| MMLU accuracy | After GRPO | `utility-grpo-30007ed.json` | 0.5375 | `utility-grpo-50f604a.json` | 0.5275 |
+
+The gate split is in `phase_b-gates-913520c.json` and the paired MMLU comparison
+in `utility-comparison-b3d7695.json`. The untrained and SFT columns moved too,
+although their adapters did not change. Two fixes landed between the runs.
+Every model now loads at its pinned base revision (`17a4545`). Before that, the
+adapter runs loaded the base with no revision, and no evaluation set
+`use_exact_model_name`, which lets Unsloth swap in its pre-quantised mirror of
+the model. The MMLU parser now reads only the final answer (`a1cd374`). The
+parser changes 7 of the 400 untrained answers (2 more correct) and no SFT or
+GRPO answer, so the rest of the MMLU change comes from the model load. Phase B has no parser change; it moved with the model load
+and with sampling at temperature 0.7.
+
+Three statements reversed:
+
+- The paired MMLU difference for SFT against untrained went from +0.0075 to
+  −0.0025. Both intervals contain zero.
+- "The sign depends on how unreadable answers are counted" no longer holds. On
+  the 375 questions where both arms named a letter, the difference is −0.032,
+  so both readings are negative.
+- On Phase B, the rescored SFT reward is now below the untrained model's (E10).
+
 ## E9. Artifacts that name the wrong code
 
 **What was wrong.** Four artifacts record a `source_commit` that did not contain
@@ -267,6 +315,9 @@ be proven byte for byte.
 refuses a dirty tree (`72f7482`), and the artifact that replaces this one names
 the commit that ran it. The evaluation runners still need the same guard. That
 is planned with the GPU re-runs.
+
+**Done.** Every script that records a commit now refuses a dirty tree
+(`e45961f`). The re-run artifacts under E8 each name the commit that ran them.
 
 ## E10. Phase B: what the model did, and what the reward assumed
 
@@ -300,6 +351,24 @@ that penalty lifted, the fine-tuned model scores above the untrained one. So the
 
 The rescoring is arithmetic on the same episodes, not a new run. A fair verdict
 needs a re-run with a prompt that asks for the lookup.
+
+**After the E8 re-run.** On the pinned base revision and the selected
+checkpoints, `phase_b-gates-913520c.json` gives:
+
+| | Untrained | After SFT | After GRPO (`checkpoint-200`) |
+| :-- | --: | --: | --: |
+| Writes for an unverified customer | 0 | 262 | 258 |
+| Verified writes that only skipped `get_order` | 0 | 274 | 279 |
+| Mean reward, as scored | +0.411 | −0.370 | −0.364 |
+| Mean reward, if skipping the lookup were not penalised | +0.411 | +0.361 | +0.380 |
+
+The rescored SFT reward is now below the untrained model's. So "with that
+penalty lifted, the fine-tuned model scores above the untrained one" no longer
+holds. By either scoring, the fine-tuned model earns less reward than the
+untrained one. Most of the change is the untrained model.
+Its reward rose from +0.286, and it called no tool in 96 of 600 episodes,
+against 148 before. The refusal failure stands: 262 of 296. The prompt still
+never asks for the lookup.
 
 ## E11. The teacher was missing from the headline
 
