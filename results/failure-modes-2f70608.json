@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-17T09:17:40.493895Z",
+  "kind": "phase_a_failure_modes",
+  "method": {
+    "correct": "The logged correct flag is true: a calculator call ran and returned the gold answer.",
+    "wrong_value": "The episode ended answered but not correct: a calculator call ran and returned the wrong number.",
+    "call_failed_to_run": "The last decision produced at least one tool event, but none was a calculator call that ran and returned a number.",
+    "no_call_or_unparsed": "The last decision produced no tool event; this is no_tag plus malformed.",
+    "no_tag": "No tool event, and the text the parser read has no <tool_call> opening tag. For a bare JSON model this includes untagged JSON that is not a valid call.",
+    "malformed": "No tool event, and the text the parser read has a <tool_call> tag that does not parse into a valid call.",
+    "r1_final_outcome": "An R1 episode is classed by its last decision, so a retry that ran is judged on the retry.",
+    "fired": "An R1 episode with two decisions: the first gave no answer and the retry ran.",
+    "rescued": "A fired retry that ended correct.",
+    "answered_wrong": "A fired retry that ended with a calculator value that is wrong.",
+    "still_no_answer": "A fired retry that ended with no calculator value.",
+    "checks": "Each completion is re-parsed with agent.parser.parse_tool_calls, after agent.dialects.normalise_tool_dialect only when the summary records tool_dialect bare_json, and the re-parse must give back the logged calls exactly. The rows must reproduce the summary's figures for each rung, and every R1 first completion must equal the R0 completion for the same task and run."
+  },
+  "arms": {
+    "base-1.7b": {
+      "summary": "results/baseline-phase_a-3cc174f.json",
+      "summary_sha256": "db617437172448572e3dd44b26d39fca8f6d507ac0d8494e277f1d17f2fa7c61",
+      "episodes": "results/episodes-phase_a-3cc174f.jsonl",
+      "episodes_sha256": "d2e37037b65732cdbcef7caae3b773fcd44df790e4dd80f2a7b5f1860d49e2b6",
+      "candidate": "Qwen/Qwen3-1.7B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 182,
+          "failures": {
+            "no_call_or_unparsed": 43,
+            "call_failed_to_run": 19,
+            "wrong_value": 356,
+            "total": 418
+          },
+          "unparsed_detail": {
+            "no_tag": 36,
+            "malformed": 7
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 200,
+          "failures": {
+            "no_call_or_unparsed": 11,
+            "call_failed_to_run": 20,
+            "wrong_value": 369,
+            "total": 400
+          },
+          "unparsed_detail": {
+            "no_tag": 8,
+            "malformed": 3
+          },
+          "retry": {
+            "fired": 62,
+            "rescued": 18,
+            "answered_wrong": 13,
+            "still_no_answer": 31
+          }
+        }
+      }
+    },
+    "teacher-4b": {
+      "summary": "results/baseline-phase_a-3cc174f.json",
+      "summary_sha256": "db617437172448572e3dd44b26d39fca8f6d507ac0d8494e277f1d17f2fa7c61",
+      "episodes": "results/episodes-phase_a-3cc174f.jsonl",
+      "episodes_sha256": "d2e37037b65732cdbcef7caae3b773fcd44df790e4dd80f2a7b5f1860d49e2b6",
+      "candidate": "Qwen/Qwen3-4B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 359,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 21,
+            "wrong_value": 219,
+            "total": 241
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 365,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 14,
+            "wrong_value": 220,
+            "total": 235
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          },
+          "retry": {
+            "fired": 22,
+            "rescued": 6,
+            "answered_wrong": 1,
+            "still_no_answer": 15
+          }
+        }
+      }
+    },
+    "sft-run1": {
+      "summary": "results/sft-test-qwen3-1.7b-c16530e.json",
+      "summary_sha256": "ee9a4d4e7fee3901690f27ae504da313a981a79bc24ae4025af1baacc753ffd5",
+      "episodes": "results/episodes-sft-test-qwen3-1.7b-c16530e.jsonl",
+      "episodes_sha256": "9bdb155b81e653243c698a942f4f29c268193c9fc385629bf2f7c0b055f9d68a",
+      "candidate": "Qwen/Qwen3-1.7B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 315,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 11,
+            "wrong_value": 273,
+            "total": 285
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 318,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 7,
+            "wrong_value": 274,
+            "total": 282
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          },
+          "retry": {
+            "fired": 12,
+            "rescued": 3,
+            "answered_wrong": 1,
+            "still_no_answer": 8
+          }
+        }
+      }
+    },
+    "sft-run2": {
+      "summary": "results/sft-test-qwen3-1.7b-seed20260823-67488ea.json",
+      "summary_sha256": "fc2282819b486192609a3cf9bb0ecf659262cb6368dee74aa8df16edcbc35780",
+      "episodes": "results/episodes-sft-test-qwen3-1.7b-seed20260823-67488ea.jsonl",
+      "episodes_sha256": "f6c44685d6983a19f538f2d653d379f1ce8cb04d9587490e980b8c8acf9171b2",
+      "candidate": "Qwen/Qwen3-1.7B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 309,
+          "failures": {
+            "no_call_or_unparsed": 0,
+            "call_failed_to_run": 15,
+            "wrong_value": 276,
+            "total": 291
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 0
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 310,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 9,
+            "wrong_value": 280,
+            "total": 290
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          },
+          "retry": {
+            "fired": 15,
+            "rescued": 1,
+            "answered_wrong": 4,
+            "still_no_answer": 10
+          }
+        }
+      }
+    },
+    "sft-run3": {
+      "summary": "results/sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
+      "summary_sha256": "35844721f05fe817e9ad19b206fd269e3a560e3941d14c7d1636078fbe81e692",
+      "episodes": "results/episodes-sft-test-qwen3-1.7b-seed20260824-51f16bf.jsonl",
+      "episodes_sha256": "43e9d8ff75b11d0cc4b34261451926ec6722ed656c8aa114c6c57b88dd8816d2",
+      "candidate": "Qwen/Qwen3-1.7B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 331,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 5,
+            "wrong_value": 263,
+            "total": 269
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 332,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 3,
+            "wrong_value": 264,
+            "total": 268
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          },
+          "retry": {
+            "fired": 6,
+            "rescued": 1,
+            "answered_wrong": 1,
+            "still_no_answer": 4
+          }
+        }
+      }
+    },
+    "grpo-1e-6": {
+      "summary": "results/grpo-test-qwen3-1.7b-f6138ee.json",
+      "summary_sha256": "fd5db9787297ddb698e0697bd39a7764285f4e8f2f616a5610983824e3a7c90f",
+      "episodes": "results/episodes-grpo-test-qwen3-1.7b-f6138ee.jsonl",
+      "episodes_sha256": "4013a8545458b3c3724de4dcc852ebbb385accc36ccb5d1718411a9298529608",
+      "candidate": "Qwen/Qwen3-1.7B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 336,
+          "failures": {
+            "no_call_or_unparsed": 3,
+            "call_failed_to_run": 8,
+            "wrong_value": 253,
+            "total": 264
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 3
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 337,
+          "failures": {
+            "no_call_or_unparsed": 3,
+            "call_failed_to_run": 5,
+            "wrong_value": 255,
+            "total": 263
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 3
+          },
+          "retry": {
+            "fired": 11,
+            "rescued": 1,
+            "answered_wrong": 2,
+            "still_no_answer": 8
+          }
+        }
+      }
+    },
+    "grpo-1e-5": {
+      "summary": "results/grpo-test-lr1e5-ce5f2ca.json",
+      "summary_sha256": "78916d1f1dd94d45179aeb32da29eb0b146d05a65c96721ad9c7aeec392efb7b",
+      "episodes": "results/episodes-grpo-test-lr1e5-ce5f2ca.jsonl",
+      "episodes_sha256": "e36314953cdb74215fe71daf7b7b314a00ac1ee446a8f690fde6a18773584d92",
+      "candidate": "Qwen/Qwen3-1.7B",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 352,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 10,
+            "wrong_value": 237,
+            "total": 248
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 1
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 353,
+          "failures": {
+            "no_call_or_unparsed": 0,
+            "call_failed_to_run": 7,
+            "wrong_value": 240,
+            "total": 247
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 0
+          },
+          "retry": {
+            "fired": 11,
+            "rescued": 1,
+            "answered_wrong": 3,
+            "still_no_answer": 7
+          }
+        }
+      }
+    },
+    "llama-8b": {
+      "summary": "results/comparator-8b-2889b6d.json",
+      "summary_sha256": "7d9d3a56430535865885b973d18daac5fc3ff668d3abe9f08b7980a122f6b478",
+      "episodes": "results/episodes-comparator-8b-2889b6d.jsonl",
+      "episodes_sha256": "27974c96f06ec3c6fed180b5fcf202c7dd46617b932685511aee59c71f6f8a12",
+      "candidate": "meta-llama/Llama-3.1-8B-Instruct",
+      "rungs": {
+        "R0": {
+          "episodes": 600,
+          "correct": 247,
+          "failures": {
+            "no_call_or_unparsed": 0,
+            "call_failed_to_run": 23,
+            "wrong_value": 330,
+            "total": 353
+          },
+          "unparsed_detail": {
+            "no_tag": 0,
+            "malformed": 0
+          }
+        },
+        "R1": {
+          "episodes": 600,
+          "correct": 249,
+          "failures": {
+            "no_call_or_unparsed": 1,
+            "call_failed_to_run": 17,
+            "wrong_value": 333,
+            "total": 351
+          },
+          "unparsed_detail": {
+            "no_tag": 1,
+            "malformed": 0
+          },
+          "retry": {
+            "fired": 23,
+            "rescued": 2,
+            "answered_wrong": 3,
+            "still_no_answer": 18
+          }
+        }
+      }
+    }
+  },
+  "source_commit": "2f7060820433e604d58d9c600322252af03cb890",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}
