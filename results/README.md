@@ -20,15 +20,20 @@ from the index. A file that a later run replaced is removed only with
 | `sft-vs-teacher-*.json` | Each SFT run paired against the Qwen3-4B teacher |
 | `comparator-8b-*.json` | Llama-3.1-8B with retry scaffolding, on test |
 | `h1-comparison-*.json` | The headline: each SFT run against the scaffolded 8B |
+| `failure-modes-*.json` | Every failed test attempt, by how it failed, and how often the R1 retry rescued one |
 | `grpo-run-*.json`, `grpo-selection-*.json` | GRPO on top of SFT run 3, at learning rates 1e-6 and 1e-5 |
 | `grpo-test-*.json`, `grpo-vs-sft-*.json`, `grpo-lr1e5-vs-sft-*.json` | Both GRPO arms on test, paired against SFT |
 | `weight-change-*.json` | How far GRPO moved the adapter from its SFT start |
 | `contamination-*.json` | The same tasks with no calculator, before and after training |
 | `utility-{base,sft,grpo}-*.json`, `utility-comparison-*.json` | MMLU with no tool offered, and the paired comparison question by question |
-| `phase_b-*.json` | Transfer to an order-support agent with three tools that were not in training, and its gate failures |
+| `phase_b-*.json` | Transfer to an order-support agent with three tools that were not in training, its gate failures, and a split by request template |
 
-Episode logs (`*.jsonl`) hold one row per attempt. They are large and are not
-committed.
+Episode logs (`*.jsonl`) hold one row per attempt. They are not in git. The
+logs these files rest on are attached to the
+[v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0),
+with their SHA-256. `failure-modes-*.json`, `phase_b-gates-*.json`,
+`phase_b-templates-*.json` and `utility-comparison-*.json` record the SHA-256 of
+every log they read.
 
 Some older artifacts hold absolute paths from the machine that wrote them.
 Those files are frozen, so the paths stay. Read them as labels: the checkpoint

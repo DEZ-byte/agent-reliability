@@ -13,6 +13,7 @@ earlier version had to withdraw do not come back.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -61,6 +62,8 @@ H1 = (
     "h1-comparison-seed20260824-2889b6d.json",
 )
 TEACHER = tuple(f"sft-vs-teacher-run{run}-d692d43.json" for run in (1, 2, 3))
+FAILURE_MODES = "failure-modes-2f70608.json"
+TEMPLATES = "phase_b-templates-2f70608.json"
 GRPO_VS_SFT = (
     ("1e-6", "grpo-vs-sft-c364562.json", "grpo-run-qwen3-1.7b-a498a7b.json"),
     ("1e-5", "grpo-lr1e5-vs-sft-91a2de9.json", "grpo-run-qwen3-1.7b-lr1e5-3d7e90f.json"),
@@ -203,6 +206,32 @@ class ResultTableTests(unittest.TestCase):
         self.assertIn("2.03 for Qwen3-1.7B and 8.03 for Llama-3.1-8B", README)
 
 
+class RetryTests(unittest.TestCase):
+    """The note under the result table: why R0 and R1 barely differ after training."""
+
+    def test_how_often_the_retry_fired(self) -> None:
+        def fired(name: str) -> int:
+            r1 = rung(name, QWEN_SMALL, "R1")
+            return r1["model_decisions"] - r1["episodes"]
+
+        trained = [fired(name) for name in SFT_TESTS + GRPO_TESTS]
+        self.assertIn(
+            f"After training it fired in {min(trained)} to {max(trained)} of 600 attempts, "
+            f"against {fired(BASELINE)} for the untrained model.",
+            README,
+        )
+
+    def test_r0_and_r1_after_training(self) -> None:
+        gaps = []
+        for name in SFT_TESTS + GRPO_TESTS:
+            r0, r1 = (rung(name, QWEN_SMALL, which)["metrics"] for which in ("R0", "R1"))
+            self.assertEqual(r0["pass^4"], r1["pass^4"], name)
+            gaps.append(r1["pass^1"] - r0["pass^1"])
+        self.assertGreaterEqual(min(gaps), 0.0)
+        self.assertEqual(f"{max(gaps):.3f}", "0.005")
+        self.assertIn("differ by at most 0.005 in `pass^1`, and not at all in `pass^4`", README)
+
+
 class EightBTests(unittest.TestCase):
     def test_paired_rows(self) -> None:
         for run, name in enumerate(H1, start=1):
@@ -279,6 +308,60 @@ class CapabilityTests(unittest.TestCase):
         self.assertIn(f"training gained up to {round(100 * max(at4))} points", README)
         self.assertIn(
             f"it gained {round(100 * min(power4))} to {round(100 * max(power4))}", README
+        )
+
+
+class FailureModeTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.arms = load(FAILURE_MODES)["arms"]
+        self.r0 = {label: arm["rungs"]["R0"] for label, arm in self.arms.items()}
+        self.sft = [self.r0[f"sft-run{run}"] for run in (1, 2, 3)]
+
+    def test_the_artifact_read_the_files_this_page_cites(self) -> None:
+        cited = {
+            "base-1.7b": BASELINE,
+            "sft-run1": SFT_TESTS[0],
+            "sft-run2": SFT_TESTS[1],
+            "sft-run3": SFT_TESTS[2],
+            "llama-8b": COMPARATOR,
+        }
+        for label, name in cited.items():
+            self.assertEqual(self.arms[label]["summary"], f"results/{name}")
+            digest = hashlib.sha256((RESULTS / name).read_bytes()).hexdigest()
+            self.assertEqual(self.arms[label]["summary_sha256"], digest)
+
+    def test_rows(self) -> None:
+        def cells(field: str) -> list[str]:
+            if field == "total":
+                values = [arm["failures"]["total"] for arm in self.sft]
+                ends = (self.r0["base-1.7b"]["failures"]["total"], self.r0["llama-8b"]["failures"]["total"])
+            else:
+                values = [arm["failures"][field] for arm in self.sft]
+                ends = (self.r0["base-1.7b"]["failures"][field], self.r0["llama-8b"]["failures"][field])
+            return [str(ends[0]), f"{min(values)} – {max(values)}", str(ends[1])]
+
+        for label, field in (
+            ("No call, or a call that did not parse", "no_call_or_unparsed"),
+            ("Call parsed but failed to run", "call_failed_to_run"),
+            ("Call ran, wrong number", "wrong_value"),
+            ("Total", "total"),
+        ):
+            with self.subTest(row=label):
+                self.assertIn(row(label, *cells(field)), README)
+        for arm in self.r0.values():
+            self.assertEqual(arm["episodes"], 600)
+
+    def test_the_shares_and_the_retry(self) -> None:
+        shares = [round(100 * arm["failures"]["wrong_value"] / arm["failures"]["total"]) for arm in self.sft]
+        self.assertIn(f"After it, {min(shares)}% to {max(shares)}% of failures are a call", README)
+        base = self.r0["base-1.7b"]["failures"]
+        self.assertIn(f"before training ({round(100 * base['wrong_value'] / base['total'])}%)", README)
+        rescued = [self.arms[f"sft-run{run}"]["rungs"]["R1"]["retry"]["rescued"] for run in (1, 2, 3)]
+        retry = self.arms["base-1.7b"]["rungs"]["R1"]["retry"]
+        self.assertIn(
+            f"it rescued {min(rescued)} to {max(rescued)} attempts per run, against "
+            f"{retry['rescued']} of {retry['fired']} for the untrained model",
+            README,
         )
 
 
@@ -422,12 +505,41 @@ class TransferTests(unittest.TestCase):
             "skipped the order lookup",
             README,
         )
+
+    def test_the_template_split(self) -> None:
+        split = load(TEMPLATES)
+        self.assertEqual(split["gates_breakdown"]["artifact"], "results/phase_b-gates-8d5825b.json")
+        arms = {label: arm["by_template"] for label, arm in split["arms"].items()}
+        for label, summary in self.summaries.items():
+            self.assertEqual(split["arms"][label]["totals"]["correct"], round(summary["metrics"]["pass^1"] * 600))
+
+        clean = "authenticate>get_order>update_order"
+        verified = {label: by["address_change_verified"] for label, by in arms.items()}
+        self.assertEqual(
+            [verified[a]["call_sequences"].get(clean, 0) for a in ("sft", "grpo")],
+            [self.gates[a]["write_classes"]["fulfil"]["clean_write"] for a in ("sft", "grpo")],
+        )
         self.assertIn(
-            f"{sft['write_classes']['refuse']['unauthenticated_write']} of 296 refusal episodes",
+            f"{verified['sft']['call_sequences'][clean]} SFT and "
+            f"{verified['grpo']['call_sequences'][clean]} GRPO completions did",
             README,
         )
-        calls = [self.gates[a]["episodes_that_called_the_lookup_tool"] for a in self.gates]
-        self.assertLess(max(calls), 0.02 * 600, "printed as almost never")
+
+        base = arms["base"]
+        with_postcode = [base["address_change_verified"], base["address_change_wrong_postcode"]]
+        episodes = sum(t["episodes"] for t in with_postcode)
+        lone = sum(t["call_sequences"].get("authenticate", 0) for t in with_postcode)
+        self.assertEqual(lone, episodes)
+        self.assertTrue(all(t["single_call"] == t["episodes"] for t in with_postcode))
+        self.assertIn(f"it made one authenticate call and stopped: {lone} of {episodes} episodes", README)
+
+        none = {label: by["address_change_no_postcode"] for label, by in arms.items()}
+        self.assertEqual(none["sft"]["episodes"], 148)
+        self.assertIn(
+            f"There SFT still wrote in {none['sft']['wrote']} of {none['sft']['episodes']} "
+            f"episodes, and GRPO in {none['grpo']['wrote']}.",
+            README,
+        )
 
 
 class HowItWorksTests(unittest.TestCase):
@@ -451,13 +563,55 @@ class HowItWorksTests(unittest.TestCase):
         self.assertIn(f"One per task was kept: {stats['selected']} examples", README)
 
     def test_identical_answers_limit(self) -> None:
-        degeneracy = load("sft-comparison-qwen3-1.7b-89a7fbb.json")["sampling_degeneracy"]["R1"]
-        baseline = degeneracy["baseline"]
+        untrained = load("sft-comparison-qwen3-1.7b-89a7fbb.json")["sampling_degeneracy"]["R1"]["baseline"]
+        teacher_side = load(TEACHER[0])
+        self.assertIn("Qwen3-4B", teacher_side["baseline_label"])
+        teacher = teacher_side["sampling_degeneracy"]["R1"]["baseline"]
         self.assertIn(
-            f"four identical answers on {baseline['tasks_with_identical_completions']} "
-            f"of {baseline['tasks']} test tasks",
+            f"On {untrained['tasks_with_identical_completions']} of {untrained['tasks']} test tasks "
+            "the untrained 1.7B wrote exactly the same text in all four attempts",
             README,
         )
+        self.assertIn(f"4B teacher did the same on {teacher['tasks_with_identical_completions']}.", README)
+
+    def test_the_decoding_limit(self) -> None:
+        for name in (BASELINE, COMPARATOR) + SFT_TESTS + GRPO_TESTS:
+            decoding = load(name)["decoding"]
+            self.assertEqual((decoding["temperature"], decoding["top_p"]), (0.7, 0.95), name)
+            self.assertNotIn("top_k", decoding, "the README says top-k was not recorded")
+        self.assertIn("sampled at temperature 0.7 and top-p 0.95", README)
+        self.assertIn("The results do not record this difference", README)
+
+    def test_the_mmlu_truncation_limit(self) -> None:
+        payload = load("utility-comparison-26ce399.json")
+        unreadable = [
+            question
+            for question in payload["rows"]
+            if any(question["arms"][arm]["extracted"] is None for arm in ("base", "sft"))
+        ]
+        cut_off = [
+            question
+            for question in unreadable
+            if any(
+                question["arms"][arm]["extracted"] is None and question["arms"][arm]["truncated"]
+                for arm in ("base", "sft")
+            )
+        ]
+        self.assertIn(
+            f"{len(unreadable)} questions have no readable answer from the untrained or the "
+            f"fine-tuned model, and {len(cut_off)} of those were cut off at the limit",
+            README,
+        )
+        rates = {
+            arm: load(f"utility-{arm}-{commit}.json")["summary"]["truncated_rate"]
+            for arm, commit in (("base", "001023e"), ("sft", "bb6764e"))
+        }
+        self.assertIn(
+            f"({100 * rates['base']:.2f}% of untrained answers, {100 * rates['sft']:.1f}% after SFT)",
+            README,
+        )
+        self.assertEqual(load("utility-base-001023e.json")["decoding"]["max_new_tokens"], 320)
+        self.assertIn("320-token answer limit", README)
 
 
 class LinkTests(unittest.TestCase):
