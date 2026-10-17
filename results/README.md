@@ -35,6 +35,31 @@ with their SHA-256. `failure-modes-*.json`, `phase_b-gates-*.json`,
 `phase_b-templates-*.json` and `utility-comparison-*.json` record the SHA-256 of
 every log they read.
 
+The two analysis files were made at commit `2f70608`, on a clean tree, with the
+release logs unpacked into `results/`. Only `created_at_utc` differs on a re-run.
+A new file makes the tree dirty, so move the first output aside before running
+the second command.
+
+```bash
+python scripts/analyse_phase_a_failures.py --output results/failure-modes-2f70608.json \
+  --arm base-1.7b results/baseline-phase_a-3cc174f.json results/episodes-phase_a-3cc174f.jsonl Qwen/Qwen3-1.7B \
+  --arm teacher-4b results/baseline-phase_a-3cc174f.json results/episodes-phase_a-3cc174f.jsonl Qwen/Qwen3-4B \
+  --arm sft-run1 results/sft-test-qwen3-1.7b-c16530e.json results/episodes-sft-test-qwen3-1.7b-c16530e.jsonl Qwen/Qwen3-1.7B \
+  --arm sft-run2 results/sft-test-qwen3-1.7b-seed20260823-67488ea.json results/episodes-sft-test-qwen3-1.7b-seed20260823-67488ea.jsonl Qwen/Qwen3-1.7B \
+  --arm sft-run3 results/sft-test-qwen3-1.7b-seed20260824-51f16bf.json results/episodes-sft-test-qwen3-1.7b-seed20260824-51f16bf.jsonl Qwen/Qwen3-1.7B \
+  --arm grpo-1e-6 results/grpo-test-qwen3-1.7b-f6138ee.json results/episodes-grpo-test-qwen3-1.7b-f6138ee.jsonl Qwen/Qwen3-1.7B \
+  --arm grpo-1e-5 results/grpo-test-lr1e5-ce5f2ca.json results/episodes-grpo-test-lr1e5-ce5f2ca.jsonl Qwen/Qwen3-1.7B \
+  --arm llama-8b results/comparator-8b-2889b6d.json results/episodes-comparator-8b-2889b6d.jsonl meta-llama/Llama-3.1-8B-Instruct
+```
+
+```bash
+python scripts/analyse_phase_b_templates.py --output results/phase_b-templates-2f70608.json \
+  --gates results/phase_b-gates-8d5825b.json \
+  --arm base results/phase_b-base-10f9d97.json results/episodes-phase_b-base-10f9d97.jsonl \
+  --arm sft results/phase_b-sft-aa59330.json results/episodes-phase_b-sft-aa59330.jsonl \
+  --arm grpo results/phase_b-grpo-42e347c.json results/episodes-phase_b-grpo-42e347c.jsonl
+```
+
 Some older artifacts hold absolute paths from the machine that wrote them.
 Those files are frozen, so the paths stay. Read them as labels: the checkpoint
 name at the end of each path is the part that matters. Newer scripts record

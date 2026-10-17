@@ -3,9 +3,10 @@
 Each figure below is recomputed from a committed file in results/ and looked up
 in the README as it is printed there, together with the sentence that states
 it. A README edited to a nicer number, or an artifact the README never caught
-up with, fails here. The two parameter counts used for the cost column come
-from the model configs, which are not in the repository, so they are pinned
-below.
+up with, fails here. The two parameter counts used for the cost column, and the
+top-k values in the limits, come from the model configs, which are not in the
+repository, so they are pinned below. The two example attempts are replayed
+through the sandbox.
 
 The last tests check that every relative link resolves, and that phrases an
 earlier version had to withdraw do not come back.
@@ -23,8 +24,15 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from env.phase_a import calculator_tool_schema  # noqa: E402
+from agent.gates import GateEngine  # noqa: E402
+from agent.parser import parse_tool_calls  # noqa: E402
+from env.phase_a import (  # noqa: E402
+    build_phase_a_registry,
+    calculator_tool_schema,
+    evaluate_expression,
+)
 from env.phase_b import phase_b_tool_schemas  # noqa: E402
+from evaluation.rungs import _failure_observation  # noqa: E402
 
 RESULTS = PROJECT_ROOT / "results"
 README_PATH = PROJECT_ROOT / "README.md"
@@ -43,6 +51,12 @@ MINUS = "−"  # the typographic minus the README uses
 # From the model configs, printed in the README beside the cost column.
 QWEN3_1_7B_PARAMS_B = 2.03
 LLAMA_3_1_8B_PARAMS_B = 8.03
+
+# top_k in the generation_config.json of the Qwen3 revisions pinned in
+# configs/model_candidates.json. Llama-3.1-8B-Instruct's sets none, so
+# transformers fills in its own default at generate time.
+QWEN_TOP_K = 20
+LIBRARY_DEFAULT_TOP_K = 50
 
 QWEN_SMALL = "Qwen/Qwen3-1.7B"
 QWEN_TEACHER = "Qwen/Qwen3-4B"
@@ -120,6 +134,29 @@ def cost(rungs: list[dict], params: float) -> list[int]:
     ]
 
 
+class ExampleTests(unittest.TestCase):
+    """The two example attempts under the intro, replayed through the sandbox."""
+
+    def test_the_right_answer(self) -> None:
+        expression = "(16 - 12) + 4"
+        self.assertIn(f'{{"expression": "{expression}"}}', README)
+        self.assertIn(f"Sandbox: {evaluate_expression(expression)} gold answer 8: correct", README)
+
+    def test_the_retry(self) -> None:
+        first = "12 * 20000 + 10% * 12 * 20000 + 1000 * 12"
+        self.assertIn(f'{{"expression": "{first}"}}', README)
+        call = json.dumps({"name": "calculator", "arguments": {"expression": first}})
+        trace = build_phase_a_registry().execute(
+            parse_tool_calls(f"<tool_call>\n{call}\n</tool_call>"), {}, gate_engine=GateEngine.from_mapping({})
+        )
+        self.assertIn(f"Feedback: {_failure_observation(trace)} Retry:", README)
+
+        old, new = "10% * 12 * 20000", "0.10 * 12 * 20000"
+        self.assertIn(f'Retry: the same call with "{new}" in place of "{old}"', README)
+        value = evaluate_expression(first.replace(old, new))
+        self.assertIn(f"Sandbox: {value} gold answer 276000: correct", README)
+
+
 class ResultTableTests(unittest.TestCase):
     """The result table: every model at R1."""
 
@@ -130,7 +167,8 @@ class ResultTableTests(unittest.TestCase):
         ):
             r1 = rung(name, candidate, "R1")
             self.assertEqual((r1["tasks"], r1["runs_per_task"]), (150, 4), name)
-        self.assertIn("150 held-out test tasks, 4 attempts per task.", README)
+        self.assertIn("150 held-out test tasks, 4 attempts per task, at R1.", README)
+        self.assertIn("| Cost per attempt (tokens × billion params) |", README)
 
     def test_what_the_ranges_span(self) -> None:
         self.assertEqual(len(SFT_TESTS), 3)
@@ -580,6 +618,8 @@ class HowItWorksTests(unittest.TestCase):
             self.assertEqual((decoding["temperature"], decoding["top_p"]), (0.7, 0.95), name)
             self.assertNotIn("top_k", decoding, "the README says top-k was not recorded")
         self.assertIn("sampled at temperature 0.7 and top-p 0.95", README)
+        self.assertIn(f"generation configs also set top-k {QWEN_TOP_K}", README)
+        self.assertIn(f"Llama's sets none, so the library default of {LIBRARY_DEFAULT_TOP_K} applied", README)
         self.assertIn("The results do not record this difference", README)
 
     def test_the_mmlu_truncation_limit(self) -> None:
@@ -607,7 +647,8 @@ class HowItWorksTests(unittest.TestCase):
             for arm, commit in (("base", "001023e"), ("sft", "bb6764e"))
         }
         self.assertIn(
-            f"({100 * rates['base']:.2f}% of untrained answers, {100 * rates['sft']:.1f}% after SFT)",
+            f"Overall, {100 * rates['base']:.2f}% of untrained answers and "
+            f"{100 * rates['sft']:.1f}% after SFT hit the limit.",
             README,
         )
         self.assertEqual(load("utility-base-001023e.json")["decoding"]["max_new_tokens"], 320)

@@ -21,23 +21,32 @@ Model:     <tool_call>
 Sandbox:   8.0          gold answer 8: correct
 ```
 
-When the first output gives no working calculator call, rung R1 shows the model
-the error once. The untrained model on test task 230:
+That was its only right attempt of four on this task. The other three added
+the 12 instead of subtracting it, so the task fails `pass^4`.
+
+Two settings are measured. At R0 the model gets one try. At R1, if its first
+output gives no working calculator call, it sees the error and tries once more.
+The untrained model on test task 230, at R1:
 
 ```text
-Model:     {"expression": "12 * 20000 + 10% * 12 * 20000 + 1000 * 12"}
+Question:  Mark buys a fleet of 12 cars for his company. Each car sells for
+           $20,000. He pays 10% tax on the cars and then another $1000 for
+           registration on each of them. How much does he pay for everything?
+Model:     <tool_call>
+           {"name": "calculator", "arguments": {"expression":
+            "12 * 20000 + 10% * 12 * 20000 + 1000 * 12"}}
+           </tool_call>
 Feedback:  The calculator failed: tool_exception: ValueError: sandbox
            violation: invalid_syntax: line 1: invalid syntax
-Retry:     {"expression": "12 * 20000 + 0.10 * 12 * 20000 + 1000 * 12"}
+Retry:     the same call with "0.10 * 12 * 20000" in place of "10% * 12 * 20000"
 Sandbox:   276000.0     gold answer 276000: correct
 ```
 
 ## Result
 
-150 held-out test tasks, 4 attempts per task. If the first output does not give
-a working calculator call, the model sees the error and gets one retry (rung R1).
+150 held-out test tasks, 4 attempts per task, at R1.
 
-| Model | `pass^1` | `pass^4` | Cost per attempt |
+| Model | `pass^1` | `pass^4` | Cost per attempt (tokens × billion params) |
 | :-- | --: | --: | --: |
 | Qwen3-1.7B, untrained | 0.333 | 0.287 | not recorded |
 | Llama-3.1-8B + retry | 0.415 | 0.293 | 236 |
@@ -108,16 +117,17 @@ SFT it has almost nothing to fix: it rescued 1 to 3 attempts per run, against
 calls. Dev selection picked step 200 at 1e-6 and step 300 at 1e-5. Change
 against SFT, at R0:
 
-| Learning rate | `pass^1` change | 95% interval | Problems with no gradient |
+| Learning rate | `pass^1` change | 95% interval | Groups with no gradient |
 | :-- | --: | :--: | --: |
 | 1e-6 | +0.008 | +0.000 to +0.017 | 65% |
 | 1e-5 | +0.035 | +0.005 to +0.068 | 66% |
 
 At 1e-5 the interval excludes zero, but the sign test does not agree
 (p = 0.22), and the `pass^4` interval (−0.007 to +0.100) includes zero. It is
-one run. A problem gives no gradient when all 8 of its attempts score the same.
-Every wrong number gets the same reward, so a problem the model always gets
-wrong is as flat as one it always gets right.
+one run. Each step tries every problem 8 times, as one group. A group gives no
+gradient when all 8 of its attempts score the same. Accuracy is all or nothing,
+so a near miss scores like a wild guess. A problem the model always gets wrong
+gives almost no gradient, just like one it always gets right.
 
 **6. No detectable forgetting.** On 400 MMLU questions with no tool offered:
 53.25% untrained (213/400), 53.0% after SFT (212/400). Paired difference
@@ -147,11 +157,11 @@ completions did.
 
 The untrained model's 0.000 says less than it seems. On every request that gave
 a postcode, it made one authenticate call and stopped: 452 of 452 episodes. It
-was waiting for a result that a single-reply test never sends.
+acts as if waiting for a result, which a single-reply test never sends.
 
 The refusals need the same care. On a wrong-postcode request, one reply cannot
-know that verification will fail. Only the no-postcode request shows, in its own
-words, that the change must be refused. There SFT still wrote in 124 of 148
+know that verification will fail. Only the no-postcode request shows, from its
+own text, that verification cannot succeed. There SFT still wrote in 124 of 148
 episodes, and GRPO in 122. Every training example was one call and done, and
 none had "do not call" as the right answer.
 
@@ -209,18 +219,20 @@ Git tree, so every result names the exact code that made it.
   4B teacher did the same on 72.
 - On GSM8K every model was sampled at temperature 0.7 and top-p 0.95. The Qwen models'
   own generation configs also set top-k 20, which the evaluation did not
-  override, and Llama's sets none. The results do not record this difference,
-  and a narrower top-k can make answers more repeatable.
+  override. Llama's sets none, so the library default of 50 applied. The
+  results do not record this difference, and a narrower top-k can make answers
+  more repeatable.
 - MMLU is a 400-question sample with a 320-token answer limit. 25 questions
   have no readable answer from the untrained or the fine-tuned model, and 21 of
-  those were cut off at the limit (8.25% of untrained answers, 2.0% after SFT).
+  those were cut off at the limit. Overall, 8.25% of untrained answers and 2.0%
+  after SFT hit the limit.
   On the 375 questions where both models named an answer, the difference is
   −0.032 (95% interval −0.077 to +0.016). That is still no detectable change,
   but the interval reaches almost 8 points down.
 - The transfer test is single-reply, so it cannot test reading a result and
   then deciding. A multi-turn version was not run.
-- Episode logs are not in git. They are attached to the
-  [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0),
+- The episode logs behind these results are not in git. They are attached to
+  the [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0),
   with the five tested adapters and the SHA-256 of every file.
 
 ## Licence
