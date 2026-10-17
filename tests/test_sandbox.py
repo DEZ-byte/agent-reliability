@@ -1,13 +1,45 @@
 from __future__ import annotations
 
+import errno
+import multiprocessing.context
 import os
 import unittest
+from unittest import mock
 
+import env.sandbox as sandbox_module
 from env.sandbox import (
+    SandboxUnavailable,
     SandboxViolation,
+    _receive_payload,
     memory_limit_supported,
     run_code,
 )
+
+
+# Stand-in workers. A spawned worker imports its target by name, so these
+# must live at module scope.
+def _exit_without_result(*args: object) -> None:
+    os._exit(3)
+
+
+def _report_limit_setup_failure(source: str, connection, *limits: object) -> None:
+    sandbox_module._send_payload(
+        connection,
+        {
+            "kind": "violation",
+            "reason": "limit_setup_failed",
+            "detail": "OSError: refused",
+        },
+    )
+    connection.close()
+
+
+class _FailingConnection:
+    def __init__(self, error: OSError) -> None:
+        self._error = error
+
+    def recv_bytes(self, maxlength: int | None = None) -> bytes:
+        raise self._error
 
 
 def _posix_cpu_limit_supported() -> bool:
@@ -38,6 +70,20 @@ class SandboxTests(unittest.TestCase):
         self.assertEqual(result.exception_type, "ZeroDivisionError")
         self.assertIn("division by zero", result.exception_message or "")
         self.assertIn("ZeroDivisionError", result.stderr)
+
+    def test_invalid_syntax_is_a_violation(self) -> None:
+        with self.assertRaises(SandboxViolation) as caught:
+            run_code("17 * (23")
+
+        self.assertEqual(caught.exception.reason, "invalid_syntax")
+
+    def test_a_return_outside_a_function_is_a_violation(self) -> None:
+        """It parses, then fails to compile inside the worker: still the model's fault."""
+
+        with self.assertRaises(SandboxViolation) as caught:
+            run_code("return 1")
+
+        self.assertEqual(caught.exception.reason, "worker_internal_error")
 
     def test_import_statements_are_rejected(self) -> None:
         samples = ("import os", "from os import path")
@@ -143,6 +189,51 @@ class SandboxTests(unittest.TestCase):
             )
 
         self.assertEqual(caught.exception.reason, "memory_limit")
+
+
+class SandboxUnavailableTests(unittest.TestCase):
+    """A broken runner is not the model's mistake and must not look like one."""
+
+    def test_unavailable_is_not_a_kind_of_violation(self) -> None:
+        # Callers treat SandboxViolation as the model's failure.
+        self.assertFalse(issubclass(SandboxUnavailable, SandboxViolation))
+
+    def test_a_worker_that_cannot_start_is_unavailable(self) -> None:
+        with mock.patch.object(
+            multiprocessing.context.SpawnProcess,
+            "start",
+            side_effect=OSError("blocked by policy"),
+        ):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "worker_start_failed")
+
+    def test_a_worker_that_dies_without_a_result_is_unavailable(self) -> None:
+        with mock.patch.object(sandbox_module, "_worker_main", _exit_without_result):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "worker_terminated")
+        self.assertIn("exit code 3", str(caught.exception))
+
+    def test_a_worker_that_cannot_set_its_limits_is_unavailable(self) -> None:
+        with mock.patch.object(
+            sandbox_module, "_worker_main", _report_limit_setup_failure
+        ):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "limit_setup_failed")
+
+    def test_only_an_oversized_message_is_a_protocol_violation(self) -> None:
+        with self.assertRaises(SandboxViolation) as caught:
+            _receive_payload(_FailingConnection(OSError("bad message length")), 16)
+        self.assertEqual(caught.exception.reason, "protocol_limit")
+
+        with self.assertRaises(SandboxUnavailable) as caught_pipe:
+            _receive_payload(_FailingConnection(OSError(errno.EIO, "I/O error")), 16)
+        self.assertEqual(caught_pipe.exception.reason, "pipe_read_failed")
 
 
 if __name__ == "__main__":

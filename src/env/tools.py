@@ -25,6 +25,16 @@ ToolHandler: TypeAlias = Callable[[BaseModel, ToolState], JsonValue]
 _T = TypeVar("_T")
 
 
+class ToolInfrastructureError(RuntimeError):
+    """The machinery behind a tool failed, not the call the model made.
+
+    Every other handler exception becomes a failed event, which the model can
+    see and retry. This one propagates instead: recorded as an event, a broken
+    sandbox would score every later call as a wrong answer and nobody would
+    notice.
+    """
+
+
 def _json_clone(value: _T) -> _T:
     """Deep-copy a value while proving it is strict JSON data."""
 
@@ -216,6 +226,8 @@ class ToolRegistry:
             working_state = _json_clone(state_before)
             try:
                 raw_output = spec.handler(validated_args, working_state)
+            except ToolInfrastructureError:
+                raise
             except Exception as exc:  # Tool failures are data, not control flow.
                 output = None
                 succeeded = False

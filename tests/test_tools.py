@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 
 from agent.gates import GateEngine
 from agent.parser import parse_tool_calls
-from env.tools import ToolRegistry, ToolSpec
+from env.tools import ToolInfrastructureError, ToolRegistry, ToolSpec
 
 
 class SetArgs(BaseModel):
@@ -114,6 +114,41 @@ class ToolRegistryTests(unittest.TestCase):
         self.assertIn("RuntimeError: boom", event.error_message or "")
         self.assertEqual(event.state_after, {"allowed": True})
         self.assertEqual(state, {"allowed": True})
+
+    def test_only_an_infrastructure_error_escapes_execute(self) -> None:
+        """A bad call is data the model can retry. A broken tool runner is not."""
+
+        registry = ToolRegistry()
+
+        def ordinary(args: BaseModel, state: dict) -> None:
+            raise ValueError("bad input")
+
+        def broken(args: BaseModel, state: dict) -> None:
+            state["attempted"] = True
+            raise ToolInfrastructureError("sandbox worker died")
+
+        registry.register(ToolSpec("ordinary", SetArgs, ordinary))
+        registry.register(ToolSpec("broken", SetArgs, broken))
+
+        event = registry.execute(
+            parse_tool_calls(
+                '<tool_call>{"name":"ordinary","arguments":{"value":1}}</tool_call>'
+            ),
+            {},
+        ).tool_events[0]
+        self.assertTrue(event.dispatched)
+        self.assertFalse(event.succeeded)
+        self.assertEqual(event.error_code, "tool_exception")
+
+        state = {"value": 0}
+        with self.assertRaisesRegex(ToolInfrastructureError, "worker died"):
+            registry.execute(
+                parse_tool_calls(
+                    '<tool_call>{"name":"broken","arguments":{"value":1}}</tool_call>'
+                ),
+                state,
+            )
+        self.assertEqual(state, {"value": 0})
 
     def test_invalid_output_rolls_back_working_state(self) -> None:
         registry = ToolRegistry()

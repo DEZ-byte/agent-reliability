@@ -26,6 +26,7 @@ from typing import Any
 
 __all__ = [
     "SandboxResult",
+    "SandboxUnavailable",
     "SandboxViolation",
     "memory_limit_supported",
     "run_code",
@@ -40,6 +41,13 @@ _DEFAULT_MAX_OUTPUT_CHARS = 64 * 1024
 _DEFAULT_MAX_SOURCE_CHARS = 64 * 1024
 _MAX_PROTOCOL_PAYLOAD_BYTES = 4 * _MIB
 _RESULT_NAME = "_sandbox_last_value"
+
+# What multiprocessing raises for a message longer than recv_bytes allows. Any
+# other OSError from the pipe is the pipe failing, not the snippet.
+_OVERSIZED_MESSAGE = "bad message length"
+
+# Reasons a worker can report that describe the runner, not the snippet.
+_RUNNER_FAILURE_REASONS = frozenset({"limit_setup_failed", "worker_protocol_error"})
 
 _FORBIDDEN_NAMES = frozenset(
     {
@@ -83,10 +91,26 @@ _FORBIDDEN_ATTRIBUTES = frozenset(
 
 
 class SandboxViolation(RuntimeError):
-    """A rejected program or a sandbox resource/control failure.
+    """A rejected program or a breached resource limit: the snippet's fault.
 
     ``reason`` is a stable machine-readable category. ``detail`` is intended
     for logs and may contain platform-specific information.
+    """
+
+    def __init__(self, reason: str, detail: str | None = None) -> None:
+        self.reason = reason
+        self.detail = detail
+        message = reason if detail is None else f"{reason}: {detail}"
+        super().__init__(message)
+
+
+class SandboxUnavailable(RuntimeError):
+    """The sandbox itself failed, so the snippet was never judged.
+
+    A worker that cannot start, dies on its own, or breaks the result protocol
+    says nothing about the code it was given. Callers must stop rather than
+    score it as a wrong answer. This deliberately does not subclass
+    :class:`SandboxViolation`, which callers treat as the model's failure.
     """
 
     def __init__(self, reason: str, detail: str | None = None) -> None:
@@ -339,42 +363,46 @@ def _receive_payload(
     try:
         encoded = connection.recv_bytes(_MAX_PROTOCOL_PAYLOAD_BYTES)
     except OSError as exc:
-        raise SandboxViolation(
-            "protocol_limit",
-            f"worker message exceeded {_MAX_PROTOCOL_PAYLOAD_BYTES} bytes",
+        if str(exc) == _OVERSIZED_MESSAGE:
+            raise SandboxViolation(
+                "protocol_limit",
+                f"worker message exceeded {_MAX_PROTOCOL_PAYLOAD_BYTES} bytes",
+            ) from exc
+        raise SandboxUnavailable(
+            "pipe_read_failed", f"{type(exc).__name__}: {exc}"
         ) from exc
 
     try:
         payload = json.loads(encoded.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
-        raise SandboxViolation(
+        raise SandboxUnavailable(
             "worker_protocol_error", f"invalid JSON payload: {type(exc).__name__}"
         ) from exc
 
     if not isinstance(payload, dict):
-        raise SandboxViolation("worker_protocol_error", "payload must be an object")
+        raise SandboxUnavailable("worker_protocol_error", "payload must be an object")
 
     kind = payload.get("kind")
     if kind == "violation":
         reason = payload.get("reason")
         detail = payload.get("detail")
         if not isinstance(reason, str) or not reason:
-            raise SandboxViolation(
+            raise SandboxUnavailable(
                 "worker_protocol_error", "violation reason must be non-empty text"
             )
         if detail is not None and not isinstance(detail, str):
-            raise SandboxViolation(
+            raise SandboxUnavailable(
                 "worker_protocol_error", "violation detail must be text or null"
             )
         return payload
 
     if kind != "result":
-        raise SandboxViolation("worker_protocol_error", "unknown payload kind")
+        raise SandboxUnavailable("worker_protocol_error", "unknown payload kind")
 
     for field in ("stdout", "stderr"):
         value = payload.get(field)
         if not isinstance(value, str) or len(value) > max_output_chars:
-            raise SandboxViolation(
+            raise SandboxUnavailable(
                 "worker_protocol_error", f"invalid or oversized {field} field"
             )
     for field in ("value_repr", "exception_message"):
@@ -382,14 +410,14 @@ def _receive_payload(
         if value is not None and (
             not isinstance(value, str) or len(value) > max_output_chars
         ):
-            raise SandboxViolation(
+            raise SandboxUnavailable(
                 "worker_protocol_error", f"invalid or oversized {field} field"
             )
     exception_type = payload.get("exception_type")
     if exception_type is not None and (
         not isinstance(exception_type, str) or len(exception_type) > 256
     ):
-        raise SandboxViolation(
+        raise SandboxUnavailable(
             "worker_protocol_error", "invalid exception_type field"
         )
     return payload
@@ -647,17 +675,32 @@ def _positive_int_or_none(name: str, value: int | None) -> int | None:
     return value
 
 
-def _exit_violation(exit_code: int | None) -> SandboxViolation:
+def _poll(connection: Connection, timeout: float) -> bool:
+    # On Windows, polling an empty pipe whose writer has exited raises
+    # BrokenPipeError. There is no payload either way, so the exit code decides.
+    try:
+        return connection.poll(timeout)
+    except (BrokenPipeError, EOFError):
+        return False
+
+
+def _exit_error(exit_code: int | None) -> SandboxViolation | SandboxUnavailable:
+    """Why a worker that the parent did not kill exited with no payload.
+
+    Only the POSIX CPU and file-size limits end a worker this way for
+    something the snippet did. Any other silent exit is the runner failing.
+    """
+
     if exit_code is not None and exit_code < 0:
         terminating_signal = -exit_code
         if terminating_signal == getattr(signal, "SIGXCPU", object()):
             return SandboxViolation("cpu_limit", "worker exceeded RLIMIT_CPU")
         if terminating_signal == getattr(signal, "SIGXFSZ", object()):
             return SandboxViolation("file_size_limit", "worker exceeded RLIMIT_FSIZE")
-        return SandboxViolation(
+        return SandboxUnavailable(
             "worker_terminated", f"worker received signal {terminating_signal}"
         )
-    return SandboxViolation(
+    return SandboxUnavailable(
         "worker_terminated", f"worker exited without a result (exit code {exit_code})"
     )
 
@@ -677,6 +720,8 @@ def run_code(
     Static-policy and resource failures raise :class:`SandboxViolation`.
     Ordinary exceptions raised by the snippet are captured in
     :class:`SandboxResult`, allowing callers to present a tool observation.
+    A failure of the sandbox itself, such as a worker that cannot start or
+    dies without a result, raises :class:`SandboxUnavailable`.
 
     The timeout is wall-clock time and is enforced by ``Process.kill()``.
     POSIX workers also receive RLIMIT_AS, RLIMIT_CPU, and RLIMIT_FSIZE. On
@@ -719,7 +764,7 @@ def run_code(
     process: multiprocessing.Process | None = None
     process_started = False
     payload: dict[str, Any] | None = None
-    termination_reason: SandboxViolation | None = None
+    termination_reason: SandboxViolation | SandboxUnavailable | None = None
 
     try:
         process = context.Process(
@@ -735,7 +780,12 @@ def run_code(
             name="python-sandbox-worker",
             daemon=True,
         )
-        process.start()
+        try:
+            process.start()
+        except OSError as exc:
+            raise SandboxUnavailable(
+                "worker_start_failed", f"{type(exc).__name__}: {exc}"
+            ) from exc
         process_started = True
         child_connection.close()
         deadline = time.monotonic() + float(timeout_seconds)
@@ -759,12 +809,12 @@ def run_code(
                     )
                     break
 
-            if payload is None and parent_connection.poll(0):
+            if payload is None and _poll(parent_connection, 0):
                 try:
                     payload = _receive_payload(parent_connection, max_output_chars)
                 except EOFError:
                     pass
-                except SandboxViolation as exc:
+                except (SandboxViolation, SandboxUnavailable) as exc:
                     process.kill()
                     termination_reason = exc
                     break
@@ -776,16 +826,18 @@ def run_code(
         if termination_reason is not None:
             raise termination_reason
 
-        if payload is None and parent_connection.poll(0.1):
+        if payload is None and _poll(parent_connection, 0.1):
             try:
                 payload = _receive_payload(parent_connection, max_output_chars)
             except EOFError:
                 pass
 
         if payload is None:
-            raise _exit_violation(process.exitcode)
+            raise _exit_error(process.exitcode)
 
         if payload.get("kind") == "violation":
+            if payload["reason"] in _RUNNER_FAILURE_REASONS:
+                raise SandboxUnavailable(payload["reason"], payload.get("detail"))
             raise SandboxViolation(payload["reason"], payload.get("detail"))
 
         return SandboxResult(
