@@ -41,6 +41,7 @@ HEAD = "c0ffee" * 6 + "c0ff"
 GUARDED = {
     "analyse_phase_a_failures.py",
     "analyse_phase_b_gates.py",
+    "analyse_phase_b_templates.py",
     "build_sft_dataset.py",
     "compare_arms.py",
     "compare_utility.py",
