@@ -3,6 +3,7 @@ from __future__ import annotations
 import errno
 import multiprocessing.context
 import os
+import signal
 import unittest
 from unittest import mock
 
@@ -20,6 +21,10 @@ from env.sandbox import (
 # must live at module scope.
 def _exit_without_result(*args: object) -> None:
     os._exit(3)
+
+
+def _killed_by_a_signal(*args: object) -> None:
+    os.kill(os.getpid(), signal.SIGKILL)
 
 
 def _report_limit_setup_failure(source: str, connection, *limits: object) -> None:
@@ -261,6 +266,17 @@ class SandboxUnavailableTests(unittest.TestCase):
         self.assertEqual(caught.exception.reason, "worker_terminated")
         self.assertIn("exit code 3", str(caught.exception))
 
+    @unittest.skipUnless(os.name == "posix", "POSIX signals")
+    def test_a_worker_killed_by_a_signal_is_unavailable(self) -> None:
+        # Only SIGXCPU and SIGXFSZ are the model's limits. Any other signal
+        # means the runner broke.
+        with mock.patch.object(sandbox_module, "_worker_main", _killed_by_a_signal):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "worker_terminated")
+        self.assertIn(f"signal {int(signal.SIGKILL)}", str(caught.exception))
+
     def test_a_worker_that_cannot_set_its_limits_is_unavailable(self) -> None:
         with mock.patch.object(
             sandbox_module, "_worker_main", _report_limit_setup_failure
@@ -278,7 +294,12 @@ class SandboxUnavailableTests(unittest.TestCase):
         self.assertEqual(caught.exception.reason, "worker_protocol_error")
 
     def test_a_payload_that_breaks_the_protocol_is_unavailable(self) -> None:
-        for data in (b"not json", b"[]", b'{"kind": "unknown"}'):
+        for data in (
+            b"not json",
+            b"[]",
+            b'{"kind": "unknown"}',
+            b'{"kind": "result", "stdout": 5, "stderr": ""}',
+        ):
             with self.subTest(data=data):
                 with self.assertRaises(SandboxUnavailable) as caught:
                     _receive_payload(_BytesConnection(data), 16)
