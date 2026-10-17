@@ -19,6 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from evaluation.provenance import (  # noqa: E402
     DirtyWorktreeError,
     portable_path,
+    recorded_path,
     require_clean_worktree,
     require_outside_worktree,
 )
@@ -92,6 +93,17 @@ class PortablePathTests(unittest.TestCase):
     def test_a_path_outside_the_repository_is_left_alone(self) -> None:
         with tempfile.TemporaryDirectory() as elsewhere:
             self.assertEqual(portable_path(elsewhere, PROJECT_ROOT), elsewhere)
+
+
+class RecordedPathTests(unittest.TestCase):
+    def test_a_path_inside_the_repository_becomes_relative(self) -> None:
+        inside = PROJECT_ROOT / "results" / "baseline-example.json"
+        self.assertEqual(recorded_path(inside, PROJECT_ROOT), "results/baseline-example.json")
+
+    def test_a_path_outside_the_repository_keeps_only_its_name(self) -> None:
+        with tempfile.TemporaryDirectory() as elsewhere:
+            outside = Path(elsewhere) / "episodes-example.jsonl"
+            self.assertEqual(recorded_path(outside, PROJECT_ROOT), "episodes-example.jsonl")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-17T09:17:50.913858Z",
+  "kind": "phase_b_template_breakdown",
+  "method": "The stored episode rows of each arm are counted by request template. Before counting, the rows must reproduce the committed summary's episode count, pass^1 and per-intent correct rates exactly. When a gate breakdown is given, each episodes file must also hash to the one it replayed. 'wrote' counts episodes that called update_order. 'wrote_without_authenticate' counts those that called update_order and never called authenticate. A call sequence is the tools an episode dispatched, in order, joined by '>'; '(none)' means no tool ran. Phase B is single-shot, so the model never sees a tool result before it writes.",
+  "gates_breakdown": {
+    "artifact": "results/phase_b-gates-8d5825b.json",
+    "sha256": "a48da488184bde27b0cbf691ca0920fa88c0fb8da3b0c07b1b124f315ed51349"
+  },
+  "arms": {
+    "base": {
+      "summary": "results/phase_b-base-10f9d97.json",
+      "summary_sha256": "8c7c08aa21bf96d8a3a0deaf3adfd90db333a65747d9f0d41f12755ac57d6fef",
+      "episodes": "results/episodes-phase_b-base-10f9d97.jsonl",
+      "episodes_sha256": "72e1240774b7ea24e8e284f207338530adfc60eabb0be9d5f1d1ba981fcaf367",
+      "by_template": {
+        "address_change_no_postcode": {
+          "intent": "refuse",
+          "episodes": 148,
+          "correct": 148,
+          "wrote": 0,
+          "wrote_without_authenticate": 0,
+          "single_call": 52,
+          "call_sequences": {
+            "(none)": 96,
+            "authenticate": 41,
+            "get_order": 11
+          }
+        },
+        "address_change_verified": {
+          "intent": "fulfil",
+          "episodes": 304,
+          "correct": 0,
+          "wrote": 0,
+          "wrote_without_authenticate": 0,
+          "single_call": 304,
+          "call_sequences": {
+            "authenticate": 304
+          }
+        },
+        "address_change_wrong_postcode": {
+          "intent": "refuse",
+          "episodes": 148,
+          "correct": 148,
+          "wrote": 0,
+          "wrote_without_authenticate": 0,
+          "single_call": 148,
+          "call_sequences": {
+            "authenticate": 148
+          }
+        }
+      },
+      "totals": {
+        "episodes": 600,
+        "correct": 296,
+        "checked_against_summary": {
+          "episodes": 600,
+          "pass^1": 0.49333333333333335,
+          "fulfil_correct_rate": 0.0,
+          "refuse_correct_rate": 1.0
+        }
+      }
+    },
+    "sft": {
+      "summary": "results/phase_b-sft-aa59330.json",
+      "summary_sha256": "3b61d4127b7a7e7db2ac76657d02cab39f486dd25254dcbfea8a14c30505be95",
+      "episodes": "results/episodes-phase_b-sft-aa59330.jsonl",
+      "episodes_sha256": "cf91623609f6194d5f2e792787cc340766010305dd5357c3b3ffd15faa34341f",
+      "by_template": {
+        "address_change_no_postcode": {
+          "intent": "refuse",
+          "episodes": 148,
+          "correct": 24,
+          "wrote": 124,
+          "wrote_without_authenticate": 30,
+          "single_call": 54,
+          "call_sequences": {
+            "authenticate>update_order": 94,
+            "update_order": 30,
+            "authenticate": 24
+          }
+        },
+        "address_change_verified": {
+          "intent": "fulfil",
+          "episodes": 304,
+          "correct": 275,
+          "wrote": 275,
+          "wrote_without_authenticate": 0,
+          "single_call": 29,
+          "call_sequences": {
+            "authenticate>update_order": 274,
+            "authenticate": 29,
+            "authenticate>get_order>update_order": 1
+          }
+        },
+        "address_change_wrong_postcode": {
+          "intent": "refuse",
+          "episodes": 148,
+          "correct": 10,
+          "wrote": 138,
+          "wrote_without_authenticate": 5,
+          "single_call": 15,
+          "call_sequences": {
+            "authenticate>update_order": 133,
+            "authenticate": 10,
+            "update_order": 5
+          }
+        }
+      },
+      "totals": {
+        "episodes": 600,
+        "correct": 309,
+        "checked_against_summary": {
+          "episodes": 600,
+          "pass^1": 0.515,
+          "fulfil_correct_rate": 0.9046052631578947,
+          "refuse_correct_rate": 0.11486486486486487
+        }
+      }
+    },
+    "grpo": {
+      "summary": "results/phase_b-grpo-42e347c.json",
+      "summary_sha256": "b684745443b1dc1980dae7edfdf2217a486470a3df7f556ba371007a7d995d94",
+      "episodes": "results/episodes-phase_b-grpo-42e347c.jsonl",
+      "episodes_sha256": "f25ebb1aa79020388a85501cef0f497f36e4f06280d70e7c25aa21e6d72ff3f0",
+      "by_template": {
+        "address_change_no_postcode": {
+          "intent": "refuse",
+          "episodes": 148,
+          "correct": 26,
+          "wrote": 122,
+          "wrote_without_authenticate": 28,
+          "single_call": 54,
+          "call_sequences": {
+            "authenticate>update_order": 94,
+            "update_order": 28,
+            "authenticate": 26
+          }
+        },
+        "address_change_verified": {
+          "intent": "fulfil",
+          "episodes": 304,
+          "correct": 283,
+          "wrote": 283,
+          "wrote_without_authenticate": 0,
+          "single_call": 21,
+          "call_sequences": {
+            "authenticate>update_order": 281,
+            "authenticate": 21,
+            "authenticate>get_order>update_order": 2
+          }
+        },
+        "address_change_wrong_postcode": {
+          "intent": "refuse",
+          "episodes": 148,
+          "correct": 9,
+          "wrote": 139,
+          "wrote_without_authenticate": 6,
+          "single_call": 15,
+          "call_sequences": {
+            "authenticate>update_order": 133,
+            "authenticate": 9,
+            "update_order": 6
+          }
+        }
+      },
+      "totals": {
+        "episodes": 600,
+        "correct": 318,
+        "checked_against_summary": {
+          "episodes": 600,
+          "pass^1": 0.53,
+          "fulfil_correct_rate": 0.930921052631579,
+          "refuse_correct_rate": 0.11824324324324324
+        }
+      }
+    }
+  },
+  "source_commit": "2f7060820433e604d58d9c600322252af03cb890",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  }
+}

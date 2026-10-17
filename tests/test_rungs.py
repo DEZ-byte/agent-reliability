@@ -3,9 +3,12 @@ from __future__ import annotations
 import dataclasses
 import json
 import unittest
+from unittest import mock
 
 from agent.gates import GateEngine
 from env.phase_a import PhaseATask, build_phase_a_registry
+from env.sandbox import SandboxUnavailable
+from env.tools import ToolInfrastructureError
 from evaluation.rungs import (
     MODEL_DECISION_BUDGET,
     EpisodeCounters,
@@ -30,14 +33,27 @@ def call(expression: str) -> str:
     return f"<tool_call>{payload}</tool_call>"
 
 
-def episode(rung: str, replies: list[str]):
+def episode(rung: str, replies: list[str], policy=None):
     return run_episode(
         task=TASK,
         registry=build_phase_a_registry(),
         gate_engine=GateEngine.from_mapping({}),
-        policy=make_stub_policy(replies),
+        policy=policy if policy is not None else make_stub_policy(replies),
         rung=rung,  # type: ignore[arg-type]
     )
+
+
+def recording_policy(replies: list[str]):
+    """A stub policy that also keeps the messages each decision was shown."""
+
+    stub = make_stub_policy(replies)
+    seen: list[list[dict[str, str]]] = []
+
+    def policy(messages: list[dict[str, str]]) -> str:
+        seen.append(messages)
+        return stub(messages)
+
+    return policy, seen
 
 
 class RungContrastTests(unittest.TestCase):
@@ -93,6 +109,30 @@ class FeedbackTests(unittest.TestCase):
     def test_an_unparseable_reply_produces_a_parse_specific_observation(self) -> None:
         result = episode("R1", ["<tool_call>{not json}</tool_call>", call("17 * 23")])
         self.assertTrue(result.correct)
+
+    def test_r1_retries_after_an_expression_with_invalid_syntax(self) -> None:
+        policy, seen = recording_policy([call("17 * (23"), call("17 * 23")])
+        result = episode("R1", [], policy=policy)
+
+        self.assertTrue(result.correct)
+        self.assertEqual(result.counters.policy_model_decision_count, 2)
+        self.assertEqual(result.tool_events[0].error_code, "tool_exception")
+        self.assertIn("invalid_syntax", seen[1][-1]["content"])
+
+
+class InfrastructureFailureTests(unittest.TestCase):
+    """A broken sandbox is not the model's failure, so R1 must not retry it."""
+
+    def test_r1_raises_without_asking_for_a_second_decision(self) -> None:
+        policy, seen = recording_policy([call("17 * 23"), call("17 * 23")])
+        with mock.patch(
+            "env.phase_a.run_code",
+            side_effect=SandboxUnavailable("worker_terminated", "exit code 3"),
+        ):
+            with self.assertRaises(ToolInfrastructureError):
+                episode("R1", [], policy=policy)
+
+        self.assertEqual(len(seen), 1)
 
 
 class CounterTests(unittest.TestCase):

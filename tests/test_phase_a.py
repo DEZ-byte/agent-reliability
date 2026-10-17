@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest import mock
 
 from pydantic import ValidationError
 
@@ -17,6 +18,8 @@ from env.phase_a import (
     grade_episode,
     parse_gsm8k_answer,
 )
+from env.sandbox import SandboxUnavailable
+from env.tools import ToolInfrastructureError
 from training.rewards import score_episode
 
 TASK = PhaseATask(
@@ -126,6 +129,29 @@ class GradingTests(unittest.TestCase):
         self.assertEqual(reward.format, 0.2)
         self.assertEqual(reward.efficiency, -0.05)
         self.assertEqual(reward.total, 1.15)
+
+
+class SandboxFailureTests(unittest.TestCase):
+    """A model's mistake is a failed call. A broken sandbox stops the run."""
+
+    def test_a_broken_sandbox_raises_instead_of_failing_the_call(self) -> None:
+        with mock.patch(
+            "env.phase_a.run_code",
+            side_effect=SandboxUnavailable("worker_terminated", "exit code 3"),
+        ):
+            with self.assertRaisesRegex(ToolInfrastructureError, "worker_terminated"):
+                run(block("17 * 23"))
+
+    def test_model_mistakes_are_still_failed_calls(self) -> None:
+        cases = (("1/0", "ZeroDivisionError"), ("17 * (23", "invalid_syntax"))
+        for expression, detail in cases:
+            with self.subTest(expression=expression):
+                trace, _ = run(block(expression))
+                event = trace.tool_events[0]
+                self.assertTrue(event.dispatched)
+                self.assertFalse(event.succeeded)
+                self.assertEqual(event.error_code, "tool_exception")
+                self.assertIn(detail, event.error_message or "")
 
 
 class TaskModelTests(unittest.TestCase):

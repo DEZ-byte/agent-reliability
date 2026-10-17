@@ -26,6 +26,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from agent.gates import GateEngine  # noqa: E402
 from env.phase_a import build_phase_a_registry  # noqa: E402
+from env.sandbox import SandboxUnavailable  # noqa: E402
+from env.tools import ToolInfrastructureError  # noqa: E402
 import training.grpo_reward as grpo_reward_module  # noqa: E402
 from training.grpo_reward import (  # noqa: E402
     CompletionScore,
@@ -210,6 +212,32 @@ class RewardBatchTests(unittest.TestCase):
     def test_a_group_size_below_one_is_refused(self) -> None:
         with self.assertRaises(ValueError):
             grpo_reward_module.make_reward_function(group_size=0)
+
+
+class SandboxFailureTests(unittest.TestCase):
+    """A dead sandbox used to score every later candidate 0.15, silently.
+
+    A failed call that the model caused keeps that score. A sandbox that cannot
+    run the call must stop training instead.
+    """
+
+    def test_a_model_error_still_scores_as_a_wrong_answer(self) -> None:
+        result = score(call("1/0"))
+        self.assertFalse(result.correct)
+        self.assertAlmostEqual(result.total, 0.15)
+
+    def test_a_broken_sandbox_raises_out_of_the_reward_function(self) -> None:
+        reward = grpo_reward_module.make_reward_function(group_size=1)
+        with mock.patch(
+            "env.phase_a.run_code",
+            side_effect=SandboxUnavailable("worker_terminated", "exit code 3"),
+        ):
+            with self.assertRaises(ToolInfrastructureError):
+                reward(
+                    completions=[call("2 + 2*2")],
+                    gold_answer=[GOLD],
+                    question=[QUESTION],
+                )
 
 
 if __name__ == "__main__":

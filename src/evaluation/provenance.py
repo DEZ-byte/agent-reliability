@@ -88,6 +88,19 @@ def portable_path(path: Path | str, root: Path) -> str:
         return str(path)
 
 
+def recorded_path(path: Path | str, root: Path) -> str:
+    """The repository-relative path, or the file name for a file outside the repository.
+
+    For an input file whose SHA-256 is recorded beside it. An absolute path
+    names one machine. A file read from another checkout is named by its file
+    name, and its hash says which bytes were read.
+    """
+
+    if Path(path).resolve().is_relative_to(Path(root).resolve()):
+        return portable_path(path, root)
+    return Path(path).name
+
+
 def adapter_weights_sha256(adapter: Path | str | None) -> str | None:
     """SHA-256 of an adapter's weights file, read whole; None for the base model.
 

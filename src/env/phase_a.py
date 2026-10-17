@@ -25,8 +25,8 @@ from env.models import (
     OutcomeSource,
     ToolEvent,
 )
-from env.sandbox import SandboxViolation, run_code
-from env.tools import ToolRegistry, ToolSpec, ToolState
+from env.sandbox import SandboxUnavailable, SandboxViolation, run_code
+from env.tools import ToolInfrastructureError, ToolRegistry, ToolSpec, ToolState
 
 CALCULATOR_TOOL_NAME: Final = "calculator"
 
@@ -108,6 +108,10 @@ def _calculator_handler(args: BaseModel, state: ToolState) -> float:
     expression = args.expression  # type: ignore[attr-defined]
     try:
         value = evaluate_expression(expression)
+    except SandboxUnavailable as exc:
+        # The sandbox broke, so the expression was never judged. Scoring it as
+        # a wrong answer would hide the breakage for the rest of a run.
+        raise ToolInfrastructureError(str(exc)) from exc
     except SandboxViolation as exc:
         # A violation is the model's failure, recorded as a failed dispatch
         # rather than an exception that aborts the episode.
