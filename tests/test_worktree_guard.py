@@ -39,6 +39,7 @@ HEAD = "c0ffee" * 6 + "c0ff"
 
 # Every script that writes a source_commit, and so must call the guard.
 GUARDED = {
+    "analyse_phase_a_failures.py",
     "analyse_phase_b_gates.py",
     "build_sft_dataset.py",
     "compare_arms.py",

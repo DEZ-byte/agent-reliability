@@ -52,6 +52,7 @@ ARTIFACT_GLOBS: Final = (
     "phase_b-*.json",
     "utility-*.json",
     "weight-change-*.json",
+    "failure-modes-*.json",
 )
 
 SCHEMA_VERSION: Final = 1
