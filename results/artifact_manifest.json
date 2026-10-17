@@ -32,6 +32,12 @@
       "recorded_in_commit": "4de6c16368c05585ecbed63099e2f041adda8815",
       "kind": "phase_a_no_tool_diagnostic"
     },
+    "failure-modes-2f70608.json": {
+      "sha256": "5fb2f51f9a230c991d1e6ae7814e4ea21e2a70aef0d9cbe63bc837fbda0d4ea8",
+      "bytes": 11850,
+      "recorded_in_commit": "cf8a1b038cad3325bce07e4f9075d1eb0dceb821",
+      "kind": "phase_a_failure_modes"
+    },
     "grpo-lr1e5-vs-sft-91a2de9.json": {
       "sha256": "b30a1a86a4167430f73c40b803108e71b851a960492e62df63d99bcd67ee7346",
       "bytes": 3839,
@@ -127,6 +133,12 @@
       "bytes": 1706,
       "recorded_in_commit": "4134ef3fd292ca2d5e285eb0f3e8a5fb0575428f",
       "kind": "phase_b_transfer_eval"
+    },
+    "phase_b-templates-2f70608.json": {
+      "sha256": "03a8df26fd5973e40cec853f76fe81d6fca90699ac798f6f3395d147aec83f48",
+      "bytes": 6235,
+      "recorded_in_commit": "cf8a1b038cad3325bce07e4f9075d1eb0dceb821",
+      "kind": "phase_b_template_breakdown"
     },
     "sft-candidates-a2dbe77.json": {
       "sha256": "7972c19d490263fd0ee7f127080bd43d7ef4aae762b40194694f0fafb6308d49",
