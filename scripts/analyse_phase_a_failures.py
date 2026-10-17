@@ -88,7 +88,10 @@ METHOD: Final = {
         "calculator call that ran and returned a number."
     ),
     NO_CALL: "The last decision produced no tool event; this is no_tag plus malformed.",
-    NO_TAG: "No tool event, and the text the parser read has no <tool_call> opening tag.",
+    NO_TAG: (
+        "No tool event, and the text the parser read has no <tool_call> opening tag. "
+        "For a bare JSON model this includes untagged JSON that is not a valid call."
+    ),
     MALFORMED: (
         "No tool event, and the text the parser read has a <tool_call> tag that "
         "does not parse into a valid call."

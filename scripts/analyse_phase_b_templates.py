@@ -10,12 +10,12 @@ The Phase B test split has three request templates:
   the order alone.
 
 Phase B is single-shot. The model writes all of its tool calls before any tool
-runs, so it never sees whether authentication worked. The first two templates
-are worded differently, but nothing in either says whether its postcode is
-right. A model that writes on both is wrong on one, a model that stops on both
-is wrong on the other, and it has no evidence that would let it do better. Only
-the no-postcode request shows, in the request itself, that the change must be
-refused. It is the one template where a single reply can show judgement.
+runs, so it never sees whether authentication worked. Nothing in the first two
+requests says whether the postcode is right. Their wording differs, but telling
+them apart by wording would be a learned cue, not judgement. A model that writes
+on both is wrong on one, and a model that stops on both is wrong on the other.
+Only the no-postcode request shows, in the request itself, that the change must
+be refused. It is the one template where a single reply can show judgement.
 
 The per-intent rates in the summary merge the two refusal templates, and they
 say nothing about which tools were called. This script counts each template on
@@ -54,7 +54,7 @@ from evaluation.provenance import (  # noqa: E402
     portable_path,
     require_clean_worktree,
 )
-from run_phase_b_eval import SPLIT_MANIFEST_PATH, summarise  # noqa: E402
+from run_phase_b_eval import SPLIT_MANIFEST_PATH, PhaseBEvalError, summarise  # noqa: E402
 
 SCHEMA_VERSION: Final = 1
 SEPARATOR: Final = ">"
@@ -221,6 +221,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (TemplateAnalysisError, DirtyWorktreeError) as error:
+    except (TemplateAnalysisError, PhaseBEvalError, DirtyWorktreeError) as error:
         print(f"refused: {error}", file=sys.stderr)
         raise SystemExit(1)

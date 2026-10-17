@@ -191,6 +191,17 @@ class ClassTests(unittest.TestCase):
         self.assertEqual(self._class("R1", [PROSE, FAILS]), "call_failed_to_run")
         self.assertEqual(self._class("R1", [FAILS, WRONG]), "wrong_value")
         self.assertEqual(self._class("R1", [PROSE, GOOD]), "correct")
+        # The one case where judging the whole episode would differ: the first
+        # call ran and failed, and the retry made no call at all.
+        self.assertEqual(self._class("R1", [FAILS, PROSE]), "no_tag")
+
+    def test_a_logged_call_the_re_parse_does_not_give_back_is_refused(self) -> None:
+        """The same number of calls is not enough: they must be the same calls."""
+
+        row = episode("R0", [WRONG])
+        row["tool_events"][0]["call"]["arguments"]["expression"] = "6 - 7"
+        with self.assertRaisesRegex(failures.FailureAnalysisError, "re-parse does not give back"):
+            failures.classify(row, normalise=False)
 
     def test_events_that_contradict_the_terminal_reason_are_refused(self) -> None:
         row = episode("R0", [WRONG])

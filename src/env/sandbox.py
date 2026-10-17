@@ -760,7 +760,12 @@ def run_code(
     _parse_and_validate(source)
 
     context = multiprocessing.get_context("spawn")
-    parent_connection, child_connection = context.Pipe(duplex=False)
+    try:
+        parent_connection, child_connection = context.Pipe(duplex=False)
+    except OSError as exc:
+        raise SandboxUnavailable(
+            "worker_start_failed", f"{type(exc).__name__}: {exc}"
+        ) from exc
     process: multiprocessing.Process | None = None
     process_started = False
     payload: dict[str, Any] | None = None
@@ -780,9 +785,12 @@ def run_code(
             name="python-sandbox-worker",
             daemon=True,
         )
+        # Any failure to start the worker is the runner's, never the model's:
+        # an OSError, a RuntimeError when the caller has no __main__ guard, or a
+        # pickling error. Catching only OSError let the others score 0.15.
         try:
             process.start()
-        except OSError as exc:
+        except Exception as exc:
             raise SandboxUnavailable(
                 "worker_start_failed", f"{type(exc).__name__}: {exc}"
             ) from exc

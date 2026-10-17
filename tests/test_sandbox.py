@@ -34,12 +34,32 @@ def _report_limit_setup_failure(source: str, connection, *limits: object) -> Non
     connection.close()
 
 
+def _report_protocol_error(source: str, connection, *limits: object) -> None:
+    sandbox_module._send_payload(
+        connection,
+        {
+            "kind": "violation",
+            "reason": "worker_protocol_error",
+            "detail": "result could not be encoded",
+        },
+    )
+    connection.close()
+
+
 class _FailingConnection:
     def __init__(self, error: OSError) -> None:
         self._error = error
 
     def recv_bytes(self, maxlength: int | None = None) -> bytes:
         raise self._error
+
+
+class _BytesConnection:
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    def recv_bytes(self, maxlength: int | None = None) -> bytes:
+        return self._data
 
 
 def _posix_cpu_limit_supported() -> bool:
@@ -209,6 +229,30 @@ class SandboxUnavailableTests(unittest.TestCase):
 
         self.assertEqual(caught.exception.reason, "worker_start_failed")
 
+    def test_a_start_failure_of_any_kind_is_unavailable(self) -> None:
+        """The bootstrapping RuntimeError of a caller with no __main__ guard."""
+
+        with mock.patch.object(
+            multiprocessing.context.SpawnProcess,
+            "start",
+            side_effect=RuntimeError("bootstrapping phase"),
+        ):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "worker_start_failed")
+
+    def test_a_pipe_that_cannot_be_made_is_unavailable(self) -> None:
+        with mock.patch.object(
+            multiprocessing.context.SpawnContext,
+            "Pipe",
+            side_effect=OSError("too many open files"),
+        ):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "worker_start_failed")
+
     def test_a_worker_that_dies_without_a_result_is_unavailable(self) -> None:
         with mock.patch.object(sandbox_module, "_worker_main", _exit_without_result):
             with self.assertRaises(SandboxUnavailable) as caught:
@@ -225,6 +269,20 @@ class SandboxUnavailableTests(unittest.TestCase):
                 run_code("6 * 7")
 
         self.assertEqual(caught.exception.reason, "limit_setup_failed")
+
+    def test_a_worker_that_reports_a_protocol_error_is_unavailable(self) -> None:
+        with mock.patch.object(sandbox_module, "_worker_main", _report_protocol_error):
+            with self.assertRaises(SandboxUnavailable) as caught:
+                run_code("6 * 7")
+
+        self.assertEqual(caught.exception.reason, "worker_protocol_error")
+
+    def test_a_payload_that_breaks_the_protocol_is_unavailable(self) -> None:
+        for data in (b"not json", b"[]", b'{"kind": "unknown"}'):
+            with self.subTest(data=data):
+                with self.assertRaises(SandboxUnavailable) as caught:
+                    _receive_payload(_BytesConnection(data), 16)
+                self.assertEqual(caught.exception.reason, "worker_protocol_error")
 
     def test_only_an_oversized_message_is_a_protocol_violation(self) -> None:
         with self.assertRaises(SandboxViolation) as caught:
