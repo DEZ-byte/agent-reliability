@@ -398,10 +398,6 @@ class ArtifactTests(unittest.TestCase):
             self._main(["base"], mock.Mock(return_value=HEAD))
         self.assertFalse(self.output.exists())
 
-    def test_a_path_inside_the_repository_is_recorded_relative_to_it(self) -> None:
-        inside = PROJECT_ROOT / "results" / "baseline-example.json"
-        self.assertEqual(failures.recorded_path(inside), "results/baseline-example.json")
-
 
 if __name__ == "__main__":
     unittest.main()

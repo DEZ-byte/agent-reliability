@@ -255,10 +255,14 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(
             payload["gates_breakdown"]["sha256"], self._sha(self.root / "phase_b-gates.json")
         )
+        # Files outside the repository are named by file name, not by an absolute path.
+        self.assertEqual(payload["gates_breakdown"]["artifact"], "phase_b-gates.json")
         self.assertEqual(list(payload["arms"]), ["base", "sft"])
         rows = make_rows()
         expected = templates.analyse_arm(rows, TASKS, make_summary(rows))
         for label, arm in payload["arms"].items():
+            self.assertEqual(arm["summary"], f"phase_b-{label}.json")
+            self.assertEqual(arm["episodes"], f"episodes-phase_b-{label}.jsonl")
             self.assertEqual(arm["episodes_sha256"], self._sha(episodes[label]))
             self.assertEqual(arm["summary_sha256"], self._sha(self.root / f"phase_b-{label}.json"))
             self.assertEqual(arm["by_template"], expected["by_template"])

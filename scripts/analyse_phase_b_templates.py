@@ -51,7 +51,7 @@ from env.phase_b import (  # noqa: E402
 from env.phase_b_tasks import load_split  # noqa: E402
 from evaluation.provenance import (  # noqa: E402
     DirtyWorktreeError,
-    portable_path,
+    recorded_path,
     require_clean_worktree,
 )
 from run_phase_b_eval import SPLIT_MANIFEST_PATH, PhaseBEvalError, summarise  # noqa: E402
@@ -152,7 +152,7 @@ def main() -> int:
         gates = json.loads(gates_bytes.decode("utf-8"))
         replayed = {label: arm["episodes_sha256"] for label, arm in gates["arms"].items()}
         gates_record = {
-            "artifact": portable_path(gates_file, PROJECT_ROOT),
+            "artifact": recorded_path(gates_file, PROJECT_ROOT),
             "sha256": hashlib.sha256(gates_bytes).hexdigest(),
         }
 
@@ -176,9 +176,9 @@ def main() -> int:
         ]
         tasks = load_split(SPLIT_MANIFEST_PATH, summary["split"])
         arms[label] = {
-            "summary": portable_path(summary_file, PROJECT_ROOT),
+            "summary": recorded_path(summary_file, PROJECT_ROOT),
             "summary_sha256": hashlib.sha256(summary_file.read_bytes()).hexdigest(),
-            "episodes": portable_path(episodes_file, PROJECT_ROOT),
+            "episodes": recorded_path(episodes_file, PROJECT_ROOT),
             "episodes_sha256": episodes_sha256,
             **analyse_arm(rows, tasks, summary),
         }

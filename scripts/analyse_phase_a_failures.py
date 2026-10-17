@@ -48,7 +48,11 @@ from agent.parser import parse_tool_calls  # noqa: E402
 from env.models import ToolEvent  # noqa: E402
 from env.phase_a import is_answering_event  # noqa: E402
 from evaluation.metrics import compute_pass_metrics  # noqa: E402
-from evaluation.provenance import portable_path, require_clean_worktree  # noqa: E402
+from evaluation.provenance import (  # noqa: E402
+    DirtyWorktreeError,
+    recorded_path,
+    require_clean_worktree,
+)
 
 SCHEMA_VERSION: Final = 1
 RUNGS: Final = ("R0", "R1")
@@ -279,18 +283,6 @@ def read_rows(path: Path) -> list[dict[str, Any]]:
     ]
 
 
-def recorded_path(path: Path) -> str:
-    """The repository-relative path, or the file name for a file outside the repository.
-
-    An absolute path names one machine. A file read from another checkout is
-    named by its file name, and its hash says which bytes were read.
-    """
-
-    if path.resolve().is_relative_to(PROJECT_ROOT.resolve()):
-        return portable_path(path, PROJECT_ROOT)
-    return path.name
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -318,9 +310,9 @@ def main() -> int:
         except FailureAnalysisError as error:
             raise FailureAnalysisError(f"{label}: {error}") from error
         arms[label] = {
-            "summary": recorded_path(summary_file),
+            "summary": recorded_path(summary_file, PROJECT_ROOT),
             "summary_sha256": hashlib.sha256(summary_file.read_bytes()).hexdigest(),
-            "episodes": recorded_path(episodes_file),
+            "episodes": recorded_path(episodes_file, PROJECT_ROOT),
             "episodes_sha256": hashlib.sha256(episodes_file.read_bytes()).hexdigest(),
             "candidate": candidate,
             "rungs": rungs,
@@ -351,6 +343,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except FailureAnalysisError as error:
+    except (FailureAnalysisError, DirtyWorktreeError) as error:
         print(f"refused: {error}", file=sys.stderr)
         raise SystemExit(1)
