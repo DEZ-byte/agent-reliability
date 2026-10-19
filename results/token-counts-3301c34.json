@@ -1,0 +1,393 @@
+{
+  "schema_version": 1,
+  "kind": "token_counts",
+  "created_at_utc": "2026-10-19T16:22:39.643369Z",
+  "source_commit": "3301c345bc27edef9c5279f0c7adbe057d071a43",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows",
+    "transformers": "5.5.0",
+    "tokenizers": "0.22.2"
+  },
+  "method": {
+    "recorded": "Counted at generation time: the length of each generate() call's new tokens, which includes the end-of-sequence token, summed over every decision.",
+    "rebuilt_from_logs": "Reconstructed after the fact, not counted at generation time. Each decoded completion in the episode log is re-tokenized with the model's pinned tokenizer, add_special_tokens=False, and counted as min(tokens + 1, max_new_tokens): decoding drops the end-of-sequence token, and a reply that hit the limit has none. At R1 the retry completion counts as its own decision.",
+    "validation": "Before anything is written, the rule is applied to every Qwen3-1.7B run that recorded its counts and has its episode log, and must give back each recorded rung total exactly. The rule is not applied to Llama-3.1-8B; rule_on_llama shows what it gives there, beside the recorded totals that are kept.",
+    "tokens_per_attempt": "tokens_total divided by episodes; one episode is one attempt.",
+    "cost": "tokens_per_attempt times the model's unique parameters in billions (rounded)."
+  },
+  "max_new_tokens": 256,
+  "parameters": {
+    "convention": "Each parameter is counted once. A model whose config ties the output head to the embedding holds one matrix for both, so a stored copy of the head is not counted again. stored counts every tensor in the safetensors files; unique drops that copy. rounded_billions is the constant cost uses.",
+    "models": {
+      "Qwen/Qwen3-1.7B": {
+        "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "rounded_billions": 1.72,
+        "stored": 2031739904,
+        "unique": 1720574976,
+        "tie_word_embeddings": true,
+        "head_stored_separately": true,
+        "checked_against_checkpoint": true
+      },
+      "Qwen/Qwen3-4B": {
+        "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+        "rounded_billions": 4.02,
+        "stored": 4022468096,
+        "unique": 4022468096,
+        "tie_word_embeddings": true,
+        "head_stored_separately": false,
+        "checked_against_checkpoint": true
+      },
+      "meta-llama/Llama-3.1-8B-Instruct": {
+        "revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+        "rounded_billions": 8.03,
+        "stored": 8030261248,
+        "unique": 8030261248,
+        "tie_word_embeddings": false,
+        "head_stored_separately": true,
+        "checked_against_checkpoint": true
+      }
+    }
+  },
+  "validation": {
+    "qwen": [
+      {
+        "label": "Qwen3-1.7B, SFT run 2 R0",
+        "summary": "sft-test-qwen3-1.7b-seed20260823-67488ea.json",
+        "rung": "R0",
+        "recorded": 21509,
+        "rebuilt": 21509,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT run 2 R1",
+        "summary": "sft-test-qwen3-1.7b-seed20260823-67488ea.json",
+        "rung": "R1",
+        "recorded": 22264,
+        "rebuilt": 22264,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT run 3 R0",
+        "summary": "sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
+        "rung": "R0",
+        "recorded": 21251,
+        "rebuilt": 21251,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT run 3 R1",
+        "summary": "sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
+        "rung": "R1",
+        "recorded": 21489,
+        "rebuilt": 21489,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT + GRPO, lr 1e-6 R0",
+        "summary": "grpo-test-qwen3-1.7b-f6138ee.json",
+        "rung": "R0",
+        "recorded": 21495,
+        "rebuilt": 21495,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT + GRPO, lr 1e-6 R1",
+        "summary": "grpo-test-qwen3-1.7b-f6138ee.json",
+        "rung": "R1",
+        "recorded": 22215,
+        "rebuilt": 22215,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT + GRPO, lr 1e-5 R0",
+        "summary": "grpo-test-lr1e5-ce5f2ca.json",
+        "rung": "R0",
+        "recorded": 21506,
+        "rebuilt": 21506,
+        "match": true
+      },
+      {
+        "label": "Qwen3-1.7B, SFT + GRPO, lr 1e-5 R1",
+        "summary": "grpo-test-lr1e5-ce5f2ca.json",
+        "rung": "R1",
+        "recorded": 21960,
+        "rebuilt": 21960,
+        "match": true
+      }
+    ],
+    "rule_on_llama": [
+      {
+        "label": "Llama-3.1-8B + retry R0",
+        "summary": "comparator-8b-2889b6d.json",
+        "rung": "R0",
+        "recorded": 17003,
+        "rebuilt": 16460,
+        "difference": -543
+      },
+      {
+        "label": "Llama-3.1-8B + retry R1",
+        "summary": "comparator-8b-2889b6d.json",
+        "rung": "R1",
+        "recorded": 17664,
+        "rebuilt": 17121,
+        "difference": -543
+      }
+    ]
+  },
+  "inputs": [
+    {
+      "file": "baseline-phase_a-3cc174f.json",
+      "sha256": "db617437172448572e3dd44b26d39fca8f6d507ac0d8494e277f1d17f2fa7c61"
+    },
+    {
+      "file": "comparator-8b-2889b6d.json",
+      "sha256": "7d9d3a56430535865885b973d18daac5fc3ff668d3abe9f08b7980a122f6b478"
+    },
+    {
+      "file": "episodes-comparator-8b-2889b6d.jsonl",
+      "sha256": "27974c96f06ec3c6fed180b5fcf202c7dd46617b932685511aee59c71f6f8a12"
+    },
+    {
+      "file": "episodes-grpo-test-lr1e5-ce5f2ca.jsonl",
+      "sha256": "e36314953cdb74215fe71daf7b7b314a00ac1ee446a8f690fde6a18773584d92"
+    },
+    {
+      "file": "episodes-grpo-test-qwen3-1.7b-f6138ee.jsonl",
+      "sha256": "4013a8545458b3c3724de4dcc852ebbb385accc36ccb5d1718411a9298529608"
+    },
+    {
+      "file": "episodes-phase_a-3cc174f.jsonl",
+      "sha256": "d2e37037b65732cdbcef7caae3b773fcd44df790e4dd80f2a7b5f1860d49e2b6"
+    },
+    {
+      "file": "episodes-sft-test-qwen3-1.7b-c16530e.jsonl",
+      "sha256": "9bdb155b81e653243c698a942f4f29c268193c9fc385629bf2f7c0b055f9d68a"
+    },
+    {
+      "file": "episodes-sft-test-qwen3-1.7b-seed20260823-67488ea.jsonl",
+      "sha256": "f6c44685d6983a19f538f2d653d379f1ce8cb04d9587490e980b8c8acf9171b2"
+    },
+    {
+      "file": "episodes-sft-test-qwen3-1.7b-seed20260824-51f16bf.jsonl",
+      "sha256": "43e9d8ff75b11d0cc4b34261451926ec6722ed656c8aa114c6c57b88dd8816d2"
+    },
+    {
+      "file": "grpo-test-lr1e5-ce5f2ca.json",
+      "sha256": "78916d1f1dd94d45179aeb32da29eb0b146d05a65c96721ad9c7aeec392efb7b"
+    },
+    {
+      "file": "grpo-test-qwen3-1.7b-f6138ee.json",
+      "sha256": "fd5db9787297ddb698e0697bd39a7764285f4e8f2f616a5610983824e3a7c90f"
+    },
+    {
+      "file": "sft-test-qwen3-1.7b-c16530e.json",
+      "sha256": "ee9a4d4e7fee3901690f27ae504da313a981a79bc24ae4025af1baacc753ffd5"
+    },
+    {
+      "file": "sft-test-qwen3-1.7b-seed20260823-67488ea.json",
+      "sha256": "fc2282819b486192609a3cf9bb0ecf659262cb6368dee74aa8df16edcbc35780"
+    },
+    {
+      "file": "sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
+      "sha256": "35844721f05fe817e9ad19b206fd269e3a560e3941d14c7d1636078fbe81e692"
+    }
+  ],
+  "rows": [
+    {
+      "row": "Qwen3-1.7B, untrained",
+      "model": "Qwen/Qwen3-1.7B",
+      "summary": "baseline-phase_a-3cc174f.json",
+      "unique_params_b": 1.72,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 45.93333333333333,
+          "tokens_total": 27560,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "rebuilt_from_logs",
+          "cost": 79.00533333333333
+        },
+        "R1": {
+          "tokens_per_attempt": 52.08166666666666,
+          "tokens_total": 31249,
+          "episodes": 600,
+          "decisions": 662,
+          "source": "rebuilt_from_logs",
+          "cost": 89.58046666666667
+        }
+      }
+    },
+    {
+      "row": "Llama-3.1-8B + retry",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "summary": "comparator-8b-2889b6d.json",
+      "unique_params_b": 8.03,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 28.338333333333335,
+          "tokens_total": 17003,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "recorded",
+          "cost": 227.55681666666666
+        },
+        "R1": {
+          "tokens_per_attempt": 29.44,
+          "tokens_total": 17664,
+          "episodes": 600,
+          "decisions": 623,
+          "source": "recorded",
+          "cost": 236.4032
+        }
+      }
+    },
+    {
+      "row": "Qwen3-1.7B, SFT run 1",
+      "model": "Qwen/Qwen3-1.7B",
+      "summary": "sft-test-qwen3-1.7b-c16530e.json",
+      "seed": 20260820,
+      "unique_params_b": 1.72,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 35.41166666666667,
+          "tokens_total": 21247,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "rebuilt_from_logs",
+          "cost": 60.90806666666667
+        },
+        "R1": {
+          "tokens_per_attempt": 36.208333333333336,
+          "tokens_total": 21725,
+          "episodes": 600,
+          "decisions": 612,
+          "source": "rebuilt_from_logs",
+          "cost": 62.278333333333336
+        }
+      }
+    },
+    {
+      "row": "Qwen3-1.7B, SFT run 2",
+      "model": "Qwen/Qwen3-1.7B",
+      "summary": "sft-test-qwen3-1.7b-seed20260823-67488ea.json",
+      "seed": 20260823,
+      "unique_params_b": 1.72,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 35.848333333333336,
+          "tokens_total": 21509,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "recorded",
+          "cost": 61.65913333333334
+        },
+        "R1": {
+          "tokens_per_attempt": 37.10666666666667,
+          "tokens_total": 22264,
+          "episodes": 600,
+          "decisions": 615,
+          "source": "recorded",
+          "cost": 63.82346666666667
+        }
+      }
+    },
+    {
+      "row": "Qwen3-1.7B, SFT run 3",
+      "model": "Qwen/Qwen3-1.7B",
+      "summary": "sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
+      "seed": 20260824,
+      "unique_params_b": 1.72,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 35.41833333333334,
+          "tokens_total": 21251,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "recorded",
+          "cost": 60.91953333333334
+        },
+        "R1": {
+          "tokens_per_attempt": 35.815,
+          "tokens_total": 21489,
+          "episodes": 600,
+          "decisions": 606,
+          "source": "recorded",
+          "cost": 61.6018
+        }
+      }
+    },
+    {
+      "row": "Qwen3-1.7B, SFT + GRPO, lr 1e-6",
+      "model": "Qwen/Qwen3-1.7B",
+      "summary": "grpo-test-qwen3-1.7b-f6138ee.json",
+      "unique_params_b": 1.72,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 35.825,
+          "tokens_total": 21495,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "recorded",
+          "cost": 61.61900000000001
+        },
+        "R1": {
+          "tokens_per_attempt": 37.025,
+          "tokens_total": 22215,
+          "episodes": 600,
+          "decisions": 611,
+          "source": "recorded",
+          "cost": 63.683
+        }
+      }
+    },
+    {
+      "row": "Qwen3-1.7B, SFT + GRPO, lr 1e-5",
+      "model": "Qwen/Qwen3-1.7B",
+      "summary": "grpo-test-lr1e5-ce5f2ca.json",
+      "unique_params_b": 1.72,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 35.843333333333334,
+          "tokens_total": 21506,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "recorded",
+          "cost": 61.650533333333335
+        },
+        "R1": {
+          "tokens_per_attempt": 36.6,
+          "tokens_total": 21960,
+          "episodes": 600,
+          "decisions": 611,
+          "source": "recorded",
+          "cost": 62.952
+        }
+      }
+    },
+    {
+      "row": "Qwen3-4B, untrained (the teacher)",
+      "model": "Qwen/Qwen3-4B",
+      "summary": "baseline-phase_a-3cc174f.json",
+      "unique_params_b": 4.02,
+      "rungs": {
+        "R0": {
+          "tokens_per_attempt": 35.255,
+          "tokens_total": 21153,
+          "episodes": 600,
+          "decisions": 600,
+          "source": "rebuilt_from_logs",
+          "cost": 141.7251
+        },
+        "R1": {
+          "tokens_per_attempt": 36.895,
+          "tokens_total": 22137,
+          "episodes": 600,
+          "decisions": 622,
+          "source": "rebuilt_from_logs",
+          "cost": 148.3179
+        }
+      }
+    }
+  ]
+}
