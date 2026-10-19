@@ -266,6 +266,12 @@
       "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
       "kind": "paired_arm_comparison"
     },
+    "token-counts-737f284.json": {
+      "sha256": "1234010fd451d41b7002593d19dd13aeb4b6becd8de238333bf0d6e733284c5e",
+      "bytes": 16570,
+      "recorded_in_commit": "dc17bdc01e30bbdb671b7d338e2e295f080832d6",
+      "kind": "token_counts"
+    },
     "utility-base-001023e.json": {
       "sha256": "375540da75ff5544b1058ac7b2b1409e75f939f00be4826490e51d241a5593bb",
       "bytes": 5974,
