@@ -56,6 +56,18 @@
       "recorded_in_commit": "cc1841ed8002ecb4428536c1ed922e02cf396edf",
       "kind": "grpo_run"
     },
+    "grpo-selection-lr1e5-cc1841e.json": {
+      "sha256": "8fba902d5e9a1fe049cba2e94e196e313e499165860ee5eff7dc30c9e0bd5d16",
+      "bytes": 2374,
+      "recorded_in_commit": "3301c345bc27edef9c5279f0c7adbe057d071a43",
+      "kind": "checkpoint_selection"
+    },
+    "grpo-selection-qwen3-1.7b-7be7eab.json": {
+      "sha256": "0b68f164ba13eb6cb1629ce4abf23f6631e75421c5b27987869a405ddd0eb302",
+      "bytes": 2318,
+      "recorded_in_commit": "3301c345bc27edef9c5279f0c7adbe057d071a43",
+      "kind": "checkpoint_selection"
+    },
     "grpo-test-lr1e5-ce5f2ca.json": {
       "sha256": "78916d1f1dd94d45179aeb32da29eb0b146d05a65c96721ad9c7aeec392efb7b",
       "bytes": 4203,
@@ -176,6 +188,24 @@
       "recorded_in_commit": "20a59c41825827400c643ff786bf267c4039c366",
       "kind": "sft_run"
     },
+    "sft-selection-qwen3-1.7b-72ff036.json": {
+      "sha256": "6ec248e14aaecd3e90c40d74d4cfb67aac11e48c20ab39ebe9529323b4c2659d",
+      "bytes": 1751,
+      "recorded_in_commit": "3301c345bc27edef9c5279f0c7adbe057d071a43",
+      "kind": "checkpoint_selection"
+    },
+    "sft-selection-qwen3-1.7b-seed20260823-0abb401.json": {
+      "sha256": "561640318ab330b265fb887f6f53b9d4bfd50235b14fdd9cafa416fa484b9479",
+      "bytes": 1848,
+      "recorded_in_commit": "3301c345bc27edef9c5279f0c7adbe057d071a43",
+      "kind": "checkpoint_selection"
+    },
+    "sft-selection-qwen3-1.7b-seed20260824-fbb9cd4.json": {
+      "sha256": "1d55393201f7086b983494bfd2bfa7f3bfa9712bf4438fa22545fabfd93dc95a",
+      "bytes": 1844,
+      "recorded_in_commit": "3301c345bc27edef9c5279f0c7adbe057d071a43",
+      "kind": "checkpoint_selection"
+    },
     "sft-test-qwen3-1.7b-c16530e.json": {
       "sha256": "ee9a4d4e7fee3901690f27ae504da313a981a79bc24ae4025af1baacc753ffd5",
       "bytes": 3347,
@@ -211,6 +241,12 @@
       "bytes": 6800,
       "recorded_in_commit": "07350b91a654c894c8facaaf5ede55756becdc7f",
       "kind": "paired_arm_comparison"
+    },
+    "token-counts-3301c34.json": {
+      "sha256": "1118d35e4c3b46b5cb6743ad0e3aff8a0b615ff7222058b53a4162868e96226b",
+      "bytes": 12515,
+      "recorded_in_commit": "a532461a79c7efc6c1c2014f2a995de649b99513",
+      "kind": "token_counts"
     },
     "utility-base-001023e.json": {
       "sha256": "375540da75ff5544b1058ac7b2b1409e75f939f00be4826490e51d241a5593bb",
