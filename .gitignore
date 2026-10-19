@@ -19,18 +19,3 @@ checkpoints/
 data/teacher/
 data/sft/
 results/**/*.jsonl
-
-# Working documents. These stay on the author's machine on purpose: they are
-# planning and protocol material, not the result.
-BLUEPRINT_v2.md
-DECISIONS.md
-PLAN.md
-HYPOTHESIS_PROTOCOL.md
-RUNG_PROTOCOL.md
-MODEL_SMOKE_PROTOCOL.md
-SELF_CORRECTION_SPEC.md
-RELATED_WORK.md
-notebooks/
-
-# Local drafts of write-ups that are not published yet.
-drafts/
