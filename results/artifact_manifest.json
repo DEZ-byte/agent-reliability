@@ -110,6 +110,30 @@
       "recorded_in_commit": "e2878c219a4e6a8ef89d7ab7136d07a0aca0caeb",
       "kind": "masking_verification"
     },
+    "order-support-modes-fc3bc97.json": {
+      "sha256": "45e05e4b447ce6cdaa774bc1758a0bc068c4803f0e161754d255a3da63745c4a",
+      "bytes": 25645,
+      "recorded_in_commit": "9e071d0497e066f6fde93b26f01f559727f410ae",
+      "kind": "order_support_mode_comparison"
+    },
+    "order-support-multiturn-base-3cacc39.json": {
+      "sha256": "18d7fda1cc773c7c1647a76d296f16078859fadb60985f212fe6279bcb7dee59",
+      "bytes": 3326,
+      "recorded_in_commit": "fc3bc97bb56edc9423e7f20e3267b49f3890f38e",
+      "kind": "order_support_multiturn_eval"
+    },
+    "order-support-multiturn-grpo-3cacc39.json": {
+      "sha256": "b018b9117e1b4157342a346964542f558a00c479653ffe0a765a11d739da31e4",
+      "bytes": 3475,
+      "recorded_in_commit": "fc3bc97bb56edc9423e7f20e3267b49f3890f38e",
+      "kind": "order_support_multiturn_eval"
+    },
+    "order-support-multiturn-sft-3cacc39.json": {
+      "sha256": "10f109fafa35045a0de6829a58007a898c747f04b23fd3abdee9830dac0a04df",
+      "bytes": 3386,
+      "recorded_in_commit": "fc3bc97bb56edc9423e7f20e3267b49f3890f38e",
+      "kind": "order_support_multiturn_eval"
+    },
     "phase_b-base-10f9d97.json": {
       "sha256": "8c7c08aa21bf96d8a3a0deaf3adfd90db333a65747d9f0d41f12755ac57d6fef",
       "bytes": 1591,
