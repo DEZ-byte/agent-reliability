@@ -1,13 +1,15 @@
 # Results
 
 The results in the [README](../README.md) come from the files in this folder.
-Nothing here is edited after it is written.
-`tests/test_docs_match_artifacts.py` checks the README's result numbers against
-these files and fails if they disagree.
+Files here are not edited in place. A file that has to change is retired and
+added again under a new manifest entry.
+`tests/test_docs_match_artifacts.py` rebuilds the README's tables and numbers
+from these files and fails if they disagree.
 
 `artifact_manifest.json` records a SHA-256, a byte length and the recording
 commit for every file. A test fails if a file changes, or if a file is missing
-from the index. A file that a later run replaced is removed only with
+from the index; `python scripts/analyze.py verify-manifest` runs the same
+check. A file that a later run replaced is removed only with
 `scripts/build_artifact_manifest.py --retire`, and Git history keeps it.
 
 | Files | What they hold |
@@ -26,22 +28,57 @@ from the index. A file that a later run replaced is removed only with
 | `weight-change-*.json` | How far GRPO moved the adapter from its SFT start |
 | `contamination-*.json` | The same tasks with no calculator, before and after training |
 | `utility-{base,sft,grpo}-*.json`, `utility-comparison-*.json` | MMLU with no tool offered, and the paired comparison question by question |
-| `phase_b-*.json` | Transfer to an order-support agent with three tools that were not in training, its gate failures, and a split by request template |
+| `phase_b-*.json` | Single-turn transfer to an order-support agent with three tools that were not in training, its gate failures, and a split by request template |
+| `token-counts-*.json` | Generated tokens and cost per attempt for every model row in the README, the parameter counts behind the cost, and a check of the token rule against every recorded count |
+| `order-support-multiturn-*.json` | The closed-loop multi-turn order-support run. No such run exists yet. |
 
 Episode logs (`*.jsonl`) hold one row per attempt. They are not in git. The
 logs these files rest on are attached to the
 [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0),
 with their SHA-256. `failure-modes-*.json`, `phase_b-gates-*.json`,
-`phase_b-templates-*.json` and `utility-comparison-*.json` record the SHA-256 of
-every log they read.
+`phase_b-templates-*.json`, `utility-comparison-*.json` and
+`token-counts-*.json` record the SHA-256 of every log they read.
 
-The two analysis files were made at commit `2f70608`, on a clean tree, with the
-release logs unpacked into `results/`. Only `created_at_utc` differs on a re-run.
-A new file makes the tree dirty, so move the first output aside before running
-the second command.
+## Commands
+
+Every frozen artifact was produced by a script under its old name, at the
+commit the artifact records. Those scripts now run as subcommands of four CLIs
+in `scripts/`. Each subcommand takes the same flags as the script it replaces;
+`order-support` adds `--mode` and `--max-turns`, and their defaults give the
+single-turn run.
+
+| Old script | Now |
+| :-- | :-- |
+| `generate_sft_trajectories.py` | `data.py generate-teacher` |
+| `build_sft_dataset.py` | `data.py build-sft` |
+| `build_phase_a_splits.py` | `data.py split-gsm8k` |
+| `build_phase_b_split.py` | `data.py split-order-support` |
+| `build_utility_split.py` | `data.py split-mmlu` |
+| `train_sft.py` | `train.py sft` |
+| `train_grpo.py` | `train.py grpo` |
+| `select_checkpoint.py` | `train.py select-checkpoint` |
+| `verify_masking.py` | `train.py verify-masking` |
+| `measure_weight_change.py` | `train.py weight-change` |
+| `run_phase_a_baseline.py` | `evaluate.py gsm8k` |
+| `run_phase_b_eval.py` | `evaluate.py order-support` |
+| `run_utility_eval.py` | `evaluate.py mmlu` |
+| `probe_contamination.py` | `evaluate.py contamination` |
+| `compare_arms.py` | `analyze.py compare-models` |
+| `compare_utility.py` | `analyze.py compare-mmlu` |
+| `analyse_phase_a_failures.py` | `analyze.py failure-taxonomy` |
+| `analyse_phase_b_gates.py` | `analyze.py order-support-gates` |
+| `analyse_phase_b_templates.py` | `analyze.py order-support-templates` |
+
+The two CPU analysis files were made at commit `2f70608` by the old scripts
+`analyse_phase_a_failures.py` and `analyse_phase_b_templates.py`, on a clean
+tree, with the release logs unpacked into `results/`. Re-running those scripts
+at `2f70608` changes only `created_at_utc`. The commands below are the current
+equivalents. They record the commit they run at as `source_commit`, so a run
+at a later commit also differs there. A new file makes the tree dirty, so move
+the first output aside before running the second command.
 
 ```bash
-python scripts/analyse_phase_a_failures.py --output results/failure-modes-2f70608.json \
+python scripts/analyze.py failure-taxonomy --output results/failure-modes-2f70608.json \
   --arm base-1.7b results/baseline-phase_a-3cc174f.json results/episodes-phase_a-3cc174f.jsonl Qwen/Qwen3-1.7B \
   --arm teacher-4b results/baseline-phase_a-3cc174f.json results/episodes-phase_a-3cc174f.jsonl Qwen/Qwen3-4B \
   --arm sft-run1 results/sft-test-qwen3-1.7b-c16530e.json results/episodes-sft-test-qwen3-1.7b-c16530e.jsonl Qwen/Qwen3-1.7B \
@@ -53,14 +90,35 @@ python scripts/analyse_phase_a_failures.py --output results/failure-modes-2f7060
 ```
 
 ```bash
-python scripts/analyse_phase_b_templates.py --output results/phase_b-templates-2f70608.json \
+python scripts/analyze.py order-support-templates --output results/phase_b-templates-2f70608.json \
   --gates results/phase_b-gates-8d5825b.json \
   --arm base results/phase_b-base-10f9d97.json results/episodes-phase_b-base-10f9d97.jsonl \
   --arm sft results/phase_b-sft-aa59330.json results/episodes-phase_b-sft-aa59330.jsonl \
   --arm grpo results/phase_b-grpo-42e347c.json results/episodes-phase_b-grpo-42e347c.jsonl
 ```
 
-Some older artifacts hold absolute paths from the machine that wrote them.
-Those files are frozen, so the paths stay. Read them as labels: the checkpoint
-name at the end of each path is the part that matters. Newer scripts record
-paths relative to the repository.
+The token counts need a clean tree, the cached tokenizers at their pinned
+revisions, and the release logs in `results/`. The figures in `assets/` are
+drawn from the frozen files and the token counts, and need matplotlib.
+
+```bash
+HF_HUB_OFFLINE=1 python scripts/analyze.py backfill-tokens
+python scripts/analyze.py plots
+```
+
+## Paths inside artifacts
+
+Five checkpoint-selection records,
+`sft-selection-qwen3-1.7b-72ff036.json`,
+`sft-selection-qwen3-1.7b-seed20260823-0abb401.json`,
+`sft-selection-qwen3-1.7b-seed20260824-fbb9cd4.json`,
+`grpo-selection-qwen3-1.7b-7be7eab.json` and
+`grpo-selection-lr1e5-cc1841e.json`, were retired and added again with their
+`artifact` fields changed from absolute local temporary paths to relative
+labels such as `selection\select-checkpoint-75.json`. No other byte changed,
+and Git history holds the original bytes.
+
+The SFT and GRPO run records still hold the absolute adapter directory of the
+machine that wrote them. Those files are frozen, so the paths stay. Read them
+as labels: the checkpoint name at the end of each path is the part that
+matters. Newer commands record paths relative to the repository.
