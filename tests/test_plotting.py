@@ -82,6 +82,58 @@ def copy_figure_one_inputs(root: Path) -> None:
             shutil.copy(RESULTS / spec["vs_llama"], root / spec["vs_llama"])
 
 
+def multi_turn_fixture(spec: dict, index: int) -> dict:
+    """A closed-loop summary with made-up rates, paired with a real single-turn run.
+
+    The rates differ from every single-turn rate, so reading the wrong file shows.
+    """
+
+    single = load(spec["file"])
+    completion, refusal = 0.25 + 0.1 * index, 0.6 - 0.1 * index
+    by_intent = {
+        "fulfil": {"episodes": single["by_intent"]["fulfil"]["episodes"],
+                   "correct_rate": completion},
+        "refuse": {"episodes": single["by_intent"]["refuse"]["episodes"],
+                   "correct_rate": refusal},
+    }
+    return {
+        "kind": plotting.MULTI_TURN_KIND,
+        "label": spec["multi_turn"],
+        "executed": True,
+        "model": dict(single["model"]),
+        "adapter": single["adapter"],
+        "weights_sha256": single["weights_sha256"],
+        "max_turns": 4,
+        "tasks": 150,
+        "runs_per_task": 4,
+        "episodes": single["episodes"],
+        "by_intent": by_intent,
+        "multi_turn": {
+            "clean_metrics": {"pass^1": 0.05 + 0.07 * index, "pass^4": 0.01 * index},
+            "by_intent": json.loads(json.dumps(by_intent)),
+            "mean_turns_used": 1.5 + 0.25 * index,
+        },
+    }
+
+
+def multi_turn_name(spec: dict) -> str:
+    return plotting.MULTI_TURN_GLOB.format(label=spec["multi_turn"]).replace("*", "abc1234")
+
+
+def write_order_support_inputs(root: Path) -> dict[str, dict]:
+    """Copy the single-turn inputs into `root` and write a multi-turn fixture per model."""
+
+    fixtures = {}
+    for index, spec in enumerate(plotting.ORDER_SUPPORT):
+        shutil.copy(RESULTS / spec["file"], root / spec["file"])
+        if spec["same_adapter_as"]:
+            shutil.copy(RESULTS / spec["same_adapter_as"], root / spec["same_adapter_as"])
+        fixtures[spec["key"]] = multi_turn_fixture(spec, index)
+        (root / multi_turn_name(spec)).write_text(json.dumps(fixtures[spec["key"]]),
+                                                  encoding="utf-8")
+    return fixtures
+
+
 class _TempDir(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -302,6 +354,106 @@ class TransferDataTests(_TempDir):
         with self.assertRaisesRegex(PlotError, "loaded an adapter"):
             plotting.order_support_data(self.root)
 
+    def test_multi_turn_rates_come_from_the_multi_turn_summaries(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        rows = plotting.multi_turn_order_support_data(self.root)["rows"]
+        self.assertEqual([row["key"] for row in rows],
+                         [spec["key"] for spec in plotting.ORDER_SUPPORT])
+        for spec, row in zip(plotting.ORDER_SUPPORT, rows):
+            loop = fixtures[spec["key"]]["multi_turn"]
+            with self.subTest(run=spec["key"]):
+                self.assertEqual(row["file"], multi_turn_name(spec))
+                fulfil, refuse = loop["by_intent"]["fulfil"], loop["by_intent"]["refuse"]
+                self.assertEqual(row["completion_rate"], fulfil["correct_rate"])
+                self.assertEqual(row["refusal_rate"], refuse["correct_rate"])
+                self.assertEqual(row["strict_pass1"], loop["clean_metrics"]["pass^1"])
+                self.assertEqual(row["mean_turns_used"], loop["mean_turns_used"])
+                self.assertEqual((row["tasks"], row["runs_per_task"], row["max_turns"]),
+                                 (150, 4, 4))
+
+    def test_the_single_turn_markers_use_the_single_turn_rates(self) -> None:
+        write_order_support_inputs(self.root)
+        rows = plotting.multi_turn_order_support_data(self.root)["rows"]
+        for spec, row in zip(plotting.ORDER_SUPPORT, rows):
+            stored = load(spec["file"])
+            with self.subTest(run=spec["key"]):
+                self.assertEqual(row["single_turn"]["file"], spec["file"])
+                self.assertEqual(row["single_turn"]["completion_rate"],
+                                 stored["by_intent"]["fulfil"]["correct_rate"])
+                self.assertEqual(row["single_turn"]["refusal_rate"],
+                                 stored["by_intent"]["refuse"]["correct_rate"])
+                self.assertEqual(row["single_turn"]["attempted_write_rate"],
+                                 stored["diagnostics"]["attempted_write_rate"])
+                self.assertNotEqual(row["single_turn"]["completion_rate"], row["completion_rate"])
+
+    def test_exactly_one_multi_turn_summary_per_model_is_required(self) -> None:
+        write_order_support_inputs(self.root)
+        spec = plotting.ORDER_SUPPORT[1]
+        extra = self.root / multi_turn_name(spec).replace("abc1234", "def5678")
+        shutil.copy(self.root / multi_turn_name(spec), extra)
+        with self.assertRaisesRegex(PlotError, "exactly one"):
+            plotting.multi_turn_order_support_data(self.root)
+        extra.unlink()
+        (self.root / multi_turn_name(spec)).unlink()
+        with self.assertRaisesRegex(PlotError, "found none"):
+            plotting.multi_turn_order_support_data(self.root)
+
+    def test_a_multi_turn_run_with_other_weights_is_refused(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        spec = plotting.ORDER_SUPPORT[2]
+        changed = fixtures[spec["key"]]
+        changed["weights_sha256"] = "0" * 64
+        self.write_json(multi_turn_name(spec), changed)
+        with self.assertRaisesRegex(PlotError, "same weights"):
+            plotting.multi_turn_order_support_data(self.root)
+
+    def test_an_untrained_multi_turn_run_on_another_base_revision_is_refused(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        spec = plotting.ORDER_SUPPORT[0]
+        self.assertIsNone(spec["same_adapter_as"])
+        changed = fixtures[spec["key"]]
+        self.assertIsNone(changed["weights_sha256"])
+        changed["model"]["revision"] = "0" * 40
+        self.write_json(multi_turn_name(spec), changed)
+        with self.assertRaisesRegex(PlotError, "same weights"):
+            plotting.multi_turn_order_support_data(self.root)
+
+    def test_a_summary_that_is_not_a_multi_turn_run_is_refused(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        spec = plotting.ORDER_SUPPORT[1]
+        for field, value in (("kind", "transfer_eval"), ("executed", False),
+                             ("model", {"id": "Qwen/Qwen3-8B"})):
+            with self.subTest(field=field):
+                self.write_json(multi_turn_name(spec), {**fixtures[spec["key"]], field: value})
+                with self.assertRaisesRegex(PlotError, "is not an executed multi-turn"):
+                    plotting.multi_turn_order_support_data(self.root)
+
+    def test_multi_turn_runs_that_scored_other_attempts_are_refused(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        # The same shift in every run, so only the single-turn pairing can catch it.
+        for spec in plotting.ORDER_SUPPORT:
+            changed = fixtures[spec["key"]]
+            changed["multi_turn"]["by_intent"]["fulfil"]["episodes"] -= 4
+            self.write_json(multi_turn_name(spec), changed)
+        with self.assertRaisesRegex(PlotError, "scored different attempts"):
+            plotting.multi_turn_order_support_data(self.root)
+
+    def test_the_turn_cap_comes_from_the_summaries(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        for spec in plotting.ORDER_SUPPORT:
+            self.write_json(multi_turn_name(spec), {**fixtures[spec["key"]], "max_turns": 3})
+        rows = plotting.multi_turn_order_support_data(self.root)["rows"]
+        self.assertEqual([row["max_turns"] for row in rows], [3, 3, 3])
+
+    def test_disagreeing_multi_turn_correct_rates_are_refused(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        spec = plotting.ORDER_SUPPORT[0]
+        changed = fixtures[spec["key"]]
+        changed["by_intent"]["refuse"]["correct_rate"] += 0.01
+        self.write_json(multi_turn_name(spec), changed)
+        with self.assertRaisesRegex(PlotError, "refuse correct rates disagree"):
+            plotting.multi_turn_order_support_data(self.root)
+
     def test_grpo_group_shares_match_group_health(self) -> None:
         data = plotting.grpo_groups_data(RESULTS)
         self.assertEqual(len(data["rows"]), len(plotting.GRPO_RUNS))
@@ -330,6 +482,12 @@ class TransferDataTests(_TempDir):
         self.assertEqual(plotting._learning_rate_label(1e-06), "lr 1e-6")
         self.assertEqual(plotting._learning_rate_label(1e-05), "lr 1e-5")
         self.assertEqual(plotting._learning_rate_label(2.5e-06), "lr 2.5e-6")
+
+    def test_turn_labels_drop_trailing_zeros(self) -> None:
+        self.assertEqual(plotting._turns(2.26), "2.26")
+        self.assertEqual(plotting._turns(1.095), "1.095")
+        self.assertEqual(plotting._turns(1.1233333333333333), "1.123")
+        self.assertEqual(plotting._turns(2.0), "2")
 
     def test_the_data_side_never_imports_matplotlib(self) -> None:
         path = self.write_json("token-counts-test.json", token_counts_fixture())
@@ -392,20 +550,46 @@ class DrawnValueTests(_TempDir):
         ]
         self.assertEqual(heights, expected)
 
-    def test_the_order_support_panel_draws_completion_then_refusal(self) -> None:
-        data = plotting.order_support_data(RESULTS)
+    def test_the_order_support_panel_draws_multi_turn_bars_and_single_turn_markers(self) -> None:
+        write_order_support_inputs(self.root)
+        data = plotting.multi_turn_order_support_data(self.root)
         self.draw(plotting._draw_order_support_panel, data)
         bars = [(round(p.get_x() + p.get_width() / 2), p.get_height()) for p in self.ax.patches]
         expected = [
             pair
             for row in data["rows"]
-            for pair in ((0, row["completion_rate"]), (1, row["refusal_rate"]))
+            for pair in ((0, row["completion_rate"]), (1, row["refusal_rate"]),
+                         (2, row["strict_pass1"]))
         ]
         self.assertEqual(bars, expected)
+        markers = [[float(y) for _, y in c.get_offsets()] for c in self.ax.collections]
+        self.assertEqual(markers, [
+            [row["single_turn"]["completion_rate"], row["single_turn"]["refusal_rate"]]
+            for row in data["rows"]
+        ])
         labels = [text.get_text() for text in self.ax.texts]
         for row in data["rows"]:
-            self.assertIn(f"{row['completion_rate']:.3f}", labels)
-            self.assertIn(f"{row['refusal_rate']:.3f}", labels)
+            for name in ("completion_rate", "refusal_rate", "strict_pass1"):
+                self.assertIn(f"{row[name]:.3f}", labels)
+        legend = [text.get_text() for text in self.ax.get_legend().get_texts()]
+        self.assertEqual(legend[:-1], [
+            f"{row['label']}, {plotting._turns(row['mean_turns_used'])} turns"
+            for row in data["rows"]
+        ])
+        self.assertEqual(self.ax.get_title(loc="left"),
+                         "Order-support transfer, multi-turn closed loop")
+
+    def test_the_order_support_note_names_the_recorded_turn_cap(self) -> None:
+        fixtures = write_order_support_inputs(self.root)
+        for spec in plotting.ORDER_SUPPORT:
+            self.write_json(multi_turn_name(spec), {**fixtures[spec["key"]], "max_turns": 3})
+        data = plotting.multi_turn_order_support_data(self.root)
+        self.draw(plotting._draw_order_support_panel, data)
+        notes = " ".join(text.get_text() for text in self.ax.texts)
+        self.assertIn("up to 3 turns per episode", notes)
+        self.assertNotIn("up to 4 turns", notes)
+        self.assertIn("its mean turns per episode", notes)
+        self.assertNotIn("replies per episode", notes)
 
     def test_the_failure_panel_stacks_the_failure_parts(self) -> None:
         data = plotting.failure_modes_data(RESULTS)

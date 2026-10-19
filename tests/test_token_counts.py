@@ -4,8 +4,9 @@ Three README rows have no recorded token counts, so the backfill command
 rebuilds them by re-tokenizing the logged completions. These tests pin the
 rule, the per-rung sums, the refusal when the rule does not reproduce a
 recorded total, the parameter count from safetensors headers, and the shape of
-the artifact. A whitespace tokenizer stands in for the real ones, so no model
-library is needed.
+the artifact. The multi-turn order-support runs get the same rule summed over
+turns, with prompt counts read from what the evaluation recorded. A whitespace
+tokenizer stands in for the real ones, so no model library is needed.
 """
 
 from __future__ import annotations
@@ -26,12 +27,14 @@ from commands import backfill_tokens  # noqa: E402
 from evaluation.provenance import DirtyWorktreeError  # noqa: E402
 from evaluation.token_counts import (  # noqa: E402
     UNIQUE_PARAMS_B,
+    MultiTurnCount,
     RungCount,
     TokenCountError,
     check_rounded,
     cost,
     decision_tokens,
     parameter_counts,
+    rebuild_multiturn,
     rebuild_rung,
     recorded_rung,
     validate,
@@ -42,6 +45,7 @@ TEACHER = "Qwen/Qwen3-4B"
 LLAMA = "meta-llama/Llama-3.1-8B-Instruct"
 HEAD = "c0ffee" * 6 + "c0ff"
 LIMIT = 256
+TURN_LIMIT = 384
 
 
 def encode(text: str) -> list[str]:
@@ -97,6 +101,45 @@ def summary(rows: list[dict], candidates: list[str], *, record: bool) -> dict:
             }
             for candidate in candidates
         ],
+    }
+
+
+def turn_row(task: int, run: int, completions: list[str], prompts: list[int]) -> dict:
+    return {
+        "task_id": f"orders:test:{task}",
+        "run_index": run,
+        "completions": completions,
+        "prompt_tokens_per_turn": prompts,
+        "turns_used": len(completions),
+    }
+
+
+def turn_episodes() -> list[dict]:
+    """Three episodes, six turns; one turn runs past the 384-token cap.
+
+    Generated: (4 + 2) + 3 + (384 + 2 + 3) = 398. Prompt: 220 + 90 + 1120 = 1430.
+    """
+
+    return [
+        turn_row(0, 0, ["one two three", "four"], [100, 120]),
+        turn_row(0, 1, ["a b"], [90]),
+        turn_row(1, 0, [" ".join(["x"] * 400), "done", "ok fine"], [100, 500, 520]),
+    ]
+
+
+def turn_summary(rows: list[dict], label: str, limit: int | None = TURN_LIMIT) -> dict:
+    histogram: dict[str, int] = {}
+    for r in rows:
+        histogram[str(r["turns_used"])] = histogram.get(str(r["turns_used"]), 0) + 1
+    rollout = {} if limit is None else {"max_new_tokens": limit}
+    return {
+        "executed": True,
+        "mode": "multi_turn",
+        "label": label,
+        "model": {"id": SMALL},
+        "episodes": len(rows),
+        "rollout": rollout,
+        "multi_turn": {"turns_used": histogram},
     }
 
 
@@ -183,6 +226,58 @@ class ValidationTests(unittest.TestCase):
             validate([])
 
 
+class MultiTurnTests(unittest.TestCase):
+    def _rebuild(self, rows: list[dict]) -> MultiTurnCount:
+        return rebuild_multiturn(rows, encode=encode, max_new_tokens=TURN_LIMIT)
+
+    def test_every_turn_of_every_episode_is_summed(self) -> None:
+        count = self._rebuild(turn_episodes())
+        self.assertEqual(
+            count,
+            MultiTurnCount(
+                episodes=3, turns=6, generated_total=398, prompt_total=1430, turns_at_cap=1
+            ),
+        )
+        self.assertAlmostEqual(count.generated_per_episode, 398 / 3)
+        self.assertAlmostEqual(count.generated_per_turn, 398 / 6)
+        self.assertAlmostEqual(count.prompt_per_episode, 1430 / 3)
+        self.assertAlmostEqual(count.prompt_per_turn, 1430 / 6)
+
+    def test_turns_are_capped_at_384(self) -> None:
+        def words(n: int) -> str:
+            return " ".join(["x"] * n)
+
+        self.assertEqual(decision_tokens(words(382), encode, TURN_LIMIT), 383)
+        self.assertEqual(decision_tokens(words(383), encode, TURN_LIMIT), 384)
+        self.assertEqual(decision_tokens(words(500), encode, TURN_LIMIT), 384)
+        rows = [turn_row(0, 0, [words(382), words(383), words(500)], [10, 20, 30])]
+        count = self._rebuild(rows)
+        self.assertEqual((count.generated_total, count.turns_at_cap), (383 + 384 + 384, 2))
+
+    def test_prompt_tokens_come_from_the_recorded_field(self) -> None:
+        # The prompt totals ignore the completion text and sum what was logged.
+        rows = turn_episodes()
+        for r in rows:
+            r["completions"] = ["a much longer reply than before"] * r["turns_used"]
+        count = self._rebuild(rows)
+        self.assertEqual(count.prompt_total, 1430)
+        self.assertEqual(count.generated_total, 6 * 7)
+
+    def test_a_row_whose_turn_records_disagree_is_refused(self) -> None:
+        rows = turn_episodes()
+        rows[0]["prompt_tokens_per_turn"] = [100]
+        with self.assertRaisesRegex(TokenCountError, "2 completions, 1 prompt lengths and 2 turns"):
+            self._rebuild(rows)
+        rows = turn_episodes()
+        rows[1]["turns_used"] = 2
+        with self.assertRaisesRegex(TokenCountError, "orders:test:0 run 1"):
+            self._rebuild(rows)
+
+    def test_an_empty_log_is_refused(self) -> None:
+        with self.assertRaisesRegex(TokenCountError, "no episodes"):
+            self._rebuild([])
+
+
 class ParameterTests(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -233,6 +328,14 @@ class CommandTests(unittest.TestCase):
         {"row": "teacher", "model": TEACHER, "summary": "base.json",
          "episodes": "episodes-base.jsonl", "source": backfill_tokens.REBUILT},
     )
+    MULTITURN = (
+        {"label": "base", "row": "small, untrained", "summary": "mt-base.json",
+         "episodes": "episodes-mt-base.jsonl"},
+        {"label": "sft", "row": "small, SFT run 2", "summary": "mt-sft.json",
+         "episodes": "episodes-mt-sft.jsonl"},
+    )
+    GSM8K_INPUTS = {"base.json", "sft.json", "llama.json",
+                    "episodes-base.jsonl", "episodes-sft.jsonl", "episodes-llama.jsonl"}
 
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -248,11 +351,19 @@ class CommandTests(unittest.TestCase):
             stored["generated_tokens_total"] += 4
             stored["generated_tokens_per_episode"] = stored["generated_tokens_total"] / 4
         (self.results / "llama.json").write_text(json.dumps(llama), encoding="utf-8")
+        # The SFT multi-turn log drops the last episode's final turn: 5 turns, 395 tokens.
+        sft_turns = turn_episodes()
+        last = sft_turns[-1]
+        last.update(completions=last["completions"][:2], prompt_tokens_per_turn=[100, 500],
+                    turns_used=2)
+        self._write_turns("mt-base", turn_episodes(), "base")
+        self._write_turns("mt-sft", sft_turns, "sft")
 
         self.encoders: list[str] = []
         self.guard = mock.Mock(return_value=HEAD)
         patches = [
             mock.patch.object(backfill_tokens, "ROWS", self.ROWS),
+            mock.patch.object(backfill_tokens, "MULTITURN", self.MULTITURN),
             mock.patch.object(backfill_tokens, "RESULTS_DIR", self.results),
             mock.patch.object(backfill_tokens, "require_clean_worktree", self.guard),
             mock.patch.object(backfill_tokens, "load_encoder", self._load_encoder),
@@ -272,6 +383,14 @@ class CommandTests(unittest.TestCase):
         )
         (self.results / f"{name}.json").write_text(
             json.dumps(summary(rows, candidates, record=record)), encoding="utf-8"
+        )
+
+    def _write_turns(self, name: str, rows: list[dict], label: str, **summary_args) -> None:
+        (self.results / f"episodes-{name}.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
+        )
+        (self.results / f"{name}.json").write_text(
+            json.dumps(turn_summary(rows, label, **summary_args)), encoding="utf-8"
         )
 
     def _load_encoder(self, model: str, revision: str):
@@ -318,11 +437,115 @@ class CommandTests(unittest.TestCase):
         self.assertTrue(all(c["match"] for c in checks))
         self.assertEqual(
             {entry["file"] for entry in artifact["inputs"]},
-            {"base.json", "sft.json", "llama.json",
-             "episodes-base.jsonl", "episodes-sft.jsonl", "episodes-llama.jsonl"},
+            self.GSM8K_INPUTS
+            | {"mt-base.json", "mt-sft.json", "episodes-mt-base.jsonl", "episodes-mt-sft.jsonl"},
         )
         self.assertFalse(artifact["parameters"]["models"][SMALL]["checked_against_checkpoint"])
         self.assertEqual(sorted(set(self.encoders)), sorted({SMALL, TEACHER, LLAMA}))
+
+    def test_the_multiturn_section_has_one_entry_per_label(self) -> None:
+        artifact = self._artifact()
+        section = artifact["order_support_multiturn"]
+        self.assertEqual(list(section), ["base", "sft"])
+        base, sft = section["base"], section["sft"]
+        self.assertEqual(
+            {k: base[k] for k in ("row", "model", "summary", "log", "max_new_tokens",
+                                  "episodes", "turns", "unique_params_b")},
+            {"row": "small, untrained", "model": SMALL, "summary": "mt-base.json",
+             "log": "episodes-mt-base.jsonl", "max_new_tokens": 384, "episodes": 3,
+             "turns": 6, "unique_params_b": 1.72},
+        )
+        self.assertEqual(
+            {k: base["generated"][k] for k in ("tokens_total", "turns_at_cap", "source")},
+            {"tokens_total": 398, "turns_at_cap": 1, "source": "rebuilt_from_logs"},
+        )
+        self.assertAlmostEqual(base["generated"]["tokens_per_episode"], 398 / 3)
+        self.assertAlmostEqual(base["generated"]["tokens_per_turn"], 398 / 6)
+        self.assertEqual(
+            {k: base["prompt"][k] for k in ("tokens_total", "source")},
+            {"tokens_total": 1430, "source": "recorded"},
+        )
+        self.assertAlmostEqual(base["prompt"]["tokens_per_episode"], 1430 / 3)
+        self.assertAlmostEqual(base["prompt"]["tokens_per_turn"], 1430 / 6)
+        self.assertAlmostEqual(base["cost"], 398 / 3 * 1.72)
+        self.assertEqual((sft["turns"], sft["generated"]["tokens_total"]), (5, 395))
+        self.assertEqual(sft["prompt"]["tokens_total"], 910)
+        self.assertIn("order_support_multiturn", artifact["method"])
+        self.assertIn("GSM8K only, at a 256-token cap", artifact["method"]["validation"])
+
+    def test_the_gsm8k_part_does_not_change(self) -> None:
+        full = self._artifact()
+        with mock.patch.object(backfill_tokens, "MULTITURN", ()):
+            alone = self._artifact()
+        self.assertEqual(alone["order_support_multiturn"], {})
+        for key in ("max_new_tokens", "parameters", "validation", "rows"):
+            self.assertEqual(full[key], alone[key], key)
+        gsm8k = [entry for entry in full["inputs"] if entry["file"] in self.GSM8K_INPUTS]
+        self.assertEqual(gsm8k, alone["inputs"])
+
+    def test_a_flag_that_differs_from_the_multiturn_cap_is_refused(self) -> None:
+        with self.assertRaisesRegex(
+            backfill_tokens.BackfillError, "mt-base.json ran with max_new_tokens=384, not 256"
+        ):
+            backfill_tokens.main(["--order-support-max-new-tokens", "256"])
+        self.assertEqual(list(self.results.glob("token-counts-*")), [])
+
+    def test_a_multiturn_summary_with_no_cap_is_refused(self) -> None:
+        self._write_turns("mt-sft", turn_episodes(), "sft", limit=None)
+        with self.assertRaisesRegex(
+            backfill_tokens.BackfillError, "mt-sft.json records no max_new_tokens"
+        ):
+            backfill_tokens.main([])
+        self.assertEqual(list(self.results.glob("token-counts-*")), [])
+
+    def test_a_multiturn_log_short_of_its_summary_is_refused(self) -> None:
+        summary = turn_summary(turn_episodes(), "base")
+        (self.results / "mt-base.json").write_text(json.dumps(summary), encoding="utf-8")
+        rows = turn_episodes()[:2]
+        (self.results / "episodes-mt-base.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
+        )
+        with self.assertRaisesRegex(
+            backfill_tokens.BackfillError,
+            "the log gives 2 episodes and 3 turns, the summary 3 and 6",
+        ):
+            backfill_tokens.main([])
+        self.assertEqual(list(self.results.glob("token-counts-*")), [])
+
+    def test_a_multiturn_log_with_a_turn_missing_is_refused(self) -> None:
+        summary = turn_summary(turn_episodes(), "base")
+        (self.results / "mt-base.json").write_text(json.dumps(summary), encoding="utf-8")
+        rows = turn_episodes()
+        # Same episode count; the last episode loses its third turn, and the row
+        # stays consistent with itself so only the summary check can catch it.
+        last = rows[-1]
+        last["completions"] = last["completions"][:2]
+        last["prompt_tokens_per_turn"] = last["prompt_tokens_per_turn"][:2]
+        last["turns_used"] = 2
+        (self.results / "episodes-mt-base.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
+        )
+        with self.assertRaisesRegex(
+            backfill_tokens.BackfillError,
+            "the log gives 3 episodes and 5 turns, the summary 3 and 6",
+        ):
+            backfill_tokens.main([])
+        self.assertEqual(list(self.results.glob("token-counts-*")), [])
+
+    def test_a_multiturn_summary_with_another_label_is_refused(self) -> None:
+        self._write_turns("mt-sft", turn_episodes(), "grpo")
+        with self.assertRaisesRegex(backfill_tokens.BackfillError, "labeled grpo, not sft"):
+            backfill_tokens.main([])
+
+    def test_a_multiturn_summary_from_another_model_is_refused(self) -> None:
+        summary = turn_summary(turn_episodes(), "sft")
+        summary["model"] = {"id": TEACHER}
+        (self.results / "mt-sft.json").write_text(json.dumps(summary), encoding="utf-8")
+        with self.assertRaisesRegex(
+            backfill_tokens.BackfillError, re.escape(f"mt-sft.json ran {TEACHER}, not {SMALL}")
+        ):
+            backfill_tokens.main([])
+        self.assertEqual(list(self.results.glob("token-counts-*")), [])
 
     def test_the_artifact_holds_no_absolute_path(self) -> None:
         text = json.dumps(self._artifact())
@@ -408,6 +631,17 @@ class RealRowsTests(unittest.TestCase):
         self.assertEqual(len(validated), 4)
         self.assertEqual(sorted(r["seed"] for r in rows if "seed" in r),
                          [20260820, 20260823, 20260824])
+
+    def test_the_multiturn_runs_are_base_sft_and_grpo(self) -> None:
+        specs = backfill_tokens.MULTITURN
+        self.assertEqual([s["label"] for s in specs], ["base", "sft", "grpo"])
+        for spec in specs:
+            name = f"order-support-multiturn-{spec['label']}-3cacc39.json"
+            self.assertEqual(spec["summary"], name)
+            self.assertEqual(spec["episodes"], f"episodes-{spec['summary']}l")
+        readme_rows = {r["row"] for r in backfill_tokens.ROWS}
+        self.assertTrue({s["row"] for s in specs} <= readme_rows)
+        self.assertEqual(backfill_tokens.MULTITURN_MODEL, SMALL)
 
 
 if __name__ == "__main__":

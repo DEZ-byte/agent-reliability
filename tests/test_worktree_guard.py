@@ -52,6 +52,7 @@ GUARDED = {
     "failure_taxonomy.py",
     "generate_teacher.py",
     "order_support_gates.py",
+    "order_support_modes.py",
     "order_support_templates.py",
     "probe_contamination.py",
     "select_checkpoint.py",

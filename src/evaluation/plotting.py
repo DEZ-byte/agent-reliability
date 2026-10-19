@@ -140,13 +140,15 @@ FAILURE_ARMS: Final = {
 }
 
 # The order-support runs, and the GSM8K summary whose adapter each one must
-# have loaded. The untrained run loads no adapter.
+# have loaded. The untrained run loads no adapter. `file` is the single-turn
+# run; `multi_turn` is the label of the closed-loop run, found by glob.
 ORDER_SUPPORT: Final = (
     {
         "key": "untrained",
         "label": "Qwen3-1.7B untrained",
         "family": "untrained",
         "file": "phase_b-base-10f9d97.json",
+        "multi_turn": "base",
         "same_adapter_as": None,
     },
     {
@@ -154,6 +156,7 @@ ORDER_SUPPORT: Final = (
         "label": "SFT run 3",
         "family": "sft",
         "file": "phase_b-sft-aa59330.json",
+        "multi_turn": "sft",
         "same_adapter_as": "sft-test-qwen3-1.7b-seed20260824-51f16bf.json",
     },
     {
@@ -161,9 +164,12 @@ ORDER_SUPPORT: Final = (
         "label": "SFT + GRPO, lr 1e-6",
         "family": "grpo",
         "file": "phase_b-grpo-42e347c.json",
+        "multi_turn": "grpo",
         "same_adapter_as": "grpo-test-qwen3-1.7b-f6138ee.json",
     },
 )
+MULTI_TURN_GLOB: Final = "order-support-multiturn-{label}-*.json"
+MULTI_TURN_KIND: Final = "order_support_multiturn_eval"
 
 GRPO_RUNS: Final = (
     "grpo-run-qwen3-1.7b-a498a7b.json",
@@ -412,7 +418,7 @@ def failure_modes_data(results_dir: Path, rung: str = "R0") -> dict[str, Any]:
 
 
 def order_support_data(results_dir: Path) -> dict[str, Any]:
-    """Completion and correct-refusal rates on the order-support test split."""
+    """Single-turn completion and correct-refusal rates on the order-support test split."""
 
     rows: list[dict[str, Any]] = []
     for spec in ORDER_SUPPORT:
@@ -441,6 +447,86 @@ def order_support_data(results_dir: Path) -> dict[str, Any]:
             "attempted_write_rate": data["diagnostics"]["attempted_write_rate"],
             "episodes": data["episodes"],
         })
+    return {"rows": rows}
+
+
+def find_multi_turn(results_dir: Path, label: str) -> Path:
+    """The one closed-loop order-support summary for a label."""
+
+    pattern = MULTI_TURN_GLOB.format(label=label)
+    found = sorted(results_dir.glob(pattern))
+    if len(found) != 1:
+        names = ", ".join(path.name for path in found) or "none"
+        raise PlotError(f"expected exactly one {pattern} in {results_dir.name}/, found {names}")
+    return found[0]
+
+
+def multi_turn_order_support_data(results_dir: Path) -> dict[str, Any]:
+    """Closed-loop order-support rates, with the same models' single-turn rates.
+
+    Each multi-turn run must have loaded the same weights as the single-turn
+    run it is paired with, which `order_support_data` has already tied to the
+    GSM8K test of that adapter.
+    """
+
+    single = {row["key"]: row for row in order_support_data(results_dir)["rows"]}
+    rows: list[dict[str, Any]] = []
+    for spec in ORDER_SUPPORT:
+        path = find_multi_turn(results_dir, spec["multi_turn"])
+        data = read_json(path)
+        if (data.get("kind") != MULTI_TURN_KIND or data.get("executed") is not True
+                or data.get("model", {}).get("id") != QWEN_SMALL):
+            raise PlotError(f"{path.name} is not an executed multi-turn {QWEN_SMALL} run")
+        paired = read_json(results_dir / spec["file"])
+        # The untrained runs record no weights hash, so the base revision is
+        # what ties them together.
+        if (data.get("weights_sha256") != paired.get("weights_sha256")
+                or (data.get("adapter") is None) != (paired.get("adapter") is None)
+                or data["model"].get("revision") != paired.get("model", {}).get("revision")):
+            raise PlotError(f"{path.name} did not load the same weights as {spec['file']}")
+        loop = data["multi_turn"]
+        fulfil, refuse = loop["by_intent"]["fulfil"], loop["by_intent"]["refuse"]
+        # The top-level by_intent is the field the single-turn panel reads; the
+        # two must agree, so the open and closed loop are graded the same way.
+        for intent, entry in (("fulfil", fulfil), ("refuse", refuse)):
+            if not _same(entry["correct_rate"], data["by_intent"][intent]["correct_rate"]):
+                raise PlotError(f"{path.name}: the two {intent} correct rates disagree")
+        before = single[spec["key"]]
+        rows.append({
+            "key": spec["key"],
+            "label": spec["label"],
+            "color": COLORS[spec["family"]],
+            "file": path.name,
+            "completion_rate": fulfil["correct_rate"],
+            "completion_episodes": fulfil["episodes"],
+            "refusal_rate": refuse["correct_rate"],
+            "refusal_episodes": refuse["episodes"],
+            "strict_pass1": loop["clean_metrics"]["pass^1"],
+            "mean_turns_used": loop["mean_turns_used"],
+            "max_turns": data["max_turns"],
+            "tasks": data["tasks"],
+            "runs_per_task": data["runs_per_task"],
+            "episodes": data["episodes"],
+            "single_turn": {
+                "file": before["file"],
+                "completion_rate": before["completion_rate"],
+                "refusal_rate": before["refusal_rate"],
+                "completion_episodes": before["completion_episodes"],
+                "refusal_episodes": before["refusal_episodes"],
+                "attempted_write_rate": before["attempted_write_rate"],
+                "episodes": before["episodes"],
+            },
+        })
+    for field in ("completion_episodes", "refusal_episodes", "tasks", "runs_per_task",
+                  "max_turns"):
+        if len({row[field] for row in rows}) != 1:
+            raise PlotError(f"the multi-turn order-support runs differ in {field}")
+    for row in rows:
+        before = row["single_turn"]
+        if (before["completion_episodes"], before["refusal_episodes"]) != (
+            row["completion_episodes"], row["refusal_episodes"]
+        ):
+            raise PlotError(f"{row['file']} and {before['file']} scored different attempts")
     return {"rows": rows}
 
 
@@ -478,7 +564,7 @@ def grpo_groups_data(results_dir: Path) -> dict[str, Any]:
 def transfer_data(results_dir: Path) -> dict[str, Any]:
     return {
         "failure_modes": failure_modes_data(results_dir),
-        "order_support": order_support_data(results_dir),
+        "order_support": multi_turn_order_support_data(results_dir),
         "grpo_groups": grpo_groups_data(results_dir),
     }
 
@@ -718,8 +804,8 @@ def _draw_cost_panel(ax, data: Mapping[str, Any]) -> None:
 def render_transfer(data: Mapping[str, Any], path: Path) -> None:
     plt = _pyplot()
     with plt.rc_context(STYLE):
-        fig, axes = plt.subplots(1, 3, figsize=(16, 5),
-                                 gridspec_kw={"width_ratios": [1.45, 1.1, 0.75], "wspace": 0.3})
+        fig, axes = plt.subplots(1, 3, figsize=(17.5, 5),
+                                 gridspec_kw={"width_ratios": [1.45, 1.45, 0.75], "wspace": 0.3})
         try:
             _draw_failure_panel(axes[0], data["failure_modes"])
             _draw_order_support_panel(axes[1], data["order_support"])
@@ -763,57 +849,75 @@ def _draw_failure_panel(ax, data: Mapping[str, Any]) -> None:
               columnspacing=1.0)
 
 
-def _engaged(row: Mapping[str, Any]) -> str:
-    """The engaged share of refusal attempts, with the count when it is a whole number."""
+def _turns(value: float) -> str:
+    """Mean turns with up to three decimals and no trailing zeros."""
 
-    rate, episodes = row["refusal_engaged_rate"], row["refusal_episodes"]
-    share = f"{100 * rate:.1f}%"
-    count = rate * episodes
-    if abs(count - round(count)) < 1e-6:
-        return f"{share} of them ({round(count)} of {episodes})"
-    return f"{share} of them"
+    return f"{value:.3f}".rstrip("0").rstrip(".")
+
+
+# The single-turn rate of the same model, drawn on its multi-turn bar.
+SINGLE_TURN_MARKER: Final = {"marker": "D", "s": 20, "color": "white", "edgecolor": INK,
+                             "linewidth": 0.9, "zorder": 5, "clip_on": False}
 
 
 def _draw_order_support_panel(ax, data: Mapping[str, Any]) -> None:
     rows = data["rows"]
     width = 0.26
+    first = rows[0]
     for i, row in enumerate(rows):
         offset = (i - (len(rows) - 1) / 2) * width
-        for x, value in ((0, row["completion_rate"]), (1, row["refusal_rate"])):
+        bars = ((0, row["completion_rate"]), (1, row["refusal_rate"]), (2, row["strict_pass1"]))
+        for x, value in bars:
             ax.bar(x + offset, value, width * 0.9, color=row["color"], linewidth=0, zorder=2,
-                   label=row["label"] if x == 0 else None)
-            ax.text(x + offset, value + 0.015, f"{value:.3f}", ha="center", va="bottom",
-                    fontsize=7.6, color=INK)
-    completable = {row["completion_episodes"] for row in rows}
-    refusals = {row["refusal_episodes"] for row in rows}
-    if len(completable) != 1 or len(refusals) != 1:
-        raise PlotError("the order-support runs scored different numbers of attempts")
-    ax.set_xticks([0, 1])
+                   label=f"{row['label']}, {_turns(row['mean_turns_used'])} turns"
+                   if x == 0 else None)
+            ax.text(x + offset, value + 0.03, f"{value:.3f}", ha="center", va="bottom",
+                    fontsize=7.4, color=INK)
+        before = row["single_turn"]
+        ax.scatter([offset, 1 + offset], [before["completion_rate"], before["refusal_rate"]],
+                   **SINGLE_TURN_MARKER)
+    ax.set_xticks([0, 1, 2])
     ax.set_xticklabels([
-        f"completable requests:\ncompleted\n({completable.pop()} attempts)",
-        f"refusal-required requests:\ncorrectly refused\n({refusals.pop()} attempts)",
-    ])
-    ax.set_xlim(-0.6, 1.6)
-    ax.set_ylim(0, 1.22)
+        f"completable requests:\ncompleted\n({first['completion_episodes']} attempts)",
+        f"refusal-required requests:\ncorrectly refused\n({first['refusal_episodes']} attempts)",
+        f"all requests:\nstrict pass^1\n"
+        f"({first['tasks']} tasks \u00d7 {first['runs_per_task']} runs)",
+    ], fontsize=8)
+    ax.set_xlim(-0.55, 2.55)
+    ax.set_ylim(0, 1.4)
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_ylabel("rate")
     _grid(ax)
-    ax.set_title("Order-support transfer (single-turn)", pad=8)
+    ax.set_title("Order-support transfer, multi-turn closed loop", pad=8)
     _panel_letter(ax, "B")
-    ax.legend(loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.0), handlelength=0.9,
-              columnspacing=0.7, handletextpad=0.4, fontsize=7.6)
+
+    from matplotlib.lines import Line2D
+
+    handles, _ = ax.get_legend_handles_labels()
+    handles.append(Line2D([], [], linestyle="none", marker=SINGLE_TURN_MARKER["marker"],
+                          markersize=5, markerfacecolor="white", markeredgecolor=INK,
+                          markeredgewidth=0.9, label="same model, single-turn"))
+    ax.legend(handles=handles, loc="upper left", ncol=1, bbox_to_anchor=(0.0, 1.0),
+              handlelength=0.9, columnspacing=1.0, handletextpad=0.4, fontsize=7.4)
+
+    notes = [
+        f"Bars: tool results fed back, up to {first['max_turns']} turns per episode.\n"
+        "The number after each model in the legend is its mean turns per episode.\n"
+        "Diamonds: the same model with one reply and no tool results fed back.\n"
+        "Strict pass^1: the order ends in the requested state, no tool rule was broken\n"
+        "and at least one call ran.",
+    ]
     # A refusal is graded on the order being unchanged, so a run that never
     # writes scores 1.000 on refusals whatever else it did. Say so on the panel.
-    notes = [
-        f"The {row['label']} run wrote in none of its {row['episodes']} attempts, so\n"
-        f"every refusal-required attempt counts as refused. A non-write tool call\n"
-        f"ran without error in {_engaged(row)}."
+    notes += [
+        f"In its single-turn run, {row['label']} wrote in none of its "
+        f"{row['single_turn']['episodes']} attempts, so its\nsingle-turn refusal rate counts "
+        "every refusal-required attempt as refused."
         for row in rows
-        if row["attempted_write_rate"] == 0
+        if row["single_turn"]["attempted_write_rate"] == 0
     ]
-    if notes:
-        ax.text(0.0, -0.25, "\n".join(notes), transform=ax.transAxes, fontsize=7.3, color=MUTED,
-                va="top", ha="left", linespacing=1.35)
+    ax.text(0.0, -0.19, "\n".join(notes), transform=ax.transAxes, fontsize=7.3, color=MUTED,
+            va="top", ha="left", linespacing=1.35)
 
 
 def _draw_grpo_panel(ax, data: Mapping[str, Any]) -> None:

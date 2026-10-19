@@ -33,6 +33,7 @@ CPU_COMMANDS = (
     "failure_taxonomy",
     "order_support_gates",
     "order_support_templates",
+    "order_support_modes",
     "backfill_tokens",
     "plots",
 )

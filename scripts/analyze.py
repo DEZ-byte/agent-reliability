@@ -9,6 +9,7 @@ Subcommands:
   failure-taxonomy         classify every failed GSM8K test attempt by how it failed
   order-support-gates      split the order-support gate violations by gate
   order-support-templates  split the order-support results by request template
+  order-support-modes      pair single-turn and multi-turn order support task by task
   backfill-tokens          record token counts for existing episode logs
   plots                    draw the figures from the frozen results
   verify-manifest          check that results/ still matches its manifest
@@ -67,6 +68,10 @@ COMMANDS = {
     "order-support-templates": (
         "order_support_templates",
         "split the order-support results by request template",
+    ),
+    "order-support-modes": (
+        "order_support_modes",
+        "pair single-turn and multi-turn order support task by task",
     ),
     "backfill-tokens": ("backfill_tokens", "record token counts for existing episode logs"),
     "plots": ("plots", "draw the figures from the frozen results"),

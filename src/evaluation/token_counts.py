@@ -10,6 +10,10 @@ Decoding drops the end-of-sequence token, so it is added back, and a reply that
 hit the limit stopped without one. The rule is only trusted after it gives
 back every token total the evaluation recorded for the same tokenizer.
 
+The multi-turn order-support evaluation records each turn's prompt length but
+not the tokens it generated. Its generated counts come from the same rule,
+summed over every turn of an episode; its prompt counts are the recorded ones.
+
 Nothing here imports a tokenizer library. The caller passes `encode`.
 """
 
@@ -92,6 +96,71 @@ def rebuild_rung(
     if episodes == 0:
         raise TokenCountError(f"the log holds no {rung} rows for {candidate}")
     return RungCount(episodes=episodes, decisions=decisions, tokens_total=total)
+
+
+@dataclass(frozen=True)
+class MultiTurnCount:
+    """Generated and prompt tokens over one multi-turn log. Each turn is one decision."""
+
+    episodes: int
+    turns: int
+    generated_total: int
+    prompt_total: int
+    turns_at_cap: int
+
+    @property
+    def generated_per_episode(self) -> float:
+        return self.generated_total / self.episodes
+
+    @property
+    def generated_per_turn(self) -> float:
+        return self.generated_total / self.turns
+
+    @property
+    def prompt_per_episode(self) -> float:
+        return self.prompt_total / self.episodes
+
+    @property
+    def prompt_per_turn(self) -> float:
+        return self.prompt_total / self.turns
+
+
+def rebuild_multiturn(
+    rows: Iterable[Mapping[str, Any]], *, encode: Encode, max_new_tokens: int
+) -> MultiTurnCount:
+    """Sum the rule over every turn of every episode, and the recorded prompt lengths.
+
+    A row holds one completion and one recorded prompt length per turn. A row
+    whose completions, prompt lengths and `turns_used` disagree is refused.
+    `turns_at_cap` counts turns whose count equals the cap.
+    """
+
+    episodes = turns = generated = prompt = capped = 0
+    for row in rows:
+        completions = row["completions"]
+        prompts = row["prompt_tokens_per_turn"]
+        if not len(completions) == len(prompts) == row["turns_used"]:
+            raise TokenCountError(
+                f"{row['task_id']} run {row['run_index']}: {len(completions)} completions, "
+                f"{len(prompts)} prompt lengths and {row['turns_used']} turns used"
+            )
+        episodes += 1
+        turns += len(completions)
+        prompt += sum(prompts)
+        for text in completions:
+            count = decision_tokens(text, encode, max_new_tokens)
+            generated += count
+            if count == max_new_tokens:
+                capped += 1
+    if episodes == 0:
+        raise TokenCountError("the multi-turn log holds no episodes")
+    return MultiTurnCount(
+        episodes=episodes,
+        turns=turns,
+        generated_total=generated,
+        prompt_total=prompt,
+        turns_at_cap=capped,
+    )
 
 
 def recorded_rung(stored: Mapping[str, Any]) -> RungCount | None:

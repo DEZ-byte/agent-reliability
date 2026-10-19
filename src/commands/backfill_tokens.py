@@ -1,4 +1,4 @@
-"""Record generated-token counts and cost for every model row in the README.
+"""Record token counts and cost for every GSM8K row, plus multi-turn token counts.
 
 The GSM8K evaluation counts generated tokens as it generates. Three rows ran
 before that code existed: the untrained Qwen3-1.7B, the untrained Qwen3-4B and
@@ -10,6 +10,12 @@ checked first. Applied to the four Qwen3-1.7B runs that did record their
 counts, it must give back all eight recorded rung totals exactly, or nothing is
 written. The rule is not applied to Llama-3.1-8B, whose recorded counts are
 kept; the artifact shows what the rule would have given for it.
+
+The multi-turn order-support runs (untrained, SFT run 3, SFT + GRPO) recorded
+each turn's prompt length but not the tokens each turn generated. The same rule
+rebuilds those, summed over every turn of an episode, at the cap the summary
+records for that evaluation. The rule was validated only on GSM8K at its
+256-token cap; there are no recorded multi-turn totals to check it against.
 
 Cost is tokens per attempt times unique parameters in billions. The parameter
 constants are checked against the safetensors headers of the pinned snapshots
@@ -40,12 +46,14 @@ from evaluation.provenance import (  # noqa: E402
 from evaluation.token_counts import (  # noqa: E402
     UNIQUE_PARAMS_B,
     Encode,
+    MultiTurnCount,
     RungCount,
     TokenCountError,
     check_rounded,
     check_rung,
     cost,
     parameter_counts,
+    rebuild_multiturn,
     rebuild_rung,
     recorded_rung,
     validate,
@@ -126,6 +134,30 @@ ROWS: Final = (
     },
 )
 
+# The multi-turn order-support runs, one per checkpoint, all on Qwen3-1.7B.
+# Each log holds one model only, so its rows carry no candidate field.
+MULTITURN: Final = (
+    {
+        "label": "base",
+        "row": "Qwen3-1.7B, untrained",
+        "summary": "order-support-multiturn-base-3cacc39.json",
+        "episodes": "episodes-order-support-multiturn-base-3cacc39.jsonl",
+    },
+    {
+        "label": "sft",
+        "row": "Qwen3-1.7B, SFT run 3",
+        "summary": "order-support-multiturn-sft-3cacc39.json",
+        "episodes": "episodes-order-support-multiturn-sft-3cacc39.jsonl",
+    },
+    {
+        "label": "grpo",
+        "row": "Qwen3-1.7B, SFT + GRPO, lr 1e-6",
+        "summary": "order-support-multiturn-grpo-3cacc39.json",
+        "episodes": "episodes-order-support-multiturn-grpo-3cacc39.jsonl",
+    },
+)
+MULTITURN_MODEL: Final = QWEN_SMALL
+
 METHOD: Final = {
     RECORDED: (
         "Counted at generation time: the length of each generate() call's new "
@@ -137,16 +169,29 @@ METHOD: Final = {
         "tokenizer, add_special_tokens=False, and counted as "
         "min(tokens + 1, max_new_tokens): decoding drops the end-of-sequence token, "
         "and a reply that hit the limit has none. At R1 the retry completion counts "
-        "as its own decision."
+        "as its own decision. In the multi-turn order-support runs each turn is one "
+        "decision, and max_new_tokens is the cap that evaluation's summary records."
     ),
     "validation": (
         "Before anything is written, the rule is applied to every Qwen3-1.7B run "
         "that recorded its counts and has its episode log, and must give back each "
         "recorded rung total exactly. The rule is not applied to Llama-3.1-8B; "
-        "rule_on_llama shows what it gives there, beside the recorded totals that are kept."
+        "rule_on_llama shows what it gives there, beside the recorded totals that are kept. "
+        "This check covers GSM8K only, at a 256-token cap. The order-support "
+        "multi-turn counts apply the same rule at that evaluation's own cap, and no "
+        "recorded generated totals exist there to check them against."
     ),
     "tokens_per_attempt": "tokens_total divided by episodes; one episode is one attempt.",
     "cost": "tokens_per_attempt times the model's unique parameters in billions (rounded).",
+    "order_support_multiturn": (
+        "generated is rebuilt from the logs with the rule above, summed over every "
+        "turn of an episode. prompt is recorded: the prompt (prefill) length of "
+        "each turn's generate() call, logged as prompt_tokens_per_turn, summed the "
+        "same way. Each turn's prompt holds the whole conversation so far. "
+        "turns_at_cap counts turns whose rebuilt count equals the cap: the "
+        "replies that used the whole budget. cost is generated tokens per episode times "
+        "unique parameters in billions."
+    ),
 }
 
 PARAMETER_CONVENTION: Final = (
@@ -250,7 +295,72 @@ def rung_entry(count: RungCount, source: str, params_b: float) -> dict[str, Any]
     }
 
 
-def build(episodes_dir: Path, max_new_tokens: int) -> dict[str, Any]:
+def multiturn_limit(summary: dict[str, Any], name: str, expected: int) -> int:
+    """The per-turn cap a multi-turn summary records; refuse a missing or other value."""
+
+    limit = summary.get("rollout", {}).get("max_new_tokens")
+    if limit is None:
+        raise BackfillError(f"{name} records no max_new_tokens")
+    if limit != expected:
+        raise BackfillError(f"{name} ran with max_new_tokens={limit}, not {expected}")
+    return int(limit)
+
+
+def check_multiturn(
+    count: MultiTurnCount, summary: dict[str, Any], spec: dict[str, Any]
+) -> None:
+    """Refuse a log that does not match its summary's label, model, episodes or turns."""
+
+    name = spec["summary"]
+    if summary.get("executed") is not True or summary.get("mode") != "multi_turn":
+        raise BackfillError(f"{name} is not an executed multi-turn run")
+    if summary.get("label") != spec["label"]:
+        raise BackfillError(f"{name} is labeled {summary.get('label')}, not {spec['label']}")
+    model = summary.get("model", {}).get("id")
+    if model != MULTITURN_MODEL:
+        raise BackfillError(f"{name} ran {model}, not {MULTITURN_MODEL}")
+    histogram = summary["multi_turn"]["turns_used"]
+    turns = sum(int(used) * n for used, n in histogram.items())
+    expected = (summary.get("episodes"), turns)
+    if (count.episodes, count.turns) != expected:
+        raise BackfillError(
+            f"{name}: the log gives {count.episodes} episodes and {count.turns} turns, "
+            f"the summary {expected[0]} and {expected[1]}"
+        )
+
+
+def multiturn_entry(
+    spec: dict[str, Any], count: MultiTurnCount, limit: int, params_b: float
+) -> dict[str, Any]:
+    return {
+        "row": spec["row"],
+        "model": MULTITURN_MODEL,
+        "summary": spec["summary"],
+        "log": spec["episodes"],
+        "max_new_tokens": limit,
+        "episodes": count.episodes,
+        "turns": count.turns,
+        "generated": {
+            "tokens_total": count.generated_total,
+            "tokens_per_episode": count.generated_per_episode,
+            "tokens_per_turn": count.generated_per_turn,
+            "turns_at_cap": count.turns_at_cap,
+            "source": REBUILT,
+        },
+        "prompt": {
+            "tokens_total": count.prompt_total,
+            "tokens_per_episode": count.prompt_per_episode,
+            "tokens_per_turn": count.prompt_per_turn,
+            "source": RECORDED,
+        },
+        "unique_params_b": params_b,
+        "cost": cost(count.generated_per_episode, params_b),
+    }
+
+
+def build(
+    episodes_dir: Path, max_new_tokens: int, order_support_max_new_tokens: int = 384
+) -> dict[str, Any]:
     """Validate the rule, then count every row. Returns the artifact body."""
 
     summaries: dict[str, dict[str, Any]] = {}
@@ -340,12 +450,28 @@ def build(episodes_dir: Path, max_new_tokens: int) -> dict[str, Any]:
             row["seed"] = spec["seed"]
         rows.append({**row, "unique_params_b": params_b, "rungs": rungs})
 
+    # 3. The multi-turn order-support runs: generated rebuilt, prompt recorded.
+    multiturn: dict[str, Any] = {}
+    for spec in MULTITURN:
+        path = RESULTS_DIR / spec["summary"]
+        stored = read_json(path)
+        inputs[spec["summary"]] = hashlib.sha256(path.read_bytes()).hexdigest()
+        limit = multiturn_limit(stored, spec["summary"], order_support_max_new_tokens)
+        count = rebuild_multiturn(
+            log(spec["episodes"]), encode=encoder(MULTITURN_MODEL), max_new_tokens=limit
+        )
+        check_multiturn(count, stored, spec)
+        multiturn[spec["label"]] = multiturn_entry(
+            spec, count, limit, UNIQUE_PARAMS_B[MULTITURN_MODEL]
+        )
+
     return {
         "max_new_tokens": max_new_tokens,
         "parameters": params,
         "validation": {"qwen": checks, "rule_on_llama": llama},
         "inputs": [{"file": name, "sha256": inputs[name]} for name in sorted(inputs)],
         "rows": rows,
+        "order_support_multiturn": multiturn,
     }
 
 
@@ -369,13 +495,20 @@ def main(argv: list[str] | None = None) -> int:
         "--max-new-tokens",
         type=int,
         default=256,
-        help="the generation cap the evaluations used; every summary read must "
-        "record this value (default: 256)",
+        help="the generation cap the GSM8K evaluations used; every GSM8K summary "
+        "read must record this value (default: 256)",
+    )
+    parser.add_argument(
+        "--order-support-max-new-tokens",
+        type=int,
+        default=384,
+        help="the per-turn generation cap of the multi-turn order-support runs; "
+        "every multi-turn summary must record this value (default: 384)",
     )
     args = parser.parse_args(argv)
 
     source_commit = require_clean_worktree(PROJECT_ROOT)
-    body = build(args.episodes_dir, args.max_new_tokens)
+    body = build(args.episodes_dir, args.max_new_tokens, args.order_support_max_new_tokens)
     payload = {
         "schema_version": SCHEMA_VERSION,
         "kind": "token_counts",
@@ -405,6 +538,14 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"{row['row']}: R0 {r0['tokens_per_attempt']:.2f}, R1 {r1['tokens_per_attempt']:.2f} "
             f"tokens/attempt ({r1['source']}), R1 cost {r1['cost']:.1f}"
+        )
+    for label, entry in body["order_support_multiturn"].items():
+        generated, prompt = entry["generated"], entry["prompt"]
+        print(
+            f"order support, multi-turn, {label}: {entry['turns']} turns, "
+            f"{generated['tokens_per_episode']:.2f} generated/episode ({generated['source']}), "
+            f"{prompt['tokens_per_episode']:.2f} prompt/episode ({prompt['source']}), "
+            f"cost {entry['cost']:.1f}"
         )
     print(f"wrote {path.name}")
     return 0

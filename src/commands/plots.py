@@ -4,11 +4,12 @@ assets/reliability_cost_pareto.png: pass@4, pass^1 and pass^4 per model on
 GSM8K tool use at R1, and pass^4 against the cost of one attempt.
 
 assets/failure_and_transfer_breakdown.png: how the GSM8K attempts failed, the
-order-support transfer rates, and the share of GRPO groups with no reward
-variance.
+multi-turn order-support rates next to the same models' single-turn rates,
+and the share of GRPO groups with no reward variance.
 
 Every number is read from results/ and from the token-counts artifact, which
-is found by glob unless --token-counts names it. The figures are not results
+is found by glob unless --token-counts names it. The multi-turn order-support
+summaries are found by glob too, one per model. The figures are not results
 themselves, so this command writes no provenance and runs on any tree. Needs
 matplotlib.
 """
