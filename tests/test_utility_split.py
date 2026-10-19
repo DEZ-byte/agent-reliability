@@ -9,7 +9,7 @@ the score moves with the subject mix rather than with anything training did.
 If the hashes are not checked, an upstream edit changes what "the same
 questions" means without anything saying so. And if these questions ever
 overlapped with something the project trains on, the number would measure
-memorisation instead of retention.
+memorization instead of retention.
 
 The loader itself is not exercised here, because it downloads the dataset.
 What is checked is the manifest that pins it.

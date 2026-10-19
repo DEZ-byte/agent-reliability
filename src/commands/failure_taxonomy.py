@@ -1,21 +1,21 @@
 """Classify every failed GSM8K test attempt by how it failed.
 
 The GSM8K artifacts report how often a model answers correctly. They do not
-say why the other attempts fail, and until now those counts lived only in the
+say why the other attempts fail, and those counts otherwise live only in the
 git-ignored episode logs. This writes them into one artifact.
 
 Each failed episode falls into exactly one class:
 
-- **No call, or an unparsed one.** The completion produced no tool event. This
-  is split into replies with no `<tool_call>` tag at all, and tagged replies
-  that do not parse into a valid call.
-- **A call that failed to run.** A call was parsed, but none of its events was
-  a calculator call that returned a number: a schema error, an unknown tool, or
+- No call, or an unparsed one. The completion produced no tool event. This is
+  split into replies with no `<tool_call>` tag at all, and tagged replies that
+  do not parse into a valid call.
+- A call that failed to run. A call was parsed, but none of its events was a
+  calculator call that returned a number: a schema error, an unknown tool, or
   an expression the sandbox rejected.
-- **A wrong value.** A calculator call ran and returned the wrong number.
+- A wrong value. A calculator call ran and returned the wrong number.
 
 At R1, an attempt that gives no answer gets one retry that sees the failure.
-An R1 episode is classed by its last decision. The retries are also counted on
+An R1 episode is classified by its last decision. The retries are also counted on
 their own: how many fired, how many ended correct, how many ended with a wrong
 number, and how many still gave no answer.
 
@@ -107,6 +107,8 @@ METHOD: Final = {
     "rescued": "A fired retry that ended correct.",
     "answered_wrong": "A fired retry that ended with a calculator value that is wrong.",
     "still_no_answer": "A fired retry that ended with no calculator value.",
+    # The old function name below matches the frozen failure-modes-2f70608.json
+    # artifact; the function is now agent.dialects.normalize_tool_dialect.
     "checks": (
         "Each completion is re-parsed with agent.parser.parse_tool_calls, after "
         "agent.dialects.normalise_tool_dialect only when the summary records "
@@ -288,7 +290,9 @@ def read_rows(path: Path) -> list[dict[str, Any]]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--arm",
         nargs=4,

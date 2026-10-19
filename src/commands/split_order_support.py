@@ -23,7 +23,9 @@ DEFAULT_OUTPUT: Final = PROJECT_ROOT / "configs" / "splits" / "phase_b_orders.js
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--seed", type=int, default=GENERATOR_SEED)
     args = parser.parse_args(argv)

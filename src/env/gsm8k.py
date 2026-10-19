@@ -7,7 +7,7 @@ benchmark called "GSM8K-Tool".
 The point of the wrapper is the grading rule. A model that writes the right
 number in prose scores nothing. Accuracy comes from a tool call that actually
 executed in the sandbox and returned the right value, which is what section 7.0
-means by execution-backed accuracy, and what makes a memorised answer worthless.
+means by execution-backed accuracy, and what makes a memorized answer worthless.
 """
 
 from __future__ import annotations

@@ -1,27 +1,22 @@
-"""Measure what fine-tuning cost outside the task it was fine-tuned for.
+"""Measure MMLU accuracy and tool-call rate after GSM8K tool training.
 
-Every result this project has published was measured on GSM8K with a
-calculator, which is the task the model was trained on. That answers whether
-training worked and says nothing about what it broke. This runs the same
-checkpoints over 400 held-out general-knowledge questions with no tool in
-sight, and reports two numbers.
+Every other result here is measured on GSM8K with a calculator, the task the
+model was trained on. This runs the same checkpoints over 400 held-out
+general-knowledge questions with no tool offered, and reports two numbers.
 
-Accuracy is the obvious one: does the model still know things.
+Accuracy shows whether the model still answers general-knowledge questions.
 
-The tool-call rate is the one worth watching. Every training example was a
-single tool call, so the pressure to emit one on anything question-shaped is
-real, and this benchmark offers no tools at all. A `<tool_call>` block here is
-a habit that has escaped its context. A model can hold its accuracy and still
-become unusable outside its training task, and folding the two together would
-hide exactly that.
+The tool-call rate is reported too. Every training example was one tool call,
+so a `<tool_call>` block on an MMLU question shows that format leaking outside
+the training task. A model can keep its accuracy and still do this, so the two
+numbers are reported separately.
 
-Decoded greedily, one pass per question. This asks what the model knows rather
-than how reliably it answers, so `pass^k` is the wrong instrument and sampling
-four times would cost four times as much to answer a question nobody asked.
+Decoded greedily, one pass per question. This measures what the model knows
+rather than how consistently it answers, so `pass^k` does not apply, and
+sampling four times would cost four times as much.
 
-No tools are passed to the chat template, deliberately. Handing the model a
-tool block and then counting tool calls would measure obedience; withholding it
-measures habit.
+No tools are passed to the chat template. Offering a tool block would invite
+tool calls; leaving it out shows whether the model writes them unprompted.
 """
 
 from __future__ import annotations
@@ -128,7 +123,9 @@ def by_subject(rows: list[dict[str, Any]]) -> dict[str, dict[str, float]]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--model", required=True)
     parser.add_argument("--adapter", default=None)
     parser.add_argument("--label", required=True)

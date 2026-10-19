@@ -1,4 +1,7 @@
-"""Analyze recorded results on the CPU. No model is loaded.
+"""Analyze recorded results on the CPU.
+
+No model weights are loaded. backfill-tokens needs transformers and the cached
+pinned tokenizers, and plots needs matplotlib.
 
 Subcommands:
   compare-models           pair two models' episode logs: bootstrap interval, then tests
@@ -28,11 +31,26 @@ from commands.cli import run  # noqa: E402
 PROG = "analyze.py"
 
 
+VERIFY_MANIFEST_HELP = """usage: analyze.py verify-manifest
+
+Check that every result artifact matches its SHA-256 and byte length in
+results/artifact_manifest.json, and that no file is missing from it. Takes no
+options. To retire a replaced file, run
+`python scripts/build_artifact_manifest.py --retire NAME` directly."""
+
+
 def verify_manifest(argv: list[str]) -> int:
     """Run the manifest check in its own process and pass its exit code on."""
 
+    if argv in (["-h"], ["--help"]):
+        print(VERIFY_MANIFEST_HELP)
+        return 0
+    if argv:
+        print(VERIFY_MANIFEST_HELP, file=sys.stderr)
+        print(f"analyze.py verify-manifest: takes no options, got {' '.join(argv)}", file=sys.stderr)
+        return 2
     script = PROJECT_ROOT / "scripts" / "build_artifact_manifest.py"
-    return subprocess.run([sys.executable, str(script), "--check", *argv], check=False).returncode
+    return subprocess.run([sys.executable, str(script), "--check"], check=False).returncode
 
 
 COMMANDS = {
@@ -57,7 +75,13 @@ COMMANDS = {
 
 
 def main(argv: list[str] | None = None) -> int:
-    return run(PROG, "Analyze recorded results on the CPU. No model is loaded.", COMMANDS, argv)
+    return run(
+        PROG,
+        "Analyze recorded results on the CPU. No model weights are loaded; "
+        "backfill-tokens needs the cached tokenizers and plots needs matplotlib.",
+        COMMANDS,
+        argv,
+    )
 
 
 if __name__ == "__main__":

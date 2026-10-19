@@ -1,31 +1,30 @@
 """Measure how far GRPO moved the policy away from the SFT checkpoint it started from.
 
 The two GRPO runs differ tenfold in learning rate, and comparing them only
-makes sense if the weights really moved further at the higher rate. Those
-figures were first computed by hand and recorded nowhere a reader could check.
+makes sense if the weights moved further at the higher rate. Those figures
+were first computed by hand and recorded nowhere a reader could check.
 
-This recomputes them from the adapters on disk and writes an artifact, so the
-number is reproducible from files anyone can hash.
+This recomputes them from the adapters on disk and writes an artifact.
 
-Two quantities, because for LoRA they answer different questions.
+The command reports two quantities, because for LoRA they answer different
+questions.
 
-The adapter-parameter change is the plain one: how much did the numbers in the
-adapter file move, relative to their own size. It is easy to state and easy to
-check.
+The adapter-parameter change is the plain one: how much the numbers in the
+adapter file moved, relative to their own size.
 
-The effective-delta change is the one that matters to the model. A LoRA adapter
-does not act through A and B separately; it acts through the product, scaled by
-alpha over r. Two adapters can differ substantially in their factors while
-producing nearly the same delta, or barely differ while producing a different
-one, so the product is computed per module and compared directly.
+The effective-delta change measures what the model computes. A LoRA adapter
+acts through the product of A and B, scaled by alpha over r, not through A and
+B separately. Two adapters can differ a lot in their factors while producing
+nearly the same delta, or differ little while producing a different one, so
+the product is computed per module and compared directly.
 
-Both are reported. Where they disagree, the effective delta is the honest
-answer to "did the policy change", and the parameter change is the honest
-answer to "did training touch anything".
+Both are reported. Where they disagree, the effective delta shows whether the
+policy changed, and the parameter change shows whether training moved the
+adapter at all.
 
-Compare the checkpoints that were actually evaluated. The first artifact this
-script wrote compared the final step-400 adapters, while the test results came
-from the dev-selected checkpoint-200 and checkpoint-300. The script refuses a
+Pass the checkpoints that were evaluated on test. The first artifact this
+command wrote compared the final step-400 adapters, while the test results came
+from the dev-selected checkpoint-200 and checkpoint-300. The command refuses a
 dirty tree and records repository-relative paths.
 """
 
@@ -150,7 +149,9 @@ def compare(before: Path, after: Path) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--before", required=True, type=Path, help="SFT checkpoint")
     parser.add_argument(
         "--after",

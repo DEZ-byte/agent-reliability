@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import sys
 import tempfile
 import unittest
@@ -159,7 +158,7 @@ class SelectionRecordTests(unittest.TestCase):
         self.assertEqual([c[:3] for c in commands], [[sys.executable, runner_script, "gsm8k"]] * 2)
         self.assertEqual(
             [c["artifact"] for c in record["candidates"]],
-            [os.path.join("scratch", f"select-{name}.json") for name in weights],
+            ["scratch/select-checkpoint-100.json", "scratch/select-checkpoint-200.json"],
         )
 
 

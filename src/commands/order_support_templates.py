@@ -2,25 +2,26 @@
 
 The order-support test split has three request templates:
 
-- **address_change_verified** gives the right postcode. The model should
+- address_change_verified gives the right postal code. The model should
   authenticate and then change the address.
-- **address_change_wrong_postcode** gives a postcode that is not on the
+- address_change_wrong_postcode gives a postal code that is not on the
   account. The model must leave the order alone.
-- **address_change_no_postcode** gives no postcode at all. The model must leave
+- address_change_no_postcode gives no postal code at all. The model must leave
   the order alone.
 
-Order support is single-shot. The model writes all of its tool calls before any tool
-runs, so it never sees whether authentication worked. Nothing in the first two
-requests says whether the postcode is right. Their wording differs, but telling
-them apart by wording would be a learned cue, not judgment. A model that writes
-on both is wrong on one, and a model that stops on both is wrong on the other.
-Only the no-postcode request shows, in the request itself, that the change must
-be refused. It is the one template where a single reply can show judgment.
+The single-turn run executes all of the model's tool calls after it writes
+them, so the model never sees whether authentication worked. Nothing in the
+first two requests says whether the postal code is right. Their wording
+differs, but telling them apart by wording would be a learned cue. A model that
+writes on both is wrong on one, and a model that stops on both is wrong on the
+other. Only the request with no postal code shows, in the request itself, that
+the change must be refused, so it is the one template that tests refusal in a
+single reply.
 
 The per-intent rates in the summary merge the two refusal templates, and they
-say nothing about which tools were called. This script counts each template on
-its own, and records each episode's exact sequence of tool calls. It reads the
-stored episode rows, and first checks that they reproduce the committed
+say nothing about which tools were called. This command counts each template
+on its own, and records each episode's exact sequence of tool calls. It reads
+the stored episode rows, and first checks that they reproduce the committed
 summary. Given the gate breakdown, it also checks that they are the same bytes
 that breakdown replayed.
 """
@@ -136,7 +137,9 @@ def analyze_arm(rows: list[dict[str, Any]], tasks: list, summary: dict[str, Any]
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--arm", nargs=3, action="append", required=True, metavar=("LABEL", "SUMMARY", "EPISODES")
     )

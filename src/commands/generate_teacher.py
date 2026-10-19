@@ -1,28 +1,27 @@
 """Roll out a policy over the frozen train split and keep what the grader passes.
 
-Section 5.2 of the project plan (private planning notes): the teacher plays the
-agent on the GSM8K train split, every trajectory is graded by the
-deterministic grader, and only passing trajectories are kept. The grader
-doubles as the data filter, which is what makes this rejection sampling rather
-than distillation of whatever the teacher happened to say.
+The teacher plays the agent on the GSM8K train split, the deterministic grader
+scores every trajectory, and only passing trajectories are kept. The grader is
+also the data filter, which makes this rejection sampling rather than
+distillation of everything the teacher wrote.
 
 Every candidate is written, passing or not, each carrying the grader's verdict
 and the laundering verdict. Nothing is dropped here: capping, de-duplication
-and the split checks belong to the dataset builder, so a rejected row stays
-inspectable instead of never having existed.
+and the split checks belong to the dataset builder, so a rejected row can
+still be inspected.
 
 Both verdicts are computed under `configs/train_config.yaml`, never under a
-function default. The laundering filter's question-match rule defaults to 0.5
-and D-071 pinned it to 0.0, so a call that omitted it would silently apply a
-rule this project measured and switched off. The threshold that was applied is
-recorded in the summary, because a flag whose rule nobody can recover is not
-evidence of anything.
+function default. The laundering filter's question-match rule defaults to 0.5,
+and `retention.min_question_match_ratio` pins it to 0.0 because on dev the rule
+rejected genuine multi-step work. A call that omitted it would apply a rule
+this project measured and switched off. The threshold that was applied is
+recorded in the summary.
 
 It does not touch dev or test. The split is an argument but the default is
 train, and the generated rows carry their task ids so a later build can be
 checked against the frozen manifest.
 
-Each row stores the fully materialised message list and its hash. Re-deriving
+Each row stores the fully materialized message list and its hash. Re-deriving
 that list later from tool events loses the exact observation strings, and a
 training row that cannot be rebuilt byte-for-byte cannot be verified at all.
 
@@ -292,9 +291,9 @@ def generate(
     tools = [calculator_tool_schema()]
     rung = generation["rung"]
     runs = generation["runs_per_task"]
-    # From the config, never from the function default. D-071 pinned this to
-    # 0.0 and the default is 0.5, so a call that omits it silently applies a
-    # rule the project measured and switched off.
+    # From the config, never from the function default. The config pins this
+    # to 0.0 and the default is 0.5, so a call that omits it applies a rule
+    # the project measured and switched off.
     match_ratio = config["retention"]["min_question_match_ratio"]
 
     counts = {
@@ -438,7 +437,9 @@ def generate(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--model", required=True, help="Hugging Face repo id")
     parser.add_argument("--revision", default=None, help="required if unregistered")
     parser.add_argument("--candidates", required=True, help="candidate JSONL path")

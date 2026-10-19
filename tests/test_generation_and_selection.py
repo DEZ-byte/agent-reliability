@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import sys
 import tempfile
 import unittest
@@ -124,7 +123,7 @@ class SelectionResumeTests(unittest.TestCase):
                 output_dir=scratch, limit=None, resume=True,
             )
         self.assertTrue(row["reused"])
-        self.assertEqual(row["artifact"], os.path.join("selection", "select-checkpoint-25.json"))
+        self.assertEqual(row["artifact"], "selection/select-checkpoint-25.json")
 
 
 if __name__ == "__main__":

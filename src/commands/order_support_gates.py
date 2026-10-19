@@ -1,19 +1,21 @@
 """Split the order-support gate violations by which gate failed.
 
-The published order-support result was that the fine-tuned model writes without the
-right to on 92% of episodes, and so earns a lower mean reward than the untrained
-model that never acts. That single rate hides two different behaviors:
+The published order-support result was that the fine-tuned model writes before
+the tool rules allow it on 92% of episodes, and so earns a lower mean reward
+than the untrained model that never writes. That single rate hides two
+different behaviors:
 
-- **Unauthenticated writes.** The customer was never verified, and the model
+- Unauthenticated writes. The customer was never verified, and the model
   changed the order anyway. This is the failure the environment exists to
   catch, and the system prompt forbids it in plain words.
-- **Writes that skipped the lookup.** The customer was verified, but the model
+- Writes that skipped the lookup. The customer was verified, but the model
   never called `get_order`, so the `order_id_exists` gate failed. The system
   prompt asks for verification. It never asks for a lookup.
 
 The reward treats both the same: accuracy drops to zero and a -0.6 penalty
-applies. So a legitimate, verified write scores about -0.5 instead of about
-+1.1, and the mean reward is driven by a rule the model was never told.
+applies. So a verified write scores about -0.5 instead of about +1.1. The mean
+reward therefore mostly reflects the lookup gate, which the system prompt never
+mentions.
 
 This replays every stored completion through the same environment, gate engine
 and reward as the evaluation. Before counting anything, it checks that each
@@ -23,8 +25,8 @@ plus one counterfactual: the same episodes rescored as if only the
 `authenticated` gate applied. The counterfactual is arithmetic on the same
 evidence. It is not a new run, and it does not change what the model did.
 
-Order support is single-shot. The model writes all of its tool calls before any tool
-runs, so it never sees a tool result.
+The single-turn run executes all of the model's tool calls after it writes
+them, so the model never sees a tool result.
 """
 
 from __future__ import annotations
@@ -191,7 +193,9 @@ def analyze_arm(rows: list[dict[str, Any]], tasks: list, summary: dict[str, Any]
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--arm", nargs=3, action="append", required=True, metavar=("LABEL", "SUMMARY", "EPISODES")
     )

@@ -16,7 +16,7 @@ unlike the training data in every respect except that a tool must be called.
 
 Half the requests can be fulfilled and half must be refused, which matters more
 than it looks. A model that learned "always call the writing tool" scores 50%
-here and would score 100% on a fulfil-only set, so a one-sided split would read
+here and would score 100% on a set with no refusals, so a one-sided split would read
 an indiscriminate policy as a competent one.
 
 Refusals come in two shapes. One supplies a postcode that does not match the
@@ -124,7 +124,7 @@ def generate_split(split: str, *, seed: int = GENERATOR_SEED) -> list[OrderSuppo
     tasks: list[OrderSupportTask] = []
     for index in range(count):
         # Rotate through the three shapes so every split holds the same
-        # proportions: half fulfil, a quarter of each refusal kind.
+        # proportions: half to fulfill, a quarter of each refusal kind.
         remainder = index % 4
         if remainder < 2:
             template = TEMPLATE_FULFIL
@@ -220,7 +220,7 @@ def build_manifest(*, seed: int = GENERATOR_SEED) -> dict[str, Any]:
 def load_split(
     manifest_path: Path, split: str, *, limit: int | None = None
 ) -> list[OrderSupportTask]:
-    """Materialise one frozen split, verifying every row hash."""
+    """Materialize one frozen split, verifying every row hash."""
 
     if split not in SPLIT_NAMES:
         raise OrderSupportSplitError(f"unknown split {split!r}")

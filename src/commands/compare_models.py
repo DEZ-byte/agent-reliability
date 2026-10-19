@@ -1,30 +1,27 @@
 """Compare two arms on the same tasks: paired interval first, tests second.
 
-The analysis protocol (private planning notes) is explicit in section 6.2 that
-"permutation tests are secondary to estimates and CIs", and section 6.1 pins
-10,000 replicates with a stored seed. An earlier version of this script
-reported a p-value and no interval at all, which inverts the protocol's own
-priority and leaves a reader with a significance verdict and no idea how
-precise the estimate is.
+The analysis plan puts estimates and confidence intervals ahead of permutation
+tests, and fixes 10,000 bootstrap replicates with a stored seed. An earlier
+version of this command reported a p-value with no interval, which gave a
+significance verdict without saying how precise the estimate was.
 
-Three things this reports that a naive comparison omits.
+It reports three things a plain comparison leaves out.
 
-**An interval on the paired difference**, by task-level bootstrap. The tasks are
-the sampling unit, so they are what gets resampled; resampling episodes would
-treat four runs of one task as four independent observations and understate the
-width badly.
+An interval on the paired difference, by task-level bootstrap. Tasks are the
+sampling unit, so tasks are resampled. Resampling episodes would treat four
+runs of one task as four independent observations and make the interval too
+narrow.
 
-**A p-value that cannot be zero.** A Monte Carlo permutation p-value is
-`(hits + 1) / (resamples + 1)`, never `hits / resamples`. The uncorrected form
-reports 0.0 when no resample beats the observed statistic, and 0.0 is not a
-probability - it is the resample count showing through. The exact paired sign
-test is reported alongside, because it does not depend on a resample count.
+A p-value that cannot be zero. A Monte Carlo permutation p-value is
+`(hits + 1) / (resamples + 1)`, not `hits / resamples`. An uncorrected p-value
+of 0.0 only means no resample beat the observed statistic, so it reflects the
+resample count rather than a probability. The exact paired sign test is
+reported alongside because it does not depend on a resample count.
 
-**Sampling degeneracy per arm.** pass^k only means anything if the k attempts
-can differ. When an arm emits byte-identical completions for a task, that
-task's pass^k collapses to pass^1 and the comparison is not matched on the
-thing it claims to measure. The rate is reported per arm, and so is the
-comparison restricted to tasks where both arms genuinely varied.
+Sampling degeneracy per arm. pass^k needs the k attempts to be able to differ.
+When an arm writes byte-identical completions for a task, that task's pass^k
+equals its pass^1. The rate is reported per arm, along with the comparison
+restricted to tasks where both arms varied.
 """
 
 from __future__ import annotations
@@ -270,7 +267,9 @@ def degeneracy(arm: dict[str, dict[str, Any]]) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--baseline-episodes", required=True, type=Path)
     parser.add_argument("--treatment-episodes", required=True, type=Path)
     parser.add_argument("--baseline-label", required=True)

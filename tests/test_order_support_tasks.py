@@ -1,7 +1,7 @@
 """The transfer split has to be honest before its numbers mean anything.
 
 Two properties carry the whole experiment. The split must be balanced, because
-a fulfil-only set scores an indiscriminate "always write" policy at 100% and
+a set with no refusals scores an indiscriminate "always write" policy at 100% and
 would read specialization as competence. And the splits must be disjoint,
 because order support has a train split and anything trained on it must not be
 measured on tasks it saw.
@@ -61,7 +61,7 @@ class GenerationTests(unittest.TestCase):
             self.assertEqual(len(generate_split(split)), SPLIT_SIZES[split])
 
     def test_the_split_is_balanced_between_fulfil_and_refuse(self) -> None:
-        """A fulfil-only set would score 'always write' at 100%."""
+        """A set with no refusals would score 'always write' at 100%."""
 
         tasks = generate_split("test")
         fulfil = sum(1 for t in tasks if t.intent == INTENT_FULFIL)
@@ -91,7 +91,7 @@ class GenerationTests(unittest.TestCase):
                 self.assertIn(task.order.postcode, task.request)
 
     def test_the_requested_address_always_differs_from_the_current_one(self) -> None:
-        """Otherwise fulfil and refuse would grade identically."""
+        """Otherwise `fulfil` and `refuse` would grade identically."""
 
         for split in SPLIT_NAMES:
             for task in generate_split(split):

@@ -1,16 +1,13 @@
 """Pair the MMLU arms question by question, and freeze the result.
 
-The first write-up of the MMLU probe reported a paired difference of +0.005,
-with 38 questions improved and 36 worse. Neither number fits the accuracies the
-artifacts record: 214 of 400 before training and 217 after is a difference of
-three questions, so improved minus regressed has to be three and the mean
-difference has to be +0.0075. The comparison had been typed into a terminal and
-run while the fine-tuned arm's response file was still being rewritten, with
-391 of its 400 rows on disk.
+An earlier write-up of the MMLU probe reported a paired difference that did
+not fit the accuracies its own artifacts recorded. That comparison had been
+typed into a terminal and run while the fine-tuned arm's response file was
+still being written. Those first artifacts are retired and kept only in Git
+history.
 
-So the comparison is now an artifact rather than terminal output, and it is
-built only from rows that provably belong to the headline numbers. Before
-comparing anything this refuses to run unless:
+This command turns that comparison into an artifact, built only from rows that
+belong to the reported numbers. Before comparing anything this refuses to run unless:
 
 - every response file reproduces its committed summary exactly: accuracy, every
   rate, the mean answer length and every per-subject score;
@@ -20,18 +17,18 @@ comparing anything this refuses to run unless:
   tree is clean, so `source_commit` names code that actually ran.
 
 The rows are taken as graded when the evaluation ran. They are not re-scored
-with whatever the answer extractor looks like today, because that would be a
-different measurement wearing the old one's name.
+with the current answer extractor, because that would be a different
+measurement reported under the old name.
 
 The response files themselves stay uncommitted (they hold full completions and
 fall under `results/**/*.jsonl`). The artifact carries every scored field per
 question plus a SHA-256 of each completion, so anyone holding the response
 files can bind them to this record.
 
-The statistics are the ones `compare_models.py` already uses: a question-level
-bootstrap interval on the paired difference with 10,000 seeded replicates, the
-paired sign-flip permutation p-value, and the exact sign test on discordant
-pairs, which for right-or-wrong outcomes is McNemar's exact test.
+The statistics are the ones `compare-models` uses: a question-level bootstrap
+interval on the paired difference with 10,000 seeded replicates, the paired
+sign-flip permutation p-value, and the exact sign test on discordant pairs,
+which for right-or-wrong outcomes is McNemar's exact test.
 """
 
 from __future__ import annotations
@@ -328,7 +325,9 @@ def _committed(path: Path) -> tuple[str, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--arm",
         nargs=3,
@@ -362,7 +361,7 @@ def main(argv: list[str] | None = None) -> int:
         summary = json.loads(summary_file.read_text(encoding="utf-8"))
         if summary.get("label") != label:
             raise UtilityComparisonError(
-                f"{summary_file.name} is labelled {summary.get('label')!r}, not {label!r}"
+                f"{summary_file.name} is labeled {summary.get('label')!r}, not {label!r}"
             )
         rows = load_responses(responses_file)
         check_rows_reproduce_summary(rows, summary, label=label)

@@ -2,8 +2,8 @@
 
 `tests/test_masking.py` proves the logic against a stub, because CI has no
 network. That leaves one thing unproven: that the real Qwen3 chat template
-behaves the way the stub says it does. This script closes that gap and writes
-the answer down as a hashed artifact rather than as a claim.
+behaves the way the stub says it does. This command checks the real Qwen3
+template and records the result in a hashed artifact.
 
 Three properties are measured per checkpoint.
 
@@ -179,7 +179,9 @@ def verify(candidate: dict[str, str]) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--output", required=True)
     parser.add_argument("--candidate", action="append", default=[])
     args = parser.parse_args(argv)

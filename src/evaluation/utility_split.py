@@ -61,7 +61,7 @@ def load_manifest(path: Path) -> dict[str, Any]:
 
 
 def load_questions(manifest_path: Path, *, limit: int | None = None):
-    """Materialise the frozen subset, verifying every row hash."""
+    """Materialize the frozen subset, verifying every row hash."""
 
     manifest = load_manifest(manifest_path)
     dataset = manifest["dataset"]

@@ -6,7 +6,7 @@ things: the dataset itself, which stays out of Git because it is bulk, and a
 manifest of task ids and row hashes, which is committed so the selection is
 permanent and checkable.
 
-Three properties the build enforces rather than assumes.
+The build checks three properties:
 
 Every selected task id must appear in the train split of the frozen split
 manifest. A dev or test id reaching training data is the leak that invalidates
@@ -15,14 +15,14 @@ are shuffled together.
 
 Every selected row must survive masking. `training.masking.encode_with_labels`
 is called on each one here, so a row that cannot be labeled correctly is found
-during the build rather than after a training run that quietly learnt nothing.
+during the build rather than after a training run.
 
 At most `retention.per_task_cap` rows come from any one task. Easy tasks pass
 on every sample and hard tasks pass once, so an uncapped set is weighted toward
 exactly the problems the model already solves.
 
 `--check` rebuilds and fails if a byte would differ, so a committed manifest
-cannot drift from the data it claims to describe.
+cannot drift from its data.
 """
 
 from __future__ import annotations
@@ -204,7 +204,9 @@ def build_manifest(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--candidates", required=True)
     parser.add_argument("--dataset", required=True, help="selected rows, JSONL")
     parser.add_argument("--summary", required=True)

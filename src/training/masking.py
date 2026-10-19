@@ -2,7 +2,7 @@
 
 Section 7.2 of the project plan (private planning notes) requires
 `labels[t] = -100` for every token outside an assistant turn. That is the
-direct defence against training the model to produce its own tool
+direct defense against training the model to produce its own tool
 observations, which is the `fabricated_result` failure.
 
 Every guard here exists because the failure it catches is silent. The mask

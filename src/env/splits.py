@@ -65,7 +65,7 @@ def load_split(
     *,
     limit: int | None = None,
 ) -> list[Gsm8kTask]:
-    """Materialise one frozen split as tasks, verifying every row hash.
+    """Materialize one frozen split as tasks, verifying every row hash.
 
     Entries are grouped by upstream split so each upstream split is downloaded
     once even when a project split mixes them.

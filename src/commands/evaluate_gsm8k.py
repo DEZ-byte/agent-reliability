@@ -1,17 +1,16 @@
 """Run the GSM8K R0/R1 baseline and record pass^k with confidence intervals.
 
-This produces the first reliability numbers in the project. It plugs a real
-checkpoint into the framework-neutral rung core in `src/evaluation/rungs.py`,
-which is what keeps the R0-versus-R1 contrast identical to the one already
-tested on CPU.
+This plugs a real checkpoint into the framework-neutral rung core in
+`src/evaluation/rungs.py`, which keeps the R0-versus-R1 contrast identical to
+the one already tested on CPU.
 
 Offline by default. A measured run needs --run-load with --allow-download and
 refuses to start on a dirty worktree, so every artifact names the exact source
 that produced it.
 
-Every accuracy figure is reported beside its no-arithmetic rate, which D-064
-makes mandatory: a model that can solve these problems in its head may pass the
-remembered answer to the tool instead of computing it, and that scores correct.
+Every accuracy figure is reported beside its no-arithmetic rate. A model that
+can solve these problems in its head may pass the remembered answer to the tool
+instead of computing it, and that scores correct.
 """
 
 from __future__ import annotations
@@ -391,7 +390,9 @@ def _measure(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--output", required=True)
     parser.add_argument(
         "--config",

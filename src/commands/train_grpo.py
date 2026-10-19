@@ -1,23 +1,23 @@
 """Train the GSM8K GRPO arm from the SFT checkpoint, on execution-backed reward.
 
-Section 7.1 requires GRPO to initialize from the SFT policy rather than from
-base; GRPO-from-base exists only as a separate labeled ablation and is not run
-here. The reward is the same composite the evaluator grades with, so the
-constraint trained against cannot drift from the one measured against.
+GRPO starts from the SFT policy, not from the base model. A GRPO-from-base run
+would be a separate, labeled ablation and is not run here. The reward is the
+same composite the evaluator grades with, so the training target and the
+measured one cannot drift apart.
 
 Every configuration value is passed explicitly and then re-read from the
 constructed trainer. Importing unsloth replaces `GRPOTrainer` and changes
-`GRPOConfig` defaults: on this stack `loss_type` defaults to `dapo` where
-section 7.2 specifies token-level GRPO, and `temperature` defaults to 1.0 where
-section 7.3 wants 0.7 to 0.85. A config that omits a field does not get the
-documented default, it gets unsloth's.
+`GRPOConfig` defaults: on this stack `loss_type` defaults to `dapo` where the
+config pins token-level `grpo`, and `temperature` defaults to 1.0 where the
+config pins 0.8. A field the config omits takes unsloth's default, not the
+documented one.
 
-Two things are logged every step because section 7.3 says a silent failure hides
-in each. Zero-variance groups contribute exactly no gradient, since advantages
-are group-relative, so a run can look busy while learning nothing. And the
-laundering rate is the thing this reward cannot see: section 7.0 scores a call
-that restates a remembered answer at full accuracy, measured rather than
-penalized, and GRPO is the sharpest possible version of that pressure.
+Two quantities are logged every step. Zero-variance groups give no gradient,
+because advantages are relative to the group, so their share shows how much of
+each step could change the policy. The laundering rate is the other: the
+reward gives full accuracy to a call that restates a remembered answer, so the
+rate is measured rather than penalized, and reward-driven training could push
+it up.
 """
 
 from __future__ import annotations
@@ -193,7 +193,9 @@ def summarize_health(health: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--adapter", required=True, help="SFT checkpoint to start from")
     parser.add_argument("--model", required=True, help="base model id")
     parser.add_argument("--output-dir", required=True)
@@ -223,8 +225,8 @@ def main(argv: list[str] | None = None) -> int:
     grpo = config["grpo"]
     if grpo["init_from"] != "sft":
         raise GRPOError(
-            "section 7.1 initialises GRPO from the SFT checkpoint; "
-            "GRPO-from-base is a separate labelled ablation"
+            "section 7.1 initializes GRPO from the SFT checkpoint; "
+            "GRPO-from-base is a separate labeled ablation"
         )
     # A rate sweep is a departure from the single pinned value, recorded as
     # one. Editing the config instead would change its hash and orphan the

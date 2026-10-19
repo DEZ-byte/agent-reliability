@@ -1,9 +1,8 @@
 """Build frozen GSM8K task splits from a pinned dataset revision.
 
-Writes ID manifests, not data. Section 5.4 of the project plan (private
-planning notes) requires the splits to be committed as JSON lists so a later
-run cannot quietly evaluate on something it trained on. The dataset itself is
-never redistributed from this repository.
+Writes the train, dev and test ID manifests, not data. The splits are committed
+as JSON lists so a later run cannot evaluate on something it trained on. The
+dataset itself is never redistributed from this repository.
 
 Deterministic by construction: a fixed revision, a fixed seed, and a sort before
 sampling. Running this twice produces byte-identical manifests.
@@ -125,7 +124,9 @@ def build() -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--output", default=str(SPLIT_DIR / "phase_a_gsm8k.json"))
     parser.add_argument(
         "--check",

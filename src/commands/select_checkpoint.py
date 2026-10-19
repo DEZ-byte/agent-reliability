@@ -1,29 +1,23 @@
 """Score every saved checkpoint on dev and pick the winner by the pinned rule.
 
-Section 7.4 of the project plan (private planning notes): evaluate on the dev
-split only, freeze the dev winner, and run it on test exactly once. The rule
-this script applies - which split, which rung, which metric - is read from
+Only the dev split is scored here. The dev winner is frozen and runs on test
+once. The rule (split, rung and metric) is read from the `selection` block of
 `configs/train_config.yaml`, where it was written before any dev number
 existed.
 
-That matters more than it looks. With several checkpoints and one obvious
-number per checkpoint, the temptation is to glance at the results and pick.
-Doing it by hand is where "best on dev" quietly becomes "best on whichever
-metric happened to favor the checkpoint I expected", and nothing in the
-artifact would show the difference. Here the rule is applied by code, every
-candidate's score is recorded whether it won or lost, and ties break toward the
-earliest checkpoint rather than toward whichever the operator prefers.
+The rule is applied by code, every candidate's score is recorded whether it
+won or lost, and ties break toward the earliest checkpoint. Picking by hand
+after seeing the scores would let the choice of metric follow the result, and
+the artifact would not show it.
 
-The final checkpoint is included as a candidate. Nothing distinguishes it from
-the intermediate ones except that training stopped there.
+The final checkpoint is a candidate like the intermediate ones.
 
 `--resume` reuses a checkpoint's dev score when its `select-<tag>.json` is
 already in the scratch directory and carries the metric. Scoring four
-checkpoints takes about an hour on a 4060-class card and a Colab session can
-die in the middle; without this, a disconnect at checkpoint three throws away
-three. Nothing else changes: the rule, the candidates and the tie-break are
-the same, and a reused score is marked `"reused": true` in the summary so a
-reader can see which evaluations ran in this invocation.
+checkpoints takes about an hour on a 4060-class card, so a dropped session
+would otherwise lose the scores already finished. The rule, the candidates and
+the tie-break do not change, and a reused score is marked `"reused": true` in
+the summary so a reader can see which evaluations ran in this invocation.
 """
 
 from __future__ import annotations
@@ -36,7 +30,7 @@ import platform
 import subprocess
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Final
 
 PROJECT_ROOT: Final = Path(__file__).resolve().parents[2]
@@ -157,8 +151,9 @@ def score(
     tag = checkpoint.name.replace(".", "-")
     result_path = output_dir / f"select-{tag}.json"
     # A label, not a path: the scratch folder's own name plus the file name.
-    # An absolute scratch path would put this machine's layout into the record.
-    artifact = os.path.join(output_dir.name, result_path.name)
+    # An absolute scratch path would put this machine's layout into the record,
+    # and a forward slash keeps the label the same on every OS.
+    artifact = PurePosixPath(output_dir.name, result_path.name).as_posix()
     episodes_path = output_dir / f"select-{tag}.jsonl"
     if resume:
         reused = _reusable_score(
@@ -218,7 +213,9 @@ def score(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--adapter-dir", required=True, type=Path)
     parser.add_argument("--base-model", required=True)
     parser.add_argument("--summary", required=True)
@@ -247,7 +244,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     if rule["checkpoints_evaluated"] != "all_saved":
         raise SelectionError(
-            "this script evaluates every saved checkpoint; the config asks for "
+            "this command evaluates every saved checkpoint; the config asks for "
             f"{rule['checkpoints_evaluated']!r}"
         )
 

@@ -39,7 +39,7 @@ class NoToolProbe(BaseModel):
     """One no-tool attempt at a task, scored against the gold answer.
 
     ``condition`` matters more than the score. Given room to think, a model can
-    solve GSM8K in prose, and a correct answer says nothing about memorisation.
+    solve GSM8K in prose, and a correct answer says nothing about memorization.
     Only the token-starved condition, where multi-step reasoning does not fit,
     is evidence that the answer was recalled rather than derived.
     """
@@ -77,7 +77,7 @@ def expression_does_arithmetic(expression: str) -> bool:
 
     ``17 * 23`` computes. ``391`` does not, and neither does ``(391)``. A model
     that recalls the answer and wraps it in a tool call produces the second
-    kind, which is how memorisation can survive execution-backed grading.
+    kind, which is how memorization can survive execution-backed grading.
     """
 
     try:

@@ -1,20 +1,19 @@
 """Measure what a base checkpoint can do on GSM8K tasks with no tool.
 
-Section 5.4 of the project plan (private planning notes) requires this before
-any GSM8K baseline is read.
+This runs before any GSM8K baseline is read.
 
-Two conditions, because one number cannot answer both questions. Given room to
-think, these models solve GSM8K by reasoning in prose, so a correct answer there
-measures capability without a calculator and says nothing about memorisation.
-Starved of tokens, multi-step reasoning does not fit, so a correct answer is
+The probe runs under two conditions, because one number cannot answer both
+questions. Given room to think, these models solve GSM8K by reasoning in prose, so a correct answer there
+measures capability without a calculator and says nothing about memorization.
+With very few tokens, multi-step reasoning does not fit, so a correct answer is
 evidence the model recalled it. Reporting only the first and calling it recall
-would be a false label; an early version of this probe did exactly that.
+would mislabel it, and an early version of this probe did exactly that.
 
 Offline by default. Loading a checkpoint needs --run-load and --allow-download,
 and a measured run refuses to start on a dirty worktree so every artifact names
 the exact source that produced it.
 
-These are diagnostics, never task scores.
+These numbers are diagnostics, not task scores.
 """
 
 from __future__ import annotations
@@ -279,7 +278,9 @@ def _measure(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--output", required=True)
     parser.add_argument("--candidate", action="append", default=[])
     parser.add_argument("--limit", type=int, default=None)

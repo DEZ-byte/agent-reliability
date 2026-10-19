@@ -1,26 +1,25 @@
-"""Train the GSM8K SFT adapter on pre-masked rows, asserting the stack's traps shut.
+"""Train the GSM8K SFT adapter on pre-masked rows, checking what unsloth changes.
 
 Every value here is set explicitly, including ones that look like defaults.
-Importing unsloth rewrites `trl.SFTTrainer` and silently changes `SFTConfig`
-defaults - on this stack the learning rate moves from 2e-5 to 5e-5 and bf16
-flips off - so a config that omits a field does not get the documented default,
-it gets unsloth's. Assertions below re-read the resolved values from the
-trainer rather than trusting what was passed.
+Importing unsloth rewrites `trl.SFTTrainer` and changes `SFTConfig` defaults.
+On this stack the learning rate moves from 2e-5 to 5e-5 and bf16 turns off.
+A field the config omits takes unsloth's default, not the documented one, so
+the resolved values are re-read from the trainer and asserted.
 
 The rows arrive already tokenized, with labels built by `training.masking`.
-That is deliberate: `assistant_only_loss=True` is silently non-functional here,
-because unsloth's dataset preparation never produces an assistant mask, so the
-flag would train on everything while appearing to do the opposite.
+`assistant_only_loss=True` has no effect here, because unsloth's dataset
+preparation never produces an assistant mask, so the flag would train on every
+token while appearing to train on the assistant's tokens only.
 
-Three traps get explicit guards.
+Three settings get explicit guards.
 
 `packing=True` drops a custom `labels` column with no warning and falls back to
 labels=input_ids, which trains on the prompt. It is forced off and asserted.
 
 Nothing truncates a pre-tokenized row under unsloth. A row longer than
-`max_length` is therefore dropped rather than cut, because the assistant span
-sits at the end of the row and right-truncation removes precisely the tokens
-the loss is computed over, leaving a row that still trains and teaches nothing.
+`max_length` is dropped rather than cut, because the assistant span sits at the
+end of the row and right-truncation would remove the tokens the loss is
+computed over.
 
 An `assistant_masks` column would overwrite the supplied labels after they are
 loaded. The dataset is asserted to carry only the three columns it should.
@@ -265,7 +264,9 @@ def _verify_first_batch(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--output-dir", required=True)

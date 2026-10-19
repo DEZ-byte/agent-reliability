@@ -30,7 +30,9 @@ QUESTIONS: Final = 400
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--questions", type=int, default=QUESTIONS)
     parser.add_argument("--seed", type=int, default=SEED)

@@ -3,7 +3,7 @@
 Subcommands:
   generate-teacher     roll out the teacher on the GSM8K train split (GPU)
   build-sft            select and freeze the SFT rows from graded candidates
-  split-gsm8k          freeze the GSM8K dev and test splits
+  split-gsm8k          freeze the GSM8K train, dev and test splits
   split-order-support  freeze the order-support task splits
   split-mmlu           freeze the stratified MMLU subset
 
@@ -25,7 +25,7 @@ PROG = "data.py"
 COMMANDS = {
     "generate-teacher": ("generate_teacher", "roll out the teacher on the GSM8K train split (GPU)"),
     "build-sft": ("build_sft", "select and freeze the SFT rows from graded candidates"),
-    "split-gsm8k": ("split_gsm8k", "freeze the GSM8K dev and test splits"),
+    "split-gsm8k": ("split_gsm8k", "freeze the GSM8K train, dev and test splits"),
     "split-order-support": ("split_order_support", "freeze the order-support task splits"),
     "split-mmlu": ("split_mmlu", "freeze the stratified MMLU subset"),
 }

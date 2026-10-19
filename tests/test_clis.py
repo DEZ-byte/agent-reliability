@@ -7,7 +7,10 @@ stack.
 
 from __future__ import annotations
 
+import ast
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import subprocess
@@ -24,14 +27,14 @@ from commands import cli  # noqa: E402
 
 SCRIPTS = PROJECT_ROOT / "scripts"
 CLIS = ("data", "train", "evaluate", "analyze")
-# Registered in analyze.py ahead of the modules that will implement them.
-PENDING = {"backfill_tokens", "plots"}
 CPU_COMMANDS = (
     "compare_models",
     "compare_mmlu",
     "failure_taxonomy",
     "order_support_gates",
     "order_support_templates",
+    "backfill_tokens",
+    "plots",
 )
 GPU_STACK = ("torch", "unsloth", "trl", "transformers")
 
@@ -84,13 +87,35 @@ class HelpTests(unittest.TestCase):
 
 
 class RegistryTests(unittest.TestCase):
-    def test_every_subcommand_names_a_command_module(self) -> None:
+    def test_every_subcommand_names_a_command_module_with_a_main(self) -> None:
+        # Parsed, not imported: the GPU modules import torch at load time.
         for name in CLIS:
             for subcommand, (target, _) in _load(name).COMMANDS.items():
-                if not isinstance(target, str) or target in PENDING:
+                if not isinstance(target, str):
                     continue
                 with self.subTest(cli=name, subcommand=subcommand):
-                    self.assertTrue((PROJECT_ROOT / "src" / "commands" / f"{target}.py").is_file())
+                    path = PROJECT_ROOT / "src" / "commands" / f"{target}.py"
+                    self.assertTrue(path.is_file(), path.name)
+                    tree = ast.parse(path.read_text(encoding="utf-8"))
+                    functions = {
+                        node.name for node in tree.body if isinstance(node, ast.FunctionDef)
+                    }
+                    self.assertIn("main", functions)
+
+    def test_every_analyze_subcommand_answers_help(self) -> None:
+        # analyze.py is the CPU CLI, so each of its modules can be loaded here.
+        # verify-manifest runs in its own process and has its own test below.
+        for subcommand, (target, _) in _load("analyze").COMMANDS.items():
+            if not isinstance(target, str):
+                continue
+            out = io.StringIO()
+            with self.subTest(subcommand=subcommand):
+                with mock.patch.object(sys, "argv", ["analyze.py"]), \
+                        contextlib.redirect_stdout(out), \
+                        self.assertRaises(SystemExit) as exited:
+                    cli.run("analyze.py", "test", {subcommand: (target, "")}, [subcommand, "--help"])
+                self.assertEqual(exited.exception.code, 0)
+                self.assertIn(f"usage: analyze.py {subcommand}", out.getvalue())
 
     def test_verify_manifest_passes_on_the_check_exit_code(self) -> None:
         result = _run(str(SCRIPTS / "analyze.py"), "verify-manifest")

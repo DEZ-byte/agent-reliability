@@ -42,6 +42,7 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
 # Every command module that writes a source_commit, and so must call the guard.
 GUARDED = {
+    "backfill_tokens.py",
     "build_sft.py",
     "compare_mmlu.py",
     "compare_models.py",
