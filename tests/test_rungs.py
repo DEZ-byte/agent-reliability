@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 
 from agent.gates import GateEngine
-from env.phase_a import PhaseATask, build_phase_a_registry
+from env.gsm8k import Gsm8kTask, build_gsm8k_registry
 from env.sandbox import SandboxUnavailable
 from env.tools import ToolInfrastructureError
 from evaluation.rungs import (
@@ -16,7 +16,7 @@ from evaluation.rungs import (
     run_episode,
 )
 
-TASK = PhaseATask(
+TASK = Gsm8kTask(
     task_id="gsm8k:test:0",
     template_id="gsm8k:test:0",
     question="17 boxes of 23 pens. How many pens?",
@@ -36,7 +36,7 @@ def call(expression: str) -> str:
 def episode(rung: str, replies: list[str], policy=None):
     return run_episode(
         task=TASK,
-        registry=build_phase_a_registry(),
+        registry=build_gsm8k_registry(),
         gate_engine=GateEngine.from_mapping({}),
         policy=policy if policy is not None else make_stub_policy(replies),
         rung=rung,  # type: ignore[arg-type]
@@ -126,7 +126,7 @@ class InfrastructureFailureTests(unittest.TestCase):
     def test_r1_raises_without_asking_for_a_second_decision(self) -> None:
         policy, seen = recording_policy([call("17 * 23"), call("17 * 23")])
         with mock.patch(
-            "env.phase_a.run_code",
+            "env.gsm8k.run_code",
             side_effect=SandboxUnavailable("worker_terminated", "exit code 3"),
         ):
             with self.assertRaises(ToolInfrastructureError):
@@ -182,7 +182,7 @@ class LaunderingTests(unittest.TestCase):
         self.assertFalse(result.answered_without_arithmetic)
 
 
-class SerialisationTests(unittest.TestCase):
+class SerializationTests(unittest.TestCase):
     def test_the_record_round_trips_as_json(self) -> None:
         payload = episode("R1", [call("1/0"), call("17 * 23")]).to_json()
         restored = json.loads(json.dumps(payload))

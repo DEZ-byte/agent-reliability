@@ -2,10 +2,10 @@
 
 A checkpoint directory keeps its name when it is retrained in place, so a path
 says nothing about which weights produced a number. The hash does. It is taken
-the way measure_weight_change.py always took it, SHA-256 over the whole
+the way the weight-change command always took it, SHA-256 over the whole
 `adapter_model.safetensors`, so a new record matches an old one by value.
 
-No model is loaded. Phase B and MMLU write their record before any load, and
+No model is loaded. Order-support and MMLU write their record before any load, and
 checkpoint selection runs with a fake evaluation runner.
 """
 
@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -28,9 +29,9 @@ from evaluation.provenance import (  # noqa: E402
     pinned_revision,
     portable_path,
 )
-from scripts import run_phase_b_eval  # noqa: E402
-from scripts import run_utility_eval  # noqa: E402
-from scripts import select_checkpoint  # noqa: E402
+from commands import evaluate_mmlu  # noqa: E402
+from commands import evaluate_order_support  # noqa: E402
+from commands import select_checkpoint  # noqa: E402
 
 MODEL = "Qwen/Qwen3-1.7B"
 REGISTRY = PROJECT_ROOT / "configs" / "model_candidates.json"
@@ -92,16 +93,16 @@ class EvaluationRecordTests(unittest.TestCase):
         self.assertIsNone(base["adapter"])
         self.assertEqual(base["model"]["revision"], pinned_revision(MODEL, REGISTRY))
 
-    def test_phase_b(self) -> None:
+    def test_order_support(self) -> None:
         self._check(
-            run_phase_b_eval,
+            evaluate_order_support,
             ["--model", MODEL, "--label", "x", "--episodes", str(self.root / "e.jsonl"),
              "--limit", "1"],
         )
 
     def test_mmlu(self) -> None:
         self._check(
-            run_utility_eval,
+            evaluate_mmlu,
             ["--model", MODEL, "--label", "x", "--responses", str(self.root / "r.jsonl")],
         )
 
@@ -117,8 +118,10 @@ class SelectionRecordTests(unittest.TestCase):
             for name, data in weights.items():
                 _adapter(run / name, data)
             summary = root / "selection.json"
+            commands: list[list[str]] = []
 
             def runner(command, **kwargs):
+                commands.append(command)
                 output = Path(command[command.index("--output") + 1])
                 rung = command[command.index("--rung") + 1]
                 score = 0.9 if "checkpoint-200" in command[command.index("--adapter") + 1] else 0.1
@@ -149,6 +152,15 @@ class SelectionRecordTests(unittest.TestCase):
         )
         self.assertEqual(record["selected"]["checkpoint"], "checkpoint-200")
         self.assertEqual(record["selected"]["weights_sha256"], hashlib.sha256(b"late").hexdigest())
+
+        # Each checkpoint runs through the GSM8K evaluation command, and the
+        # record names its result by scratch folder and file, not by full path.
+        runner_script = str(PROJECT_ROOT / "scripts" / "evaluate.py")
+        self.assertEqual([c[:3] for c in commands], [[sys.executable, runner_script, "gsm8k"]] * 2)
+        self.assertEqual(
+            [c["artifact"] for c in record["candidates"]],
+            [os.path.join("scratch", f"select-{name}.json") for name in weights],
+        )
 
 
 if __name__ == "__main__":

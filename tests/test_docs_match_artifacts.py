@@ -26,12 +26,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from agent.gates import GateEngine  # noqa: E402
 from agent.parser import parse_tool_calls  # noqa: E402
-from env.phase_a import (  # noqa: E402
-    build_phase_a_registry,
+from env.gsm8k import (  # noqa: E402
+    build_gsm8k_registry,
     calculator_tool_schema,
     evaluate_expression,
 )
-from env.phase_b import phase_b_tool_schemas  # noqa: E402
+from env.order_support import order_support_tool_schemas  # noqa: E402
 from evaluation.rungs import _failure_observation  # noqa: E402
 
 RESULTS = PROJECT_ROOT / "results"
@@ -146,7 +146,7 @@ class ExampleTests(unittest.TestCase):
         first = "12 * 20000 + 10% * 12 * 20000 + 1000 * 12"
         self.assertIn(f'{{"expression": "{first}"}}', README)
         call = json.dumps({"name": "calculator", "arguments": {"expression": first}})
-        trace = build_phase_a_registry().execute(
+        trace = build_gsm8k_registry().execute(
             parse_tool_calls(f"<tool_call>\n{call}\n</tool_call>"), {}, gate_engine=GateEngine.from_mapping({})
         )
         self.assertIn(f"Feedback: {_failure_observation(trace)} Retry:", README)
@@ -209,7 +209,7 @@ class ResultTableTests(unittest.TestCase):
         )
 
     def test_sft_and_grpo_rows(self) -> None:
-        for label, names, emphasise in (
+        for label, names, emphasize in (
             ("Qwen3-1.7B, SFT", SFT_TESTS, True),
             ("Qwen3-1.7B, SFT + GRPO", GRPO_TESTS, False),
         ):
@@ -221,7 +221,7 @@ class ResultTableTests(unittest.TestCase):
                 span([r["metrics"]["pass^4"] for r in r1]),
                 f"{min(costs)} – {max(costs)}",
             ]
-            if emphasise:
+            if emphasize:
                 cells = [bold(cell) for cell in cells]
             self.assertIn(row(*cells), README)
 
@@ -522,7 +522,7 @@ class TransferTests(unittest.TestCase):
         )
 
     def test_three_tools_none_of_them_trained_on(self) -> None:
-        tools = phase_b_tool_schemas()
+        tools = order_support_tool_schemas()
         self.assertEqual(len(tools), 3)
         self.assertNotIn(calculator_tool_schema(), tools)
         self.assertIn("three tools that were not in training", README)

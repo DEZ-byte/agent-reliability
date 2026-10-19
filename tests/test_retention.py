@@ -129,7 +129,7 @@ class CompletionShapeTests(unittest.TestCase):
     D-062 failure. Reported rather than assumed, at every build.
     """
 
-    def test_a_bare_call_is_recognised(self) -> None:
+    def test_a_bare_call_is_recognized(self) -> None:
         self.assertEqual(
             completion_shape('<tool_call>\n{"a": 1}\n</tool_call>'), "bare_tool_call"
         )
@@ -139,25 +139,25 @@ class CompletionShapeTests(unittest.TestCase):
             completion_shape('\n  <tool_call>x</tool_call>  \n'), "bare_tool_call"
         )
 
-    def test_reasoning_before_the_call_is_recognised(self) -> None:
+    def test_reasoning_before_the_call_is_recognized(self) -> None:
         self.assertEqual(
             completion_shape("Alan collected 48 shells.\n<tool_call>x</tool_call>"),
             "prose_then_tool_call",
         )
 
-    def test_text_after_the_call_is_recognised(self) -> None:
+    def test_text_after_the_call_is_recognized(self) -> None:
         self.assertEqual(
             completion_shape("<tool_call>x</tool_call>\nThe answer is 48."),
             "tool_call_then_prose",
         )
 
-    def test_prose_on_both_sides_is_recognised(self) -> None:
+    def test_prose_on_both_sides_is_recognized(self) -> None:
         self.assertEqual(
             completion_shape("Let me think.<tool_call>x</tool_call>So, 48."),
             "prose_around_tool_call",
         )
 
-    def test_a_completion_with_no_call_is_recognised(self) -> None:
+    def test_a_completion_with_no_call_is_recognized(self) -> None:
         self.assertEqual(completion_shape("The answer is 48."), "no_tool_call")
 
 

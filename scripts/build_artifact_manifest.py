@@ -53,6 +53,9 @@ ARTIFACT_GLOBS: Final = (
     "utility-*.json",
     "weight-change-*.json",
     "failure-modes-*.json",
+    # Token-count records, and order-support records named after the task.
+    "token-counts-*.json",
+    "order-support-*.json",
 )
 
 SCHEMA_VERSION: Final = 1

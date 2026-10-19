@@ -2,11 +2,11 @@
 
 A result is only reproducible if the weights under it are. The Hub's default
 branch can move, and without `use_exact_model_name` Unsloth swaps the name for a
-pre-quantised mirror that has no pinned revision at all. Handed an adapter
-directory, Unsloth also drops `revision` for the base, so a script that loads
+pre-quantized mirror that has no pinned revision at all. Handed an adapter
+directory, Unsloth also drops `revision` for the base, so a command that loads
 the adapter directory ran on whatever the default branch held that day.
 
-Nothing here loads a model. A fake `unsloth` records what each script would
+Nothing here loads a model. A fake `unsloth` records what each command would
 have passed and stops the run there.
 """
 
@@ -30,9 +30,9 @@ from evaluation.provenance import (  # noqa: E402
     pinned_load_kwargs,
     pinned_revision,
 )
-from scripts import run_phase_b_eval  # noqa: E402
-from scripts import run_utility_eval  # noqa: E402
-from scripts import train_grpo  # noqa: E402
+from commands import evaluate_mmlu  # noqa: E402
+from commands import evaluate_order_support  # noqa: E402
+from commands import train_grpo  # noqa: E402
 
 REGISTRY = PROJECT_ROOT / "configs" / "model_candidates.json"
 MODEL = "Qwen/Qwen3-1.7B"
@@ -58,7 +58,7 @@ def _adapter(root: Path, base: str = MODEL) -> Path:
 
 
 class _Stop(Exception):
-    """Raised by the fake loader so the script goes no further."""
+    """Raised by the fake loader so the command goes no further."""
 
 
 class RegistryTests(unittest.TestCase):
@@ -108,7 +108,7 @@ class RegistryTests(unittest.TestCase):
 
 
 class ScriptWiringTests(unittest.TestCase):
-    """Each script hands the pinned kwargs to the loader it really calls."""
+    """Each command hands the pinned kwargs to the loader it really calls."""
 
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -161,23 +161,23 @@ class ScriptWiringTests(unittest.TestCase):
             "--allow-download",
         ]
 
-    def test_phase_b_eval_with_and_without_an_adapter(self) -> None:
+    def test_order_support_eval_with_and_without_an_adapter(self) -> None:
         extra = ["--label", "x", "--episodes", str(self.root / "e.jsonl"), "--limit", "1"]
-        self._assert_pinned(self._run(run_phase_b_eval, self._common() + extra))
+        self._assert_pinned(self._run(evaluate_order_support, self._common() + extra))
         self.calls.clear()
         call = self._run(
-            run_phase_b_eval, self._common() + extra + ["--adapter", str(self.adapter)]
+            evaluate_order_support, self._common() + extra + ["--adapter", str(self.adapter)]
         )
         self._assert_pinned(call)
         self.assertEqual(call["tokenizer_name"], str(self.adapter))
 
     def test_utility_eval_with_and_without_an_adapter(self) -> None:
         extra = ["--label", "x", "--responses", str(self.root / "r.jsonl")]
-        with mock.patch.object(run_utility_eval, "load_questions", return_value=[]):
-            self._assert_pinned(self._run(run_utility_eval, self._common() + extra))
+        with mock.patch.object(evaluate_mmlu, "load_questions", return_value=[]):
+            self._assert_pinned(self._run(evaluate_mmlu, self._common() + extra))
             self.calls.clear()
             call = self._run(
-                run_utility_eval,
+                evaluate_mmlu,
                 self._common() + extra + ["--adapter", str(self.adapter)],
             )
         self._assert_pinned(call)
@@ -191,19 +191,21 @@ class ScriptWiringTests(unittest.TestCase):
         argv = self._common() + ["--label", "x", "--episodes", str(self.root / "e.jsonl")]
         argv[1] = "Qwen/Not-A-Model"
         with mock.patch.dict(sys.modules, self._fakes()), mock.patch.object(
-            sys, "argv", ["run_phase_b_eval", *argv]
+            sys, "argv", ["evaluate_order_support", *argv]
         ):
             with self.assertRaises(UnpinnedModelError):
-                run_phase_b_eval.main()
+                evaluate_order_support.main()
         self.assertEqual(self.calls, [])
 
 
 class EveryLoaderIsPinnedTests(unittest.TestCase):
-    """A static sweep, so a new script cannot quietly load an unpinned model."""
+    """A static sweep, so a new command cannot quietly load an unpinned model."""
 
     def test_every_fast_language_model_load_is_pinned(self) -> None:
         checked = 0
-        for path in sorted((PROJECT_ROOT / "scripts").glob("*.py")):
+        commands = sorted((PROJECT_ROOT / "src" / "commands").glob("*.py"))
+        scripts = sorted((PROJECT_ROOT / "scripts").glob("*.py"))
+        for path in commands + scripts:
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for node in ast.walk(tree):
                 if not (
@@ -231,7 +233,7 @@ class EveryLoaderIsPinnedTests(unittest.TestCase):
                 self.assertTrue(
                     isinstance(exact, ast.Constant) and exact.value is True, where
                 )
-        # Seven scripts load a model this way today; finding none would mean
+        # Seven commands load a model this way today; finding none would mean
         # the sweep stopped looking, not that every load is pinned.
         self.assertGreaterEqual(checked, 7)
 

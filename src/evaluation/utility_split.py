@@ -12,7 +12,7 @@ ones. A 1.7B model's score would then move with the subject mix rather than with
 anything training did.
 
 The manifest stores indices and hashes rather than the questions themselves,
-exactly as the Phase A split does, because the dataset is already public and
+exactly as the GSM8K split does, because the dataset is already public and
 vendoring it would duplicate something upstream maintains.
 """
 

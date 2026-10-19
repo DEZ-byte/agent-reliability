@@ -1,4 +1,4 @@
-"""Framework-neutral R0 and R1 episode loops for Phase A.
+"""Framework-neutral R0 and R1 episode loops for GSM8K.
 
 The rung protocol (private planning notes) defines these rungs in section 4,
 and in section 1 the counters every episode must record. This module
@@ -18,13 +18,13 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Callable, Final, Literal, Protocol
 
-from agent.dialects import normalise_tool_dialect
+from agent.dialects import normalize_tool_dialect
 from agent.gates import GateEngine, GateMode
 from agent.parser import parse_tool_calls
 from env.models import EnvironmentOutcome, EpisodeTrace, OutcomeSource, ToolEvent
-from env.phase_a import (
+from env.gsm8k import (
     CALCULATOR_TOOL_NAME,
-    PhaseATask,
+    Gsm8kTask,
     answer_from_events,
     is_answering_event,
 )
@@ -146,16 +146,16 @@ def _count(counters: EpisodeCounters, trace: EpisodeTrace) -> None:
 
 def run_episode(
     *,
-    task: PhaseATask,
+    task: Gsm8kTask,
     registry: ToolRegistry,
     gate_engine: GateEngine,
     policy: Policy,
     rung: Rung,
     run_index: int = 0,
     environment_turn_cap: int = REFERENCE_ENVIRONMENT_TURN_CAP,
-    normalise_dialect: bool = False,
+    normalize_dialect: bool = False,
 ) -> EpisodeResult:
-    """Run one Phase A episode under R0 or R1.
+    """Run one GSM8K episode under R0 or R1.
 
     The episode ends as soon as a calculator call executes successfully, since
     D-060 makes that result the answer. It also ends when the rung's decision
@@ -195,7 +195,7 @@ def run_episode(
         # JSON is a real format failure by its own convention and keeps
         # counting as one; three such completions exist in the recorded logs.
         parsed = parse_tool_calls(
-            normalise_tool_dialect(completion) if normalise_dialect else completion
+            normalize_tool_dialect(completion) if normalize_dialect else completion
         )
         trace = registry.execute(
             parsed,

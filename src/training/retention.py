@@ -10,7 +10,7 @@ nothing.
 does not catch the decorated form, and decoration is one character of effort:
 `391 + 0` and `391 * 1` both parse as arithmetic and both compute nothing. A
 filter that misses them lets the training set fill with answer-first
-reconstructions, which is precisely the behaviour section 5.4 of the project
+reconstructions, which is precisely the behavior section 5.4 of the project
 plan (private planning notes) says must not be rewarded.
 
 So retention asks a harder question: does this expression look like it was

@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from scripts import build_sft_dataset as builder  # noqa: E402
+from commands import build_sft as builder  # noqa: E402
 
 SPLIT_MANIFEST = PROJECT_ROOT / "configs" / "splits" / "phase_a_gsm8k.json"
 

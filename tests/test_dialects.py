@@ -24,7 +24,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from agent.dialects import (  # noqa: E402
     looks_like_tool_call,
-    normalise_tool_dialect,
+    normalize_tool_dialect,
     template_uses_canonical_tags,
 )
 from agent.parser import parse_tool_calls  # noqa: E402
@@ -37,27 +37,27 @@ class PassThroughTests(unittest.TestCase):
     """Anything already canonical, or not a tool call, is returned untouched."""
 
     def test_a_canonical_call_is_byte_identical(self) -> None:
-        self.assertEqual(normalise_tool_dialect(CANONICAL), CANONICAL)
+        self.assertEqual(normalize_tool_dialect(CANONICAL), CANONICAL)
 
     def test_prose_is_untouched(self) -> None:
         text = "The answer is 72."
-        self.assertEqual(normalise_tool_dialect(text), text)
+        self.assertEqual(normalize_tool_dialect(text), text)
 
     def test_malformed_json_is_left_for_the_parser_to_reject(self) -> None:
         """The parser reports format failures. Repairing them would hide them."""
 
         broken = '{"name": "calculator", '
-        self.assertEqual(normalise_tool_dialect(broken), broken)
+        self.assertEqual(normalize_tool_dialect(broken), broken)
 
     def test_json_that_is_not_a_tool_call_is_untouched(self) -> None:
-        self.assertEqual(normalise_tool_dialect('{"a": 1}'), '{"a": 1}')
+        self.assertEqual(normalize_tool_dialect('{"a": 1}'), '{"a": 1}')
 
     def test_a_stray_closing_tag_disables_translation(self) -> None:
         """Presence of either tag means the model was speaking the canonical
         dialect, however badly, so its output is judged in that dialect."""
 
         text = '{"name": "calculator", "parameters": {}}</tool_call>'
-        self.assertEqual(normalise_tool_dialect(text), text)
+        self.assertEqual(normalize_tool_dialect(text), text)
 
 
 class TranslationTests(unittest.TestCase):
@@ -65,7 +65,7 @@ class TranslationTests(unittest.TestCase):
         """The point of the module: this is a correct call in Llama's dialect."""
 
         self.assertEqual(parse_tool_calls(BARE_LLAMA).emitted_blocks, 0)
-        result = parse_tool_calls(normalise_tool_dialect(BARE_LLAMA))
+        result = parse_tool_calls(normalize_tool_dialect(BARE_LLAMA))
         self.assertEqual(result.emitted_blocks, 1)
         self.assertEqual(result.issues, [])
         self.assertEqual(result.calls[0].name, "calculator")
@@ -73,7 +73,7 @@ class TranslationTests(unittest.TestCase):
 
     def test_parameters_is_renamed_to_arguments(self) -> None:
         payload = json.loads(
-            normalise_tool_dialect(BARE_LLAMA)
+            normalize_tool_dialect(BARE_LLAMA)
             .removeprefix("<tool_call>\n")
             .removesuffix("\n</tool_call>")
         )
@@ -81,12 +81,12 @@ class TranslationTests(unittest.TestCase):
 
     def test_an_already_correct_key_survives_translation(self) -> None:
         bare = '{"name": "calculator", "arguments": {"expression": "1+1"}}'
-        result = parse_tool_calls(normalise_tool_dialect(bare))
+        result = parse_tool_calls(normalize_tool_dialect(bare))
         self.assertEqual(result.calls[0].arguments, {"expression": "1+1"})
 
     def test_surrounding_prose_does_not_block_translation(self) -> None:
         text = 'Let me compute.\n{"name": "calculator", "parameters": {"expression": "6*7"}}'
-        self.assertEqual(parse_tool_calls(normalise_tool_dialect(text)).emitted_blocks, 1)
+        self.assertEqual(parse_tool_calls(normalize_tool_dialect(text)).emitted_blocks, 1)
 
 
 class ShapeTests(unittest.TestCase):

@@ -1,4 +1,4 @@
-"""Load the frozen Phase A task splits, whichever upstream split they came from.
+"""Load the frozen GSM8K task splits, whichever upstream split they came from.
 
 The split manifest draws from two different upstream GSM8K splits on purpose:
 train tasks come from upstream `train`, while dev and test come from upstream
@@ -20,7 +20,7 @@ import json
 from pathlib import Path
 from typing import Any, Final
 
-from env.phase_a import PhaseATask, parse_gsm8k_answer
+from env.gsm8k import Gsm8kTask, parse_gsm8k_answer
 
 SPLIT_NAMES: Final = ("train", "dev", "test")
 
@@ -64,7 +64,7 @@ def load_split(
     split: str,
     *,
     limit: int | None = None,
-) -> list[PhaseATask]:
+) -> list[Gsm8kTask]:
     """Materialise one frozen split as tasks, verifying every row hash.
 
     Entries are grouped by upstream split so each upstream split is downloaded
@@ -88,7 +88,7 @@ def load_split(
         for name in needed
     }
 
-    tasks: list[PhaseATask] = []
+    tasks: list[Gsm8kTask] = []
     for entry in entries:
         row = rows_by_split[upstream_split(entry["task_id"])][entry["source_index"]]
         if content_digest(row["question"], row["answer"]) != entry["content_sha256"]:
@@ -96,7 +96,7 @@ def load_split(
                 f"{entry['task_id']} does not match its recorded content hash"
             )
         tasks.append(
-            PhaseATask(
+            Gsm8kTask(
                 task_id=entry["task_id"],
                 template_id=entry["template_id"],
                 question=row["question"],

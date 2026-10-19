@@ -104,7 +104,7 @@ def recorded_path(path: Path | str, root: Path) -> str:
 def adapter_weights_sha256(adapter: Path | str | None) -> str | None:
     """SHA-256 of an adapter's weights file, read whole; None for the base model.
 
-    measure_weight_change.py hashes the same bytes the same way, so a new
+    The weight-change command hashes the same bytes the same way, so a new
     record can be matched to an old one by value.
     """
 
@@ -133,7 +133,7 @@ def pinned_load_kwargs(
 ) -> dict[str, Any]:
     """`FastLanguageModel.from_pretrained` arguments for the pinned base model.
 
-    Without `use_exact_model_name`, Unsloth swaps the name for a pre-quantised
+    Without `use_exact_model_name`, Unsloth swaps the name for a pre-quantized
     mirror that does not have the pinned revision. Handed an adapter directory,
     it also drops `revision` for the base model. So the base is always loaded
     by id and the adapter is attached afterwards. The adapter's own tokenizer

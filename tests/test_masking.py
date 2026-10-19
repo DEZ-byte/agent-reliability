@@ -11,7 +11,7 @@ test that cannot create that condition cannot prove the guard works. Each test
 below builds the broken case explicitly and asserts the guard refuses it.
 
 The matching facts about the real Qwen3 tokenizer are measured separately by
-`scripts/verify_masking.py`, which writes a hashed artifact.
+`scripts/train.py verify-masking`, which writes a hashed artifact.
 """
 
 from __future__ import annotations
@@ -160,7 +160,7 @@ class MaskedExampleTests(unittest.TestCase):
             else:
                 self.assertEqual(label, IGNORE_INDEX)
 
-    def test_trained_token_count_matches_the_labelled_positions(self) -> None:
+    def test_trained_token_count_matches_the_labeled_positions(self) -> None:
         tokenizer = StubTokenizer()
         example = encode_with_labels(tokenizer, TRAJECTORY, tools=[])
         self.assertEqual(

@@ -9,7 +9,7 @@ that is not there.
 
 The second measurement is the interesting one. Nothing in this benchmark offers
 a tool, so a tool call here is a habit that escaped its training context. That
-is what specialisation looks like from the outside, and it is pinned separately
+is what specialization looks like from the outside, and it is pinned separately
 from accuracy because the two can move in opposite directions.
 """
 
@@ -26,7 +26,7 @@ from evaluation.utility import (  # noqa: E402
     emitted_tool_call,
     extract_choice,
     score_completion,
-    summarise,
+    summarize,
     was_truncated,
 )
 
@@ -166,7 +166,7 @@ class SummaryTests(unittest.TestCase):
         ]
 
     def test_accuracy_counts_only_correct_letters(self) -> None:
-        self.assertEqual(summarise(self._scores())["accuracy"], 0.25)
+        self.assertEqual(summarize(self._scores())["accuracy"], 0.25)
 
     def test_the_tool_habit_is_reported_separately_from_accuracy(self) -> None:
         """The case that matters: knowledge intact, answer format collapsed.
@@ -182,18 +182,18 @@ class SummaryTests(unittest.TestCase):
             )
             for _ in range(4)
         ]
-        summary = summarise(scores)
+        summary = summarize(scores)
         self.assertEqual(summary["accuracy"], 1.0)
         self.assertEqual(summary["tool_call_rate"], 1.0)
-        self.assertEqual(summarise(self._scores())["tool_call_rate"], 0.25)
+        self.assertEqual(summarize(self._scores())["tool_call_rate"], 0.25)
 
     def test_extraction_failures_are_reported_so_they_cannot_hide(self) -> None:
         """A collapse in answer format would otherwise read as lost knowledge."""
 
-        self.assertEqual(summarise(self._scores())["extraction_failure_rate"], 0.5)
+        self.assertEqual(summarize(self._scores())["extraction_failure_rate"], 0.5)
 
-    def test_an_empty_run_summarises_to_nothing(self) -> None:
-        self.assertEqual(summarise([]), {"questions": 0})
+    def test_an_empty_run_summarizes_to_nothing(self) -> None:
+        self.assertEqual(summarize([]), {"questions": 0})
 
     def test_running_out_of_budget_is_separated_from_rambling_to_a_stop(self) -> None:
         """These mean different things and must not share one number.
@@ -208,7 +208,7 @@ class SummaryTests(unittest.TestCase):
             score_completion("Let me work through this...", gold_index=0, truncated=True),
             score_completion("I have no idea.", gold_index=0, truncated=False),
         ]
-        summary = summarise(scores)
+        summary = summarize(scores)
         self.assertEqual(summary["extraction_failure_rate"], 1.0)
         self.assertEqual(summary["truncated_rate"], 0.5)
         self.assertEqual(summary["unreadable_within_budget_rate"], 0.5)

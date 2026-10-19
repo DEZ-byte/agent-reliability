@@ -5,10 +5,10 @@ import unittest
 
 from agent.gates import GateEngine, GateMode
 from agent.parser import parse_tool_calls
-from env.phase_a import (
-    PhaseATask,
+from env.gsm8k import (
+    Gsm8kTask,
     answered_without_arithmetic,
-    build_phase_a_registry,
+    build_gsm8k_registry,
     grade_episode,
 )
 from evaluation.contamination import (
@@ -19,7 +19,7 @@ from evaluation.contamination import (
     score_no_tool_attempt,
 )
 
-TASK = PhaseATask(
+TASK = Gsm8kTask(
     task_id="gsm8k:test:0",
     template_id="gsm8k:test:0",
     question="17 boxes of 23 pens.",
@@ -29,7 +29,7 @@ TASK = PhaseATask(
 
 
 def run(raw: str):
-    registry = build_phase_a_registry()
+    registry = build_gsm8k_registry()
     engine = GateEngine.from_mapping({})
     return registry.execute(
         parse_tool_calls(raw), {}, gate_engine=engine, gate_mode=GateMode.ENFORCE
@@ -58,7 +58,7 @@ class AnswerExtractionTests(unittest.TestCase):
 class ArithmeticDetectionTests(unittest.TestCase):
     """The check that separates computing from restating."""
 
-    def test_real_arithmetic_is_recognised(self) -> None:
+    def test_real_arithmetic_is_recognized(self) -> None:
         for expression in ("17 * 23", "(48/2)+6", "-3 + 4", "min(3, 4)", "2 ** 5"):
             with self.subTest(expression=expression):
                 self.assertTrue(expression_does_arithmetic(expression))

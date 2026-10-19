@@ -99,17 +99,17 @@ class DigestTests(unittest.TestCase):
 class DisjointnessTests(unittest.TestCase):
     """These questions must not appear anywhere the project trains."""
 
-    def test_no_utility_question_shares_a_hash_with_a_phase_a_task(self) -> None:
+    def test_no_utility_question_shares_a_hash_with_a_gsm8k_task(self) -> None:
         """Different datasets, but the check is cheap and the claim is public."""
 
-        phase_a = json.loads(
+        gsm8k = json.loads(
             (PROJECT_ROOT / "configs" / "splits" / "phase_a_gsm8k.json").read_text(
                 encoding="utf-8"
             )
         )
         trained = {
             entry["content_sha256"]
-            for split in phase_a["splits"].values()
+            for split in gsm8k["splits"].values()
             for entry in split
         }
         utility = {

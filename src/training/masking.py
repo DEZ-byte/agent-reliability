@@ -69,7 +69,7 @@ class MaskedExample:
 
 
 def _token_ids(rendered: Any) -> list[int]:
-    """Normalise what `apply_chat_template` returns across its many shapes."""
+    """Normalize what `apply_chat_template` returns across its many shapes."""
 
     if isinstance(rendered, dict) or hasattr(rendered, "keys"):
         return list(rendered["input_ids"])

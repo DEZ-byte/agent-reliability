@@ -14,7 +14,7 @@ retention check: does the model still know things.
 The second is whether the model reaches for a tool when there is no tool. The
 training data was one tool-call per example, every example, so the pressure to
 emit a tool call on anything that looks like a question is real and it is
-exactly what specialisation would look like from the inside. Nothing in this
+exactly what specialization would look like from the inside. Nothing in this
 benchmark offers a tool, so a `<tool_call>` block here is a habit that has
 escaped its context. That rate is reported alongside accuracy, because a model
 can keep its knowledge and still become unusable outside its training task.
@@ -141,7 +141,7 @@ def score_completion(
     )
 
 
-def summarise(scores: Sequence[UtilityScore]) -> dict[str, Any]:
+def summarize(scores: Sequence[UtilityScore]) -> dict[str, Any]:
     """What a whole benchmark run looked like."""
 
     if not scores:
@@ -175,6 +175,6 @@ __all__ = [
     "emitted_tool_call",
     "extract_choice",
     "score_completion",
-    "summarise",
+    "summarize",
     "was_truncated",
 ]

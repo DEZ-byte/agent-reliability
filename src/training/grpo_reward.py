@@ -26,11 +26,11 @@ import math
 from dataclasses import dataclass
 from typing import Any, Final, Sequence
 
-from agent.dialects import normalise_tool_dialect
+from agent.dialects import normalize_tool_dialect
 from agent.gates import GateEngine, GateMode
 from agent.parser import parse_tool_calls
 from env.models import EnvironmentOutcome, OutcomeSource
-from env.phase_a import answer_from_events, build_phase_a_registry
+from env.gsm8k import answer_from_events, build_gsm8k_registry
 from env.tools import ToolRegistry
 from training.retention import laundering_verdict
 from training.rewards import score_episode
@@ -59,11 +59,11 @@ def score_completion(
     question: str = "",
     registry: ToolRegistry,
     gate_engine: GateEngine,
-    normalise_dialect: bool = False,
+    normalize_dialect: bool = False,
 ) -> CompletionScore:
     """Execute one candidate and score it on execution evidence alone."""
 
-    text = normalise_tool_dialect(completion) if normalise_dialect else completion
+    text = normalize_tool_dialect(completion) if normalize_dialect else completion
     trace = registry.execute(
         parse_tool_calls(text),
         {},
@@ -81,7 +81,7 @@ def score_completion(
         gate_engine=gate_engine,
     )
     # Section 7.0 is explicit that a call restating a remembered answer still
-    # scores +1.0, measured rather than penalised. GRPO is the sharpest possible
+    # scores +1.0, measured rather than penalized. GRPO is the sharpest possible
     # version of that pressure: laundering is the cheapest route to full
     # accuracy, so the rate is tracked every step rather than checked at the end.
     laundered = False
@@ -158,7 +158,7 @@ def group_health(scores: Sequence[CompletionScore]) -> dict[str, Any]:
 def make_reward_function(
     *,
     group_size: int,
-    normalise_dialect: bool = False,
+    normalize_dialect: bool = False,
     health_log: list | None = None,
 ):
     """Build the callable TRL invokes, closing over one registry and gate engine.
@@ -175,7 +175,7 @@ def make_reward_function(
 
     if group_size < 1:
         raise ValueError(f"group_size must be >= 1, got {group_size}")
-    registry = build_phase_a_registry()
+    registry = build_gsm8k_registry()
     gate_engine = GateEngine.from_mapping({})
 
     def reward(completions, gold_answer, question=None, **kwargs):
@@ -192,7 +192,7 @@ def make_reward_function(
                 question=q,
                 registry=registry,
                 gate_engine=gate_engine,
-                normalise_dialect=normalise_dialect,
+                normalize_dialect=normalize_dialect,
             )
             for text, gold, q in zip(completions, gold_answer, questions)
         ]

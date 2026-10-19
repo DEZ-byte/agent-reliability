@@ -2,7 +2,7 @@
 
 `build_prompt_dataset` pre-renders each train task with the evaluation system
 prompt, user template and calculator schema, with thinking off. If any of that
-drifted, GRPO would optimise a prompt that is never tested.
+drifted, GRPO would optimize a prompt that is never tested.
 
 Everything here runs offline. The split loader and the `datasets` module are
 replaced with stand-ins, so the real function runs end to end on one synthetic
@@ -22,11 +22,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from scripts import train_grpo  # noqa: E402
+from commands import train_grpo  # noqa: E402
 
 
 class RecordingTokenizer:
-    """Captures every `apply_chat_template` call instead of tokenising."""
+    """Captures every `apply_chat_template` call instead of tokenizing."""
 
     def __init__(self) -> None:
         self.calls: list[dict] = []

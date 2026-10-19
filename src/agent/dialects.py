@@ -1,4 +1,4 @@
-"""Normalise a model's native tool-call dialect into the canonical form.
+"""Normalize a model's native tool-call dialect into the canonical form.
 
 Models do not agree on how a tool call looks. Qwen3's chat template produces
 `<tool_call>{"name": ..., "arguments": {...}}</tool_call>`. Llama 3.1's produces
@@ -12,7 +12,7 @@ inside it.
 
 This matters because the alternative is a false result. Scored without it, a
 Llama emitting a perfectly correct calculator call gets zero, and the number
-looks like a capability gap when it is a serialisation difference. That is the
+looks like a capability gap when it is a serialization difference. That is the
 same mistake D-060 recorded on the Qwen side, where a described format produced
 a well-formed opening tag and an early stop, and it cost a full baseline run.
 
@@ -51,7 +51,7 @@ def looks_like_tool_call(payload: object) -> bool:
     )
 
 
-def normalise_tool_dialect(completion: str) -> str:
+def normalize_tool_dialect(completion: str) -> str:
     """Rewrite an untagged tool call into the canonical tagged form.
 
     Returns the input unchanged unless every one of these holds: there is no
@@ -109,6 +109,6 @@ __all__ = [
     "OPEN_TAG",
     "CLOSE_TAG",
     "looks_like_tool_call",
-    "normalise_tool_dialect",
+    "normalize_tool_dialect",
     "template_uses_canonical_tags",
 ]

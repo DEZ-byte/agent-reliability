@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -22,8 +23,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from scripts import generate_sft_trajectories as gen  # noqa: E402
-from scripts import select_checkpoint as selector  # noqa: E402
+from commands import generate_teacher as gen  # noqa: E402
+from commands import select_checkpoint as selector  # noqa: E402
 
 
 class BatchingTests(unittest.TestCase):
@@ -48,9 +49,9 @@ class BatchingTests(unittest.TestCase):
             other([{"role": "user", "content": "different prompt"}])
 
     def test_first_decision_messages_match_run_episode(self) -> None:
-        from env.phase_a import PhaseATask
+        from env.gsm8k import Gsm8kTask
 
-        task = PhaseATask(task_id="t", template_id="t", question="2+2?", gold_answer=4.0, source="test")
+        task = Gsm8kTask(task_id="t", template_id="t", question="2+2?", gold_answer=4.0, source="test")
         messages = gen._first_decision_messages(task)
         self.assertEqual(messages[0]["content"], gen.SYSTEM_PROMPT)
         self.assertEqual(messages[1]["content"], gen.USER_PROMPT.format(question="2+2?"))
@@ -108,6 +109,22 @@ class SelectionResumeTests(unittest.TestCase):
             self.assertIsNone(selector._reusable_score(path, rung="R0", metric="pass^1", checkpoint=checkpoint))
             weights.unlink()
             self.assertIsNone(selector._reusable_score(path, rung="R0", metric="pass^1", checkpoint=checkpoint))
+
+    def test_a_reused_score_names_its_artifact_by_scratch_folder_and_file(self) -> None:
+        # The full scratch path is local to one machine, so it stays out of the record.
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp) / "selection"
+            scratch.mkdir()
+            checkpoint = Path(tmp) / "checkpoint-25"
+            checkpoint.mkdir()
+            (checkpoint / "adapter_model.safetensors").write_bytes(b"weights")
+            self._write(scratch, self._good())
+            row = selector.score(
+                checkpoint=checkpoint, base_model="m", split="dev", rung="R0", metric="pass^1",
+                output_dir=scratch, limit=None, resume=True,
+            )
+        self.assertTrue(row["reused"])
+        self.assertEqual(row["artifact"], os.path.join("selection", "select-checkpoint-25.json"))
 
 
 if __name__ == "__main__":
