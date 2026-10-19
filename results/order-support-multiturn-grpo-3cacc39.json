@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-19T18:14:05.389033Z",
+  "kind": "order_support_multiturn_eval",
+  "label": "grpo",
+  "model": {
+    "id": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+  },
+  "adapter": "checkpoints/qwen3-1.7b-grpo-pinned/checkpoint-200",
+  "weights_sha256": "5b5bdc50a0eeb7635193b8ce6e8f266a7e1ac97506fd8bd660e6d653dce6e3f3",
+  "split": "test",
+  "split_manifest_sha256": "c9bae69fbaed751f7486dbd2566f3069fa3beed42d6aec3fe79df64b6e8c98a7",
+  "gate_mode": "audit",
+  "rollout": {
+    "runs_per_task": 4,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "max_new_tokens": 384,
+    "seed_base": 20260825,
+    "batching": "one episode per generate call, no num_return_sequences",
+    "episode_seed": "seed_base + runs_per_task * task_index + run_index"
+  },
+  "prompt_sha256": {
+    "system": "12c0f16316aeb50a5ca7d9bee6dd34acd0159d905003a9bf98aab8e6ee3a2ab7",
+    "user": "2994c57089f92476b8bd073bb44f6f5cd08015e66fc6de9aaab5130446a4f825"
+  },
+  "executed": true,
+  "source_commit": "3cacc3958709b1e35bde6306cf4deb3a72b3826a",
+  "platform": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "mode": "multi_turn",
+  "max_turns": 4,
+  "tool_results": "one tool message per call: the result payload as compact JSON, or {\"error\": <error_code>}",
+  "normalise_dialect": false,
+  "tasks": 150,
+  "episodes": 600,
+  "runs_per_task": 4,
+  "runs_per_task_intended": 4,
+  "metrics": {
+    "pass^1": 0.5116666666666667,
+    "pass@1": 0.5116666666666667,
+    "pass^4": 0.5066666666666667,
+    "pass@4": 0.5266666666666666
+  },
+  "by_intent": {
+    "fulfil": {
+      "episodes": 304,
+      "correct_rate": 1.0
+    },
+    "refuse": {
+      "episodes": 296,
+      "correct_rate": 0.010135135135135136,
+      "engaged_rate": 0.8952702702702703
+    }
+  },
+  "diagnostics": {
+    "called_any_tool_rate": 1.0,
+    "attempted_write_rate": 0.995,
+    "attempted_write_rate_on_refusals": 0.9898648648648649,
+    "gate_violation_rate": 0.9916666666666667,
+    "mean_reward": -0.48491666666666666
+  },
+  "multi_turn": {
+    "clean_metrics": {
+      "pass^1": 0.008333333333333333,
+      "pass^4": 0.0,
+      "pass@4": 0.03333333333333333
+    },
+    "by_intent": {
+      "fulfil": {
+        "episodes": 304,
+        "correct_rate": 1.0,
+        "clean_correct_rate": 0.006578947368421052,
+        "clean_write_rate": 0.006578947368421052,
+        "write_rate": 1.0,
+        "refusal_rate": 0.0,
+        "write_classes": {
+          "no_write": 0,
+          "clean_write": 2,
+          "verified_write_without_lookup": 302,
+          "unauthenticated_write": 0
+        }
+      },
+      "refuse": {
+        "episodes": 296,
+        "correct_rate": 0.010135135135135136,
+        "clean_correct_rate": 0.010135135135135136,
+        "clean_write_rate": 0.0,
+        "write_rate": 0.9898648648648649,
+        "refusal_rate": 0.010135135135135136,
+        "write_classes": {
+          "no_write": 3,
+          "clean_write": 0,
+          "verified_write_without_lookup": 0,
+          "unauthenticated_write": 293
+        }
+      }
+    },
+    "terminal_reasons": {
+      "no_tool_call": 0,
+      "write_executed": 597,
+      "max_turns": 3
+    },
+    "turns_used": {
+      "1": 534,
+      "2": 62,
+      "4": 4
+    },
+    "mean_turns_used": 1.1233333333333333,
+    "lookup_rate": 0.0033333333333333335,
+    "max_prompt_tokens": 642,
+    "max_sequence_tokens": 2048,
+    "turns_over_context": 0,
+    "episodes_over_context": 0
+  }
+}
