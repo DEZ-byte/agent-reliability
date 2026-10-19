@@ -29,14 +29,21 @@ check. A file that a later run replaced is removed only with
 | `contamination-*.json` | The same tasks with no calculator, before and after training |
 | `utility-{base,sft,grpo}-*.json`, `utility-comparison-*.json` | MMLU with no tool offered, and the paired comparison question by question |
 | `phase_b-*.json` | Single-turn transfer to an order-support agent with three tools that were not in training, its gate failures, and a split by request template |
-| `token-counts-*.json` | Generated tokens and cost per attempt for every model row in the README, the parameter counts behind the cost, and a check of the token rule against every recorded count |
-| `order-support-multiturn-*.json` | The closed-loop multi-turn order-support run. No such run exists yet. |
+| `order-support-multiturn-{base,sft,grpo}-*.json` | The same three checkpoints on the same order-support test split in the closed-loop multi-turn mode: tool results go back to the model, up to 4 replies per episode |
+| `order-support-modes-*.json` | Each checkpoint's single-turn and multi-turn runs paired by request: differences with intervals and tests, completion, refusal, lookup and write counts per mode, first-reply writes, and strict pass^1 for both modes |
+| `token-counts-*.json` | Generated tokens and cost per attempt for every GSM8K model row in the README, the parameter counts behind the cost, a check of the token rule against every recorded count, and the token counts of the multi-turn order-support runs |
+
+The first token-counts file, `token-counts-3301c34.json`, was retired and
+replaced by one that adds the multi-turn counts; its GSM8K rows, parameter
+counts and validation are unchanged.
 
 Episode logs (`*.jsonl`) hold one row per attempt. They are not in git. The
 logs these files rest on are attached to the
 [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0),
-with their SHA-256. `failure-modes-*.json`, `phase_b-gates-*.json`,
-`phase_b-templates-*.json`, `utility-comparison-*.json` and
+with their SHA-256, except the three multi-turn order-support logs
+(`episodes-order-support-multiturn-*.jsonl`), which are not yet published.
+`failure-modes-*.json`, `phase_b-gates-*.json`, `phase_b-templates-*.json`,
+`utility-comparison-*.json`, `order-support-modes-*.json` and
 `token-counts-*.json` record the SHA-256 of every log they read.
 
 ## Commands
@@ -97,11 +104,40 @@ python scripts/analyze.py order-support-templates --output results/phase_b-templ
   --arm grpo results/phase_b-grpo-42e347c.json results/episodes-phase_b-grpo-42e347c.jsonl
 ```
 
-The token counts need a clean tree, the cached tokenizers at their pinned
-revisions, and the release logs in `results/`. The figures in `assets/` are
-drawn from the frozen files and the token counts, and need matplotlib.
+The three multi-turn order-support runs were made at commit `3cacc39`,
+offline, with the pinned base weights already in the local cache.
+`--run-load` requires `--allow-download`; with `HF_HUB_OFFLINE=1` nothing is
+fetched:
 
 ```bash
+HF_HUB_OFFLINE=1 python scripts/evaluate.py order-support --model Qwen/Qwen3-1.7B \
+  --label base \
+  --summary results/order-support-multiturn-base-3cacc39.json \
+  --episodes results/episodes-order-support-multiturn-base-3cacc39.jsonl \
+  --split test --mode multi_turn --max-turns 4 --run-load --allow-download
+HF_HUB_OFFLINE=1 python scripts/evaluate.py order-support --model Qwen/Qwen3-1.7B \
+  --adapter checkpoints/qwen3-1.7b-sft-seed20260824/checkpoint-86 --label sft \
+  --summary results/order-support-multiturn-sft-3cacc39.json \
+  --episodes results/episodes-order-support-multiturn-sft-3cacc39.jsonl \
+  --split test --mode multi_turn --max-turns 4 --run-load --allow-download
+HF_HUB_OFFLINE=1 python scripts/evaluate.py order-support --model Qwen/Qwen3-1.7B \
+  --adapter checkpoints/qwen3-1.7b-grpo-pinned/checkpoint-200 --label grpo \
+  --summary results/order-support-multiturn-grpo-3cacc39.json \
+  --episodes results/episodes-order-support-multiturn-grpo-3cacc39.jsonl \
+  --split test --mode multi_turn --max-turns 4 --run-load --allow-download
+```
+
+The analysis commands below need a clean tree and the episode logs in
+`results/`, including the three multi-turn logs. `order-support-modes` pairs
+each checkpoint's single-turn and multi-turn runs and writes
+`results/order-support-modes-<commit>.json`. The token counts also need the
+cached tokenizers at their pinned revisions. The figures in `assets/` are
+drawn from the frozen files and the token counts, and need matplotlib. Each
+command writes a new file, so commit or move its output before running the
+next one.
+
+```bash
+python scripts/analyze.py order-support-modes
 HF_HUB_OFFLINE=1 python scripts/analyze.py backfill-tokens
 python scripts/analyze.py plots
 ```

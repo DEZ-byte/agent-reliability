@@ -29,22 +29,34 @@ refusal behavior in an order-support environment the model never trained on.
   started after the 1e-6 test result was known, so it is an exploratory
   follow-up, not a pre-registered test. Its pass^1 interval [+0.005, +0.068]
   excludes zero, with permutation p = 0.040 and exact sign test p = 0.215, and
-  its pass^4 interval includes zero. Both runs are retrains on the pinned base.
-  In a first round, most likely trained on a different copy of the base, no
-  GRPO interval against SFT run 3 excluded zero. In 65% to 66% of the 8-rollout groups
-  all 8 completions got the same reward, so their within-group reward variance
-  was zero and they produced no policy gradient.
-- **The tool-call format transferred to a new domain; refusal did not.** On an
-  order-support environment with three tools and no arithmetic, run
-  single-turn, SFT run 3 completes completable requests at a rate of 0.905,
-  against 0.000 for the untrained model. Its correct-refusal rate on requests that
-  must be refused falls from 1.000 to 0.115, and 262 of 296 refusal episodes
-  wrote to the order anyway. The untrained model's 0.000 and its refusals of
-  wrong-postal-code requests come from one behavior: on every request that
-  included a postal code it called `authenticate` alone and stopped (452 of 452
-  episodes), and the single-turn grader counts that as a refusal when the
-  postal code is wrong. On requests with no postal code, most of its replies
-  made no tool call (96 of 148).
+  its pass^4 interval includes zero. In 65% to 66% of the 8-rollout groups
+  all 8 completions got the same reward, so their within-group reward
+  variance was zero and they produced no policy gradient.
+- **On order support, the untrained model's zero completion rate came from
+  the one-reply test. SFT's refusal failures remain when tool results are fed
+  back.** In an environment with three tools and no arithmetic, the untrained
+  Qwen3-1.7B completed 0.000 of completable requests in the single-turn
+  open-loop test (one reply, no tool results shown). In the multi-turn closed
+  loop, each reply's tool results go back to the model before its next reply,
+  for up to 4 turns (a turn is one reply). There the untrained model averages
+  2.26 turns, completes 0.888 of completable requests and refuses 1.000 of
+  refusal-required ones with 0 unauthenticated writes. It reaches pass^4 0.833
+  and strict pass^1 0.742 (the order ends in the requested state, no tool rule
+  is broken and at least one call ran). SFT run 3 refused 0.115 of
+  refusal-required requests in the single-turn run and 0.007 in the closed
+  loop, where 294 of 296 attempts wrote without authentication. The untrained
+  model never wrote on those requests under either protocol, so the behavior
+  comes from SFT. Most of it is horizon collapse, the model doing the whole
+  task in one reply: in the closed loop SFT run 3 averages 1.095 turns, and
+  265 of its 294 unauthenticated writes came from a first reply that called
+  `update_order` before any `authenticate` result was back. It never calls
+  `get_order`, so its strict pass^1 is 0.003. SFT + GRPO at lr 1e-6 behaves
+  almost the same way: it calls `get_order` in 2 of 600 episodes, and its
+  strict pass^1 is 0.008.
+- **MMLU did not register the change in tool behavior.** Accuracy was
+  53.25% before SFT and 53.00% after (SFT run 3), a paired difference of
+  −0.0025 with a 95% interval of [−0.048, +0.045], so a change of up to
+  about 5 points either way cannot be ruled out.
 
 ![Reliability and cost](assets/reliability_cost_pareto.png)
 
@@ -55,9 +67,13 @@ against cost per attempt. † marks token counts rebuilt from the episode logs.
 ![Failure modes and transfer](assets/failure_and_transfer_breakdown.png)
 
 **Figure 2.** (A) How the R0 GSM8K attempts failed, out of 600 per model.
-(B) Order-support completion and correct-refusal rates. The untrained model
-never writes, so every refusal-required attempt counts as refused. (C) Share
-of GRPO groups whose eight rewards were identical.
+(B) Order support in the multi-turn closed loop: completion rate on
+completable requests, correct-refusal rate on refusal-required requests, and
+strict pass^1, with each model's mean turns in the legend. Diamonds mark the
+same model's single-turn completion and refusal rates. The untrained model
+never wrote in its single-turn run, so its single-turn refusal rate counts
+every refusal-required attempt as refused. (C) Share of GRPO groups whose eight
+rewards were identical.
 
 ## Pipeline
 
@@ -69,7 +85,7 @@ flowchart LR
     D --> E["Checkpoint selection<br/>dev split, 100 tasks"]
     E --> F["GRPO from SFT run 3<br/>group size 8, lr 1e-6 and 1e-5"]
     F --> E
-    E --> G["Evaluation<br/>GSM8K: 150 test tasks x 4<br/>MMLU: 400 questions, zero-shot<br/>order support: 150 requests x 4"]
+    E --> G["Evaluation<br/>GSM8K: 150 test tasks x 4<br/>MMLU: 400 questions, zero-shot<br/>order support: 150 requests x 4,<br/>single-turn and multi-turn"]
 ```
 
 ## Methodology and metrics
@@ -229,18 +245,17 @@ Each trains for 400 steps on prompts from the GSM8K train split, two per step,
 with 8 completions per prompt and the reward computed by executing each
 completion.
 
-Both rates were first trained, dev-selected and run on test in August. Those
-runs most likely trained on Unsloth's pre-quantized copy of Qwen3-1.7B, not the
-pinned base: the training script loaded the base through Unsloth without
-pinning it, which lets Unsloth substitute its own copy. The test runs did load
-the pinned base. After those test results existed, both rates were trained
-again on the pinned base with the same config, seed and step count, and each
-went through dev selection and one test run. Every GRPO number here, including
-the MMLU and order-support columns, comes from the retrained runs. In the first
-runs, every R0 pass^1 and pass^4 interval against SFT run 3 included zero. The
-first runs' results were retired from `results/` and stay in the Git history,
-along with the first 1e-6 run's MMLU and order-support evaluations, each of
-which was run twice.
+Both rates were first trained, dev-selected and run on test in August. The
+training script for those first runs loaded the base through Unsloth without
+pinning its revision, so the weights they trained from cannot be tied to the
+pinned base. Their test runs loaded the pinned base. After those test results
+existed, both rates were trained again on the pinned base with the same
+config, seed and step count, and each went through dev selection and one test
+run. Every GRPO number here, including the MMLU and order-support columns,
+comes from the retrained runs. In the first runs, no R0 pass^1 or pass^4
+interval against SFT run 3 excluded zero. Those artifacts were retired from
+`results/` and remain in the Git history, along with the first 1e-6 run's MMLU
+and order-support evaluations, each of which was run twice.
 
 The training config pins a learning rate of 1e-6. The 1e-5 run overrides it,
 and its run record shows it started after the 1e-6 test comparison was
@@ -290,34 +305,105 @@ The 150 test requests are 76 completable address changes and 74 that must be
 refused: 37 give no postal code and 37 give the wrong one (`postcode` is the
 environment's field for the postal code that `authenticate` checks). The model
 has three tools, `authenticate`, `get_order` and `update_order`, none of which
-it saw in training. The run is a single-turn audit: the model writes all its
-tool calls in one reply, they execute in order, it never sees a result, and a
-write that breaks a tool rule still executes and is counted.
+it saw in training. The tool rules require a successful `authenticate` and a
+`get_order` lookup before `update_order`.
+
+Each checkpoint ran the same requests, 4 attempts each, under two protocols:
+
+- **Single-turn (open loop).** The model writes all its tool calls in one
+  reply, they execute in order, and it never sees a result.
+- **Multi-turn (closed loop).** Each reply's calls execute and their results
+  go back to the model before its next reply. An episode ends when a reply
+  makes no tool call, after a reply whose `update_order` call was dispatched,
+  or after 4 replies. A turn is one model reply.
+
+Both protocols grade in audit mode: a write that breaks a tool rule still
+executes and is counted. Strict pass^1 counts an attempt only if the order
+ends in the requested state, no tool rule was broken and at least one call
+ran. The single-turn logs do not store it, so every stored single-turn reply was
+replayed as a one-turn episode through the multi-turn grader, which
+reproduced every stored grade exactly.
+
+Single-turn, open loop:
 
 | 150 requests, 4 attempts each | Untrained 1.7B | SFT run 3 | SFT + GRPO, lr 1e-6 |
 | :-- | --: | --: | --: |
-| pass^1 | 0.493 | 0.515 | 0.530 |
-| pass^4 | 0.493 | 0.340 | 0.380 |
 | Completable requests completed (304 attempts) | 0.000 | 0.905 | 0.931 |
-| Refusal-required requests refused (296 attempts) | 1.000 | 0.115 | 0.118 |
-| Refusal-required attempts that wrote anyway | 0 | 262 | 261 |
+| Refusal-required requests refused (296 attempts), with unauthenticated writes | 1.000 (0) | 0.115 (262) | 0.118 (261) |
+| Calls `get_order` at least once (share of attempts) | 0.018 | 0.002 | 0.003 |
+| Strict pass^1 (no tool rule broken) | 0.333 | 0.058 | 0.062 |
+| pass^1 / pass^4 | 0.493 / 0.493 | 0.515 / 0.340 | 0.530 / 0.380 |
 
-274 of SFT run 3's 275 completed address changes skipped `get_order`, which
-the tool rules require before a write. The system prompt asks the model to
-verify the customer before changing an order and never mentions the lookup.
-The untrained model called `authenticate` alone on every request that included
-a postal code, 452 of 452 episodes, and the single-turn grader counts that as a
-correct refusal on the wrong-postal-code requests. On the requests with no
-postal code, 96 of its 148 replies made no tool call.
+Multi-turn, closed loop:
 
-On a wrong-postal-code request the model writes its whole reply before any
-tool runs, so it cannot react to the failed authentication. Only the requests
-with no postal code test refusal cleanly: SFT still wrote in 124 of 148 of
-them, and GRPO in 122.
+| 150 requests, 4 attempts each | Untrained 1.7B | SFT run 3 | SFT + GRPO, lr 1e-6 |
+| :-- | --: | --: | --: |
+| Completable requests completed (304 attempts) | 0.888 | 1.000 | 1.000 |
+| Refusal-required requests refused (296 attempts), with unauthenticated writes | 1.000 (0) | 0.007 (294) | 0.010 (293) |
+| Calls `get_order` at least once (share of attempts) | 0.420 | 0.000 | 0.003 |
+| Strict pass^1 (no tool rule broken) | 0.742 | 0.003 | 0.008 |
+| pass^1 / pass^4 | 0.943 / 0.833 | 0.510 / 0.507 | 0.512 / 0.507 |
+| Mean turns used (at most 4) | 2.26 | 1.095 | 1.123 |
 
-A closed-loop multi-turn mode now exists, in which tool results go back to the
-model before its next reply (`python scripts/evaluate.py order-support --mode
-multi_turn`). It has not been run yet, so no multi-turn numbers are reported.
+Paired by request, multi-turn minus single-turn, with task-level bootstrap
+95% intervals (10,000 replicates):
+
+| Multi-turn minus single-turn | pass^1 [95% CI] | pass^4 [95% CI] | Strict pass^1 [95% CI] |
+| :-- | :-- | :-- | :-- |
+| Untrained 1.7B | +0.450 [+0.377, +0.523] | +0.340 [+0.267, +0.420] | +0.408 [+0.340, +0.477] |
+| SFT run 3 | −0.005 [−0.035, +0.025] | +0.167 [+0.107, +0.227] | −0.055 [−0.077, −0.037] |
+| SFT + GRPO, lr 1e-6 | −0.018 [−0.045, +0.008] | +0.127 [+0.073, +0.180] | −0.053 [−0.077, −0.032] |
+
+Every interval in this table that excludes zero has a permutation p of
+0.0001, the add-one floor for 10,000 resamples. The Bonferroni threshold for
+these nine comparisons is 0.0056; the comparison file records it, but no
+correction was planned in advance.
+
+**The untrained model's zero single-turn completion rate came from the
+protocol.** In the single-turn run it called `authenticate` alone on every
+request that included a postal code, 452 of 452 episodes, and the single-turn
+grader counts that as a correct refusal on the wrong-postal-code requests. On
+the requests with no postal code, 96 of its 148 replies made no tool call.
+With tool results fed back it averages 2.26 turns, completes 0.888 of
+completable requests and refuses 1.000 of refusal-required ones with 0
+unauthenticated writes. Its pass^4 is 0.833. Its strict pass^1 rises from
+0.333 single-turn to 0.742, a gain of 0.408. Of its 274 write attempts on completable
+requests, 39 skipped `get_order`.
+
+**SFT run 3 still writes on refusal-required requests when it can see tool
+results.** It never calls `get_order` in the closed loop, refuses 0.007 of
+refusal-required requests (294 of 296 attempts wrote without authentication)
+and has strict pass^1 0.003. Most of this failure is horizon collapse: after
+single-step training, where every SFT example is one reply holding one tool
+call, the policy acts in one reply. It averages 1.095 turns per episode, and
+in 549 of 600 episodes its first reply already calls `update_order`, before
+any `authenticate` result returns, including 265 of the 296 refusal-required
+attempts. The untrained model, under the same protocol, called `update_order`
+in its first reply in 0 of 600 episodes. Horizon collapse is not the whole
+story. In 29 of the 31 refusal-required attempts where SFT run 3 waited for
+the `authenticate` result, it saw the failure and wrote anyway. SFT + GRPO at
+lr 1e-6 behaves almost the same way, with 1.123 turns on average, a
+first-reply `update_order` in 534 of 600 episodes, a refusal rate of 0.010
+(293 of 296 attempts wrote without authentication), strict pass^1 0.008, and
+a write after a failed `authenticate` in 39 of the 42 refusal-required
+attempts that waited for it. Both models' pass^4 rises only because they now
+complete every completable request on all four attempts: their multi-turn
+pass^4 of 0.507 is exactly the 76 completable requests out of 150.
+
+In the single-turn run, 274 of SFT run 3's 275 completed address changes
+skipped `get_order`, and in the closed loop all 304 of its writes on
+completable requests did. The system prompt asks the model to verify the
+customer before changing an order and never mentions the lookup. Refusal was
+harder to test in the single-turn run: the reply was finished before
+`authenticate` ran, so only the requests with no postal code could show it.
+SFT still wrote in 124 of 148 of those, and GRPO in 122.
+
+Generated tokens per multi-turn episode, rebuilt from the logs, were 71.0 for
+the untrained model, 72.4 for SFT run 3 and 73.4 for SFT + GRPO, and no turn
+reached the 384-token cap. Prompt tokens were recorded at generation time.
+Each turn's prompt resends the conversation so far, so the untrained model's
+longer episodes average 1,184 prompt tokens per episode, against 533 for SFT
+run 3 and 549 for SFT + GRPO.
 
 ## Limitations
 
@@ -338,9 +424,12 @@ multi_turn`). It has not been run yet, so no multi-turn numbers are reported.
   off before naming a letter is scored wrong. On the 375 questions both models
   answered, the 95% interval on the SFT change runs from −0.077 to +0.016, so a
   drop of almost 8 points cannot be ruled out.
-- The transfer test is single-turn only and cannot test reading a result
-  before deciding.
-- Token counts for three rows are reconstructed from logs, not counted at
+- The order-support test is one environment with 150 requests, and each model
+  has one multi-turn run. It grades in audit mode, so a write that breaks a
+  tool rule still executes and is scored, and the system prompt never states
+  the `get_order` rule that strict pass^1 enforces.
+- Token counts for three GSM8K rows, and every generated-token count for the
+  multi-turn order-support runs, are reconstructed from logs, not counted at
   generation time.
 
 ## Repository layout and usage
@@ -368,7 +457,8 @@ python scripts/data.py generate-teacher --help    # also: build-sft, split-gsm8k
 python scripts/train.py sft --help                # also: grpo, select-checkpoint, verify-masking, weight-change
 python scripts/evaluate.py gsm8k --help           # also: order-support, mmlu, contamination
 python scripts/analyze.py compare-models --help   # also: compare-mmlu, failure-taxonomy, order-support-gates,
-                                                  #   order-support-templates, backfill-tokens, plots, verify-manifest
+                                                  #   order-support-templates, order-support-modes,
+                                                  #   backfill-tokens, plots, verify-manifest
 ```
 
 `analyze.py plots` needs matplotlib, which the lock files do not include
@@ -388,6 +478,8 @@ To verify on CPU (Python 3.11 or 3.12), run
 
 Episode logs and the five tested adapters are attached to the
 [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0).
+The episode logs of the multi-turn order-support runs are not attached to that
+release and are not yet published.
 
 ## License
 

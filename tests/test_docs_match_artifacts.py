@@ -1,9 +1,10 @@
 """The README's numbers must be the numbers in the frozen artifacts.
 
 Every table row the README prints is rebuilt here from the files in results/,
-including the one token-counts artifact, and looked up in the README with its
-whitespace collapsed. Numbers in the prose are checked in context: each must
-appear close to a phrase that says what it is. The last number test lists
+including the one token-counts artifact and the one order-support mode
+comparison, and looked up in the README with its whitespace collapsed.
+Numbers in the prose are checked in context: each must appear close to a
+phrase that says what it is. The last number test lists
 every number left in the README's prose, tables and diagram and fails on any
 that no table row or claim below accounts for, so a new number cannot be added
 without a source.
@@ -92,11 +93,27 @@ MMLU_ARMS = ("utility-base-001023e.json", "utility-sft-bb6764e.json", "utility-g
 TRANSFER = ("phase_b-base-10f9d97.json", "phase_b-sft-aa59330.json", "phase_b-grpo-42e347c.json")
 TRANSFER_GATES = "phase_b-gates-8d5825b.json"
 TRANSFER_TEMPLATES = "phase_b-templates-2f70608.json"
+# The same three checkpoints in the closed-loop multi-turn mode, in TRANSFER's order.
+ORDER_LABELS = ("base", "sft", "grpo")
+MULTI_TURN = tuple(f"order-support-multiturn-{label}-3cacc39.json" for label in ORDER_LABELS)
 GSM8K_SPLITS = PROJECT_ROOT / "configs" / "splits" / "phase_a_gsm8k.json"
 ORDER_SPLITS = PROJECT_ROOT / "configs" / "splits" / "phase_b_orders.json"
 # GPU runs whose platform record names the Python version.
 GPU_RUNS = SFT_RUNS + tuple(g[2] for g in GRPO) + TRANSFER + MMLU_ARMS
 RELEASE_URL = "https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0"
+# Generated tokens per GSM8K row at (R0, R1), 600 attempts each, as first
+# published in token-counts-3301c34.json. Adding the multi-turn runs to the
+# token counts must leave these unchanged.
+GSM8K_TOKEN_TOTALS = {
+    "Qwen3-1.7B, untrained": (27560, 31249),
+    "Llama-3.1-8B + retry": (17003, 17664),
+    "Qwen3-1.7B, SFT run 1": (21247, 21725),
+    "Qwen3-1.7B, SFT run 2": (21509, 22264),
+    "Qwen3-1.7B, SFT run 3": (21251, 21489),
+    "Qwen3-1.7B, SFT + GRPO, lr 1e-6": (21495, 22215),
+    "Qwen3-1.7B, SFT + GRPO, lr 1e-5": (21506, 21960),
+    "Qwen3-4B, untrained (the teacher)": (21153, 22137),
+}
 
 
 # --- loading ---------------------------------------------------------------
@@ -107,18 +124,42 @@ def load(name: str) -> dict:
     return json.loads((RESULTS / name).read_text(encoding="utf-8"))
 
 
-@functools.cache
-def token_counts() -> dict:
-    found = sorted(RESULTS.glob("token-counts-*.json"))
+def the_one(pattern: str, kind: str, command: str) -> dict:
+    """The single results/ file matching pattern, which must be of this kind."""
+
+    found = sorted(RESULTS.glob(pattern))
     if len(found) != 1:
         raise AssertionError(
-            f"expected exactly one results/token-counts-*.json, found {len(found)}; "
-            "run `python scripts/analyze.py backfill-tokens` on a clean tree"
+            f"expected exactly one results/{pattern}, found {len(found)}; "
+            f"run `python scripts/analyze.py {command}` on a clean tree"
         )
     payload = json.loads(found[0].read_text(encoding="utf-8"))
-    if payload.get("kind") != "token_counts":
-        raise AssertionError(f"{found[0].name} is not a token_counts artifact")
+    if payload.get("kind") != kind:
+        raise AssertionError(f"{found[0].name} is not a {kind} artifact")
     return payload
+
+
+@functools.cache
+def token_counts() -> dict:
+    return the_one("token-counts-*.json", "token_counts", "backfill-tokens")
+
+
+@functools.cache
+def modes() -> dict:
+    return the_one("order-support-modes-*.json", "order_support_mode_comparison", "order-support-modes")
+
+
+def mode(label: str, which: str) -> dict:
+    """One checkpoint's per-mode counts; which is single_turn or multi_turn."""
+
+    return modes()["models"][label][which]
+
+
+def mode_comparison(label: str, metric: str, k: int) -> dict:
+    for entry in modes()["models"][label]["comparisons"]:
+        if (entry["metric"], entry["k"]) == (metric, k):
+            return entry
+    raise KeyError((label, metric, k))
 
 
 def params_b(model: str) -> float:
@@ -177,6 +218,12 @@ def pvalue(p: float) -> str:
 def p3(p: float) -> str:
     # The GRPO p-values print to three decimals, so 0.125 stays 0.125.
     return f"{p:.3f}"
+
+
+def turns(value: float) -> str:
+    # Mean turns print to three decimals without trailing zeros, as in the
+    # figure legend, so 1.095 is printed as is rather than rounded either way.
+    return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
 def created(name: str) -> datetime:
@@ -309,31 +356,60 @@ def mmlu_rows() -> list[str]:
     ]
 
 
-def transfer_rows() -> list[str]:
-    arms = [load(name) for name in TRANSFER]
-    gates = load(TRANSFER_GATES)["arms"]
-    fulfil, refuse = (gates["sft"]["episodes_by_intent"][intent] for intent in ("fulfil", "refuse"))
-    wrote = [
-        sum(n for kind, n in gates[label]["write_classes"]["refuse"].items() if kind != "no_write")
-        for label in ("base", "sft", "grpo")
-    ]
-    return [
-        row("pass^1", *(f3(a["metrics"]["pass^1"]) for a in arms)),
-        row("pass^4", *(f3(a["metrics"]["pass^4"]) for a in arms)),
+def transfer_rows(which: str) -> list[str]:
+    """One order-support table; which is single_turn or multi_turn."""
+
+    summaries = [load(name) for name in (TRANSFER if which == "single_turn" else MULTI_TURN)]
+    counts = [mode(label, which) for label in ORDER_LABELS]
+    fulfil, refuse = (counts[0]["episodes_by_intent"][intent] for intent in ("fulfil", "refuse"))
+    rows = [
         row(
             f"Completable requests completed ({fulfil} attempts)",
-            *(f3(a["by_intent"]["fulfil"]["correct_rate"]) for a in arms),
+            *(f3(c["completion_rate_on_fulfil"]) for c in counts),
         ),
         row(
-            f"Refusal-required requests refused ({refuse} attempts)",
-            *(f3(a["by_intent"]["refuse"]["correct_rate"]) for a in arms),
+            f"Refusal-required requests refused ({refuse} attempts), with unauthenticated writes",
+            *(
+                f"{f3(c['refusal_rate_on_refuse'])} ({c['write_classes']['refuse']['unauthenticated_write']})"
+                for c in counts
+            ),
         ),
-        row("Refusal-required attempts that wrote anyway", *(str(n) for n in wrote)),
+        row("Calls `get_order` at least once (share of attempts)", *(f3(c["lookup_rate"]) for c in counts)),
+        row(
+            "Strict pass^1 (no tool rule broken)",
+            *(f3(mode_comparison(label, "clean_correct", 1)[f"{which}_pass_power_k"]) for label in ORDER_LABELS),
+        ),
+        row("pass^1 / pass^4", *(f"{f3(s['metrics']['pass^1'])} / {f3(s['metrics']['pass^4'])}" for s in summaries)),
     ]
+    if which == "multi_turn":
+        rows.append(
+            row(
+                f"Mean turns used (at most {summaries[0]['max_turns']})",
+                *(turns(s["multi_turn"]["mean_turns_used"]) for s in summaries),
+            )
+        )
+    return rows
+
+
+ORDER_ROWS = (("Untrained 1.7B", "base"), ("SFT run 3", "sft"), ("SFT + GRPO, lr 1e-6", "grpo"))
+
+
+def mode_difference_rows() -> list[str]:
+    rows = []
+    for name, label in ORDER_ROWS:
+        cells = []
+        for metric, k in (("correct", 1), ("correct", 4), ("clean_correct", 1)):
+            entry = mode_comparison(label, metric, k)
+            cells.append(f"{signed(entry['difference'])} {interval(entry['difference_ci95'])}")
+        rows.append(row(name, *cells))
+    return rows
 
 
 def all_rows() -> list[str]:
-    return gsm8k_rows() + seed_rows() + paired_rows() + failure_rows() + grpo_rows() + mmlu_rows() + transfer_rows()
+    return (
+        gsm8k_rows() + seed_rows() + paired_rows() + failure_rows() + grpo_rows() + mmlu_rows()
+        + transfer_rows("single_turn") + transfer_rows("multi_turn") + mode_difference_rows()
+    )
 
 
 def claims() -> list[tuple[str, str]]:
@@ -365,21 +441,59 @@ def claims() -> list[tuple[str, str]]:
     out.append((f"{percent(min(shares))} to {percent(max(shares))}", "8-rollout groups"))
     out.append((str(load(GRPO[0][2])["resolved"]["num_generations"]), "-rollout groups"))
 
-    # Key findings: transfer.
-    base, sft, _ = (load(name)["by_intent"] for name in TRANSFER)
+    # Key findings: order support, single-turn against multi-turn.
+    single = {label: mode(label, "single_turn") for label in ORDER_LABELS}
+    multi = {label: mode(label, "multi_turn") for label in ORDER_LABELS}
+    summary = dict(zip(ORDER_LABELS, (load(name) for name in MULTI_TURN)))
+    strict = {label: mode_comparison(label, "clean_correct", 1) for label in ORDER_LABELS}
+    mean_turns = {label: turns(summary[label]["multi_turn"]["mean_turns_used"]) for label in ORDER_LABELS}
+    first = {label: multi[label]["first_reply_update_order"] for label in ORDER_LABELS}
+    later = {
+        label: multi[label]["later_write_after_failed_authenticate"]["by_intent"]["refuse"]
+        for label in ORDER_LABELS
+    }
+    episodes = multi["base"]["episodes"]
+    n_refuse = multi["base"]["episodes_by_intent"]["refuse"]
+    grpo_lookups = round(multi["grpo"]["lookup_rate"] * episodes)
+
+    def refused(label: str) -> str:
+        unauthenticated = multi[label]["write_classes"]["refuse"]["unauthenticated_write"]
+        return (
+            f"{f3(multi[label]['refusal_rate_on_refuse'])} of refusal-required requests "
+            f"({unauthenticated} of {n_refuse}"
+        )
+
+    base_unauthenticated = multi["base"]["write_classes"]["refuse"]["unauthenticated_write"]
     out += [
-        (f3(sft["fulfil"]["correct_rate"]), "completable requests"),
-        (f3(base["fulfil"]["correct_rate"]), "for the untrained model"),
-        (f"from {f3(base['refuse']['correct_rate'])} to {f3(sft['refuse']['correct_rate'])}", "falls"),
+        (f"completed {f3(single['base']['completion_rate_on_fulfil'])} of completable requests", "open-loop"),
+        (f"averages {mean_turns['base']} turns", "untrained"),
+        (f"completes {f3(multi['base']['completion_rate_on_fulfil'])} of completable requests", "averages"),
+        (
+            f"refuses {f3(multi['base']['refusal_rate_on_refuse'])} of refusal-required ones with "
+            f"{base_unauthenticated} unauthenticated writes",
+            "completes",
+        ),
+        (f"pass^4 {f3(summary['base']['metrics']['pass^4'])}", "strict pass^1"),
+        (f"pass^1 {f3(strict['base']['multi_turn_pass_power_k'])}", "strict"),
+        (f"averages {mean_turns['sft']} turns", "horizon collapse"),
+        (
+            f"{first['sft']['by_intent']['refuse']['episodes']} of its "
+            f"{multi['sft']['write_classes']['refuse']['unauthenticated_write']} unauthenticated writes "
+            "came from a first reply",
+            "horizon collapse",
+        ),
+        (f"never calls `get_order`, so its strict pass^1 is {f3(strict['sft']['multi_turn_pass_power_k'])}",
+         "SFT run 3"),
+        (f"calls `get_order` in {grpo_lookups} of {episodes} episodes", "almost the same way"),
+        (f"its strict pass^1 is {f3(strict['grpo']['multi_turn_pass_power_k'])}", "almost the same way"),
+        (f"refuses {refused('sft')} attempts wrote without authentication)", "get_order"),
+        (f"strict pass^1 {f3(strict['sft']['multi_turn_pass_power_k'])}", "refuses"),
     ]
-    refuse = load(TRANSFER_GATES)["arms"]["sft"]["write_classes"]["refuse"]
-    out.append((f"{sum(refuse.values()) - refuse['no_write']} of {sum(refuse.values())}", "wrote to the order"))
+    mmlu_base, mmlu_sft = (load(name)["summary"]["accuracy"] for name in MMLU_ARMS[:2])
+    out.append((f"{100 * mmlu_base:.2f}% before SFT and {100 * mmlu_sft:.2f}% after", "MMLU"))
     halted = [templates("base")[t] for t in ("address_change_verified", "address_change_wrong_postcode")]
     lone = sum(t["call_sequences"].get("authenticate", 0) for t in halted)
-    out.append((f"{lone} of {sum(t['episodes'] for t in halted)}", "authenticate"))
     silent = templates("base")["address_change_no_postcode"]
-    no_call = f"{silent['call_sequences']['(none)']} of {silent['episodes']}"
-    out.append((no_call, "no tool call"))
 
     # Figure captions.
     out.append((str(failures("base-1.7b")["episodes"]), "out of"))
@@ -516,14 +630,85 @@ def claims() -> list[tuple[str, str]]:
         (f"{no_postcode} give no postal code", "refused"),
         (f"{wrong_postcode} give the wrong one", "refused"),
     ]
+    max_turns = summary["base"]["max_turns"]
+    out.append((f"after {max_turns} replies", "episode ends"))
+
+    # Order-support transfer: the paired differences.
+    floor = 1 / (modes()["permutation_resamples"] + 1)
+    out += [
+        (f"{modes()['bootstrap_replicates']:,} replicates", "multi-turn minus single-turn"),
+        (pvalue(floor), "add-one floor"),
+        (f"{modes()['permutation_resamples']:,} resamples", "add-one floor"),
+        (pvalue(modes()["multiplicity"]["bonferroni_alpha"]), "Bonferroni threshold"),
+    ]
+
+    # Order-support transfer: the untrained model.
+    out.append((f"{lone} of {sum(t['episodes'] for t in halted)} episodes", "postal code"))
+    out.append((f"{silent['call_sequences']['(none)']} of its {silent['episodes']} replies", "no tool call"))
+    base_fulfil = multi["base"]["write_classes"]["fulfil"]
+    base_writes = base_fulfil["clean_write"] + base_fulfil["verified_write_without_lookup"]
+    out += [
+        (f"pass^4 is {f3(summary['base']['metrics']['pass^4'])}", "fed back"),
+        (
+            f"strict pass^1 rises from {f3(strict['base']['single_turn_pass_power_k'])} single-turn to "
+            f"{f3(strict['base']['multi_turn_pass_power_k'])}, a gain of {f3(strict['base']['difference'])}",
+            "pass^4 is",
+        ),
+        (
+            f"{base_writes} write attempts on completable requests, "
+            f"{base_fulfil['verified_write_without_lookup']} skipped",
+            "get_order",
+        ),
+    ]
+
+    # Order-support transfer: SFT and GRPO.
+    grpo_refuse = multi["grpo"]["write_classes"]["refuse"]["unauthenticated_write"]
+    grpo_refused = f"{f3(multi['grpo']['refusal_rate_on_refuse'])} ({grpo_refuse} of {n_refuse}"
+    out += [
+        (f"averages {mean_turns['sft']} turns per episode", "acts in one reply"),
+        (f"in {first['sft']['episodes']} of {episodes} episodes its first reply", "the policy acts in one reply"),
+        (f"{first['sft']['by_intent']['refuse']['episodes']} of the {n_refuse} refusal-required", "first reply"),
+        (
+            f"In {later['sft']['wrote_after_failed_authenticate']} of the {later['sft']['waited']} "
+            "refusal-required attempts where SFT run 3 waited",
+            "not the whole story",
+        ),
+        (
+            f"in {later['grpo']['wrote_after_failed_authenticate']} of the {later['grpo']['waited']} "
+            "refusal-required attempts that waited for it",
+            "failed `authenticate`",
+        ),
+        (f"in its first reply in {first['base']['episodes']} of {episodes} episodes", "untrained"),
+        (f"{mean_turns['grpo']} turns on average", "GRPO"),
+        (f"`update_order` in {first['grpo']['episodes']} of {episodes} episodes", "GRPO"),
+        (f"refusal rate of {grpo_refused} attempts wrote without authentication)", "GRPO"),
+        (f"strict pass^1 {f3(strict['grpo']['multi_turn_pass_power_k'])}", "first-reply"),
+        (f"pass^4 of {f3(summary['sft']['metrics']['pass^4'])}", "exactly"),
+        (f"{verified} completable requests out of {len(test_tasks)}", "pass^4"),
+    ]
     sft_fulfil = load(TRANSFER_GATES)["arms"]["sft"]["write_classes"]["fulfil"]
     completed = sft_fulfil["clean_write"] + sft_fulfil["verified_write_without_lookup"]
     out.append((f"{sft_fulfil['verified_write_without_lookup']} of SFT run 3's {completed}", "get_order"))
-    out.append((f"{lone} of {sum(t['episodes'] for t in halted)} episodes", "postal code"))
-    out.append((f"{silent['call_sequences']['(none)']} of its {silent['episodes']} replies", "no tool call"))
+    sft_multi_fulfil = multi["sft"]["write_classes"]["fulfil"]
+    sft_skipped = sft_multi_fulfil["verified_write_without_lookup"]
+    out.append((f"all {sft_skipped} of its writes on completable requests", "closed loop"))
     none = {arm: templates(arm)["address_change_no_postcode"] for arm in ("sft", "grpo")}
     out.append((f"{none['sft']['wrote']} of {none['sft']['episodes']}", "no postal code"))
     out.append((f"GRPO in {none['grpo']['wrote']}", "no postal code"))
+
+    # Order-support transfer: tokens per multi-turn episode.
+    tokens = token_counts()["order_support_multiturn"]
+    generated = [f"{tokens[label]['generated']['tokens_per_episode']:.1f}" for label in ORDER_LABELS]
+    prompt = [f"{tokens[label]['prompt']['tokens_per_episode']:,.0f}" for label in ORDER_LABELS]
+    out += [
+        (f"{generated[0]} for the untrained model, {generated[1]} for SFT run 3 and {generated[2]} for SFT + GRPO",
+         "rebuilt from the logs"),
+        (f"{tokens['base']['max_new_tokens']}-token cap", "no turn reached"),
+        (
+            f"{prompt[0]} prompt tokens per episode, against {prompt[1]} for SFT run 3 and {prompt[2]} for SFT + GRPO",
+            "recorded at generation time",
+        ),
+    ]
 
     # Limitations.
     untrained_same = load("sft-comparison-qwen3-1.7b-89a7fbb.json")["sampling_degeneracy"]["R1"]["baseline"]
@@ -620,8 +805,14 @@ class TableTests(unittest.TestCase):
     def test_mmlu_table(self) -> None:
         self.check(mmlu_rows())
 
-    def test_transfer_table(self) -> None:
-        self.check(transfer_rows())
+    def test_single_turn_transfer_table(self) -> None:
+        self.check(transfer_rows("single_turn"))
+
+    def test_multi_turn_transfer_table(self) -> None:
+        self.check(transfer_rows("multi_turn"))
+
+    def test_mode_differences(self) -> None:
+        self.check(mode_difference_rows())
 
 
 class ClaimTests(unittest.TestCase):
@@ -664,6 +855,11 @@ class EvidenceTests(unittest.TestCase):
                     self.assertNotIn("generated_tokens_total", summary)
                     rebuilt.add(entry["row"])
         self.assertEqual(len(rebuilt), 3, "the README says three rows were rebuilt")
+        totals = {
+            entry["row"]: tuple(entry["rungs"][which]["tokens_total"] for which in ("R0", "R1"))
+            for entry in payload["rows"]
+        }
+        self.assertEqual(totals, GSM8K_TOKEN_TOTALS)
 
     def test_sft_beats_llama_and_trails_the_teacher(self) -> None:
         for name in H1:
@@ -751,8 +947,132 @@ class EvidenceTests(unittest.TestCase):
         for name in (BASELINE, COMPARATOR) + SFT_TESTS + tuple(g[3] for g in GRPO):
             self.assertTrue(load(name)["platform"].startswith("Windows"), name)
 
-    def test_no_multi_turn_result_exists(self) -> None:
-        self.assertEqual(list(RESULTS.glob("order-support-multiturn-*.json")), [], "the README says it has not run")
+    def test_multi_turn_runs_match_the_single_turn_runs(self) -> None:
+        self.assertEqual(sorted(p.name for p in RESULTS.glob("order-support-multiturn-*.json")), sorted(MULTI_TURN))
+        for single_name, multi_name in zip(TRANSFER, MULTI_TURN):
+            single, multi = load(single_name), load(multi_name)
+            with self.subTest(run=multi_name):
+                self.assertEqual(multi["kind"], "order_support_multiturn_eval")
+                self.assertTrue(multi["executed"])
+                self.assertEqual((multi["mode"], multi["max_turns"], multi["gate_mode"]), ("multi_turn", 4, "audit"))
+                self.assertEqual(multi["model"]["id"], QWEN_SMALL)
+                for key in ("weights_sha256", "split", "split_manifest_sha256", "tasks", "runs_per_task"):
+                    self.assertEqual(multi[key], single[key], key)
+                for key in ("runs_per_task", "temperature", "top_p", "max_new_tokens", "seed_base"):
+                    self.assertEqual(multi["rollout"][key], single["rollout"][key], key)
+
+    def test_the_mode_comparison_reads_these_files(self) -> None:
+        payload = modes()
+        for label, single_name, multi_name in zip(ORDER_LABELS, TRANSFER, MULTI_TURN):
+            for which, name in (("single_turn", single_name), ("multi_turn", multi_name)):
+                entry = payload["inputs"][label][which]["summary"]
+                with self.subTest(label=label, which=which):
+                    self.assertEqual(entry["file"], name)
+                    self.assertEqual(entry["sha256"], hashlib.sha256((RESULTS / name).read_bytes()).hexdigest())
+                    self.assertEqual(entry["source_commit"], load(name)["source_commit"])
+            self.assertEqual(payload["models"][label]["weights_sha256"], load(multi_name)["weights_sha256"])
+
+    def test_the_mode_comparison_agrees_with_the_summaries(self) -> None:
+        gates = load(TRANSFER_GATES)["arms"]
+        for label, single_name, multi_name in zip(ORDER_LABELS, TRANSFER, MULTI_TURN):
+            for which, name in (("single_turn", single_name), ("multi_turn", multi_name)):
+                summary, counts = load(name), mode(label, which)
+                with self.subTest(label=label, which=which):
+                    by_intent = summary["by_intent"]
+                    self.assertEqual(counts["completion_rate_on_fulfil"], by_intent["fulfil"]["correct_rate"])
+                    self.assertEqual(counts["refusal_rate_on_refuse"], by_intent["refuse"]["correct_rate"])
+                    for k in (1, 4):
+                        self.assertAlmostEqual(
+                            mode_comparison(label, "correct", k)[f"{which}_pass_power_k"],
+                            summary["metrics"][f"pass^{k}"],
+                        )
+            self.assertEqual(mode(label, "single_turn")["write_classes"], gates[label]["write_classes"], label)
+            multi = load(multi_name)["multi_turn"]
+            stored = {intent: entry["write_classes"] for intent, entry in multi["by_intent"].items()}
+            self.assertEqual(mode(label, "multi_turn")["write_classes"], stored, label)
+            self.assertAlmostEqual(
+                mode_comparison(label, "clean_correct", 1)["multi_turn_pass_power_k"], multi["clean_metrics"]["pass^1"]
+            )
+            self.assertEqual(mode(label, "multi_turn")["mean_turns_used"], multi["mean_turns_used"])
+
+    def test_mode_comparison_statistics(self) -> None:
+        payload = modes()
+        comparisons = [entry for label in ORDER_LABELS for entry in payload["models"][label]["comparisons"]]
+        self.assertEqual(len(comparisons), payload["multiplicity"]["comparisons_reported"])
+        self.assertEqual(len(comparisons), 9, "the README says nine comparisons")
+        self.assertAlmostEqual(payload["multiplicity"]["bonferroni_alpha"], 0.05 / 9)
+        floor = 1 / (payload["permutation_resamples"] + 1)
+        for entry in comparisons:
+            self.assertEqual(entry["difference_is"], "multi_turn minus single_turn")
+            self.assertEqual(entry["tasks_compared"], 150)
+            self.assertEqual(entry["bootstrap_replicates"], payload["bootstrap_replicates"])
+            low, high = entry["difference_ci95"]
+            if low > 0.0 or high < 0.0:
+                self.assertAlmostEqual(entry["p_permutation_two_sided"], floor, msg=entry["rng_stream"])
+
+    def test_the_closed_loop_claims(self) -> None:
+        base, sft, grpo = (mode(label, "multi_turn") for label in ORDER_LABELS)
+        # The untrained model never wrote single-turn, and never wrote in a first reply.
+        self.assertEqual(load(TRANSFER[0])["diagnostics"]["attempted_write_rate"], 0.0)
+        self.assertEqual(base["first_reply_update_order"]["episodes"], 0)
+        self.assertEqual(sum(v for k, v in base["write_classes"]["refuse"].items() if k != "no_write"), 0)
+        self.assertEqual(sft["lookup_rate"], 0.0, "SFT never calls get_order in the closed loop")
+        tasks = json.loads(ORDER_SPLITS.read_text(encoding="utf-8"))["splits"]["test"]
+        completable = sum(1 for t in tasks if t["intent"] == "fulfil")
+        for label, counts, name in (("sft", sft, MULTI_TURN[1]), ("grpo", grpo, MULTI_TURN[2])):
+            with self.subTest(label=label):
+                first = counts["first_reply_update_order"]
+                self.assertEqual(first["dispatched"], first["episodes"], "every first-reply write ran")
+                self.assertEqual(counts["completion_rate_on_fulfil"], 1.0)
+                self.assertEqual(round(load(name)["metrics"]["pass^4"] * len(tasks)), completable)
+                self.assertEqual(
+                    counts["write_classes"]["fulfil"]["verified_write_without_lookup"]
+                    + counts["write_classes"]["fulfil"]["clean_write"],
+                    counts["episodes_by_intent"]["fulfil"],
+                )
+                change = mode_comparison(label, "correct", 4)
+                self.assertEqual(change["tasks_regressed"], 0, "pass^4 rose only on completable requests")
+        self.assertEqual(
+            sft["write_classes"]["fulfil"]["verified_write_without_lookup"], sft["episodes_by_intent"]["fulfil"]
+        )
+        # "The other 31" and "the 42 that held off" are the refusal-required
+        # episodes whose first reply held no update_order call.
+        for label, counts in (("sft", sft), ("grpo", grpo)):
+            with self.subTest(label=label):
+                later = counts["later_write_after_failed_authenticate"]["by_intent"]["refuse"]
+                first = counts["first_reply_update_order"]["by_intent"]["refuse"]["episodes"]
+                self.assertEqual(later["waited"], counts["episodes_by_intent"]["refuse"] - first)
+                # Every unauthenticated write came either from a first reply or after waiting.
+                self.assertEqual(
+                    first + later["wrote_after_failed_authenticate"],
+                    counts["write_classes"]["refuse"]["unauthenticated_write"],
+                )
+        base_later = base["later_write_after_failed_authenticate"]["by_intent"]["refuse"]
+        self.assertEqual(base_later["wrote_after_failed_authenticate"], 0)
+        # "calls get_order in 2 of 600 episodes" is the lookup rate times the episodes.
+        lookups = grpo["lookup_rate"] * grpo["episodes"]
+        self.assertAlmostEqual(lookups, round(lookups))
+        self.assertGreater(grpo["lookup_rate"], 0.0, "almost, not exactly, the same as SFT")
+        # "Most of this failure is horizon collapse": most episodes write in the first reply.
+        for counts in (sft, grpo):
+            self.assertGreater(2 * counts["first_reply_update_order"]["episodes"], counts["episodes"])
+
+    def test_every_sft_example_is_one_reply_with_one_tool_call(self) -> None:
+        stats = load("sft-dataset-54218c4.json")["selection_stats"]
+        self.assertEqual(stats["completion_shapes"], {"bare_tool_call": stats["selected"]})
+
+    def test_multi_turn_token_counts(self) -> None:
+        tokens = token_counts()["order_support_multiturn"]
+        self.assertEqual(sorted(tokens), sorted(ORDER_LABELS))
+        for label, name in zip(ORDER_LABELS, MULTI_TURN):
+            entry = tokens[label]
+            with self.subTest(label=label):
+                self.assertEqual(entry["summary"], name)
+                self.assertEqual(entry["max_new_tokens"], load(name)["rollout"]["max_new_tokens"])
+                self.assertEqual(entry["generated"]["source"], "rebuilt_from_logs")
+                self.assertEqual(entry["prompt"]["source"], "recorded")
+                self.assertEqual(entry["generated"]["turns_at_cap"], 0, "no turn reached the cap")
+                self.assertEqual(entry["episodes"], load(name)["episodes"])
 
     def test_the_example_task_is_in_the_test_split(self) -> None:
         test = json.loads(GSM8K_SPLITS.read_text(encoding="utf-8"))["splits"]["test"]
@@ -812,7 +1132,7 @@ class WordingTests(unittest.TestCase):
         "pivotal", "delve", "moreover", "furthermore", "additionally",
         "rigorous", "testament", "it is worth noting", "in conclusion",
         "sheds light", "underscores", "landscape", "paradigm", "synergy",
-        "holistic", "meticulous", "bulletproof", "\u2014",
+        "holistic", "meticulous", "bulletproof", "most likely", "\u2014",
     )
     # Claims earlier versions had to withdraw.
     WITHDRAWN = (
@@ -828,6 +1148,9 @@ class WordingTests(unittest.TestCase):
         "did not forget anything",
         "blind to losses",
         "unseen tools",
+        "would not have caught",
+        "refusal collapse",
+        "We call",
     )
 
     def check(self, text: str) -> None:
