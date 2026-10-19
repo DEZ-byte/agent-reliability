@@ -41,7 +41,8 @@ Episode logs (`*.jsonl`) hold one row per attempt. They are not in git. The
 logs these files rest on are attached to the
 [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0),
 with their SHA-256, except the three multi-turn order-support logs
-(`episodes-order-support-multiturn-*.jsonl`), which are not yet published.
+(`episodes-order-support-multiturn-*.jsonl`), which are attached to the
+[v1.1.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.1.0).
 `failure-modes-*.json`, `phase_b-gates-*.json`, `phase_b-templates-*.json`,
 `utility-comparison-*.json`, `order-support-modes-*.json` and
 `token-counts-*.json` record the SHA-256 of every log they read.

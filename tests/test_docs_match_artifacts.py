@@ -101,6 +101,8 @@ ORDER_SPLITS = PROJECT_ROOT / "configs" / "splits" / "phase_b_orders.json"
 # GPU runs whose platform record names the Python version.
 GPU_RUNS = SFT_RUNS + tuple(g[2] for g in GRPO) + TRANSFER + MMLU_ARMS
 RELEASE_URL = "https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0"
+# The multi-turn order-support logs came later, on their own release.
+MULTI_TURN_RELEASE_URL = "https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.1.0"
 # Generated tokens per GSM8K row at (R0, R1), 600 attempts each, as first
 # published in token-counts-3301c34.json. Adding the multi-turn runs to the
 # token counts must leave these unchanged.
@@ -1119,9 +1121,12 @@ class LinkTests(unittest.TestCase):
                 with self.subTest(document=document.name, target=target):
                     self.assertTrue(path.exists(), f"{target} does not exist")
 
-    def test_the_release_link(self) -> None:
+    def test_the_release_links(self) -> None:
         for document in (README_PATH, RESULTS_README_PATH):
-            self.assertIn(RELEASE_URL, document.read_text(encoding="utf-8"))
+            text = document.read_text(encoding="utf-8")
+            self.assertIn(RELEASE_URL, text)
+            self.assertIn(MULTI_TURN_RELEASE_URL, text)
+            self.assertNotIn("not yet published", text)
 
 
 class WordingTests(unittest.TestCase):

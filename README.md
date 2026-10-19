@@ -478,8 +478,8 @@ To verify on CPU (Python 3.11 or 3.12), run
 
 Episode logs and the five tested adapters are attached to the
 [v1.0.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.0.0).
-The episode logs of the multi-turn order-support runs are not attached to that
-release and are not yet published.
+The episode logs of the multi-turn order-support runs are attached to the
+[v1.1.0 release](https://github.com/DEZ-byte/agent-reliability/releases/tag/v1.1.0).
 
 ## License
 
