@@ -3,75 +3,92 @@
 [![ci](https://github.com/DEZ-byte/agent-reliability/actions/workflows/ci.yml/badge.svg)](https://github.com/DEZ-byte/agent-reliability/actions/workflows/ci.yml)
 
 Single-trial accuracy ($\text{pass}^1$) conflates capability with consistency:
-a model that solves every task half of the time and a model that always solves
-the same half of the tasks have identical single-trial accuracy. The
-multi-trial $\text{pass}^k$ metric, introduced with $\tau$-bench, separates the
-two by scoring a task as solved only when all $k$ independent rollouts succeed.
-This repository evaluates whether execution-verified trajectory distillation
-(LoRA SFT on teacher rollouts whose calculator calls execute to the
-ground-truth answer), followed by Group Relative Policy Optimization (GRPO)
-with an execution-backed reward, can make a 1.7B model (Qwen3-1.7B) more
-reliable under $\text{pass}^4$ than an 8B model (Llama-3.1-8B-Instruct) wrapped
-in an error-feedback retry loop (R1). Beyond in-domain tool execution on
-GSM8K, it measures general capability retention (zero-shot MMLU) and
-out-of-distribution policy transfer to a three-tool order-support environment
-under both single-turn open-loop and multi-turn closed-loop execution.
+a model that solves every task 50% of the time and a model that
+deterministically solves the same 50% of tasks on every run achieve identical
+single-trial accuracy. The multi-trial $\text{pass}^k$ metric, introduced with
+$\tau$-bench, separates the two by scoring a task as solved only when all $k$
+independent rollouts succeed. This repository evaluates whether
+execution-verified trajectory distillation (LoRA SFT on teacher rollouts whose
+calculator calls execute to the ground-truth answer) followed by Group Relative
+Policy Optimization (GRPO) can make a 1.7B model (Qwen3-1.7B) more reliable
+under $\text{pass}^4$ than an 8B model (Llama-3.1-8B-Instruct) wrapped in an
+error-feedback retry scaffold (R1), on GSM8K problems answered through a
+single direct JSON calculator call. Beyond in-domain tool execution, we measure
+general capability retention (zero-shot MMLU) and out-of-distribution policy
+transfer to a three-tool order-support environment under both single-turn
+open-loop and multi-turn closed-loop execution.
 
 ## Key findings
 
-- **Execution-filtered SFT on Qwen3-1.7B beats retry-scaffolded Llama-3.1-8B
-  on pass^4 at about a quarter of the per-attempt inference cost, but does not
+- **Execution-filtered SFT on Qwen3-1.7B outperforms retry-scaffolded
+  Llama-3.1-8B on pass^4 at 26% to 27% of its decode compute, but does not
   reach its Qwen3-4B teacher.** Across three training seeds (20260820,
-  20260823, 20260824), LoRA SFT improves R1 pass^4 over Llama-3.1-8B + retry by
-  +0.100, +0.120 and +0.167 on paired test tasks, and all three 95% bootstrap
-  intervals exclude zero (SFT run 3: +0.167, 95% CI [+0.080, +0.253],
-  permutation p = 0.001). Measured as generated tokens times unique parameter
-  count (1.72B vs. 8.03B), one SFT attempt costs 26% to 27% of an 8B attempt
-  (61.6 to 63.8 vs. 236.4 tokens × B). The teacher remains ahead of every
-  student checkpoint (pass^4 0.567 vs. 0.393 to 0.460).
-- **GRPO from SFT run 3 yields small gains, and binary reward saturation leaves
-  65% to 66% of rollout groups without a learning signal.** With group size
-  G = 8, GRPO changes R0 pass^1 by +0.008 at the pinned learning rate (1e-6)
-  and by +0.035 in an exploratory run at 1e-5 (95% CI [+0.005, +0.068],
-  permutation p = 0.040, exact sign test p = 0.215); the pass^4 interval
-  includes zero at both rates. The reward is dominated by a binary accuracy
-  term, so 65% (lr = 1e-6) to 66% (lr = 1e-5) of 8-rollout groups assign the
-  same reward to all eight completions. Those groups have zero reward variance
-  ($\sigma_R = 0$), every advantage in them is zero, and with no KL term they
-  contribute no policy gradient.
+  20260823, 20260824), LoRA SFT improves R1 pass^4 over Llama-3.1-8B, with both
+  evaluated under the same single-retry R1 scaffold, by +0.100, +0.120 and
+  +0.167 on paired test tasks, and all three 95% bootstrap intervals exclude
+  zero (SFT run 3: +0.167, 95% CI [+0.080, +0.253], permutation p = 0.001).
+  The retry contributes little to the trained models: SFT triggers it on only
+  6 to 15 of 600 attempts (1.0% to 2.5%), and SFT's R0 pass^4 with no retry at
+  all (0.393 to 0.460) already exceeds the R1 pass^4 of 0.293 that
+  Llama-3.1-8B reaches with it. Measured as generated tokens times unique
+  parameter count (1.72B vs. 8.03B), one SFT attempt uses 26% to 27% of the
+  decode compute of an 8B attempt (61.6 to 63.8 vs. 236.4 tokens × B). The
+  teacher remains ahead of every 1.7B student checkpoint (pass^4 0.567 vs.
+  0.393 to 0.460).
+- **Post-SFT GRPO produces no significant pass^4 gain, consistent with binary
+  reward saturation that leaves 65% to 66% of rollout groups with zero
+  advantage.** With group size G = 8 and initialization from SFT run 3, GRPO
+  changes R0 pass^1 by +0.008 at the pinned learning rate (1e-6) and by +0.035
+  in an exploratory follow-up at 1e-5. The 1e-5 pass^1 bootstrap interval
+  ([+0.005, +0.068], permutation p = 0.040) excludes zero, but the result does
+  not survive the exact paired sign test over tasks (20 improved, 12
+  regressed, p = 0.215) or the comparison file's Bonferroni threshold of
+  0.025, and the R0 pass^4 interval includes zero at both learning rates. With
+  64% to 66% of training rollouts already correct, 65% (lr = 1e-6) to 66%
+  (lr = 1e-5) of 8-rollout groups are saturated: all eight completions are
+  correct or all eight are wrong, so the group's reward variance is zero
+  ($\sigma_R = 0$), every advantage in it is zero, and with no KL term it
+  contributes no policy gradient.
 - **On out-of-distribution order support, the untrained model's 0.000
-  single-turn completion rate is an artifact of the open-loop protocol, while
-  SFT's refusal collapse persists under closed-loop execution.** In a
-  three-tool environment (`authenticate`, `get_order`, `update_order`),
-  untrained Qwen3-1.7B completes 0.000 of completable requests in single-turn
-  open-loop mode: on every request that supplies a postal code, it calls
-  `authenticate` alone and ends its generation before the result exists. In
-  multi-turn closed-loop mode (tool outputs appended to the context, at most 4
-  turns), the untrained model averages 2.26 turns, completes 0.888 of
-  completable requests and refuses 1.000 of refusal-required requests with 0
-  unauthenticated writes (pass^4 = 0.833, strict policy-compliant
-  pass^1 = 0.742). SFT run 3 refuses only 0.115 of refusal-required requests
-  in single-turn mode and 0.007 in closed-loop mode, where 294 of 296 attempts
-  execute unauthenticated writes. The untrained model issues no
-  unauthenticated write under either protocol, so the behavior comes from SFT.
-  Single-step GSM8K SFT induces horizon collapse: in the closed loop, SFT run 3
-  averages 1.095 turns, 265 of its 294 unauthenticated writes come from a
-  first turn that calls `update_order` before any `authenticate` result is
-  returned, and it never calls `get_order`, for a strict pass^1 of 0.003.
-  SFT + GRPO at lr 1e-6 behaves almost identically: it calls `get_order` in 2
-  of 600 episodes and reaches a strict pass^1 of 0.008.
-- **Static MMLU evaluation does not register the shift in multi-turn tool
-  behavior.** Zero-shot MMLU accuracy on 400 questions is 53.25% for untrained
-  Qwen3-1.7B and 53.00% for SFT run 3, a paired difference of −0.0025 (95% CI
-  [−0.048, +0.045]). The benchmark shows no measurable change despite the
-  policy degradation on order support, although the interval cannot rule out
+  single-turn completion rate is an artifact of truncating the episode after
+  one open-loop turn, while SFT's refusal collapse, mostly a training-induced
+  horizon collapse, persists under closed-loop execution.** In a three-tool
+  environment (`authenticate`, `get_order`, `update_order`) with no
+  arithmetic, untrained Qwen3-1.7B completes 0.000 of completable requests
+  (304 attempts) in single-turn open-loop mode: on every request that supplies
+  a postal code it calls `authenticate` alone and ends its turn (452 of 452
+  episodes), so the episode stops before any write. In multi-turn closed-loop
+  mode (tool outputs returned to the context, at most 4 turns), the untrained
+  model averages 2.26 turns, completes 0.888 of completable requests (270 of
+  304) and refuses 1.000 of refusal-required requests with 0 unauthenticated
+  writes, for pass^4 = 0.833 and strict policy-compliant pass^1 = 0.742 (445
+  of 600). Strict pass^1 also requires at least one executed tool call, so it
+  rejects 83 correct refusals in which the model asked for the missing postal
+  code in plain text; without that requirement the untrained model would
+  score 528 of 600 (0.880). SFT run 3 refuses only 0.115 of refusal-required
+  requests in single-turn mode and 0.007 in closed-loop mode, where 294 of 296
+  attempts execute unauthenticated writes. The untrained model issues no
+  unauthenticated write under either protocol, so the behavior comes from
+  SFT. In the closed loop the horizon collapse is explicit: SFT run 3 averages
+  1.095 turns, 265 of its 294 unauthenticated writes come from a first turn
+  that calls `update_order` before any `authenticate` result is returned, and
+  it never calls `get_order`. Its strict pass^1 of 0.003 is 2 of 600: none of
+  its 304 completions performs the lookup, and only 2 of its 296
+  refusal-required attempts are refused. SFT + GRPO at lr 1e-6 behaves almost
+  identically: it calls `get_order` in 2 of 600 episodes and reaches a strict
+  pass^1 of 0.008.
+- **MMLU did not detect the multi-turn policy degradation.** Zero-shot MMLU
+  accuracy on 400 questions is 53.25% before SFT and 53.00% after (SFT run 3),
+  a paired difference of −0.0025 (95% CI [−0.048, +0.045]). A static
+  multiple-choice benchmark can therefore miss a large change in multi-turn
+  tool verification and refusal behavior, although this interval still admits
   a change of up to about 5 points in either direction.
 
 ![Reliability and cost](assets/reliability_cost_pareto.png)
 
 **Figure 1.** (A) pass@4, pass^1 and pass^4 under R1 on the 150-task GSM8K test
 split. SFT and SFT + GRPO bars show the mean across runs, with individual runs
-plotted as points. (B) R1 pass^4 against inference cost per attempt (generated
+plotted as points. (B) R1 pass^4 against decode cost per attempt (generated
 tokens × unique parameters in billions). † marks token counts reconstructed
 from logged completions.
 
@@ -102,13 +119,23 @@ flowchart LR
 ## Methodology and metrics
 
 **Task and sandbox.** Each GSM8K problem exposes a single `calculator` tool.
-The model must emit a JSON tool call whose arithmetic expression passes an AST
-allowlist and executes in a separate process under a wall-clock timeout. An
-attempt is scored correct only if the value returned by the sandbox matches the
-ground-truth answer; a correct number stated in plain text without an executed
-call scores zero. The splits contain 1,000 train, 100 dev and 150 test tasks
-(train from the upstream GSM8K train split, dev and test from the upstream test
-split), with every task pinned by content hash.
+The model must emit a JSON tool call,
+`{"name": "calculator", "arguments": {"expression": "..."}}`, whose arithmetic
+expression passes an AST allowlist and executes in a separate process under a
+wall-clock timeout. An attempt is scored correct only if the value returned by
+the sandbox matches the ground-truth answer; a correct number stated in plain
+text without an executed call scores zero. The setup elicits the call directly,
+without a reasoning scratchpad: evaluation runs Qwen3 with thinking disabled
+(`enable_thinking=False`), the system prompt tells the model that the
+expression must do the arithmetic rather than pass an answer it worked out
+itself, and every SFT target is a bare tool call with no preceding text. The
+model therefore has to encode a multi-step word problem as a single expression
+in one step. This isolates expression synthesis and tool-call reliability, and
+it is a harder setting than GSM8K with free-form chain-of-thought, so the
+accuracies here are not comparable to chain-of-thought GSM8K results. The
+splits contain 1,000 train, 100 dev and 150 test tasks (train from the
+upstream GSM8K train split, dev and test from the upstream test split), with
+every task pinned by content hash.
 
 **R0 and R1.** Under R0 the model gets a single generation. Under R1, if that
 generation returns no sandbox value (no tool call, an unparsable or
@@ -129,42 +156,46 @@ Sandbox:   276000.0          gold answer 276000: correct
 ```
 
 **pass^k and pass@k.** Each model makes $n = 4$ independent attempts on each of
-the $N = 150$ test tasks. With $c_{ij} \in \{0, 1\}$ indicating whether attempt
-$j$ on task $i$ succeeds,
+the $N = 150$ test tasks. Let $c_{ij} \in \{0, 1\}$ indicate whether attempt
+$j$ on task $i$ succeeds, and let $c_i = \sum_{j=1}^{n} c_{ij}$ be the number
+of successful attempts on task $i$. For any $k \in \{1, \dots, n\}$, the
+unbiased task-level estimators are
 
-$$\text{pass}^k = \frac{1}{N}\sum_i \mathbb{1}\Big[\sum_j c_{ij} = k\Big], \qquad \text{pass@}k = \frac{1}{N}\sum_i \mathbb{1}\Big[\sum_j c_{ij} \ge 1\Big],$$
+$$\text{pass}^k = \frac{1}{N}\sum_{i=1}^{N} \frac{\binom{c_i}{k}}{\binom{n}{k}}, \qquad \text{pass@}k = \frac{1}{N}\sum_{i=1}^{N} \left(1 - \frac{\binom{n - c_i}{k}}{\binom{n}{k}}\right).$$
 
-for $k = 4$. $\text{pass}^1$ is the mean per-attempt accuracy. The harness
-computes the unbiased combinatorial estimators $\binom{c_i}{k}/\binom{n}{k}$
-and $1 - \binom{n - c_i}{k}/\binom{n}{k}$, which reduce to the indicator forms
-above when $n = k$. All GSM8K evaluations, and the Qwen3-4B teacher runs that
-generated the SFT data, sample at temperature 0.7 and top-p 0.95 with at most
-256 new tokens per generation. GRPO training rollouts use a higher
-temperature, recorded in each `grpo-run-*.json`.
+At $k = 1$ both reduce to the mean per-attempt success rate,
+$\text{pass}^1 = \text{pass@}1 = \frac{1}{N}\sum_{i} c_i / n$. At $k = n = 4$
+they reduce to the all-success and any-success indicators:
 
-**Checkpoint selection and experimental protocol.** The selection criterion
-(dev split, R0, pass^1) was fixed in the training config, and the tie-break
-(earliest checkpoint first) in the selection code, before any checkpoint was
-scored on dev. Every saved checkpoint of every SFT and GRPO run is scored on
-the 100-task dev split, and only each run's dev-selected checkpoint is
-evaluated on the 150-task test split. The three SFT seeds and the GRPO run at
-the pinned learning rate (1e-6) use the pinned training configuration. Three
-decisions were made with test results already available: GRPO was initialized
-from SFT run 3, the run with the highest dev pass^1, after all three SFT test
-results were known and without a seed-selection rule fixed in advance; the
-1e-5 run was added after the 1e-6 result; and both GRPO configurations were
-retrained on the pinned base model after their first test evaluation (see
-GRPO).
+$$\text{pass}^4 = \frac{1}{N}\sum_{i=1}^{N} \mathbb{1}[c_i = 4], \qquad \text{pass@}4 = \frac{1}{N}\sum_{i=1}^{N} \mathbb{1}[c_i \ge 1].$$
+
+All GSM8K evaluations, and the Qwen3-4B teacher runs that generated the SFT
+data, sample at temperature 0.7 and top-p 0.95 with at most 256 new tokens per
+generation. GRPO training rollouts use a higher temperature, recorded in each
+`grpo-run-*.json`.
+
+**Checkpoint selection and experimental protocol.** Across all SFT and GRPO
+training runs, every saved checkpoint is evaluated on the 100-task dev split
+under R0 pass^1, with ties broken in favor of the earliest checkpoint, and
+only the highest-scoring dev checkpoint of each run is evaluated on the
+150-task test split. This selection rule was fixed before any checkpoint was
+scored on dev. The three SFT seeds (20260820, 20260823, 20260824) and the
+primary GRPO configuration (lr = 1e-6) follow the pinned training
+configuration. Two design choices were made post hoc: GRPO was initialized
+from SFT run 3, the seed with the highest dev pass^1, after all three SFT test
+results were available; and the higher learning rate (lr = 1e-5) was run as
+an exploratory follow-up after the 1e-6 test result.
 
 **Statistical testing.** All comparisons are paired at the task level. The
 primary estimate is a task-level paired bootstrap 95% confidence interval on
 the difference (10,000 replicates). Secondary p-values come from a paired
 sign-flip permutation test (10,000 resamples, add-one smoothed so p is never
-zero) and an exact two-sided paired sign test; MMLU is paired by question, with
-McNemar's exact test as the sign test. Intervals and p-values are unadjusted
-for multiple comparisons, since no correction was planned in advance. Each
-GSM8K comparison file records the Bonferroni threshold for its own family of
-tests; the MMLU comparison records none.
+zero) and an exact two-sided paired sign test, which counts tasks that
+improved against tasks that regressed and ignores ties; MMLU is paired by
+question, with McNemar's exact test as the sign test. Intervals and p-values
+are unadjusted for multiple comparisons, since no correction was planned in
+advance. Each GSM8K comparison file records the Bonferroni threshold for its
+own family of tests; the MMLU comparison records none.
 
 **Inference cost.** Cost per attempt is the mean number of generated tokens
 per attempt, including the R1 retry generation when it fires, multiplied by
@@ -172,8 +203,12 @@ the model's unique parameter count in billions: 1.72 for Qwen3-1.7B, 4.02 for
 Qwen3-4B and 8.03 for Llama-3.1-8B-Instruct. Tied weights are counted once:
 Qwen3-1.7B ties its output head to its input embedding, so its checkpoint
 stores 2,031,739,904 values but holds 1,720,574,976 unique parameters. Prompt
-(prefill) tokens are excluded. The untrained Qwen3-1.7B, the Qwen3-4B teacher
-and SFT run 1 were evaluated before the harness logged token counts, so their
+(prefill) tokens are excluded, so the metric measures marginal decode compute.
+Prefill compute grows with prompt length and repeats with every R1 retry and
+every turn of a multi-turn episode; in the multi-turn order-support runs,
+prompt tokens per episode outnumber generated tokens several times over (see
+Order-support transfer). The untrained Qwen3-1.7B, the Qwen3-4B teacher and
+SFT run 1 were evaluated before the harness logged token counts, so their
 counts (marked †) are reconstructed by re-tokenizing each logged completion
 with the model's pinned tokenizer and counting min(tokens + 1, 256), which
 adds back the end-of-sequence token that decoding strips. On the four
@@ -186,8 +221,10 @@ that protocol's 384-token cap.
 
 ### GSM8K tool reliability
 
-R1, 150 test tasks, 4 attempts each. † marks token counts reconstructed from
-logged completions.
+R1, 150 test tasks, 4 attempts each. Every row is evaluated with the
+single-retry R1 scaffold enabled; the "+ retry" label marks the comparator
+configuration named in the research question. † marks token counts
+reconstructed from logged completions.
 
 | Model | pass^1 | pass^4 | pass@4 | Tokens per attempt | Cost per attempt |
 | :-- | --: | --: | --: | --: | --: |
@@ -207,7 +244,8 @@ each of its tokens is produced by about 4.7 times as many parameters as a
 Qwen3-1.7B token, so its cost per attempt is the highest in the table. After
 training, the retry rarely triggers (6 to 15 times in 600 attempts, against 62
 for the untrained 1.7B), so R0 and R1 pass^4 are identical for every trained
-model.
+model, and the R0 column of the seed table below doubles as a no-retry
+comparison against Llama-3.1-8B's R1 pass^4.
 
 The three SFT runs share the teacher data and the recipe and differ only in
 seed. Runs 2 and 3 seed both the LoRA initialization and the order of the
@@ -253,11 +291,16 @@ SFT and SFT + GRPO columns give the range across runs.
 | Total | 418 | 269–291 | 248–264 | 353 | 241 |
 | R1 retries fired / rescued | 62 / 18 | 6–15 / 1–3 | 11 / 1 | 23 / 2 | 22 / 6 |
 
-SFT nearly eliminates missing and unparsable tool calls. The remaining
-failures are dominated by calls that execute cleanly but evaluate to an
-incorrect value: 95% to 98% of SFT failures, up from 85% before training.
-Because the retry fires only when no sandbox value comes back, it rescues 1 to
-3 attempts per SFT run, against 18 of 62 for the untrained model.
+SFT nearly eliminates format, parsing and sandbox failures: at R0 they fall
+from 62 of 600 attempts (10.3%) for the untrained model to 6 to 15 of 600
+(1.0% to 2.5%) per SFT run. What remains is almost entirely calls that execute
+cleanly but evaluate to an incorrect value: 263 to 276 of 600 attempts (43.8%
+to 46.0%), or 95% to 98% of SFT failures, up from 85% before training. Once
+the tool-call format is learned, the remaining bottleneck is composing a
+correct single expression for a multi-step problem without intermediate
+reasoning. Because the retry fires only when no sandbox value comes back, it
+rescues 1 to 3 attempts per SFT run, against 18 of 62 for the untrained
+model.
 
 ### GRPO
 
@@ -265,15 +308,6 @@ Both runs initialize from SFT run 3, the SFT run with the highest dev pass^1
 (0.4975). Each trains for 400 steps on prompts from the GSM8K train split, two
 prompts per step, with 8 completions per prompt and a reward computed by
 executing each completion.
-
-The reported runs are a second training round. The first round's training
-script loaded the base model without pinning its revision, so both learning
-rates were retrained on the pinned base with an unchanged configuration, seed
-and step budget after that round's test evaluation; in the first round, no R0
-interval against SFT run 3 excluded zero. All GRPO numbers in this README,
-including the MMLU and order-support columns, come from the retrained runs.
-The first-round artifacts, including that round's MMLU and order-support
-evaluations, are retired from `results/` and remain in the Git history.
 
 The training config pins lr = 1e-6. The 1e-5 run overrides that value and,
 according to its run record, started after the 1e-6 test comparison was
@@ -287,9 +321,15 @@ to the pass^1 change.
 | 1e-6 | 200 | +0.008 [+0.000, +0.017] | 0.123 | 0.125 | +0.007 [−0.013, +0.033] | 522 of 800 (65%) |
 | 1e-5 | 300 | +0.035 [+0.005, +0.068] | 0.040 | 0.215 | +0.047 [−0.007, +0.100] | 531 of 800 (66%) |
 
-At 1e-5, the pass^1 interval (the primary estimate) excludes zero and the
-permutation p is 0.040. The sign test does not reject, both pass^4 intervals
-include zero, and none of these values is adjusted for multiple comparisons.
+At 1e-5 the pass^1 interval, the primary estimate, excludes zero and the
+permutation p is 0.040, but the effect rests on a small number of tasks. The
+gain of +0.035 in per-attempt accuracy amounts to about 21 attempts out of
+600, from 20 tasks that improved against 12 that regressed; the exact sign
+test, which counts tasks rather than attempts, gives p = 0.215. The
+permutation p also exceeds the file's Bonferroni threshold of 0.025, and the
+R0 pass^4 interval includes zero at both learning rates. A gain this narrow is
+consistent with the saturation analysis below: most training groups gave the
+policy no gradient at all.
 
 The GRPO advantage of completion $i$ in a group is
 $A_i = (R_i - \bar{R}) / \sigma_R$. When all eight rewards in a group are
@@ -340,11 +380,14 @@ protocols:
   generations (turns).
 
 Both protocols grade in audit mode: a write that violates a tool rule still
-executes and is scored. Strict pass^1 counts an attempt only if the order ends
-in the requested state, no tool rule is violated and at least one call
-executes. The single-turn logs do not store this metric, so every stored
-single-turn generation was replayed as a one-turn episode through the
-multi-turn grader, which reproduced every stored grade exactly.
+executes and is scored. A refusal-required attempt counts as refused when it
+executes no `update_order` call; the 296 refusal-required attempts are 148
+without a postal code and 148 with the wrong one. Strict pass^1 counts an
+attempt only if the order ends in the requested state, no tool rule is
+violated and at least one call executes. The single-turn logs do not store
+this metric, so every stored single-turn generation was replayed as a one-turn
+episode through the multi-turn grader, which reproduced every stored grade
+exactly.
 
 Single-turn, open loop:
 
@@ -383,35 +426,50 @@ correction was planned in advance.
 
 **The untrained model's zero single-turn completion rate is a protocol
 artifact.** In the single-turn run it called `authenticate` alone on every
-request that supplied a postal code (452 of 452 episodes), which the
-single-turn grader scores as a correct refusal on wrong-postal-code requests.
-On requests without a postal code, 96 of its 148 generations contained no tool
-call. With tool outputs fed back, it averages 2.26 turns, completes 0.888 of
-completable requests and refuses 1.000 of refusal-required requests with 0
-unauthenticated writes. Its pass^4 is 0.833, and its strict pass^1 rises from
-0.333 single-turn to 0.742, a gain of 0.408. Of its 274 write attempts on
-completable requests, 39 skipped `get_order`.
+request that supplied a postal code (452 of 452 episodes), so the open loop
+ended each of those episodes before any write, and the single-turn grader
+scored the wrong-postal-code requests as refused. On requests without a postal
+code, 96 of its 148 generations contained no tool call. Its single-turn
+refusal rate of 1.000 therefore reflects an absence of writes rather than
+discrimination. The closed loop separates the two: the model now makes 274
+write attempts on completable requests while still refusing all 296
+refusal-required attempts with 0 unauthenticated writes. With tool outputs fed
+back it averages 2.26 turns, completes 0.888 of completable requests and
+reaches a pass^4 of 0.833, and its strict pass^1 rises from 0.333 single-turn
+to 0.742, a gain of 0.408.
+
+That strict pass^1 of 0.742 is 445 of 600 attempts: 232 of 304 completable
+and 213 of 296 refusal-required. Of the 72 completable attempts that fail the
+strict criterion, 34 did not complete the change and 38 completed it without
+the `get_order` lookup; across its 274 write attempts on completable requests,
+39 skipped the lookup. All 83 refusal-required attempts that fail are requests
+without a postal code in which the model asked the customer for the postal
+code in plain text and called no tool. Those are correct refusals that miss
+only the at-least-one-call requirement; counting them would raise strict
+pass^1 to 528 of 600 (0.880).
 
 **SFT run 3 still writes on refusal-required requests when tool outputs are
 visible.** In the closed loop it never calls `get_order`, refuses 0.007 of
 refusal-required requests (294 of 296 attempts wrote without authentication)
-and reaches a strict pass^1 of 0.003. Most of this failure is horizon
-collapse. Every SFT example is a single generation containing one tool call,
-and the resulting policy tries to finish the task in one turn: it averages
-1.095 turns per episode, and in 549 of 600 episodes its first turn already
-calls `update_order` before any `authenticate` result is returned, including
-265 of the 296 refusal-required attempts. Under the same protocol, the
-untrained model called `update_order` in its first turn in 0 of 600 episodes.
-Horizon collapse does not explain all of it: in 29 of the 31
-refusal-required attempts where SFT run 3 waited for the `authenticate`
-result, it observed the failure and wrote anyway. SFT + GRPO at lr 1e-6
-behaves almost identically, with 1.123 turns on average, a first-turn
-`update_order` in 534 of 600 episodes, a refusal rate of 0.010 (293 of 296
-attempts wrote without authentication), a strict pass^1 of 0.008, and a write
-after a failed `authenticate` in 39 of the 42 refusal-required attempts that
-waited for it. Both models' pass^4 rises only because they now complete every
-completable request on all four attempts: their multi-turn pass^4 of 0.507
-equals exactly the 76 completable requests out of 150.
+and reaches a strict pass^1 of 0.003, which is 2 of 600: 0 of its 304
+completions pass the lookup rule, and 2 of 296 refusal-required attempts are
+refused. Most of this failure is horizon collapse. Every SFT example is a
+single generation containing one tool call, and the resulting policy tries to
+finish the task in one turn: it averages 1.095 turns per episode, and in 549
+of 600 episodes its first turn already calls `update_order` before any
+`authenticate` result is returned, including 265 of the 296 refusal-required
+attempts. Under the same protocol, the untrained model called `update_order`
+in its first turn in 0 of 600 episodes. Horizon collapse does not explain all
+of it: in 29 of the 31 refusal-required attempts where SFT run 3 waited for
+the `authenticate` result, it observed the failure and wrote anyway. SFT +
+GRPO at lr 1e-6 behaves almost identically, with 1.123 turns on average, a
+first-turn `update_order` in 534 of 600 episodes, a refusal rate of 0.010 (293
+of 296 attempts wrote without authentication), a strict pass^1 of 0.008 (5 of
+600: 2 completions with the lookup and 3 refusals), and a write after a failed
+`authenticate` in 39 of the 42 refusal-required attempts that waited for it.
+Both models' pass^4 rises only because they now complete every completable
+request on all four attempts: their multi-turn pass^4 of 0.507 equals exactly
+the 76 completable requests out of 150.
 
 In the single-turn run, 274 of SFT run 3's 275 completed address changes
 skipped `get_order`, and in the closed loop all 304 of its writes on
@@ -434,8 +492,8 @@ against 533 for SFT run 3 and 549 for SFT + GRPO.
   best pass^1 and pass^4 of any model evaluated.
 - The comparator comes from a different model family, so part of the gap may
   reflect pretraining rather than training method or scale.
-- One task family and 150 test tasks. Each GRPO learning rate has a single
-  reported run, from the second training round (see GRPO).
+- One task family and 150 test tasks, and each GRPO learning rate has a single
+  reported run.
 - Some models produce identical completions across attempts. On 82 of 150 test
   tasks the untrained 1.7B generated identical text in all four attempts, and
   the teacher did on 72, which pulls their pass^4 toward their pass^1.
@@ -448,8 +506,10 @@ against 533 for SFT run 3 and 549 for SFT + GRPO.
   +0.016, so a drop of almost 8 points cannot be ruled out.
 - Order support is one environment with 150 requests, and each model has one
   multi-turn run. Grading is in audit mode, so a write that violates a tool
-  rule still executes and is scored, and the system prompt never states the
-  `get_order` requirement that strict pass^1 enforces.
+  rule still executes and is scored. The system prompt never states the
+  `get_order` requirement that strict pass^1 enforces, and the strict metric's
+  at-least-one-call requirement rejects refusals that ask for missing
+  information in text.
 - GSM8K token counts for three rows, and all generated-token counts for the
   multi-turn order-support runs, are reconstructed from logs rather than
   counted at generation time.

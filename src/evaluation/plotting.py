@@ -689,8 +689,8 @@ def _draw_capability_panel(ax, data: Mapping[str, Any]) -> None:
     ax.set_xlim(-0.6, len(data["groups"]) - 0.4)
     ax.set_ylabel("share of tasks")
     _grid(ax)
-    ax.set_title(f"Capability vs. reliability on GSM8K tool use\n"
-                 f"({data['rung']}, {data['tasks']} tasks \u00d7 {data['attempts']} attempts)",
+    ax.set_title(f"GSM8K Capability vs. Reliability\n"
+                 f"({data['rung']}, {data['tasks']} Tasks \u00d7 {data['attempts']} Attempts)",
                  pad=8)
     _panel_letter(ax, "A")
 
@@ -788,10 +788,10 @@ def _draw_cost_panel(ax, data: Mapping[str, Any]) -> None:
             bbox={"boxstyle": "round,pad=0.5", "facecolor": "white", "edgecolor": "#d1d5db",
                   "linewidth": 0.8})
 
-    ax.set_xlabel(f"{data['rung']} cost per attempt: generated tokens \u00d7 unique parameters (B)")
+    ax.set_xlabel(f"{data['rung']} decode cost per attempt: generated tokens \u00d7 unique parameters (B)")
     ax.set_ylabel(f"{data['rung']} pass^4 (solved in all {data['attempts']} attempts)")
     _grid(ax, "y")
-    ax.set_title("Reliability vs. inference cost", pad=8)
+    ax.set_title("Reliability vs. Decode Cost", pad=8)
     _panel_letter(ax, "B")
     ax.text(0.0, -0.21,
             "\u2020 Token counts reconstructed by re-tokenizing logged completions; all other runs "
@@ -843,7 +843,7 @@ def _draw_failure_panel(ax, data: Mapping[str, Any]) -> None:
     ax.set_ylim(-0.6, len(rows) - 0.4 + 1.3)
     ax.set_xlabel(f"failed attempts, out of {episodes}")
     _grid(ax, "x")
-    ax.set_title(f"Failure modes, GSM8K ({data['rung']}, {episodes} attempts per model)", pad=8)
+    ax.set_title(f"{data['rung']} GSM8K Failure Taxonomy ({episodes} Attempts / Model)", pad=8)
     _panel_letter(ax, "A")
     ax.legend(loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.0), handlelength=1.2,
               columnspacing=1.0)
@@ -888,7 +888,7 @@ def _draw_order_support_panel(ax, data: Mapping[str, Any]) -> None:
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_ylabel("rate")
     _grid(ax)
-    ax.set_title("Order-support transfer, multi-turn closed loop", pad=8)
+    ax.set_title("Multi-Turn vs. Single-Turn Order-Support Transfer", pad=8)
     _panel_letter(ax, "B")
 
     from matplotlib.lines import Line2D
@@ -947,6 +947,6 @@ def _draw_grpo_panel(ax, data: Mapping[str, Any]) -> None:
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
     ax.set_ylabel(f"share of {size}-rollout groups")
     _grid(ax)
-    ax.set_title("GRPO groups with zero reward variance", pad=8)
+    ax.set_title(f"GRPO Rollout Group Reward Variance (G = {size})", pad=8)
     _panel_letter(ax, "C")
     ax.legend(loc="upper center", ncol=1, bbox_to_anchor=(0.5, 1.0), handlelength=1.0)

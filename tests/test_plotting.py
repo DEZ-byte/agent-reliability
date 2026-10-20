@@ -577,7 +577,7 @@ class DrawnValueTests(_TempDir):
             for row in data["rows"]
         ])
         self.assertEqual(self.ax.get_title(loc="left"),
-                         "Order-support transfer, multi-turn closed loop")
+                         "Multi-Turn vs. Single-Turn Order-Support Transfer")
 
     def test_the_order_support_note_names_the_recorded_turn_cap(self) -> None:
         fixtures = write_order_support_inputs(self.root)
