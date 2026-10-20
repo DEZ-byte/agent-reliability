@@ -586,9 +586,9 @@ class DrawnValueTests(_TempDir):
         data = plotting.multi_turn_order_support_data(self.root)
         self.draw(plotting._draw_order_support_panel, data)
         notes = " ".join(text.get_text() for text in self.ax.texts)
-        self.assertIn("up to 3 turns per episode", notes)
-        self.assertNotIn("up to 4 turns", notes)
-        self.assertIn("its mean turns per episode", notes)
+        self.assertIn("at most 3 turns per episode", notes)
+        self.assertNotIn("at most 4 turns", notes)
+        self.assertIn("Legend: mean turns per episode", notes)
         self.assertNotIn("replies per episode", notes)
 
     def test_the_failure_panel_stacks_the_failure_parts(self) -> None:

@@ -122,9 +122,9 @@ DROP_RUNS: Final = ("llama", "sft3")
 
 FAILURE_MODES: Final = "failure-modes-2f70608.json"
 FAILURE_PARTS: Final = (
-    ("no_call_or_unparsed", "no call or unparsable call"),
-    ("call_failed_to_run", "call failed to run"),
-    ("wrong_value", "call ran, wrong value"),
+    ("no_call_or_unparsed", "no tool call or parse failure"),
+    ("call_failed_to_run", "parsed call failed to execute"),
+    ("wrong_value", "executed, wrong value"),
 )
 # Labels and order for the arms the failure file is known to hold. Any other
 # arm is drawn after these, under its own key.
@@ -701,10 +701,10 @@ def _draw_capability_panel(ax, data: Mapping[str, Any]) -> None:
     ax.legend(handles=handles, loc="upper left", ncol=1, handlelength=1.4,
               bbox_to_anchor=(0.0, 1.0))
     ax.text(0.0, -0.21,
-            "Bars: mean over runs; white dots: the individual runs. Whiskers: min-max range over "
-            "runs\n(SFT, SFT + GRPO), or for a single run the 95% interval stored in its summary "
-            "(pass^1, pass^4).\nNo interval is stored for pass@4, so a single run's pass@4 bar "
-            "has no whisker.",
+            "Bars: mean across runs; white dots: individual runs. Whiskers: min-max across "
+            "runs\n(SFT, SFT + GRPO) or, for a single run, the 95% CI stored in its summary "
+            "(pass^1, pass^4).\nNo CI is stored for pass@4, so single-run pass@4 bars "
+            "have no whisker.",
             transform=ax.transAxes, fontsize=7.3, color=MUTED, va="top", ha="left",
             linespacing=1.35)
 
@@ -794,7 +794,7 @@ def _draw_cost_panel(ax, data: Mapping[str, Any]) -> None:
     ax.set_title("Reliability vs. inference cost", pad=8)
     _panel_letter(ax, "B")
     ax.text(0.0, -0.21,
-            "\u2020 Token counts rebuilt by re-tokenizing the logged completions; the other runs "
+            "\u2020 Token counts reconstructed by re-tokenizing logged completions; all other runs "
             "were counted\nat generation time. Cost share: each SFT run's cost divided by "
             "Llama's cost.",
             transform=ax.transAxes, fontsize=7.3, color=MUTED, va="top", ha="left",
@@ -896,22 +896,22 @@ def _draw_order_support_panel(ax, data: Mapping[str, Any]) -> None:
     handles, _ = ax.get_legend_handles_labels()
     handles.append(Line2D([], [], linestyle="none", marker=SINGLE_TURN_MARKER["marker"],
                           markersize=5, markerfacecolor="white", markeredgecolor=INK,
-                          markeredgewidth=0.9, label="same model, single-turn"))
+                          markeredgewidth=0.9, label="same model, single-turn open loop"))
     ax.legend(handles=handles, loc="upper left", ncol=1, bbox_to_anchor=(0.0, 1.0),
               handlelength=0.9, columnspacing=1.0, handletextpad=0.4, fontsize=7.4)
 
     notes = [
-        f"Bars: tool results fed back, up to {first['max_turns']} turns per episode.\n"
-        "The number after each model in the legend is its mean turns per episode.\n"
-        "Diamonds: the same model with one reply and no tool results fed back.\n"
-        "Strict pass^1: the order ends in the requested state, no tool rule was broken\n"
-        "and at least one call ran.",
+        f"Bars: closed loop, tool outputs returned to the model, at most {first['max_turns']} "
+        "turns per episode.\nLegend: mean turns per episode for each model.\n"
+        "Diamonds: the same model in the single-turn open loop (no tool outputs observed).\n"
+        "Strict pass^1: requested final order state, no tool-rule violation, and at least\n"
+        "one executed call.",
     ]
     # A refusal is graded on the order being unchanged, so a run that never
     # writes scores 1.000 on refusals whatever else it did. Say so on the panel.
     notes += [
-        f"In its single-turn run, {row['label']} wrote in none of its "
-        f"{row['single_turn']['episodes']} attempts, so its\nsingle-turn refusal rate counts "
+        f"{row['label']} issued no writes in its single-turn run "
+        f"({row['single_turn']['episodes']} attempts), so its\nsingle-turn refusal rate counts "
         "every refusal-required attempt as refused."
         for row in rows
         if row["single_turn"]["attempted_write_rate"] == 0
@@ -928,9 +928,9 @@ def _draw_grpo_panel(ax, data: Mapping[str, Any]) -> None:
     rest = [1 - value for value in zero]
     size = data["rollouts_per_group"]
     ax.bar(x, zero, 0.58, color=color, alpha=0.35, edgecolor="white", linewidth=1.0, zorder=2,
-           label=f"all {size} rewards identical (no gradient)")
+           label="zero reward variance (no gradient)")
     ax.bar(x, rest, 0.58, bottom=zero, color=color, edgecolor="white", linewidth=1.0, zorder=2,
-           label="rewards differ")
+           label="nonzero reward variance")
     for xi, row in zip(x, rows):
         share = row["zero_variance_fraction"]
         count = row["zero_variance_groups"]
