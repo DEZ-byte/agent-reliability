@@ -421,9 +421,67 @@ def mode_difference_rows() -> list[str]:
     return rows
 
 
+def summary_rows() -> list[str]:
+    """The summary table above the pipeline diagram."""
+
+    def r1(name: str, model: str) -> dict:
+        return rung(name, model, "R1")["metrics"]
+
+    def spread(values: list[float], bold: bool = False) -> str:
+        text = f"{f3(min(values))} {EN_DASH} {f3(max(values))}"
+        return f"**{text}**" if bold else text
+
+    base, llama, teacher = r1(BASELINE, QWEN_SMALL), r1(COMPARATOR, LLAMA), r1(BASELINE, QWEN_TEACHER)
+    sft = [r1(name, QWEN_SMALL) for name in SFT_TESTS]
+    grpo = [r1(g[3], QWEN_SMALL) for g in GRPO]
+    gsm8k = "**GSM8K Calculator (`R1`)**"
+    rows = [
+        row(gsm8k, "`pass^4` (4/4 tries)", f3(base["pass^4"]), f3(llama["pass^4"]),
+            spread([m["pass^4"] for m in sft], bold=True), spread([m["pass^4"] for m in grpo]), f3(teacher["pass^4"])),
+        row(gsm8k, "`pass^1` (per-try)", f3(base["pass^1"]), f3(llama["pass^1"]),
+            spread([m["pass^1"] for m in sft], bold=True), spread([m["pass^1"] for m in grpo]), f3(teacher["pass^1"])),
+    ]
+    cost = {entry["row"]: entry["rungs"]["R1"] for entry in token_counts()["rows"]}
+
+    def one(name: str) -> str:
+        entry = cost[name]
+        return f"{entry['cost']:.1f}" + ("†" if entry["source"] != "recorded" else "")
+
+    sft_cost = [cost[f"Qwen3-1.7B, SFT run {run}"]["cost"] for run in (1, 2, 3)]
+    grpo_cost = [cost[f"Qwen3-1.7B, SFT + GRPO, lr {g[0]}"]["cost"] for g in GRPO]
+    rows.append(row(
+        "**GSM8K Decode Cost**", "`tokens × B` / try", one("Qwen3-1.7B, untrained"), one("Llama-3.1-8B + retry"),
+        f"**{min(sft_cost):.1f} {EN_DASH} {max(sft_cost):.1f}**†",
+        f"{min(grpo_cost):.1f} {EN_DASH} {max(grpo_cost):.1f}", one("Qwen3-4B, untrained (the teacher)"),
+    ))
+    mmlu = [f"{100 * load(name)['summary']['accuracy']:.2f}%" for name in MMLU_ARMS]
+    none = "—"
+    rows.append(row("**MMLU (400 questions)**", "Zero-shot accuracy", mmlu[0], none,
+                    f"**{mmlu[1]}** (run 3)", f"**{mmlu[2]}** (`1e-6`)", none))
+    one_turn = [mode(label, "single_turn") for label in ORDER_LABELS]
+    four_turn = [mode(label, "multi_turn") for label in ORDER_LABELS]
+
+    def pair(counts: dict) -> tuple[str, str]:
+        return f3(counts["completion_rate_on_fulfil"]), f3(counts["refusal_rate_on_refuse"])
+
+    (b1, r1b), (s1, r1s), (g1, r1g) = (pair(c) for c in one_turn)
+    rows.append(row("**Order Support (1-turn)**", "Complete / Refuse", f"{b1} / {r1b}", none,
+                    f"{s1} / {r1s} (run 3)", f"{g1} / {r1g} (`1e-6`)", none))
+    (b4, r4b), (s4, r4s), (g4, r4g) = (pair(c) for c in four_turn)
+    rows.append(row("**Order Support (4-turn)**", "Complete / Refuse", f"**{b4} / {r4b}**", none,
+                    f"{s4} / **{r4s}** (run 3)", f"{g4} / **{r4g}** (`1e-6`)", none))
+    strict = [f3(mode_comparison(label, "clean_correct", 1)["multi_turn_pass_power_k"]) for label in ORDER_LABELS]
+    counts = strict_counts("base")
+    asked = counts["refuse"]["correct"] - counts["refuse"]["clean"]
+    lenient = (counts["fulfil"]["clean"] + counts["refuse"]["clean"] + asked) / 600
+    rows.append(row("**Order Support (4-turn)**", "Strict `pass^1`", f"**{strict[0]}** ({f3(lenient)}*)", none,
+                    f"**{strict[1]}** (run 3)", f"**{strict[2]}** (`1e-6`)", none))
+    return rows
+
+
 def all_rows() -> list[str]:
     return (
-        gsm8k_rows() + seed_rows() + paired_rows() + failure_rows() + grpo_rows() + mmlu_rows()
+        summary_rows() + gsm8k_rows() + seed_rows() + paired_rows() + failure_rows() + grpo_rows() + mmlu_rows()
         + transfer_rows("single_turn") + transfer_rows("multi_turn") + mode_difference_rows()
     )
 
@@ -497,13 +555,6 @@ def claims() -> list[tuple[str, str]]:
     n_refuse = multi["base"]["episodes_by_intent"]["refuse"]
     grpo_lookups = round(multi["grpo"]["lookup_rate"] * episodes)
 
-    def refused(label: str) -> str:
-        unauthenticated = multi[label]["write_classes"]["refuse"]["unauthenticated_write"]
-        return (
-            f"{f3(multi[label]['refusal_rate_on_refuse'])} of refusal-required requests "
-            f"({unauthenticated} of {n_refuse}"
-        )
-
     base_unauthenticated = multi["base"]["write_classes"]["refuse"]["unauthenticated_write"]
     sft_unauthenticated = multi["sft"]["write_classes"]["refuse"]["unauthenticated_write"]
     out += [
@@ -531,8 +582,6 @@ def claims() -> list[tuple[str, str]]:
         ),
         (f"calls `get_order` in {grpo_lookups} of {episodes} episodes", "almost identically"),
         (f"reaches a strict pass^1 of {f3(strict['grpo']['multi_turn_pass_power_k'])}", "almost identically"),
-        (f"refuses {refused('sft')} attempts wrote without authentication)", "get_order"),
-        (f"strict pass^1 of {f3(strict['sft']['multi_turn_pass_power_k'])}", "refuses"),
     ]
     # Key findings: what strict pass^1 counts, per intent.
     base_strict, sft_strict = strict_counts("base"), strict_counts("sft")
@@ -555,7 +604,6 @@ def claims() -> list[tuple[str, str]]:
     out.append((f"{100 * mmlu_base:.2f}% before SFT and {100 * mmlu_sft:.2f}% after", "MMLU"))
     halted = [templates("base")[t] for t in ("address_change_verified", "address_change_wrong_postcode")]
     lone = sum(t["call_sequences"].get("authenticate", 0) for t in halted)
-    silent = templates("base")["address_change_no_postcode"]
 
     # Figure captions.
     out.append((f"{failures('base-1.7b')['episodes']} test attempts per model", "failure taxonomy"))
@@ -582,8 +630,8 @@ def claims() -> list[tuple[str, str]]:
         (f"{order['tasks']} requests x {order['runs_per_task']}", "order support"),
     ]
 
-    # Methodology.
-    out.append((f"{sizes['train']:,} train, {sizes['dev']} dev and {sizes['test']} test tasks", "splits"))
+    # Setup and metrics.
+    out.append((f"({sizes['train']:,} train, {sizes['dev']} dev, {sizes['test']} test)", "dataset splits"))
     out.append(("230", "test task"))
     decoding = load(BASELINE)["decoding"]
     out += [
@@ -593,47 +641,39 @@ def claims() -> list[tuple[str, str]]:
     ]
     run3_paired = comparison(H1[2], "R1", 4)
     out += [
-        (f"{run3_paired['bootstrap_replicates']:,} replicates", "bootstrap"),
-        (f"{run3_paired['permutation_resamples']:,} resamples", "permutation"),
-        (f"{round(100 * load(MMLU)['confidence'])}%", "interval"),
+        (f"{run3_paired['bootstrap_replicates']:,}-replicate", "bootstrap"),
+        (f"{run3_paired['permutation_resamples']:,}-resample", "permutation"),
+        (f"{round(100 * load(MMLU)['confidence'])}% CI", "bootstrap"),
     ]
     models = token_counts()["parameters"]["models"]
     small = models[QWEN_SMALL]
     out += [
-        (f"{params_b(QWEN_SMALL)} for Qwen3-1.7B", "unique"),
-        (f"{params_b(QWEN_TEACHER)} for Qwen3-4B", "unique"),
-        (f"{params_b(LLAMA)} for Llama-3.1-8B", "unique"),
-        (f"{small['stored']:,} values", "stores"),
+        (f"{params_b(QWEN_SMALL)} for `Qwen3-1.7B`", "unique"),
+        (f"{params_b(QWEN_TEACHER)} for `Qwen3-4B`", "unique"),
+        (f"{params_b(LLAMA)} for `Llama-3.1-8B", "unique"),
+        (f"{small['stored']:,} stored values", "ties"),
         (f"{small['unique']:,} unique parameters", "ties"),
-        (f"min(tokens + 1, {token_counts()['max_new_tokens']})", "re-tokenizing"),
-        (f"all {len(token_counts()['validation']['qwen'])} recorded R0 and R1 totals", "exactly"),
+        (f"min(tokens + 1, {token_counts()['max_new_tokens']})", "rebuilt"),
+        (f"({len(token_counts()['validation']['qwen'])} totals across", "exactly"),
     ]
 
-    # GSM8K results.
-    llama = rung(COMPARATOR, LLAMA, "R1")
+    # Results: GSM8K.
     out += [
-        (f"{gsm8k_r1['tasks']} test tasks, {gsm8k_r1['runs_per_task']} attempts each", "R1"),
-        (f"{f3(llama['metrics']['pass@4'])} of tasks at least once", "Llama-3.1-8B"),
-        (f"only {f3(llama['metrics']['pass^4'])} on all four", "Llama-3.1-8B"),
-        (f"{params_b(LLAMA) / params_b(QWEN_SMALL):.1f} times as many parameters", "fewest tokens"),
+        (f"{signed(min(c['difference'] for c in vs_llama))} to {signed(max(c['difference'] for c in vs_llama))} on",
+         "seeds"),
+        (f"{percent(min(ratios))} to {percent(max(ratios))} of the marginal decode compute", "seeds"),
+        (f"{min(sft_fired)} to {max(sft_fired)} of {attempts} test attempts", "retry"),
+        (f"({f3(min(sft4_r0))} to {f3(max(sft4_r0))}, seed table below)", "no-retry"),
+        (f"({f3(llama4)})", "retry-scaffolded"),
     ]
-    trained = [rung(name, QWEN_SMALL, "R1") for name in SFT_TESTS + tuple(g[3] for g in GRPO)]
-    fired = [r["model_decisions"] - r["episodes"] for r in trained]
-    out.append((f"{min(fired)} to {max(fired)} times in {trained[0]['episodes']} attempts", "retry"))
-    out.append((f"against {gsm8k_r1['model_decisions'] - gsm8k_r1['episodes']}", "untrained 1.7B"))
     seed4 = [rung(name, QWEN_SMALL, "R0")["metrics"]["pass^4"] for name in SFT_TESTS]
     out.append((f3(max(seed4) - min(seed4)), "varies by"))
 
-    # Failure taxonomy.
+    # Results: failure modes.
     sft_arms = [failures(f"sft-run{run}")["failures"] for run in (1, 2, 3)]
-    wrong = [arm["wrong_value"] / arm["total"] for arm in sft_arms]
     untrained = failures("base-1.7b")["failures"]
-    out += [
-        (f"{percent(min(wrong))} to {percent(max(wrong))}", "of SFT failures"),
-        (percent(untrained["wrong_value"] / untrained["total"]), "before training"),
-        (str(failures("base-1.7b")["episodes"]), "per model"),
-    ]
     n = failures("base-1.7b")["episodes"]
+    out.append((str(n), "per model"))
 
     def share(count: int) -> str:
         return f"{100 * count / n:.1f}%"
@@ -645,69 +685,64 @@ def claims() -> list[tuple[str, str]]:
     sft_errors = [format_errors(arm) for arm in sft_arms]
     sft_wrong = [arm["wrong_value"] for arm in sft_arms]
     out += [
-        (f"{base_errors} of {n} attempts ({share(base_errors)})", "format, parsing and sandbox"),
+        (f"{base_errors} / {n} ({share(base_errors)})", "sandbox exceptions"),
         (
-            f"{min(sft_errors)} to {max(sft_errors)} of {n} ({share(min(sft_errors))} to {share(max(sft_errors))})",
-            "per SFT run",
+            f"{min(sft_errors)}{EN_DASH}{max(sft_errors)} / {n} "
+            f"({share(min(sft_errors))}{EN_DASH}{share(max(sft_errors))})",
+            "base model",
         ),
         (
-            f"{min(sft_wrong)} to {max(sft_wrong)} of {n} attempts ({share(min(sft_wrong))} to {share(max(sft_wrong))})",
-            "incorrect value",
+            f"({min(sft_wrong)}{EN_DASH}{max(sft_wrong)} / {n}, or "
+            f"{share(min(sft_wrong))}{EN_DASH}{share(max(sft_wrong))})",
+            "wrong number",
         ),
-    ]
-    rescued = [failures(f"sft-run{run}", "R1")["retry"]["rescued"] for run in (1, 2, 3)]
-    base_retry = failures("base-1.7b", "R1")["retry"]
-    out += [
-        (f"{min(rescued)} to {max(rescued)} attempts", "per SFT run"),
-        (f"{base_retry['rescued']} of {base_retry['fired']}", "untrained model"),
     ]
 
-    # GRPO.
+    # Results: GRPO.
     run = load(GRPO[0][2])
-    dev = [load(name)["selected"]["score"] for name in SFT_SELECTIONS]
     out += [
-        (f"({max(dev):.4f})", "highest dev pass^1"),
-        (f"permutation p is {p3(late['p_permutation_two_sided'])}", "1e-5"),
-        (f"{run['train']['global_step']} steps", "two prompts per step"),
-        (f"{run['resolved']['num_generations']} completions per prompt", "two prompts per step"),
+        (f"{run['train']['global_step']} steps, G = {run['resolved']['num_generations']}", "no KL penalty"),
+        (f"{signed(pinned['difference'])} at `lr = {GRPO[0][0]}`", "R0"),
+        (f"{signed(late_rate['difference'])} in the exploratory", "follow-up"),
+        (
+            f"{late['tasks_changed']} of {late['tasks_compared']} tasks changed, {late['tasks_improved']} improved "
+            f"and {late['tasks_regressed']} regressed",
+            "sign test",
+        ),
+        (f"permutation p of {p3(late['p_permutation_two_sided'])}", "Bonferroni"),
+        (f"{percent(min(correct))} to {percent(max(correct))} of rollouts already correct", "8-rollout groups"),
+        (
+            f"{percent(shares[0])} (`lr = {GRPO[0][0]}`) to {percent(shares[1])} (`lr = {GRPO[1][0]}`)",
+            "8-rollout groups",
+        ),
     ]
     spread = [load(r)["group_health"]["mean_component_std"] for _, _, r, _ in GRPO]
     out.append((f"{f3(spread[0]['accuracy'])} and {f3(spread[1]['accuracy'])}", "standard deviation"))
     others = max(s[term] for s in spread for term in ("format", "gate", "efficiency"))
     out.append((f"at most {f3(others)}", "any other term"))
-    late_test = rung(GRPO[1][3], QWEN_SMALL, "R0")
-    net = round(late["difference"] * late_test["episodes"])
-    out += [
-        (f"about {net} attempts out of {late_test['episodes']}", "per-attempt accuracy"),
-        (f"{late['tasks_improved']} tasks that improved against {late['tasks_regressed']} that regressed",
-         "sign test"),
-        (f"Bonferroni threshold of {bonferroni:.3f}", "permutation p also exceeds"),
-    ]
 
-    # MMLU.
+    # Results: MMLU.
     everything = mmlu_comparison("sft", "all_questions")
     readable = mmlu_comparison("sft", "readable_in_both")
-    rows_mmlu = load(MMLU)["rows"]
-    unreadable = [q for q in rows_mmlu if any(q["arms"][a]["extracted"] is None for a in ("base", "sft"))]
-    cut = [
-        q
-        for q in unreadable
-        if any(q["arms"][a]["extracted"] is None and q["arms"][a]["truncated"] for a in ("base", "sft"))
-    ]
+    arms = [load(name)["summary"] for name in MMLU_ARMS]
+
+    def accuracy(s: dict) -> str:
+        return f"{100 * s['accuracy']:.2f}% ({round(s['accuracy'] * s['questions'])} / {s['questions']})"
+
     out += [
         (f"{everything['questions']} questions, zero-shot", "greedy"),
         (f"at most {load(MMLU_ARMS[0])['decoding']['max_new_tokens']} new tokens", "no tool offered"),
-        (signed(everything["difference"], 4), "paired difference"),
+        (f"{accuracy(arms[0])} for untrained", "MMLU"),
+        (f"{accuracy(arms[1])} for SFT run 3", "MMLU"),
+        (f"{accuracy(arms[2])} after GRPO", "MMLU"),
+        (f"paired difference {signed(everything['difference'], 4)}", "SFT run 3"),
         (interval(everything["difference_ci95"]), "95% CI"),
-        (f"about {round(100 * max(-everything['difference_ci95'][0], everything['difference_ci95'][1]))} points",
-         "cannot"),
-        (f"{len(unreadable)} questions", "lack a parseable answer"),
-        (f"{len(cut)} of them", "token limit"),
-        (f"{readable['questions']} questions", "both models produced"),
-        (f"{signed(readable['difference'])} {interval(readable['difference_ci95'])}", "both models produced"),
+        (f"McNemar exact p = {p3(everything['p_sign_test_exact'])}", "SFT run 3"),
+        (f"about ±{round(100 * max(-everything['difference_ci95'][0], everything['difference_ci95'][1]))} points",
+         "cannot be ruled out"),
     ]
 
-    # Order-support transfer.
+    # Results: order support.
     test_tasks = json.loads(ORDER_SPLITS.read_text(encoding="utf-8"))["splits"]["test"]
 
     def n_template(template: str) -> int:
@@ -715,145 +750,127 @@ def claims() -> list[tuple[str, str]]:
 
     verified = n_template("address_change_verified")
     no_postcode, wrong_postcode = n_template("address_change_no_postcode"), n_template("address_change_wrong_postcode")
-    out += [
-        (f"{len(test_tasks)} test requests", "Order-support transfer"),
-        (f"{verified} completable", "address changes"),
-        (f"{no_postcode + wrong_postcode} that must be refused", "address changes"),
-        (f"{no_postcode} omit the postal code", "refused"),
-        (f"{wrong_postcode} supply the wrong one", "refused"),
-    ]
-    max_turns = summary["base"]["max_turns"]
-    out.append((f"after {max_turns} generations (turns)", "episode terminates"))
     runs = summary["base"]["runs_per_task"]
-    out.append((
-        f"the {n_refuse} refusal-required attempts are {runs * no_postcode} without a postal code "
-        f"and {runs * wrong_postcode} with the wrong one",
-        "counts as refused",
-    ))
-
-    # Order-support transfer: the paired differences.
+    refuse_tasks = no_postcode + wrong_postcode
+    out += [
+        (f"{len(test_tasks)} order-support requests ({runs} attempts each, {episodes} episodes)", "zero-shot transfer"),
+        (f"{verified} requests ({runs * verified} episodes)", "completable"),
+        (
+            f"{refuse_tasks} requests ({runs * refuse_tasks} episodes) require refusal: {wrong_postcode} supply a "
+            f"wrong postal code and {no_postcode} omit it",
+            "postal code",
+        ),
+        (f"after {summary['base']['max_turns']} turns", "episode ends"),
+    ]
     floor = 1 / (modes()["permutation_resamples"] + 1)
     out += [
         (f"{modes()['bootstrap_replicates']:,} replicates", "multi-turn minus single-turn"),
         (pvalue(floor), "add-one floor"),
         (f"{modes()['permutation_resamples']:,} resamples", "add-one floor"),
         (pvalue(modes()["multiplicity"]["bonferroni_alpha"]), "Bonferroni threshold"),
-    ]
-
-    # Order-support transfer: the untrained model.
-    out.append((f"{lone} of {sum(t['episodes'] for t in halted)} episodes", "postal code"))
-    out.append((f"{silent['call_sequences']['(none)']} of its {silent['episodes']} generations", "no tool call"))
-    base_fulfil = multi["base"]["write_classes"]["fulfil"]
-    base_writes = base_fulfil["clean_write"] + base_fulfil["verified_write_without_lookup"]
-    out += [
-        (f"refusal rate of {f3(single['base']['refusal_rate_on_refuse'])} therefore reflects", "absence of writes"),
-        (f"makes {base_writes} write attempts on completable requests while still refusing all {n_refuse}",
-         "closed loop"),
-        (f"a pass^4 of {f3(summary['base']['metrics']['pass^4'])}", "fed back"),
-        (
-            f"strict pass^1 rises from {f3(strict['base']['single_turn_pass_power_k'])} single-turn to "
-            f"{f3(strict['base']['multi_turn_pass_power_k'])}, a gain of {f3(strict['base']['difference'])}",
-            "a pass^4 of",
-        ),
-        (
-            f"{base_writes} write attempts on completable requests, "
-            f"{base_fulfil['verified_write_without_lookup']} skipped",
-            "get_order",
-        ),
-    ]
-    # Order-support transfer: the untrained model's strict pass^1, per intent.
-    fulfil, refuse = base_strict["fulfil"], base_strict["refuse"]
-    out += [
-        (
-            f"{f3(strict['base']['multi_turn_pass_power_k'])} is {strict_total} of {episodes} attempts: "
-            f"{fulfil['clean']} of {fulfil['episodes']} completable and {refuse['clean']} of {refuse['episodes']} "
-            "refusal-required",
-            "strict pass^1",
-        ),
-        (f"Of the {fulfil['episodes'] - fulfil['clean']} completable attempts", "strict criterion"),
-        (
-            f"{fulfil['episodes'] - fulfil['correct']} did not complete the change and "
-            f"{fulfil['correct'] - fulfil['clean']} completed it without",
-            "get_order",
-        ),
-        (f"All {asked} refusal-required attempts that fail", "postal code"),
-        (f"{strict_total + asked} of {episodes} ({f3((strict_total + asked) / episodes)})", "counting them"),
-    ]
-
-    # Order-support transfer: SFT and GRPO.
-    grpo_refuse = multi["grpo"]["write_classes"]["refuse"]["unauthenticated_write"]
-    grpo_refused = f"{f3(multi['grpo']['refusal_rate_on_refuse'])} ({grpo_refuse} of {n_refuse}"
-    grpo_strict = strict_counts("grpo")
-    out += [
-        (
-            f"which is {sft_strict['fulfil']['clean'] + sft_strict['refuse']['clean']} of {episodes}: "
-            f"{sft_strict['fulfil']['clean']} of its {sft_strict['fulfil']['correct']} completions pass the lookup "
-            f"rule, and {sft_strict['refuse']['correct']} of {n_refuse} refusal-required attempts",
-            "strict pass^1",
-        ),
-        (
-            f"({grpo_strict['fulfil']['clean'] + grpo_strict['refuse']['clean']} of {episodes}: "
-            f"{grpo_strict['fulfil']['clean']} completions with the lookup and "
-            f"{grpo_strict['refuse']['clean']} refusals)",
-            "strict pass^1",
-        ),
-    ]
-    out += [
-        (f"averages {mean_turns['sft']} turns per episode", "finish the task in one turn"),
-        (f"in {first['sft']['episodes']} of {episodes} episodes its first turn", "finish the task in one turn"),
-        (f"{first['sft']['by_intent']['refuse']['episodes']} of the {n_refuse} refusal-required", "first turn"),
-        (
-            f"in {later['sft']['wrote_after_failed_authenticate']} of the {later['sft']['waited']} "
-            "refusal-required attempts where SFT run 3 waited",
-            "does not explain all of it",
-        ),
-        (
-            f"in {later['grpo']['wrote_after_failed_authenticate']} of the {later['grpo']['waited']} "
-            "refusal-required attempts that waited for it",
-            "failed `authenticate`",
-        ),
-        (f"in its first turn in {first['base']['episodes']} of {episodes} episodes", "untrained"),
-        (f"{mean_turns['grpo']} turns on average", "GRPO"),
-        (f"`update_order` in {first['grpo']['episodes']} of {episodes} episodes", "GRPO"),
-        (f"refusal rate of {grpo_refused} attempts wrote without authentication)", "GRPO"),
-        (f"strict pass^1 of {f3(strict['grpo']['multi_turn_pass_power_k'])}", "first-turn"),
-        (f"pass^4 of {f3(summary['sft']['metrics']['pass^4'])}", "exactly"),
+        (f"`pass^4` of {f3(summary['sft']['metrics']['pass^4'])}", "exactly"),
         (f"{verified} completable requests out of {len(test_tasks)}", "pass^4"),
     ]
+
+    # Results: order support, the untrained model.
+    fulfil, refuse = base_strict["fulfil"], base_strict["refuse"]
+    out += [
+        (f"{lone} of {sum(t['episodes'] for t in halted)} episodes", "postal code"),
+        (f"({runs * verified} completable and {runs * wrong_postcode} with a wrong postal code)", "authenticate"),
+        (f"refusal rate of {f3(single['base']['refusal_rate_on_refuse'])} reflects", "absence of writes"),
+        (f"completes {fulfil['correct']} / {fulfil['episodes']} ({f3(fulfil['correct'] / fulfil['episodes'])})",
+         "averages"),
+        (
+            f"refusing {refuse['correct']} / {refuse['episodes']} ({f3(refuse['correct'] / refuse['episodes'])}) "
+            f"refusal-required requests with {base_unauthenticated} unauthenticated writes",
+            "completes",
+        ),
+        (f"`pass^4` = {f3(summary['base']['metrics']['pass^4'])}", "reaches"),
+        (f"is {f3(strict['base']['multi_turn_pass_power_k'])} ({strict_total} / {episodes})", "strict"),
+        (
+            f"{fulfil['correct'] - fulfil['clean']} of its {fulfil['correct']} completions skip `get_order` "
+            f"({fulfil['clean']} / {fulfil['episodes']} lookup-compliant completions)",
+            "strict",
+        ),
+        (f"rejects {asked} missing-postal-code episodes", "plain text"),
+        (
+            f"({strict_total + asked} / {episodes} = {f3((strict_total + asked) / episodes)} when those {asked} "
+            "refusals count)",
+            "plain text",
+        ),
+    ]
+
+    # Results: order support, SFT and SFT + GRPO.
+    grpo_strict = strict_counts("grpo")
+    sft_refused, grpo_refused = sft_strict["refuse"]["correct"], grpo_strict["refuse"]["correct"]
     sft_fulfil = load(TRANSFER_GATES)["arms"]["sft"]["write_classes"]["fulfil"]
     completed = sft_fulfil["clean_write"] + sft_fulfil["verified_write_without_lookup"]
-    out.append((f"{sft_fulfil['verified_write_without_lookup']} of SFT run 3's {completed}", "get_order"))
-    sft_multi_fulfil = multi["sft"]["write_classes"]["fulfil"]
-    sft_skipped = sft_multi_fulfil["verified_write_without_lookup"]
-    out.append((f"all {sft_skipped} of its writes on completable requests", "closed loop"))
-    none = {arm: templates(arm)["address_change_no_postcode"] for arm in ("sft", "grpo")}
-    out.append((f"{none['sft']['wrote']} of {none['sft']['episodes']}", "without a postal code"))
-    out.append((f"GRPO on {none['grpo']['wrote']}", "without a postal code"))
+    out += [
+        (
+            f"from {f3(single['sft']['refusal_rate_on_refuse'])} in single-turn mode to "
+            f"{f3(multi['sft']['refusal_rate_on_refuse'])} ({sft_refused} / {n_refuse}) in 4-turn mode",
+            "SFT run 3",
+        ),
+        (
+            f"from {f3(single['grpo']['refusal_rate_on_refuse'])} to {f3(multi['grpo']['refusal_rate_on_refuse'])} "
+            f"({grpo_refused} / {n_refuse})",
+            "SFT + GRPO",
+        ),
+        (f"averages {mean_turns['sft']} turns and executes", "Trained on single-step"),
+        (
+            f"writes on {sft_unauthenticated} / {n_refuse} refusal-required episodes; "
+            f"{first['sft']['by_intent']['refuse']['episodes']} of those {sft_unauthenticated} writes come in its "
+            "first turn",
+            "authenticate",
+        ),
+        (
+            f"in {later['sft']['wrote_after_failed_authenticate']} of the {later['sft']['waited']} "
+            "refusal-required episodes where it did wait",
+            "wrote anyway",
+        ),
+        (f"({round(multi['sft']['lookup_rate'] * episodes)} / {episodes})", "never calls `get_order`"),
+        (f"{sft_fulfil['verified_write_without_lookup']} of its {completed} single-turn completions", "get_order"),
+        (
+            f"With {sft_strict['fulfil']['clean']} / {sft_strict['fulfil']['correct']} lookup-compliant completions "
+            f"and {sft_refused} / {n_refuse} valid refusals, SFT run 3 scores "
+            f"{f3(strict['sft']['multi_turn_pass_power_k'])} "
+            f"({sft_strict['fulfil']['clean'] + sft_refused} / {episodes})",
+            "strict",
+        ),
+        (
+            f"calls `get_order` in {grpo_lookups} / {episodes} episodes and scores "
+            f"{f3(strict['grpo']['multi_turn_pass_power_k'])} "
+            f"({grpo_strict['fulfil']['clean'] + grpo_strict['refuse']['clean']} / {episodes})",
+            "SFT + GRPO",
+        ),
+    ]
 
-    # Order-support transfer: tokens per multi-turn episode.
+    # Results: order support, tokens per closed-loop episode.
     tokens = token_counts()["order_support_multiturn"]
     generated = [f"{tokens[label]['generated']['tokens_per_episode']:.1f}" for label in ORDER_LABELS]
     prompt = [f"{tokens[label]['prompt']['tokens_per_episode']:,.0f}" for label in ORDER_LABELS]
     out += [
-        (f"{generated[0]} for the untrained model, {generated[1]} for SFT run 3 and {generated[2]} for SFT + GRPO",
-         "reconstructed from the logs"),
-        (f"{tokens['base']['max_new_tokens']}-token cap", "no turn reached"),
         (
-            f"{prompt[0]} prompt tokens per episode, against {prompt[1]} for SFT run 3 and {prompt[2]} for SFT + GRPO",
+            f"{prompt[0]} for the untrained model, {prompt[1]} for SFT run 3 and {prompt[2]} for SFT + GRPO, "
+            f"against {generated[0]}, {generated[1]} and {generated[2]} generated tokens",
             "logged at generation time",
         ),
+        (f"{tokens['base']['max_new_tokens']}-token cap", "no turn reached"),
     ]
 
     # Limitations.
     untrained_same = load("sft-comparison-qwen3-1.7b-89a7fbb.json")["sampling_degeneracy"]["R1"]["baseline"]
     teacher_same = load(TEACHER[0])["sampling_degeneracy"]["R1"]["baseline"]
+    low, high = readable["difference_ci95"]
     out += [
         (f"{untrained_same['tasks_with_identical_completions']} of {untrained_same['tasks']}", "identical text"),
         (f"did on {teacher_same['tasks_with_identical_completions']}", "teacher"),
         (f"top-k {QWEN_TOP_K}", "Qwen generation configs"),
         (f"default of {LIBRARY_DEFAULT_TOP_K}", "Llama"),
         (f"{100 * load(MMLU_ARMS[0])['summary']['truncated_rate']:.2f}%", "320-token limit"),
-        (f"almost {round(-100 * readable['difference_ci95'][0])} points", "both models"),
+        (f"{readable['questions']} questions", "both models answered"),
+        (f"from {signed(low)} to {signed(high)}", "both models answered"),
+        (f"almost {round(-100 * low)} points", "both models"),
     ]
 
     # Footer: the software the GPU runs used, and the Python versions CI tests.
@@ -921,6 +938,9 @@ class TableTests(unittest.TestCase):
         for expected in rows:
             with self.subTest(row=expected):
                 self.assertTrue(expected in README, f"row not in the README: {expected}")
+
+    def test_summary_table(self) -> None:
+        self.check(summary_rows())
 
     def test_gsm8k_table(self) -> None:
         self.check(gsm8k_rows())
@@ -1346,7 +1366,14 @@ class WordingTests(unittest.TestCase):
                 self.assertNotIn(phrase.lower(), lowered)
 
     def test_readme(self) -> None:
-        self.check(README)
+        # An em dash is allowed only as an empty table cell.
+        self.check(re.sub(r"\|\s*—\s*(?=\|)", "|", README))
+
+    def test_no_number_hides_in_a_code_span(self) -> None:
+        # The number checks skip code spans, so a measured value must stay outside them.
+        spans = re.findall(r"`([^`\n]+)`", FENCE.sub(" ", README_TEXT))
+        hidden = [span for span in spans if NUMBER.search(span) and not re.search(r"[A-Za-z_=(){}*/^]", span)]
+        self.assertEqual(hidden, [])
 
     def test_postcode_only_as_the_field_name(self) -> None:
         prose = re.sub(r"`[^`\n]+`", " ", FENCE.sub(" ", README_TEXT))
