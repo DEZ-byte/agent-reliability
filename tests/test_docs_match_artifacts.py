@@ -491,56 +491,58 @@ def claims() -> list[tuple[str, str]]:
 
     out: list[tuple[str, str]] = []
 
-    # Key findings: SFT against the scaffolded 8B and against the teacher.
+    # Takeaways: SFT against the scaffolded 8B and against the teacher.
     vs_llama = [comparison(name, "R1", 4) for name in H1]
-    out += [(signed(c["difference"]), "exclude zero") for c in vs_llama]
+    diffs = [signed(c["difference"]) for c in vs_llama]
+    out.append((f"{diffs[0]}, {diffs[1]}, and {diffs[2]}", "+ retry"))
     run3 = vs_llama[2]
-    out += [(interval(run3["difference_ci95"]), "run 3"), (pvalue(run3["p_permutation_two_sided"]), "permutation p")]
+    out += [
+        (interval(run3["difference_ci95"]), "run 3"),
+        (f"permutation p = {pvalue(run3['p_permutation_two_sided'])}", "SFT run 3"),
+    ]
     rows = {entry["row"]: entry for entry in token_counts()["rows"]}
     llama_cost = rows["Llama-3.1-8B + retry"]["rungs"]["R1"]["cost"]
     sft_costs = [rows[f"Qwen3-1.7B, SFT run {run}"]["rungs"]["R1"]["cost"] for run in (1, 2, 3)]
     ratios = [cost / llama_cost for cost in sft_costs]
     out += [
-        (f"{percent(min(ratios))} to {percent(max(ratios))}", "of an 8B attempt"),
-        (f"{min(sft_costs):.1f} to {max(sft_costs):.1f} vs. {llama_cost:.1f} tokens", "of an 8B attempt"),
+        (f"{percent(min(ratios))} to {percent(max(ratios))} of the decode cost", "8B + retry"),
+        (f"({min(sft_costs):.1f} to {max(sft_costs):.1f} vs. {llama_cost:.1f} tokens", "marginal decode compute"),
     ]
     teacher = rung(BASELINE, QWEN_TEACHER, "R1")["metrics"]["pass^4"]
     sft4 = [rung(name, QWEN_SMALL, "R1")["metrics"]["pass^4"] for name in SFT_TESTS]
-    out += [(f"{f3(teacher)} vs. {f3(min(sft4))} to {f3(max(sft4))}", "teacher")]
+    out.append((f"(`pass^4` {f3(teacher)} vs. {f3(min(sft4))} to {f3(max(sft4))})", "teacher"))
     sft_fired = [failures(f"sft-run{run}", "R1")["retry"]["fired"] for run in (1, 2, 3)]
     attempts = failures("sft-run1", "R1")["episodes"]
     out.append((
-        f"{min(sft_fired)} to {max(sft_fired)} of {attempts} attempts "
+        f"{min(sft_fired)} to {max(sft_fired)} of {attempts} test attempts "
         f"({100 * min(sft_fired) / attempts:.1f}% to {100 * max(sft_fired) / attempts:.1f}%)",
         "retry",
     ))
     sft4_r0 = [rung(name, QWEN_SMALL, "R0")["metrics"]["pass^4"] for name in SFT_TESTS]
     llama4 = rung(COMPARATOR, LLAMA, "R1")["metrics"]["pass^4"]
-    out.append((f"({f3(min(sft4_r0))} to {f3(max(sft4_r0))}) already exceeds", "R0 pass^4"))
-    out.append((f"R1 pass^4 of {f3(llama4)}", "Llama-3.1-8B"))
+    out += [
+        (f"`pass^4` ({f3(min(sft4_r0))} to {f3(max(sft4_r0))}) exceeds", "without retries"),
+        (f"with retries ({f3(llama4)})", "`R0`"),
+    ]
 
-    # Key findings: GRPO.
+    # Takeaways: GRPO.
     pinned, late_rate = (comparison(paired, "R0", 1) for _, paired, _, _ in GRPO)
-    out.append((f"{signed(pinned['difference'])} at the pinned learning rate", GRPO[0][0]))
-    out.append((f"{signed(late_rate['difference'])} in an exploratory follow-up", GRPO[1][0]))
     late = comparison(GRPO[1][1], "R0", 1)
     out.append((f"p = {p3(late['p_sign_test_exact'])}", "sign test"))
     out.append((f"p = {p3(late['p_permutation_two_sided'])}", "permutation"))
     out.append((interval(late["difference_ci95"]), "exploratory"))
-    out.append((f"{late['tasks_improved']} improved, {late['tasks_regressed']} regressed", "sign test"))
     bonferroni = load(GRPO[1][1])["multiplicity"]["bonferroni_alpha"]
     out.append((f"Bonferroni threshold of {bonferroni:.3f}", "comparison file"))
     correct = [load(run)["group_health"]["mean_correct_fraction"] for _, _, run, _ in GRPO]
-    out.append((f"{percent(min(correct))} to {percent(max(correct))} of training rollouts", "already correct"))
+    out.append((f"{percent(min(correct))} to {percent(max(correct))} of rollouts already succeed", "GRPO training"))
     shares = [load(run)["group_health"]["zero_variance_fraction"] for _, _, run, _ in GRPO]
-    out.append((f"{percent(min(shares))} to {percent(max(shares))}", "rollout groups"))
     out.append((
-        f"{percent(shares[0])} (lr = {GRPO[0][0]}) to {percent(shares[1])} (lr = {GRPO[1][0]})",
+        f"{percent(shares[0])} (`lr` {GRPO[0][0]}) to {percent(shares[1])} (`lr` {GRPO[1][0]})",
         "8-rollout groups",
     ))
     out.append((str(load(GRPO[0][2])["resolved"]["num_generations"]), "-rollout groups"))
 
-    # Key findings: order support, single-turn against multi-turn.
+    # Takeaways: order support, single-turn against multi-turn, and MMLU.
     single = {label: mode(label, "single_turn") for label in ORDER_LABELS}
     multi = {label: mode(label, "multi_turn") for label in ORDER_LABELS}
     summary = dict(zip(ORDER_LABELS, (load(name) for name in MULTI_TURN)))
@@ -554,56 +556,43 @@ def claims() -> list[tuple[str, str]]:
     episodes = multi["base"]["episodes"]
     n_refuse = multi["base"]["episodes_by_intent"]["refuse"]
     grpo_lookups = round(multi["grpo"]["lookup_rate"] * episodes)
-
     base_unauthenticated = multi["base"]["write_classes"]["refuse"]["unauthenticated_write"]
     sft_unauthenticated = multi["sft"]["write_classes"]["refuse"]["unauthenticated_write"]
-    out += [
-        (f"completes {f3(single['base']['completion_rate_on_fulfil'])} of completable requests", "open-loop"),
-        (f"the untrained model averages {mean_turns['base']} turns", "closed-loop"),
-        (f"completes {f3(multi['base']['completion_rate_on_fulfil'])} of completable requests", "averages"),
-        (
-            f"refuses {f3(multi['base']['refusal_rate_on_refuse'])} of refusal-required requests with "
-            f"{base_unauthenticated} unauthenticated writes",
-            "completes",
-        ),
-        (f"pass^4 = {f3(summary['base']['metrics']['pass^4'])}", "strict policy-compliant"),
-        (f"pass^1 = {f3(strict['base']['multi_turn_pass_power_k'])}", "strict policy-compliant"),
-        (
-            f"only {f3(single['sft']['refusal_rate_on_refuse'])} of refusal-required requests in single-turn mode "
-            f"and {f3(multi['sft']['refusal_rate_on_refuse'])} in closed-loop mode",
-            "SFT run 3",
-        ),
-        (f"{sft_unauthenticated} of {n_refuse} attempts execute unauthenticated writes", "closed-loop mode"),
-        (f"averages {mean_turns['sft']} turns", "horizon collapse"),
-        (
-            f"{first['sft']['by_intent']['refuse']['episodes']} of its {sft_unauthenticated} unauthenticated "
-            "writes come from a first turn",
-            "horizon collapse",
-        ),
-        (f"calls `get_order` in {grpo_lookups} of {episodes} episodes", "almost identically"),
-        (f"reaches a strict pass^1 of {f3(strict['grpo']['multi_turn_pass_power_k'])}", "almost identically"),
-    ]
-    # Key findings: what strict pass^1 counts, per intent.
     base_strict, sft_strict = strict_counts("base"), strict_counts("sft")
     strict_total = base_strict["fulfil"]["clean"] + base_strict["refuse"]["clean"]
     asked = base_strict["refuse"]["correct"] - base_strict["refuse"]["clean"]
-    out += [
-        (f"({base_strict['fulfil']['correct']} of {base_strict['fulfil']['episodes']})", "completable requests"),
-        (f"({strict_total} of {episodes})", "strict policy-compliant"),
-        (f"rejects {asked} correct refusals", "missing postal code"),
-        (f"{strict_total + asked} of {episodes} ({f3((strict_total + asked) / episodes)})", "without that requirement"),
-        (
-            f"strict pass^1 of {f3(strict['sft']['multi_turn_pass_power_k'])} is "
-            f"{sft_strict['fulfil']['clean'] + sft_strict['refuse']['clean']} of {episodes}",
-            "none of its",
-        ),
-        (f"none of its {sft_strict['fulfil']['correct']} completions performs the lookup", "Its strict pass^1"),
-        (f"only {sft_strict['refuse']['correct']} of its {n_refuse} refusal-required attempts", "refused"),
-    ]
-    mmlu_base, mmlu_sft = (load(name)["summary"]["accuracy"] for name in MMLU_ARMS[:2])
-    out.append((f"{100 * mmlu_base:.2f}% before SFT and {100 * mmlu_sft:.2f}% after", "MMLU"))
     halted = [templates("base")[t] for t in ("address_change_verified", "address_change_wrong_postcode")]
     lone = sum(t["call_sequences"].get("authenticate", 0) for t in halted)
+    mmlu = [f"{100 * load(name)['summary']['accuracy']:.2f}%" for name in MMLU_ARMS]
+    out += [
+        (f"scores {f3(single['base']['completion_rate_on_fulfil'])} on completions", "single-turn order support"),
+        (f"({lone} of {sum(t['episodes'] for t in halted)} postal-code episodes)", "authenticate"),
+        (
+            f"averages {mean_turns['base']} turns, completes {f3(multi['base']['completion_rate_on_fulfil'])} of "
+            f"valid orders ({base_strict['fulfil']['correct']} of {base_strict['fulfil']['episodes']})",
+            "4-turn closed loop",
+        ),
+        (
+            f"refuses {f3(multi['base']['refusal_rate_on_refuse'])} of refusal-required requests with "
+            f"{base_unauthenticated} unauthenticated writes",
+            "closed loop",
+        ),
+        (
+            f"(`pass^4` = {f3(summary['base']['metrics']['pass^4'])}, strict `pass^1` = "
+            f"{f3(strict['base']['multi_turn_pass_power_k'])}, or {f3((strict_total + asked) / episodes)} "
+            f"when {asked} plain-text",
+            "missing-postal-code",
+        ),
+        (f"({mean_turns['sft']} mean turns)", "update_order"),
+        (f"never calls `get_order` ({round(multi['sft']['lookup_rate'] * episodes)} of {episodes})", "4-turn mode"),
+        (
+            f"on {sft_unauthenticated} of {n_refuse} refusal-required attempts "
+            f"({f3(multi['sft']['refusal_rate_on_refuse'])} refusal rate, "
+            f"{f3(strict['sft']['multi_turn_pass_power_k'])} strict",
+            "unauthenticated writes",
+        ),
+        (f"({mmlu[0]} before SFT, {mmlu[1]} after SFT, {mmlu[2]} after GRPO)", "MMLU"),
+    ]
 
     # Figure captions.
     out.append((f"{failures('base-1.7b')['episodes']} test attempts per model", "failure taxonomy"))
@@ -1368,6 +1357,14 @@ class WordingTests(unittest.TestCase):
     def test_readme(self) -> None:
         # An em dash is allowed only as an empty table cell.
         self.check(re.sub(r"\|\s*—\s*(?=\|)", "|", README))
+
+    def test_top_section_layout(self) -> None:
+        self.assertTrue(README_TEXT.startswith("# agent-reliability\n"))
+        top = README_TEXT.split("## Pipeline")[0]
+        self.assertIn("### Summary of results", top)
+        takeaways = top.split("**Takeaways:**")[1].split("![")[0]
+        self.assertEqual(len(re.findall(r"^\* \*\*", takeaways, flags=re.M)), 3)
+        self.assertNotIn("## Key findings", README_TEXT)
 
     def test_no_number_hides_in_a_code_span(self) -> None:
         # The number checks skip code spans, so a measured value must stay outside them.
